@@ -4,6 +4,7 @@ import { publishXPost, publishXThread } from "./x";
 import { publishLinkedInPost } from "./linkedin";
 import { publishInstagramImage } from "./instagram";
 import { startOutboundCall } from "./twilio";
+import { createGoogleCalendarEvent } from "./google-calendar";
 
 function required(name: string) {
   const value = process.env[name];
@@ -42,6 +43,10 @@ export async function executeProviderAction(action: ExecuteRequest) {
   }
   if (action.channel === "linkedin" && action.kind === "publish_post") return publishLinkedInPost({ accessToken: required("LINKEDIN_ACCESS_TOKEN"), authorUrn: required("LINKEDIN_AUTHOR_URN"), commentary: String(action.payload.commentary || action.payload.text || ""), version: process.env.LINKEDIN_VERSION || "202609" });
   if (action.channel === "instagram" && action.kind === "publish_post") return publishInstagramImage({ accessToken: required("META_ACCESS_TOKEN"), userId: required("INSTAGRAM_USER_ID"), mediaUrl: String(action.payload.mediaUrl || ""), caption: String(action.payload.caption || ""), graphVersion: process.env.META_GRAPH_VERSION || "v23.0" });
+  if (action.channel === "calendar" && action.kind === "book_meeting") {
+    if(action.payload.availabilityVerified!==true)throw new Error("Meeting availability was not verified before booking");
+    return createGoogleCalendarEvent({calendarId:String(action.payload.calendarId||process.env.GOOGLE_CALENDAR_ID||"primary"),summary:String(action.payload.title||"Sales conversation"),description:String(action.payload.description||""),start:String(action.payload.start||""),end:String(action.payload.end||""),timeZone:String(action.payload.timezone||"UTC"),attendeeEmails:[String(action.payload.attendeeEmail||"")].filter(Boolean),createMeet:action.payload.createMeet!==false});
+  }
   if (action.channel === "voice" && action.kind === "call") {
     const base = required("APP_BASE_URL");
     const context={leadId:String(action.payload.leadId||""),missionId:String(action.payload.missionId||""),actionId:String(action.payload.actionId||""),leadName:String(action.payload.leadName||""),objective:String(action.payload.objective||"qualify interest"),language:String(action.payload.leadLanguage||"en")};
