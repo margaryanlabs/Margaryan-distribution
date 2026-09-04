@@ -1,5 +1,5 @@
 const links=[
-  ["Command","/"],["Autopilot","/autopilot"],["Leads","/leads"],["Inbox","/inbox"],["Calls","/calls"],["Meetings","/meetings"],["SMM","/smm"],["Analytics","/analytics"],["Operations","/operations"]
+  ["Command","/"],["Brief","/brief"],["Autopilot","/autopilot"],["Leads","/leads"],["Inbox","/inbox"],["Calls","/calls"],["Meetings","/meetings"],["SMM","/smm"],["Analytics","/analytics"],["Operations","/operations"]
 ] as const;
 
 export function WorkspaceDock(){
