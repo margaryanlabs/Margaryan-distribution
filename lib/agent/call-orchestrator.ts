@@ -1,4 +1,5 @@
 import { summarizeSalesConversation } from "@/lib/agent/summarize";
+import { proposeMeeting } from "@/lib/agent/meeting-orchestrator";
 import { distributionStore } from "@/lib/store";
 import type { CallSummary, Lead, PlannedAction, VoiceTranscriptTurn } from "@/lib/types";
 
@@ -18,6 +19,7 @@ export async function ingestCompletedVoiceCall(input:{callSid:string;streamSid?:
     const summary=prospectText?await summarizeSalesConversation(transcriptText(input.transcript||[])):noAnswerSummary(lead?.language||"en");
     const call=distributionStore.updateCallBySid(input.callSid,{status:"summarized",summary,error:undefined});
     const queued:ReturnType<typeof distributionStore.enqueueActions>=[];
+    let meetingProposal;
     if(lead){
       const patch:Partial<Lead>={nextAction:summary.nextAction,nextActionAt:summary.nextActionAt};
       if(summary.outcome==="do_not_contact"){patch.stage="do_not_contact";patch.optedOut=true;patch.doNotCall=true;distributionStore.stopPendingLeadActions(lead.id,"Stopped after explicit do-not-contact request on voice call");}
@@ -27,12 +29,15 @@ export async function ingestCompletedVoiceCall(input:{callSid:string;streamSid?:
       else if(summary.outcome==="follow_up"){patch.stage="replied";distributionStore.stopPendingLeadActions(lead.id,"Cold sequence stopped after live conversation");}
       else if(summary.outcome==="no_answer"){patch.nextAction=summary.nextAction||"retry_call";patch.nextActionAt=summary.nextActionAt||new Date(Date.now()+24*3600000).toISOString();}
       distributionStore.updateLead(lead.id,patch);
+      if(missionId&&summary.outcome==="meeting"&&summary.nextActionAt&&Number.isFinite(Date.parse(summary.nextActionAt))&&lead.email){
+        meetingProposal=proposeMeeting({missionId,leadId:lead.id,start:summary.nextActionAt,timezone:lead.timezone,sourceCallSid:input.callSid,title:`Demo / conversation — ${lead.company}`,notes:`Explicit meeting agreement from voice call ${input.callSid}. ${summary.summary}`});
+      }
       if(missionId&&["follow_up","qualified","meeting"].includes(summary.outcome)&&lead.email){
         const action:PlannedAction={id:`voice-followup-${input.callSid}`,channel:"email",kind:"send_email",objective:`Post-call follow-up — ${lead.company}`,rationale:"Follow-up is grounded in a completed live conversation and still requires approval",mode:"APPROVE",scheduledOffsetHours:hoursUntil(summary.nextActionAt),payload:{leadId:lead.id,to:lead.email,subject:lead.language==="ru"?`После разговора — ${lead.company}`:`Follow-up — ${lead.company}`,body:followUpBody(lead,summary),sourceCallSid:input.callSid}};
         queued.push(...distributionStore.enqueueActions(missionId,[action]));
       }
       if(missionId&&summary.outcome==="meeting")distributionStore.addPerformance({missionId,actionId:input.actionId,channel:"voice",source:"system",metrics:{meetings:1},occurredAt:completedAt,note:`Meeting explicitly agreed in voice call ${input.callSid}`});
     }
-    return{duplicate:false,call,summary,lead:lead?distributionStore.getLead(lead.id):undefined,queued};
+    return{duplicate:false,call,summary,meetingProposal,lead:lead?distributionStore.getLead(lead.id):undefined,queued};
   }catch(error){const message=error instanceof Error?error.message:"Voice call summarization failed";const call=distributionStore.updateCallBySid(input.callSid,{status:"failed",error:message});return{duplicate:false,call,queued:[],error:message};}
 }
