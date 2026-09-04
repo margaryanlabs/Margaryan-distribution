@@ -9,9 +9,20 @@ function splitThread(body:string){
   return paragraphs.length>=2?paragraphs.slice(0,12):[body.trim()];
 }
 
+function adaptiveSchedule(missionId:string,items:Awaited<ReturnType<typeof buildSmmCampaign>>){
+  const learning=distributionStore.listLearnings().find(report=>report.missionId===missionId&&report.evidenceEventIds.length>0);
+  if(!learning)return items;
+  const topChannel=learning.channelRankings[0]?.key;const topPillar=learning.pillarRankings[0]?.key?.toLowerCase();
+  const slots=items.map(item=>item.scheduledOffsetHours).sort((a,b)=>a-b);
+  return[...items].sort((a,b)=>{
+    const priority=(item:typeof a)=>Number(item.channel===topChannel)*2+Number(Boolean(topPillar&&item.pillar.toLowerCase().includes(topPillar)))*3;
+    return priority(b)-priority(a)||a.scheduledOffsetHours-b.scheduledOffsetHours;
+  }).map((item,index)=>({...item,scheduledOffsetHours:slots[index]??item.scheduledOffsetHours}));
+}
+
 export async function prepareSmmCampaign(mission:MissionRecord,days=7){
   const product=mission.input.productId?distributionStore.getProduct(mission.input.productId):undefined;
-  const items=await buildSmmCampaign(mission,product,days);const groupId=crypto.randomUUID();
+  const items=adaptiveSchedule(mission.id,await buildSmmCampaign(mission,product,days));const groupId=crypto.randomUUID();
   const drafts=distributionStore.addContent(items.map(item=>({missionId:mission.id,channel:item.channel,language:mission.input.language,title:item.title,body:item.body,callToAction:item.callToAction,status:"draft" as const,scheduledAt:new Date(Date.now()+item.scheduledOffsetHours*3600000).toISOString(),format:item.format,pillar:item.pillar,contentGroupId:groupId,requiresMedia:item.requiresMedia})));
   const actions:PlannedAction[]=items.map((item,index)=>{
     const draft=drafts[index];let mode:PlannedAction["mode"]="APPROVE";let rationale="Public brand action requires approval before scheduled execution";
@@ -20,5 +31,5 @@ export async function prepareSmmCampaign(mission:MissionRecord,days=7){
     const payload=item.channel==="x"?(item.format==="thread"?{contentId:draft.id,threadPosts:splitThread(item.body)}:{contentId:draft.id,text:item.body}):item.channel==="linkedin"?{contentId:draft.id,commentary:item.body}:{contentId:draft.id,caption:item.body,mediaUrl:""};
     return{id:`smm-${groupId}-${index}`,channel:item.channel,kind:"publish_post",objective:`Publish ${item.title}`,rationale,mode,scheduledOffsetHours:item.scheduledOffsetHours,payload};
   });
-  const queued=distributionStore.enqueueActions(mission.id,actions);return{groupId,drafts,queued};
+  const queued=distributionStore.enqueueActions(mission.id,actions);return{groupId,drafts,queued,learningApplied:Boolean(distributionStore.listLearnings().find(report=>report.missionId===mission.id&&report.evidenceEventIds.length>0))};
 }
