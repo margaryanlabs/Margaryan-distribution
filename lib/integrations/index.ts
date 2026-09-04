@@ -26,8 +26,14 @@ export async function executeProviderAction(action: ExecuteRequest) {
     };
   }
 
-  if (action.channel === "email" && action.kind === "send_email") {
-    return sendGmailMessage({ accessToken: process.env.GMAIL_ACCESS_TOKEN, to: String(action.payload.to || ""), subject: String(action.payload.subject || ""), body: String(action.payload.body || "") });
+  if (action.channel === "email" && (action.kind === "send_email" || action.kind === "reply")) {
+    return sendGmailMessage({
+      to: String(action.payload.to || ""),
+      subject: String(action.payload.subject || ""),
+      body: String(action.payload.body || ""),
+      replyToMessageId: action.kind === "reply" ? String(action.payload.replyToMessageId || "") : undefined,
+      references: action.kind === "reply" ? String(action.payload.references || action.payload.replyToMessageId || "") : undefined
+    });
   }
   if (action.channel === "x" && action.kind === "publish_post") return publishXPost({ accessToken: required("X_USER_ACCESS_TOKEN"), text: String(action.payload.text || "") });
   if (action.channel === "linkedin" && action.kind === "publish_post") return publishLinkedInPost({ accessToken: required("LINKEDIN_ACCESS_TOKEN"), authorUrn: required("LINKEDIN_AUTHOR_URN"), commentary: String(action.payload.commentary || action.payload.text || ""), version: process.env.LINKEDIN_VERSION || "202609" });
