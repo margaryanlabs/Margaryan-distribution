@@ -10,13 +10,9 @@ export async function POST(req: Request) {
     const mission = distributionStore.getMission(body.missionId);
     if (!mission) return NextResponse.json({ error: "Mission not found" }, { status: 404 });
     const limit = Math.max(1, Math.min(10, Number(body.limit || 8)));
-    const candidates = await researchBusinessLeads(mission, limit);
-    const leads = distributionStore.addLeads(candidates.map((candidate) => ({
-      ...candidate,
-      missionId: mission.id,
-      language: mission.input.language as Language,
-      stage: "researched" as const
-    })));
+    const product = mission.input.productId ? distributionStore.getProduct(mission.input.productId) : undefined;
+    const candidates = await researchBusinessLeads(mission, limit, product);
+    const leads = distributionStore.addLeads(candidates.map((candidate) => ({ ...candidate, missionId: mission.id, language: mission.input.language as Language, stage: "researched" as const })));
     return NextResponse.json({ leads, researched: candidates.length, added: leads.length });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Lead research failed" }, { status: 500 });

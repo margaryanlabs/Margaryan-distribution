@@ -8,21 +8,22 @@ Give the system a high-level job such as:
 
 It turns the job into a governed execution loop:
 
-**COMMAND → PLAN → QUEUE → POLICY → APPROVAL → EXECUTE → OBSERVE → SUMMARIZE → LEARN → NEXT ACTION**
+**COMMAND → PRODUCT BRAIN → PLAN → RESEARCH → QUEUE → POLICY → APPROVAL → EXECUTE → OBSERVE → SUMMARIZE → LEARN → NEXT ACTION**
 
-## V0.2 — No database mode
+## V0.4 — No database distribution workforce
 
-V0.2 intentionally does **not require Supabase or any database**. The runtime uses a typed in-memory store so product work can continue while the production backend is being prepared separately.
+V0.4 intentionally does **not require Supabase or any database**. The runtime uses a typed in-memory store.
 
 Implemented:
-
 - Command Center UI
+- Product Brain for reusable product/ICP/proof/objection context
+- Public-web B2B lead research + fit scoring
 - EN/RU mission planning
 - OpenAI Responses API planner
 - mission + action queue in memory
 - approval / reject / execute flows
 - dry-run provider execution by default
-- 24/7 worker contract without database dependency
+- worker contract without database dependency
 - SMM content-pack generator for X / LinkedIn / Instagram
 - connection center
 - Gmail / X / LinkedIn / Instagram / Twilio provider adapters
@@ -33,9 +34,7 @@ Implemented:
 
 ### Important limitation
 
-The in-memory store is intentionally temporary. Data survives only for the life of the running Node process and can reset on restart or serverless cold-start. This is correct for V0.2 development and demonstrations, not production persistence.
-
-The existing Supabase migration files are parked for later and are not used by the V0.2 runtime.
+Product brains, missions, leads, actions and content are process-memory only and can reset after restart or serverless cold-start. Persistent database work is intentionally deferred; V0.4 does not initialize or call any database runtime.
 
 ## Run
 
@@ -46,22 +45,6 @@ npm run typecheck
 npm run dev
 ```
 
-External side effects are disabled by default:
+External side effects are disabled by default with `EXECUTION_ENABLED=false`. Approvals and execution can therefore be tested end-to-end without sending anything externally.
 
-```env
-EXECUTION_ENABLED=false
-```
-
-With this setting, approvals and executions run end-to-end but provider calls are simulated. Only turn live execution on after the required official provider credentials and channel policy checks are configured.
-
-## Voice
-
-Realtime voice runs as a separate gateway because Twilio Media Streams use a long-lived WebSocket connection:
-
-```bash
-cd voice-gateway
-npm install
-npm start
-```
-
-See `docs/ARCHITECTURE.md` for the execution model.
+Realtime voice runs separately in `voice-gateway` because Twilio Media Streams use a long-lived WebSocket connection.

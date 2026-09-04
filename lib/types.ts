@@ -16,11 +16,24 @@ export interface ProductBrief {
   forbiddenClaims?: string[];
 }
 
+export interface ProductRecord extends ProductBrief {
+  id: string;
+  sourceUrl?: string;
+  notes?: string;
+  positioning: string[];
+  objections: string[];
+  useCases: string[];
+  language: Language;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface MissionInput {
   goal: string;
   market: string;
   language: Language;
   autonomy: "auto" | "approve" | "draft";
+  productId?: string;
 }
 
 export interface PlannedAction {
@@ -131,11 +144,13 @@ export interface DashboardSnapshot {
   actions: DistributionActionRecord[];
   content: ContentDraft[];
   leads: Lead[];
+  products: ProductRecord[];
   stats: {
     activeMissions: number;
     queuedActions: number;
     approvalsNeeded: number;
     completedActions: number;
     researchedLeads: number;
+    products: number;
   };
 }
