@@ -44,7 +44,12 @@ export async function executeProviderAction(action: ExecuteRequest) {
   if (action.channel === "instagram" && action.kind === "publish_post") return publishInstagramImage({ accessToken: required("META_ACCESS_TOKEN"), userId: required("INSTAGRAM_USER_ID"), mediaUrl: String(action.payload.mediaUrl || ""), caption: String(action.payload.caption || ""), graphVersion: process.env.META_GRAPH_VERSION || "v23.0" });
   if (action.channel === "voice" && action.kind === "call") {
     const base = required("APP_BASE_URL");
-    return startOutboundCall({ to: String(action.payload.to || ""), from: required("TWILIO_FROM_NUMBER"), accountSid: required("TWILIO_ACCOUNT_SID"), authToken: required("TWILIO_AUTH_TOKEN"), twimlUrl: String(action.payload.twimlUrl || `${base}/api/voice/twiml?leadName=${encodeURIComponent(String(action.payload.leadName || ""))}&objective=${encodeURIComponent(String(action.payload.objective || "qualify interest"))}`), statusCallback: `${base}/api/voice/status` });
+    const context={leadId:String(action.payload.leadId||""),missionId:String(action.payload.missionId||""),actionId:String(action.payload.actionId||""),leadName:String(action.payload.leadName||""),objective:String(action.payload.objective||"qualify interest"),language:String(action.payload.leadLanguage||"en")};
+    const twimlUrl=new URL(String(action.payload.twimlUrl||`${base}/api/voice/twiml`));
+    for(const [key,value] of Object.entries(context))if(value)twimlUrl.searchParams.set(key,value);
+    const statusUrl=new URL(`${base}/api/voice/status`);
+    for(const key of ["leadId","missionId","actionId"] as const)if(context[key])statusUrl.searchParams.set(key,context[key]);
+    return startOutboundCall({to:String(action.payload.to||""),from:required("TWILIO_FROM_NUMBER"),accountSid:required("TWILIO_ACCOUNT_SID"),authToken:required("TWILIO_AUTH_TOKEN"),twimlUrl:twimlUrl.toString(),statusCallback:statusUrl.toString()});
   }
   throw new Error(`No executor for ${action.channel}/${action.kind}`);
 }
