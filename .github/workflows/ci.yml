@@ -36,4 +36,4 @@ jobs:
       - name: Install voice dependencies
         run: npm install --no-audit --no-fund
       - name: Syntax check gateway
-        run: node --check server.mjs
+        run: node --check index.mjs
