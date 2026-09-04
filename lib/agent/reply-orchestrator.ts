@@ -4,7 +4,7 @@ import type { InboundReply, Lead, PlannedAction } from "@/lib/types";
 
 export function extractEmailAddress(value:string){const angle=value.match(/<([^>]+)>/);const candidate=(angle?.[1]||value).trim();const plain=candidate.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);return plain?.[0]?.toLowerCase()||"";}
 
-export async function ingestInboundReply(input:{externalId:string;threadId?:string;messageId?:string;from:string;subject:string;text:string;receivedAt?:string;lead?:Lead}){
+export async function ingestInboundReply(input:{externalId:string;threadId?:string;messageId?:string;from:string;subject:string;text:string;receivedAt?:string;lead?:Lead;isSimulation?:boolean}){
   if(distributionStore.hasReplyExternalId(input.externalId))return{duplicate:true,reply:distributionStore.listReplies().find(item=>item.externalId===input.externalId),queued:[]};
   const email=extractEmailAddress(input.from);const lead=input.lead||distributionStore.findLeadByEmail(email);if(!lead)throw new Error("Inbound sender is not a known lead");
   const mission=lead.missionId?distributionStore.getMission(lead.missionId):undefined;const product=mission?.input.productId?distributionStore.getProduct(mission.input.productId):undefined;
@@ -26,5 +26,6 @@ export async function ingestInboundReply(input:{externalId:string;threadId?:stri
   const queued=missionId&&planned.length?distributionStore.enqueueActions(missionId,planned):[];
   const status:InboundReply["status"]=decision.recommendedAction==="stop"?"stopped":queued.length?"actioned":"reviewed";
   const reply=distributionStore.addReply({externalId:input.externalId,threadId:input.threadId,messageId:input.messageId,missionId,leadId:lead.id,channel:"email",from:input.from,subject:input.subject,text:input.text,receivedAt,decision,status});
+  if(missionId&&!input.isSimulation){distributionStore.addPerformance({missionId,channel:"email",source:"system",metrics:{replies:1,positiveReplies:decision.intent==="positive"?1:0},occurredAt:receivedAt,note:`Verified inbound email reply classified as ${decision.intent}`});}
   return{duplicate:false,reply,queued,lead:distributionStore.getLead(lead.id)};
 }
