@@ -1,65 +1,52 @@
 # Margaryan Distribution
 
-Margaryan Distribution is an autonomous distribution operating system for products, brands, and campaigns.
+Autonomous **sales + SMM + distribution OS** for Margaryan Labs products.
 
-It turns one high-level instruction such as **“Sell Hay Engine to US dental clinics”** or **“Run distribution for VETO Intelligence”** into a governed execution plan across sales and content channels.
+Give it a high-level mission such as:
 
-## Product thesis
+> Sell Hay Engine to US dental clinics and run a 14-day content + outbound campaign.
 
-One command → research → strategy → content/outreach → channel execution → replies → follow-up → calls → qualification → handoff → analytics.
+The system turns the goal into research, channel strategy, social content, personalized outreach, follow-up, qualified voice conversations, summaries and next actions.
 
-The platform is built around four layers:
+## V0.1 implemented
 
-1. **Command Center** — user gives the goal, product, target market, language, budget and autonomy level.
-2. **Agent Planner** — converts the goal into tasks and channel-specific actions.
-3. **Channel Executors** — Gmail, X, LinkedIn, Instagram, voice/Twilio and future adapters.
-4. **Distribution Memory** — CRM, conversation summaries, content history, experiments, metrics and next-best-action.
-
-## V1 scope
-
-- EN/RU first
-- Product knowledge profiles
-- Distribution missions and campaigns
-- Lead CRM and outreach queue
-- Email sending adapter (Gmail)
+- Command Center UI
+- EN/RU mission planning
+- OpenAI Responses API structured planner
+- AUTO / APPROVE / BLOCKED execution modes
+- Policy gate before provider side effects
+- Gmail send + inbox-reader foundation
 - X post adapter
-- LinkedIn post adapter for approved API access
-- Instagram publishing adapter for eligible professional accounts
-- Twilio outbound call adapter + realtime voice gateway contract
-- Content calendar and SMM queue
-- Approval gates per channel/action
-- Compliance/quiet-hours/opt-out controls
-- Activity timeline and campaign analytics
-- OpenAI-powered structured planning
-
-## Safety model
-
-Margaryan Distribution never treats “autonomous” as “unbounded.” Every action has a channel policy and one of three execution modes:
-
-- `AUTO` — can execute without approval when credentials and policy allow it.
-- `APPROVE` — agent prepares the action; a human approves before execution.
-- `BLOCKED` — action is not allowed by the configured policy, account permissions, or channel rules.
-
-Cold outreach, automated calling, recording, and social automation must respect applicable laws, platform terms, opt-outs and account permissions.
+- LinkedIn Posts API adapter for approved access
+- Instagram Professional image publishing adapter
+- Twilio outbound-call adapter
+- OpenAI Realtime voice gateway
+- Post-call summarizer
+- 24/7 worker endpoint foundation
+- Supabase model for products, missions, leads, actions, conversations, content, channel accounts and compliance
+- RLS / authenticated-only Data API grants
 
 ## Stack
 
-- Next.js 16 / React 19 / TypeScript
-- Supabase (Auth + Postgres + RLS)
-- OpenAI Responses API for planning and structured outputs
-- OpenAI Realtime + Twilio Media Streams for voice
-- Official channel APIs only
+Next.js 16 · React 19 · TypeScript · Supabase · OpenAI · Twilio · official channel APIs.
 
-## Getting started
+## Run
 
 ```bash
 cp .env.example .env.local
 npm install
+npm run typecheck
 npm run dev
 ```
 
-Then create a dedicated Supabase project and run the SQL in `supabase/migrations/001_core.sql`.
+Create a dedicated Supabase project and apply `supabase/migrations/001_core.sql`.
 
-## Repository status
+Voice runs separately:
 
-V1 foundation is being implemented. External actions remain disabled until their credentials are configured.
+```bash
+cd voice-gateway
+npm install
+npm start
+```
+
+See `docs/ARCHITECTURE.md` for the execution model and production gates.

@@ -1,0 +1,2 @@
+import {NextResponse} from "next/server"; import {summarizeSalesConversation} from "@/lib/agent/summarize";
+export async function POST(req:Request){try{const{transcript}=await req.json();if(!transcript)return NextResponse.json({ok:false,error:"transcript required"},{status:400});const summary=await summarizeSalesConversation(transcript);return NextResponse.json({ok:true,summary});}catch(error){return NextResponse.json({ok:false,error:error instanceof Error?error.message:"summary failed"},{status:500});}}

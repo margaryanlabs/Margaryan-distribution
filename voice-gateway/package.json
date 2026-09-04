@@ -1,0 +1,1 @@
+{"name":"margaryan-distribution-voice-gateway","private":true,"type":"module","engines":{"node":">=22"},"scripts":{"start":"node index.mjs"},"dependencies":{"ws":"8.18.3"}}

@@ -1,0 +1,2 @@
+import {NextResponse} from "next/server";
+export function GET(){return NextResponse.json({ok:true,service:"margaryan-distribution",time:new Date().toISOString(),adapters:{openai:Boolean(process.env.OPENAI_API_KEY),supabase:Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),gmail:Boolean(process.env.GOOGLE_REFRESH_TOKEN),x:Boolean(process.env.X_USER_ACCESS_TOKEN),linkedin:Boolean(process.env.LINKEDIN_ACCESS_TOKEN),instagram:Boolean(process.env.META_ACCESS_TOKEN),voice:Boolean(process.env.TWILIO_ACCOUNT_SID&&process.env.VOICE_GATEWAY_WSS_URL)}});}
