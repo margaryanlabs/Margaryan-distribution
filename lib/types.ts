@@ -1,7 +1,7 @@
 export type Language = "en" | "ru";
-export type Channel = "email" | "voice" | "linkedin" | "instagram" | "x" | "system";
+export type Channel = "email" | "voice" | "linkedin" | "instagram" | "x" | "calendar" | "system";
 export type ExecutionMode = "AUTO" | "APPROVE" | "BLOCKED";
-export type ActionKind = "send_email" | "publish_post" | "reply" | "call" | "research" | "analyze";
+export type ActionKind = "send_email" | "publish_post" | "reply" | "call" | "research" | "analyze" | "book_meeting";
 export type LeadStage = "new" | "researched" | "contacted" | "replied" | "qualified" | "meeting" | "won" | "lost" | "do_not_contact";
 export type ActionStatus = "queued" | "approved" | "running" | "succeeded" | "failed" | "blocked" | "rejected";
 export type MissionStatus = "active" | "paused" | "completed" | "failed";
@@ -10,6 +10,7 @@ export type RecommendedNextAction = "reply" | "meeting" | "call" | "wait" | "sto
 export type ContentFormat = "post" | "thread" | "carousel" | "reel_script" | "story";
 export type MetricSource = "manual" | "provider" | "system";
 export type VoiceCallStatus = "initiated" | "ringing" | "answered" | "completed" | "summarized" | "failed";
+export type MeetingStatus = "proposed" | "availability_checked" | "approved" | "booked" | "failed" | "cancelled";
 
 export interface ProductBrief { name:string; oneLiner:string; targetCustomer:string; pains:string[]; proof:string[]; pricingNotes?:string; forbiddenClaims?:string[]; }
 export interface ProductRecord extends ProductBrief { id:string; sourceUrl?:string; notes?:string; positioning:string[]; objections:string[]; useCases:string[]; language:Language; createdAt:string; updatedAt:string; }
@@ -27,8 +28,9 @@ export interface InboundReply { id:string; externalId:string; threadId?:string; 
 export interface CallSummary { language:Language; outcome:"no_answer"|"not_interested"|"follow_up"|"qualified"|"meeting"|"do_not_contact"; summary:string; needs:string[]; objections:string[]; commitments:string[]; nextAction:string; nextActionAt?:string; decisionMaker?:string; budgetSignal?:string; urgency?:"low"|"medium"|"high"; }
 export interface VoiceTranscriptTurn { speaker:"agent"|"prospect"; text:string; at?:string; }
 export interface VoiceCallRecord { id:string; callSid:string; streamSid?:string; missionId?:string; leadId?:string; actionId?:string; objective?:string; status:VoiceCallStatus; providerStatus?:string; transcript:VoiceTranscriptTurn[]; summary?:CallSummary; startedAt?:string; answeredAt?:string; completedAt?:string; durationSeconds?:number; createdAt:string; updatedAt:string; error?:string; }
+export interface MeetingRecord { id:string; missionId:string; leadId:string; sourceCallSid?:string; title:string; attendeeEmail:string; attendeeName?:string; start:string; end:string; timezone:string; status:MeetingStatus; availabilityVerified:boolean; availabilityCheckedAt?:string; calendarId?:string; calendarEventId?:string; calendarHtmlLink?:string; meetLink?:string; notes?:string; createdAt:string; updatedAt:string; error?:string; }
 export interface PerformanceMetrics { impressions?:number; engagements?:number; clicks?:number; replies?:number; positiveReplies?:number; meetings?:number; conversions?:number; spend?:number; }
 export interface PerformanceEvent { id:string; missionId:string; contentId?:string; actionId?:string; channel:Channel; source:MetricSource; metrics:PerformanceMetrics; occurredAt:string; createdAt:string; note?:string; }
 export interface LearningRanking { key:string; impressions:number; engagements:number; clicks:number; replies:number; positiveReplies:number; meetings:number; conversions:number; score:number; }
 export interface LearningReport { id:string; missionId:string; generatedAt:string; summary:string; channelRankings:LearningRanking[]; pillarRankings:LearningRanking[]; recommendations:string[]; evidenceEventIds:string[]; }
-export interface DashboardSnapshot { missions:MissionRecord[]; actions:DistributionActionRecord[]; content:ContentDraft[]; leads:Lead[]; products:ProductRecord[]; outreach:OutreachSequence[]; replies:InboundReply[]; calls:VoiceCallRecord[]; performance:PerformanceEvent[]; learnings:LearningReport[]; stats:{activeMissions:number;queuedActions:number;approvalsNeeded:number;completedActions:number;researchedLeads:number;products:number;outreachPrepared:number;inboundReplies:number;positiveReplies:number;voiceCalls:number;meetings:number;performanceEvents:number;learningReports:number}; }
+export interface DashboardSnapshot { missions:MissionRecord[]; actions:DistributionActionRecord[]; content:ContentDraft[]; leads:Lead[]; products:ProductRecord[]; outreach:OutreachSequence[]; replies:InboundReply[]; calls:VoiceCallRecord[]; meetings:MeetingRecord[]; performance:PerformanceEvent[]; learnings:LearningReport[]; stats:{activeMissions:number;queuedActions:number;approvalsNeeded:number;completedActions:number;researchedLeads:number;products:number;outreachPrepared:number;inboundReplies:number;positiveReplies:number;voiceCalls:number;meetings:number;bookedMeetings:number;performanceEvents:number;learningReports:number}; }
