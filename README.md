@@ -2,33 +2,40 @@
 
 Autonomous **sales + SMM + distribution OS** for Margaryan Labs products.
 
-Give it a high-level mission such as:
+Give the system a high-level job such as:
 
 > Sell Hay Engine to US dental clinics and run a 14-day content + outbound campaign.
 
-The system turns the goal into research, channel strategy, social content, personalized outreach, follow-up, qualified voice conversations, summaries and next actions.
+It turns the job into a governed execution loop:
 
-## V0.1 implemented
+**COMMAND → PLAN → QUEUE → POLICY → APPROVAL → EXECUTE → OBSERVE → SUMMARIZE → LEARN → NEXT ACTION**
+
+## V0.2 — No database mode
+
+V0.2 intentionally does **not require Supabase or any database**. The runtime uses a typed in-memory store so product work can continue while the production backend is being prepared separately.
+
+Implemented:
 
 - Command Center UI
 - EN/RU mission planning
-- OpenAI Responses API structured planner
-- AUTO / APPROVE / BLOCKED execution modes
-- Policy gate before provider side effects
-- Gmail send + inbox-reader foundation
-- X post adapter
-- LinkedIn Posts API adapter for approved access
-- Instagram Professional image publishing adapter
-- Twilio outbound-call adapter
-- OpenAI Realtime voice gateway
-- Post-call summarizer
-- 24/7 worker endpoint foundation
-- Supabase model for products, missions, leads, actions, conversations, content, channel accounts and compliance
-- RLS / authenticated-only Data API grants
+- OpenAI Responses API planner
+- mission + action queue in memory
+- approval / reject / execute flows
+- dry-run provider execution by default
+- 24/7 worker contract without database dependency
+- SMM content-pack generator for X / LinkedIn / Instagram
+- connection center
+- Gmail / X / LinkedIn / Instagram / Twilio provider adapters
+- OpenAI Realtime voice gateway foundation
+- post-call summarizer
+- compliance gate and opt-out / do-not-call hooks
+- responsive dashboard
 
-## Stack
+### Important limitation
 
-Next.js 16 · React 19 · TypeScript · Supabase · OpenAI · Twilio · official channel APIs.
+The in-memory store is intentionally temporary. Data survives only for the life of the running Node process and can reset on restart or serverless cold-start. This is correct for V0.2 development and demonstrations, not production persistence.
+
+The existing Supabase migration files are parked for later and are not used by the V0.2 runtime.
 
 ## Run
 
@@ -39,9 +46,17 @@ npm run typecheck
 npm run dev
 ```
 
-Create a dedicated Supabase project and apply `supabase/migrations/001_core.sql`.
+External side effects are disabled by default:
 
-Voice runs separately:
+```env
+EXECUTION_ENABLED=false
+```
+
+With this setting, approvals and executions run end-to-end but provider calls are simulated. Only turn live execution on after the required official provider credentials and channel policy checks are configured.
+
+## Voice
+
+Realtime voice runs as a separate gateway because Twilio Media Streams use a long-lived WebSocket connection:
 
 ```bash
 cd voice-gateway
@@ -49,4 +64,4 @@ npm install
 npm start
 ```
 
-See `docs/ARCHITECTURE.md` for the execution model and production gates.
+See `docs/ARCHITECTURE.md` for the execution model.

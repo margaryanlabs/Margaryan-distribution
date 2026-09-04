@@ -6,32 +6,35 @@
 
 The planning model never performs provider side effects directly. It emits typed actions. The policy engine evaluates them. Only an official channel adapter can execute an approved action.
 
+## V0.2 runtime
+
+The current product deliberately runs without a database. A typed memory-store adapter keeps missions, actions and content drafts for the life of the Node process. This makes the full product loop testable while the production backend is deferred.
+
+The storage boundary is isolated in `lib/store`. When persistent infrastructure is connected later, the agent, API routes, provider executors and UI should not need to be redesigned; only the storage adapter changes.
+
 ## Layers
 
 1. Command Center — goal, product, market, language, autonomy.
 2. Planner — OpenAI Responses API + strict JSON schema.
-3. Queue — durable actions with status, schedule, idempotency and retries.
+3. Queue — typed actions with status, schedule and retries.
 4. Policy/approval — opt-out, DNC, quiet hours, jurisdiction and brand-risk gates.
 5. Executors — Gmail, X, LinkedIn Posts, Instagram Professional publishing, Twilio Voice.
-6. Voice gateway — Twilio Media Streams ↔ OpenAI Realtime, deployed separately as WebSocket service.
-7. Memory — products, missions, leads, content, conversations, summaries and compliance events in Supabase.
-8. Analytics — response, engagement, meetings, pipeline and experiments.
+6. Voice gateway — Twilio Media Streams ↔ OpenAI Realtime, deployed separately as a WebSocket service.
+7. Memory — V0.2 in-process store behind a replaceable interface.
+8. Analytics — response, engagement, meetings, pipeline and experiments; persistent analytics arrives with the production store.
+
+## Execution modes
+
+- `AUTO`: the worker may execute when the policy gate passes.
+- `APPROVE`: the agent prepares the action and waits for a human approval.
+- `BLOCKED`: the configured policy currently forbids execution.
+
+`EXECUTION_ENABLED=false` is the default. In this mode provider executions are simulated and return a dry-run result. This is separate from action approval: the full approval state machine can be tested without external side effects.
 
 ## SMM model
 
-A mission creates channel-native variants instead of copying one caption everywhere. Content assets hold a canonical idea plus X, LinkedIn and Instagram variants, media references, schedule and results.
+One mission can produce channel-native variants rather than copying the same caption everywhere. X, LinkedIn and Instagram receive different drafts while sharing the same campaign thesis and evidence constraints.
 
-## Messaging
+## Production backend handoff
 
-Email is implemented. Social DMs are capability-gated: add them only where the official API and the connected account/app permissions explicitly support the intended messaging flow. We do not use browser automation to bypass platform restrictions.
-
-## Production gates
-
-- Dedicated Supabase project and Auth.
-- OAuth connection flows; no long-lived provider tokens in browser storage.
-- Webhook signature verification.
-- Durable scheduler with idempotency.
-- Provider-specific rate limits and retry budgets.
-- Unsubscribe / do-not-contact suppression.
-- Jurisdiction-aware calling and recording rules.
-- Human approval by default for cold outreach and public brand actions until channel policy is explicitly configured.
+When persistent storage is enabled later, it should implement the same store capabilities for missions, actions, content, leads, conversations and analytics. Until then, no production persistence is claimed.
