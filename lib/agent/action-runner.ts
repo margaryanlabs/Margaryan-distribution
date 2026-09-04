@@ -1,6 +1,7 @@
 import { evaluateExecution } from "@/lib/compliance";
 import { executeProviderAction } from "@/lib/integrations";
 import { checkDailyExecutionLimit } from "@/lib/limits";
+import { classifyExecutionError,nextRetry } from "@/lib/retry";
 import { distributionStore } from "@/lib/store";
 import type { ExecuteRequest } from "@/lib/types";
 
@@ -35,10 +36,12 @@ export async function runDueAutoActions(limit=10){
       }
       results.push({id:action.recordId,status:"succeeded",channel:action.channel,simulated});
     }catch(error){
-      const message=error instanceof Error?error.message:"unknown error";distributionStore.updateAction(action.recordId,{status:"failed",error:message,retryCount:action.retryCount+1});
+      const message=error instanceof Error?error.message:"unknown error";const classification=classifyExecutionError(message);const retry=nextRetry(action.retryCount);
+      if(classification.transient&&retry.retry){const scheduledAt=new Date(Date.now()+retry.delayMs).toISOString();distributionStore.updateAction(action.recordId,{status:"queued",error:`Retry scheduled: ${message}`,retryCount:retry.nextCount,scheduledAt});results.push({id:action.recordId,status:"retry_scheduled",retryCount:retry.nextCount,scheduledAt,error:message});continue;}
+      distributionStore.updateAction(action.recordId,{status:classification.transient?"dead_letter":"failed",error:message,retryCount:retry.nextCount});
       if(action.kind==="publish_post"&&typeof payload.contentId==="string")distributionStore.updateContent(payload.contentId,{status:"failed"});
       if(action.channel==="calendar"&&typeof payload.meetingId==="string")distributionStore.updateMeeting(payload.meetingId,{status:"failed",error:message});
-      results.push({id:action.recordId,status:"failed",error:message});
+      results.push({id:action.recordId,status:classification.transient?"dead_letter":"failed",error:message});
     }
   }
   return{processed:results.length,results};
