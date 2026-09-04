@@ -1,4 +1,5 @@
 import { buildSmmCampaign } from "@/lib/agent/smm";
+import { assessDistributionCopy } from "@/lib/agent/quality-gate";
 import { distributionStore } from "@/lib/store";
 import type { MissionRecord, PlannedAction } from "@/lib/types";
 
@@ -23,13 +24,16 @@ function adaptiveSchedule(missionId:string,items:Awaited<ReturnType<typeof build
 export async function prepareSmmCampaign(mission:MissionRecord,days=7){
   const product=mission.input.productId?distributionStore.getProduct(mission.input.productId):undefined;
   const items=adaptiveSchedule(mission.id,await buildSmmCampaign(mission,product,days));const groupId=crypto.randomUUID();
-  const drafts=distributionStore.addContent(items.map(item=>({missionId:mission.id,channel:item.channel,language:mission.input.language,title:item.title,body:item.body,callToAction:item.callToAction,status:"draft" as const,scheduledAt:new Date(Date.now()+item.scheduledOffsetHours*3600000).toISOString(),format:item.format,pillar:item.pillar,contentGroupId:groupId,requiresMedia:item.requiresMedia})));
+  const assessments=items.map(item=>assessDistributionCopy({text:item.body,channel:item.channel,product}));
+  const drafts=distributionStore.addContent(items.map((item,index)=>({missionId:mission.id,channel:item.channel,language:mission.input.language,title:item.title,body:item.body,callToAction:item.callToAction,status:"draft" as const,scheduledAt:new Date(Date.now()+item.scheduledOffsetHours*3600000).toISOString(),format:item.format,pillar:item.pillar,contentGroupId:groupId,requiresMedia:item.requiresMedia,qualityScore:assessments[index].score,qualityIssues:assessments[index].issues})));
   const actions:PlannedAction[]=items.map((item,index)=>{
-    const draft=drafts[index];let mode:PlannedAction["mode"]="APPROVE";let rationale="Public brand action requires approval before scheduled execution";
+    const draft=drafts[index],quality=assessments[index];let mode:PlannedAction["mode"]="APPROVE";let rationale="Public brand action requires approval before scheduled execution";
+    if(!quality.pass){mode="BLOCKED";rationale=`Quality gate failed (${quality.score}/100): ${quality.issues.join("; ")}`;}
     if(mission.input.autonomy==="draft"){mode="BLOCKED";rationale="Mission is draft-only";}
-    if(item.channel==="instagram"&&item.requiresMedia){mode="BLOCKED";rationale="Instagram creative asset required before publishing";}
-    const payload=item.channel==="x"?(item.format==="thread"?{contentId:draft.id,threadPosts:splitThread(item.body)}:{contentId:draft.id,text:item.body}):item.channel==="linkedin"?{contentId:draft.id,commentary:item.body}:{contentId:draft.id,caption:item.body,mediaUrl:""};
+    if(item.channel==="instagram"&&item.requiresMedia){mode="BLOCKED";rationale=`${quality.pass?"Quality passed. ":""}Instagram creative asset required before publishing`;}
+    const basePayload={contentId:draft.id,qualityScore:quality.score,qualityIssues:quality.issues};
+    const payload=item.channel==="x"?(item.format==="thread"?{...basePayload,threadPosts:splitThread(item.body)}:{...basePayload,text:item.body}):item.channel==="linkedin"?{...basePayload,commentary:item.body}:{...basePayload,caption:item.body,mediaUrl:""};
     return{id:`smm-${groupId}-${index}`,channel:item.channel,kind:"publish_post",objective:`Publish ${item.title}`,rationale,mode,scheduledOffsetHours:item.scheduledOffsetHours,payload};
   });
-  const queued=distributionStore.enqueueActions(mission.id,actions);return{groupId,drafts,queued,learningApplied:Boolean(distributionStore.listLearnings().find(report=>report.missionId===mission.id&&report.evidenceEventIds.length>0))};
+  const queued=distributionStore.enqueueActions(mission.id,actions);return{groupId,drafts,queued,quality:{passed:assessments.filter(x=>x.pass).length,blocked:assessments.filter(x=>!x.pass).length},learningApplied:Boolean(distributionStore.listLearnings().find(report=>report.missionId===mission.id&&report.evidenceEventIds.length>0))};
 }
