@@ -15,6 +15,7 @@ export function evaluateExecution(action: ExecuteRequest): { allowed:boolean; re
   if (action.mode === "BLOCKED") return { allowed:false, reason:"Action is blocked by policy" };
   if (action.mode === "APPROVE") return { allowed:false, reason:"Human approval required" };
   if (action.policyContext?.optedOut) return { allowed:false, reason:"Recipient opted out" };
+  if (action.channel === "calendar" && action.kind === "book_meeting" && action.payload.availabilityVerified !== true) return { allowed:false, reason:"Calendar availability must be verified before booking" };
   if (action.channel === "voice") {
     if (action.policyContext?.doNotCall) return { allowed:false, reason:"Do-not-call flag" };
     if (!action.policyContext?.jurisdictionVerified) return { allowed:false, reason:"Calling jurisdiction not verified" };
