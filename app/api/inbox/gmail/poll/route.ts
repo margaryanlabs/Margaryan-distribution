@@ -1,2 +1,20 @@
-import {NextResponse} from "next/server"; import OpenAI from "openai"; import {listUnreadGmail} from "@/lib/integrations/gmail";
-export async function POST(){try{const messages=await listUnreadGmail(20);if(!process.env.OPENAI_API_KEY)return NextResponse.json({ok:true,messages});const openai=new OpenAI({apiKey:process.env.OPENAI_API_KEY});const enriched=[];for(const message of messages.slice(0,10)){const r=await openai.responses.create({model:"gpt-5.6-luna",input:`Classify this B2B sales reply. Return JSON only: {intent: positive|negative|question|ooo|unsubscribe|other, summary:string, suggestedNextAction:string}.\nFROM: ${message.from}\nSUBJECT: ${message.subject}\nBODY:\n${message.text}`});let classification:unknown={intent:"other",summary:r.output_text,suggestedNextAction:"review"};try{classification=JSON.parse(r.output_text.replace(/^```json\s*/i,"").replace(/```$/i,"").trim());}catch{}enriched.push({...message,classification});}return NextResponse.json({ok:true,messages:enriched});}catch(error){return NextResponse.json({ok:false,error:error instanceof Error?error.message:"Gmail poll failed"},{status:500});}}
+import { NextResponse } from "next/server";
+import { ingestInboundReply, extractEmailAddress } from "@/lib/agent/reply-orchestrator";
+import { listUnreadGmail, markGmailRead } from "@/lib/integrations/gmail";
+import { distributionStore } from "@/lib/store";
+
+export async function POST(){
+  try{
+    const messages=await listUnreadGmail(25);const processed=[];const errors=[];let skippedUnknown=0,duplicates=0;
+    for(const message of messages){
+      const sender=extractEmailAddress(message.from);const lead=sender?distributionStore.findLeadByEmail(sender):undefined;
+      if(!lead){skippedUnknown++;continue;}
+      if(distributionStore.hasReplyExternalId(message.id)){duplicates++;try{await markGmailRead(message.id);}catch{}continue;}
+      try{
+        const result=await ingestInboundReply({externalId:message.id,threadId:message.threadId,messageId:message.messageId,from:message.from,subject:message.subject,text:message.text,receivedAt:message.receivedAt,lead});
+        processed.push(result);await markGmailRead(message.id);
+      }catch(error){errors.push({id:message.id,error:error instanceof Error?error.message:"Reply processing failed"});}
+    }
+    return NextResponse.json({ok:true,scanned:messages.length,processed:processed.length,skippedUnknown,duplicates,errors,results:processed});
+  }catch(error){return NextResponse.json({ok:false,error:error instanceof Error?error.message:"Gmail poll failed"},{status:500});}
+}
