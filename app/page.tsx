@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
-import type { ContentDraft, DashboardSnapshot, DistributionActionRecord, Language, Lead, MissionRecord } from "@/lib/types";
+import type { ContentDraft, DashboardSnapshot, DistributionActionRecord, Language, Lead, MissionRecord, ProductRecord } from "@/lib/types";
 
 type Runtime = { storage: string; persistence: string; execution: string };
 type StateResponse = DashboardSnapshot & { runtime: Runtime };
@@ -27,11 +27,15 @@ export default function Home() {
   const [market, setMarket] = useState("United States");
   const [language, setLanguage] = useState<Language>("en");
   const [autonomy, setAutonomy] = useState<"auto" | "approve" | "draft">("approve");
+  const [selectedProductId, setSelectedProductId] = useState("");
+  const [productName, setProductName] = useState("Hay Engine");
+  const [productSource, setProductSource] = useState("");
+  const [productNotes, setProductNotes] = useState("AI receptionist / dispatcher for businesses. English and Russian distribution first.");
   const [state, setState] = useState<StateResponse | null>(null);
   const [connections, setConnections] = useState<ConnectionsResponse | null>(null);
   const [selectedMission, setSelectedMission] = useState<MissionRecord | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [notice, setNotice] = useState("No database attached. V0.2 is running in safe in-memory mode.");
+  const [notice, setNotice] = useState("No database attached. V0.4 is running in safe in-memory mode.");
 
   async function refresh() {
     const [stateRes, connectionRes] = await Promise.all([
@@ -43,6 +47,7 @@ export default function Home() {
     setState(nextState);
     setConnections(nextConnections);
     if (!selectedMission && nextState.missions[0]) setSelectedMission(nextState.missions[0]);
+    if (!selectedProductId && nextState.products[0]) setSelectedProductId(nextState.products[0].id);
   }
 
   useEffect(() => { void refresh(); }, []);
@@ -65,6 +70,27 @@ export default function Home() {
     return state.content.filter((draft) => !draft.missionId || draft.missionId === selectedMission.id);
   }, [state, selectedMission]);
 
+  async function createProductBrain() {
+    setBusy("product");
+    setNotice("Product brain is extracting positioning, ICP, pains, proof limits and objections…");
+    try {
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: productName, sourceUrl: productSource || undefined, notes: productNotes, language })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Product brain failed");
+      setSelectedProductId((data.product as ProductRecord).id);
+      setNotice(`Product brain ready: ${(data.product as ProductRecord).name}.`);
+      await refresh();
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Product brain failed");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function createMission() {
     setBusy("mission");
     setNotice("Agent is turning the command into a governed distribution plan…");
@@ -72,7 +98,7 @@ export default function Home() {
       const res = await fetch("/api/missions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ goal, market, language, autonomy })
+        body: JSON.stringify({ goal, market, language, autonomy, productId: selectedProductId || undefined })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Mission creation failed");
@@ -156,7 +182,8 @@ export default function Home() {
     }
   }
 
-  const stats = state?.stats ?? { activeMissions: 0, queuedActions: 0, approvalsNeeded: 0, completedActions: 0, researchedLeads: 0 };
+  const stats = state?.stats ?? { activeMissions: 0, queuedActions: 0, approvalsNeeded: 0, completedActions: 0, researchedLeads: 0, products: 0 };
+  const selectedProduct = state?.products.find((product) => product.id === selectedProductId);
 
   return (
     <main className="appShell">
@@ -164,6 +191,7 @@ export default function Home() {
         <div className="brandMark"><span>M</span><div><b>MARGARYAN</b><small>DISTRIBUTION</small></div></div>
         <nav>
           <a className="active" href="#command">Command</a>
+          <a href="#products">Product Brain <em>{stats.products}</em></a>
           <a href="#missions">Missions</a>
           <a href="#leads">Leads <em>{stats.researchedLeads}</em></a>
           <a href="#approvals">Approvals <em>{stats.approvalsNeeded}</em></a>
@@ -185,10 +213,30 @@ export default function Home() {
 
         <div className="notice"><span/> {notice}</div>
 
+        <section id="products" className="panel productBrainPanel">
+          <div className="panelHead"><div><span>PRODUCT BRAIN</span><h3>Teach the agent what it is distributing</h3></div><span className="muted">No database · reusable in memory</span></div>
+          <div className="productBrainGrid">
+            <div className="productForm">
+              <label><span>PRODUCT NAME</span><input value={productName} onChange={(event: ChangeEvent<HTMLInputElement>) => setProductName(event.target.value)} /></label>
+              <label><span>PUBLIC SOURCE / WEBSITE</span><input value={productSource} onChange={(event: ChangeEvent<HTMLInputElement>) => setProductSource(event.target.value)} placeholder="https://…" /></label>
+              <label className="wide"><span>WHAT WE KNOW</span><textarea value={productNotes} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setProductNotes(event.target.value)} /></label>
+              <button onClick={createProductBrain} disabled={busy === "product"}>{busy === "product" ? "Building…" : "Build product brain →"}</button>
+            </div>
+            <div className="productProfile">
+              {selectedProduct ? <>
+                <div className="productTitle"><span>ACTIVE PRODUCT</span><strong>{selectedProduct.name}</strong></div>
+                <p>{selectedProduct.oneLiner}</p>
+                <dl><div><dt>ICP</dt><dd>{selectedProduct.targetCustomer || "Not verified yet"}</dd></div><div><dt>PAINS</dt><dd>{selectedProduct.pains.slice(0, 3).join(" · ") || "Not verified yet"}</dd></div><div><dt>PROOF</dt><dd>{selectedProduct.proof.slice(0, 3).join(" · ") || "No verified proof stored"}</dd></div><div><dt>OBJECTIONS</dt><dd>{selectedProduct.objections.slice(0, 3).join(" · ") || "Not mapped yet"}</dd></div></dl>
+              </> : <div className="empty">Build a product brain first. Missions can then use the same verified product context for research, content and outreach.</div>}
+            </div>
+          </div>
+        </section>
+
         <section id="command" className="commandCard">
           <div className="commandIntro"><span>MISSION INPUT</span><h2>Give the agent a job.</h2><p>It plans the channel mix, creates actions, requests approval where needed, executes through official providers, then summarizes what happened.</p></div>
           <textarea value={goal} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setGoal(event.target.value)} />
           <div className="commandControls">
+            <label><span>PRODUCT</span><select value={selectedProductId} onChange={(event: ChangeEvent<HTMLSelectElement>) => setSelectedProductId(event.target.value)}><option value="">No product brain</option>{(state?.products || []).map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}</select></label>
             <label><span>MARKET</span><input value={market} onChange={(event: ChangeEvent<HTMLInputElement>) => setMarket(event.target.value)} /></label>
             <label><span>LANGUAGE</span><select value={language} onChange={(event: ChangeEvent<HTMLSelectElement>) => setLanguage(event.target.value as Language)}><option value="en">English</option><option value="ru">Russian</option></select></label>
             <label><span>AUTONOMY</span><select value={autonomy} onChange={(event: ChangeEvent<HTMLSelectElement>) => setAutonomy(event.target.value as "auto" | "approve" | "draft")}><option value="approve">Approve sensitive</option><option value="auto">Auto where allowed</option><option value="draft">Draft only</option></select></label>
@@ -217,7 +265,6 @@ export default function Home() {
               ))}
             </div>
           </div>
-
           <div className="panel planPanel">
             <div className="panelHead"><div><span>AGENT THESIS</span><h3>{selectedMission?.plan.missionName || "No active mission"}</h3></div><span className="muted">{selectedMission ? shortDate(selectedMission.createdAt) : "—"}</span></div>
             {selectedMission ? <>
@@ -282,7 +329,7 @@ export default function Home() {
           <div><span>STORAGE</span><b>MEMORY / NO DATABASE</b></div>
           <div><span>PERSISTENCE</span><b>PROCESS LIFETIME</b></div>
           <div><span>EXECUTION</span><b>{state?.runtime.execution?.toUpperCase() || "DRY-RUN"}</b></div>
-          <div><span>NEXT BACKEND</span><b>SUPABASE ADAPTER LATER</b></div>
+          <div><span>BACKEND</span><b>PERSISTENT ADAPTER LATER</b></div>
         </section>
       </section>
     </main>
