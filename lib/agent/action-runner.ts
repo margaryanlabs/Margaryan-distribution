@@ -10,7 +10,7 @@ export async function runDueAutoActions(limit=10){
   for(const action of due){
     const claimed=distributionStore.updateAction(action.recordId,{status:"running"});if(!claimed)continue;
     const leadId=typeof action.payload.leadId==="string"?action.payload.leadId:undefined;const lead=leadId?distributionStore.getLead(leadId):undefined;
-    const payload={...action.payload,missionId:action.missionId,actionId:action.recordId,leadLanguage:lead?.language};
+    const payload:Record<string,unknown>={...action.payload,missionId:action.missionId,actionId:action.recordId,leadLanguage:lead?.language};
     const request:ExecuteRequest={channel:action.channel,kind:action.kind,mode:"AUTO",payload,policyContext:{optedOut:Boolean(lead?.optedOut||payload.optedOut===true),doNotCall:Boolean(lead?.doNotCall||payload.doNotCall===true),jurisdictionVerified:payload.jurisdictionVerified===true,withinAllowedHours:payload.withinAllowedHours===true}};
     const gate=evaluateExecution(request);
     if(!gate.allowed){distributionStore.updateAction(action.recordId,{status:"blocked",error:gate.reason});results.push({id:action.recordId,status:"blocked",reason:gate.reason});continue;}
