@@ -95,6 +95,7 @@ export interface ContentDraft {
 
 export interface Lead {
   id: string;
+  missionId?: string;
   company: string;
   contactName?: string;
   role?: string;
@@ -105,6 +106,10 @@ export interface Lead {
   language: Language;
   stage: LeadStage;
   research?: string;
+  website?: string;
+  fitReason?: string;
+  score?: number;
+  sourceUrls?: string[];
 }
 
 export interface CallSummary {
@@ -125,10 +130,12 @@ export interface DashboardSnapshot {
   missions: MissionRecord[];
   actions: DistributionActionRecord[];
   content: ContentDraft[];
+  leads: Lead[];
   stats: {
     activeMissions: number;
     queuedActions: number;
     approvalsNeeded: number;
     completedActions: number;
+    researchedLeads: number;
   };
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
-import type { ContentDraft, DashboardSnapshot, DistributionActionRecord, Language, MissionRecord } from "@/lib/types";
+import type { ContentDraft, DashboardSnapshot, DistributionActionRecord, Language, Lead, MissionRecord } from "@/lib/types";
 
 type Runtime = { storage: string; persistence: string; execution: string };
 type StateResponse = DashboardSnapshot & { runtime: Runtime };
@@ -53,6 +53,12 @@ export default function Home() {
     return state.actions.filter((action) => action.missionId === selectedMission.id);
   }, [state, selectedMission]);
 
+  const leads = useMemo(() => {
+    if (!state) return [];
+    if (!selectedMission) return state.leads;
+    return state.leads.filter((lead) => !lead.missionId || lead.missionId === selectedMission.id);
+  }, [state, selectedMission]);
+
   const content = useMemo(() => {
     if (!state) return [];
     if (!selectedMission) return state.content;
@@ -95,6 +101,27 @@ export default function Home() {
     }
   }
 
+  async function researchLeads() {
+    if (!selectedMission) { setNotice("Launch or select a mission first."); return; }
+    setBusy("research");
+    setNotice("Research agent is searching the public web for high-fit businesses…");
+    try {
+      const res = await fetch("/api/research/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ missionId: selectedMission.id, limit: 8 })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Lead research failed");
+      setNotice(`Research completed: ${data.researched} reviewed, ${data.added} new leads added.`);
+      await refresh();
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Lead research failed");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function generateContent() {
     setBusy("content");
     try {
@@ -129,7 +156,7 @@ export default function Home() {
     }
   }
 
-  const stats = state?.stats ?? { activeMissions: 0, queuedActions: 0, approvalsNeeded: 0, completedActions: 0 };
+  const stats = state?.stats ?? { activeMissions: 0, queuedActions: 0, approvalsNeeded: 0, completedActions: 0, researchedLeads: 0 };
 
   return (
     <main className="appShell">
@@ -138,6 +165,7 @@ export default function Home() {
         <nav>
           <a className="active" href="#command">Command</a>
           <a href="#missions">Missions</a>
+          <a href="#leads">Leads <em>{stats.researchedLeads}</em></a>
           <a href="#approvals">Approvals <em>{stats.approvalsNeeded}</em></a>
           <a href="#content">Content</a>
           <a href="#connections">Connections</a>
@@ -170,6 +198,7 @@ export default function Home() {
 
         <section className="metricRow">
           <article><span>ACTIVE MISSIONS</span><strong>{stats.activeMissions}</strong><small>agent jobs in memory</small></article>
+          <article><span>RESEARCHED LEADS</span><strong>{stats.researchedLeads}</strong><small>public-web business research</small></article>
           <article><span>ACTION QUEUE</span><strong>{stats.queuedActions}</strong><small>scheduled + approved</small></article>
           <article><span>NEEDS APPROVAL</span><strong>{stats.approvalsNeeded}</strong><small>reputation-sensitive</small></article>
           <article><span>EXECUTED</span><strong>{stats.completedActions}</strong><small>{connections?.executionEnabled ? "provider actions" : "safe simulations"}</small></article>
@@ -196,6 +225,19 @@ export default function Home() {
               <div className="tagBlock"><span>AUDIENCE</span><div>{selectedMission.plan.audience.map((item) => <i key={item}>{item}</i>)}</div></div>
               <div className="tagBlock"><span>CONTENT PILLARS</span><div>{selectedMission.plan.contentPillars.map((item) => <i key={item}>{item}</i>)}</div></div>
             </> : <div className="empty">Mission strategy will appear here.</div>}
+          </div>
+        </section>
+
+        <section id="leads" className="panel leadsPanel">
+          <div className="panelHead"><div><span>RESEARCH AGENT</span><h3>Qualified account discovery</h3></div><button className="ghost" onClick={researchLeads} disabled={busy === "research" || !selectedMission}>{busy === "research" ? "Researching…" : "Research 8 leads"}</button></div>
+          <div className="leadGrid">
+            {leads.length === 0 && <div className="empty wide">No researched businesses yet. Research uses current public web information and stores only business-level lead data.</div>}
+            {leads.slice(0, 12).map((lead: Lead) => <article key={lead.id}>
+              <div className="leadTop"><span className="score">{Math.round(lead.score || 0)}</span><span className="pill wait">{lead.stage}</span></div>
+              <h4>{lead.company}</h4>
+              <p>{lead.fitReason || lead.research || "Research pending"}</p>
+              <div className="leadMeta"><span>{lead.country || "—"}</span>{lead.website && <a href={lead.website} target="_blank" rel="noreferrer">Website ↗</a>}</div>
+            </article>)}
           </div>
         </section>
 

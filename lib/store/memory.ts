@@ -1,9 +1,10 @@
-import type { ContentDraft, DashboardSnapshot, DistributionActionRecord, DistributionPlan, MissionInput, MissionRecord } from "@/lib/types";
+import type { ContentDraft, DashboardSnapshot, DistributionActionRecord, DistributionPlan, Lead, MissionInput, MissionRecord } from "@/lib/types";
 
 type MemoryState = {
   missions: MissionRecord[];
   actions: DistributionActionRecord[];
   content: ContentDraft[];
+  leads: Lead[];
 };
 
 declare global {
@@ -12,7 +13,7 @@ declare global {
 
 function state(): MemoryState {
   if (!globalThis.__margaryanDistributionMemory) {
-    globalThis.__margaryanDistributionMemory = { missions: [], actions: [], content: [] };
+    globalThis.__margaryanDistributionMemory = { missions: [], actions: [], content: [], leads: [] };
   }
   return globalThis.__margaryanDistributionMemory;
 }
@@ -81,19 +82,40 @@ export const memoryStore = {
     return [...state().content];
   },
 
+  addLeads(leads: Omit<Lead, "id">[]) {
+    const existing = new Set(state().leads.map((lead) => `${lead.company.toLowerCase()}|${(lead.website || "").toLowerCase()}`));
+    const created: Lead[] = [];
+    for (const lead of leads) {
+      const key = `${lead.company.toLowerCase()}|${(lead.website || "").toLowerCase()}`;
+      if (existing.has(key)) continue;
+      const item: Lead = { ...lead, id: crypto.randomUUID() };
+      state().leads.unshift(item);
+      existing.add(key);
+      created.push(item);
+    }
+    return created;
+  },
+
+  listLeads() {
+    return [...state().leads].sort((a, b) => (b.score || 0) - (a.score || 0));
+  },
+
   snapshot(): DashboardSnapshot {
     const missions = this.listMissions();
     const actions = this.listActions();
     const content = this.listContent();
+    const leads = this.listLeads();
     return {
       missions,
       actions,
       content,
+      leads,
       stats: {
         activeMissions: missions.filter((mission) => mission.status === "active").length,
         queuedActions: actions.filter((action) => action.status === "queued" || action.status === "approved").length,
         approvalsNeeded: actions.filter((action) => action.mode === "APPROVE" && action.status === "queued").length,
-        completedActions: actions.filter((action) => action.status === "succeeded").length
+        completedActions: actions.filter((action) => action.status === "succeeded").length,
+        researchedLeads: leads.length
       }
     };
   }
