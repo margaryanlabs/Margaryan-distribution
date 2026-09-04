@@ -1,9 +1,1 @@
-{
-  "name": "margaryan-distribution",
-  "version": "0.4.0",
-  "private": true,
-  "engines": {"node": ">=22"},
-  "scripts": {"dev": "next dev", "build": "next build", "start": "next start", "typecheck": "tsc --noEmit"},
-  "dependencies": {"next": "16.3.3", "openai": "7.5.0", "react": "19.2.8", "react-dom": "19.2.8"},
-  "devDependencies": {"@types/node": "24.7.2", "@types/react": "19.2.2", "@types/react-dom": "19.2.2", "typescript": "7.0.2"}
-}
+{"name":"margaryan-distribution","version":"0.5.0","private":true,"engines":{"node":">=22"},"scripts":{"dev":"next dev","build":"next build","start":"next start","typecheck":"tsc --noEmit"},"dependencies":{"next":"16.3.3","openai":"7.5.0","react":"19.2.8","react-dom":"19.2.8"},"devDependencies":{"@types/node":"24.7.2","@types/react":"19.2.2","@types/react-dom":"19.2.2","typescript":"7.0.2"}}
