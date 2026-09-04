@@ -8,7 +8,7 @@ export async function POST(_:Request,context:{params:Promise<{id:string}>}){
   const{id}=await context.params;const action=distributionStore.getAction(id);if(!action)return NextResponse.json({error:"Action not found"},{status:404});
   if(!["approved","queued","failed"].includes(action.status))return NextResponse.json({error:`Cannot execute action in ${action.status} state`},{status:409});
   const leadId=typeof action.payload.leadId==="string"?action.payload.leadId:undefined;const lead=leadId?distributionStore.getLead(leadId):undefined;
-  const payload={...action.payload,missionId:action.missionId,actionId:action.recordId,leadLanguage:lead?.language};
+  const payload:Record<string,unknown>={...action.payload,missionId:action.missionId,actionId:action.recordId,leadLanguage:lead?.language};
   const request:ExecuteRequest={channel:action.channel,kind:action.kind,mode:action.mode,payload,policyContext:{optedOut:Boolean(lead?.optedOut||payload.optedOut===true),doNotCall:Boolean(lead?.doNotCall||payload.doNotCall===true),jurisdictionVerified:payload.jurisdictionVerified===true,withinAllowedHours:payload.withinAllowedHours===true}};
   const gate=evaluateExecution(request);if(!gate.allowed){distributionStore.updateAction(id,{status:action.mode==="APPROVE"?"queued":"blocked",error:gate.reason});return NextResponse.json({error:gate.reason},{status:409});}
   distributionStore.updateAction(id,{status:"running",error:undefined});
