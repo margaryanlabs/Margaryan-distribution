@@ -1,6 +1,6 @@
 import type { ExecuteRequest } from "@/lib/types";
 import { sendGmailMessage } from "./gmail";
-import { publishXPost } from "./x";
+import { publishXPost, publishXThread } from "./x";
 import { publishLinkedInPost } from "./linkedin";
 import { publishInstagramImage } from "./instagram";
 import { startOutboundCall } from "./twilio";
@@ -35,7 +35,11 @@ export async function executeProviderAction(action: ExecuteRequest) {
       references: action.kind === "reply" ? String(action.payload.references || action.payload.replyToMessageId || "") : undefined
     });
   }
-  if (action.channel === "x" && action.kind === "publish_post") return publishXPost({ accessToken: required("X_USER_ACCESS_TOKEN"), text: String(action.payload.text || "") });
+  if (action.channel === "x" && action.kind === "publish_post") {
+    const threadPosts = Array.isArray(action.payload.threadPosts) ? action.payload.threadPosts.filter((item): item is string => typeof item === "string" && item.trim().length > 0) : [];
+    if (threadPosts.length > 1) return publishXThread({ accessToken: required("X_USER_ACCESS_TOKEN"), posts: threadPosts });
+    return publishXPost({ accessToken: required("X_USER_ACCESS_TOKEN"), text: String(action.payload.text || threadPosts[0] || "") });
+  }
   if (action.channel === "linkedin" && action.kind === "publish_post") return publishLinkedInPost({ accessToken: required("LINKEDIN_ACCESS_TOKEN"), authorUrn: required("LINKEDIN_AUTHOR_URN"), commentary: String(action.payload.commentary || action.payload.text || ""), version: process.env.LINKEDIN_VERSION || "202609" });
   if (action.channel === "instagram" && action.kind === "publish_post") return publishInstagramImage({ accessToken: required("META_ACCESS_TOKEN"), userId: required("INSTAGRAM_USER_ID"), mediaUrl: String(action.payload.mediaUrl || ""), caption: String(action.payload.caption || ""), graphVersion: process.env.META_GRAPH_VERSION || "v23.0" });
   if (action.channel === "voice" && action.kind === "call") {
