@@ -9,6 +9,7 @@ export type ReplyIntent = "positive" | "question" | "negative" | "ooo" | "unsubs
 export type RecommendedNextAction = "reply" | "meeting" | "call" | "wait" | "stop" | "review";
 export type ContentFormat = "post" | "thread" | "carousel" | "reel_script" | "story";
 export type MetricSource = "manual" | "provider" | "system";
+export type VoiceCallStatus = "initiated" | "ringing" | "answered" | "completed" | "summarized" | "failed";
 
 export interface ProductBrief { name:string; oneLiner:string; targetCustomer:string; pains:string[]; proof:string[]; pricingNotes?:string; forbiddenClaims?:string[]; }
 export interface ProductRecord extends ProductBrief { id:string; sourceUrl?:string; notes?:string; positioning:string[]; objections:string[]; useCases:string[]; language:Language; createdAt:string; updatedAt:string; }
@@ -25,7 +26,7 @@ export interface InboundReplyDecision { intent:ReplyIntent; summary:string; conf
 export interface InboundReply { id:string; externalId:string; threadId?:string; messageId?:string; missionId?:string; leadId:string; channel:"email"; from:string; subject:string; text:string; receivedAt:string; decision:InboundReplyDecision; status:"reviewed"|"actioned"|"stopped"; createdAt:string; }
 export interface CallSummary { language:Language; outcome:"no_answer"|"not_interested"|"follow_up"|"qualified"|"meeting"|"do_not_contact"; summary:string; needs:string[]; objections:string[]; commitments:string[]; nextAction:string; nextActionAt?:string; decisionMaker?:string; budgetSignal?:string; urgency?:"low"|"medium"|"high"; }
 export interface VoiceTranscriptTurn { speaker:"agent"|"prospect"; text:string; at?:string; }
-export interface VoiceCallRecord { id:string; callSid:string; streamSid?:string; missionId?:string; leadId?:string; actionId?:string; objective?:string; status:"completed"|"summarized"|"failed"; transcript:VoiceTranscriptTurn[]; summary?:CallSummary; startedAt?:string; completedAt:string; createdAt:string; error?:string; }
+export interface VoiceCallRecord { id:string; callSid:string; streamSid?:string; missionId?:string; leadId?:string; actionId?:string; objective?:string; status:VoiceCallStatus; providerStatus?:string; transcript:VoiceTranscriptTurn[]; summary?:CallSummary; startedAt?:string; answeredAt?:string; completedAt?:string; durationSeconds?:number; createdAt:string; updatedAt:string; error?:string; }
 export interface PerformanceMetrics { impressions?:number; engagements?:number; clicks?:number; replies?:number; positiveReplies?:number; meetings?:number; conversions?:number; spend?:number; }
 export interface PerformanceEvent { id:string; missionId:string; contentId?:string; actionId?:string; channel:Channel; source:MetricSource; metrics:PerformanceMetrics; occurredAt:string; createdAt:string; note?:string; }
 export interface LearningRanking { key:string; impressions:number; engagements:number; clicks:number; replies:number; positiveReplies:number; meetings:number; conversions:number; score:number; }
