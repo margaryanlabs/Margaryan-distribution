@@ -12,8 +12,9 @@ export type MetricSource = "manual" | "provider" | "system";
 export type VoiceCallStatus = "initiated" | "ringing" | "answered" | "completed" | "summarized" | "failed";
 export type MeetingStatus = "proposed" | "availability_checked" | "approved" | "booked" | "failed" | "cancelled";
 
+export interface BrandVoice { tone:string[]; writingRules:string[]; avoid:string[]; founderVoice?:string; visualDirection:string[]; channelRules:{x:string[];linkedin:string[];instagram:string[];email:string[];voice:string[]}; }
 export interface ProductBrief { name:string; oneLiner:string; targetCustomer:string; pains:string[]; proof:string[]; pricingNotes?:string; forbiddenClaims?:string[]; }
-export interface ProductRecord extends ProductBrief { id:string; sourceUrl?:string; notes?:string; positioning:string[]; objections:string[]; useCases:string[]; language:Language; createdAt:string; updatedAt:string; }
+export interface ProductRecord extends ProductBrief { id:string; sourceUrl?:string; notes?:string; positioning:string[]; objections:string[]; useCases:string[]; brandVoice?:BrandVoice; language:Language; createdAt:string; updatedAt:string; }
 export interface MissionInput { goal:string; market:string; language:Language; autonomy:"auto"|"approve"|"draft"; productId?:string; }
 export interface PlannedAction { id:string; channel:Exclude<Channel,"system">; kind:ActionKind; objective:string; rationale:string; mode:ExecutionMode; scheduledOffsetHours:number; payload:Record<string,unknown>; }
 export interface DistributionPlan { missionName:string; thesis:string; audience:string[]; contentPillars:string[]; actions:PlannedAction[]; successMetrics:string[]; stopConditions:string[]; }
