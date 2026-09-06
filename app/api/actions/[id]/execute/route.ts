@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { distributionStore } from "@/lib/store";
 import { evaluateExecution } from "@/lib/compliance";
-import { executeProviderAction } from "@/lib/integrations";
+import { executeDistributionAction } from "@/lib/agent/executor";
 import { checkDailyExecutionLimit } from "@/lib/limits";
 import type { ExecuteRequest } from "@/lib/types";
 
@@ -22,7 +22,7 @@ export async function POST(_:Request,context:{params:Promise<{id:string}>}){
   const gate=evaluateExecution(request);if(!gate.allowed){distributionStore.updateAction(id,{status:action.mode==="APPROVE"?"queued":"blocked",error:gate.reason});return NextResponse.json({error:gate.reason},{status:409});}
   distributionStore.updateAction(id,{status:"running",error:undefined});
   try{
-    const result=await executeProviderAction(request);const simulated=typeof result==="object"&&result!==null&&"simulated" in result&&Boolean((result as{simulated?:boolean}).simulated);const updated=distributionStore.updateAction(id,{status:"succeeded",result,executedAt:new Date().toISOString(),error:undefined});
+    const result=await executeDistributionAction(request);const simulated=typeof result==="object"&&result!==null&&"simulated" in result&&Boolean((result as{simulated?:boolean}).simulated);const updated=distributionStore.updateAction(id,{status:"succeeded",result,executedAt:new Date().toISOString(),error:undefined});
     if(!simulated&&action.kind==="publish_post"&&typeof payload.contentId==="string")distributionStore.updateContent(payload.contentId,{status:"published"});
     if(!simulated&&action.channel==="email"&&action.kind==="send_email"&&leadId&&lead&&!["replied","qualified","meeting","won","lost","do_not_contact"].includes(lead.stage))distributionStore.updateLead(leadId,{stage:"contacted"});
     if(!simulated&&action.channel==="calendar"&&action.kind==="book_meeting")syncMeetingBooking(payload,result);
