@@ -21,6 +21,22 @@ jobs:
         run: npm run typecheck
       - name: Production build
         run: npm run build
+      - name: End-to-end task smoke test
+        env:
+          EXECUTION_ENABLED: "false"
+        run: |
+          npm run start -- -H 127.0.0.1 -p 3000 > /tmp/margaryan-distribution.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/api/health > /dev/null; then
+              npm run smoke
+              exit $?
+            fi
+            sleep 1
+          done
+          cat /tmp/margaryan-distribution.log
+          exit 1
 
   voice-gateway:
     runs-on: ubuntu-latest
