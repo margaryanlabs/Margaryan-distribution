@@ -1,5 +1,6 @@
 import { evaluateExecution } from "@/lib/compliance";
 import { executeDistributionAction } from "@/lib/agent/executor";
+import { evaluateActionDependencies, evaluateColdSequenceLeadState, nextDependencyCheckAt } from "@/lib/agent/action-dependencies";
 import { checkDailyExecutionLimit } from "@/lib/limits";
 import { classifyExecutionError,nextRetry } from "@/lib/retry";
 import { distributionStore } from "@/lib/store";
@@ -17,9 +18,17 @@ export async function runDueAutoActions(limit=10){
   const due=distributionStore.listActions().filter(action=>(action.status==="queued"||action.status==="approved")&&action.mode==="AUTO"&&action.scheduledAt<=now).slice(0,Math.max(1,Math.min(50,limit)));
   const results:Array<Record<string,unknown>>=[];
   for(const action of due){
+    const leadId=typeof action.payload.leadId==="string"?action.payload.leadId:undefined;const lead=leadId?distributionStore.getLead(leadId):undefined;
+    const dependency=evaluateActionDependencies(action);
+    if(!dependency.allowed){
+      if(dependency.waiting){const scheduledAt=nextDependencyCheckAt();distributionStore.updateAction(action.recordId,{status:"queued",scheduledAt,error:dependency.reason});results.push({id:action.recordId,status:"dependency_wait",scheduledAt,reason:dependency.reason});}
+      else{distributionStore.updateAction(action.recordId,{status:"rejected",error:dependency.reason,rejectedAt:new Date().toISOString()});results.push({id:action.recordId,status:"rejected",reason:dependency.reason});}
+      continue;
+    }
+    const leadState=evaluateColdSequenceLeadState(action,lead);
+    if(!leadState.allowed){distributionStore.updateAction(action.recordId,{status:"rejected",error:leadState.reason,rejectedAt:new Date().toISOString()});results.push({id:action.recordId,status:"rejected",reason:leadState.reason});continue;}
     const daily=checkDailyExecutionLimit(action.channel,action.kind);if(!daily.allowed){distributionStore.updateAction(action.recordId,{status:"blocked",error:daily.reason});results.push({id:action.recordId,status:"blocked",reason:daily.reason});continue;}
     const claimed=distributionStore.updateAction(action.recordId,{status:"running"});if(!claimed)continue;
-    const leadId=typeof action.payload.leadId==="string"?action.payload.leadId:undefined;const lead=leadId?distributionStore.getLead(leadId):undefined;
     const payload:Record<string,unknown>={...action.payload,missionId:action.missionId,actionId:action.recordId,leadLanguage:lead?.language};
     const request:ExecuteRequest={channel:action.channel,kind:action.kind,mode:"AUTO",payload,policyContext:{optedOut:Boolean(lead?.optedOut||payload.optedOut===true),doNotCall:Boolean(lead?.doNotCall||payload.doNotCall===true),jurisdictionVerified:payload.jurisdictionVerified===true,withinAllowedHours:payload.withinAllowedHours===true}};
     const gate=evaluateExecution(request);
