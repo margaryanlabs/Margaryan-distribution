@@ -1,9 +1,4 @@
 import { NextResponse } from "next/server";
 import { runDueAutoActions } from "@/lib/agent/action-runner";
-
-export async function POST(req:Request){
-  const secret=process.env.WORKER_SECRET;
-  if(secret&&req.headers.get("x-worker-secret")!==secret)return NextResponse.json({ok:false},{status:401});
-  const result=await runDueAutoActions(10);
-  return NextResponse.json({ok:true,storage:"memory",...result});
-}
+import { storageRuntime, withDurableState } from "@/lib/store/checkpoint";
+export async function POST(req:Request){const secret=process.env.WORKER_SECRET;if(!secret)return NextResponse.json({ok:false,error:"WORKER_SECRET is required"},{status:503});if(req.headers.get("x-worker-secret")!==secret)return NextResponse.json({ok:false,error:"Unauthorized"},{status:401});try{const{result,hydration,persistence}=await withDurableState(()=>runDueAutoActions(10));return NextResponse.json({ok:true,runtime:storageRuntime(),hydration,persistence,...result});}catch(error){return NextResponse.json({ok:false,error:error instanceof Error?error.message:"Worker failed",runtime:storageRuntime()},{status:500});}}

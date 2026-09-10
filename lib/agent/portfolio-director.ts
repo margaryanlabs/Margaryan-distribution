@@ -1,0 +1,13 @@
+import { runDueAutoActions } from "@/lib/agent/action-runner";
+import { runAutopilot } from "@/lib/agent/director";
+import { ensurePortfolioProducts } from "@/lib/portfolio/catalog";
+import { distributionStore } from "@/lib/store";
+
+export interface PortfolioDirectorOptions{bootstrap?:boolean;maxMissions?:number;leadTarget?:number;researchPerTick?:number;outreachPerTick?:number;smmDays?:number;pollInbox?:boolean;runActions?:boolean;}
+function bounded(value:number|undefined,fallback:number,min:number,max:number){const numeric=Number.isFinite(value)?Number(value):fallback;return Math.max(min,Math.min(max,Math.round(numeric)));}
+export async function runPortfolioDirector(options:PortfolioDirectorOptions={}){
+  const startedAt=new Date().toISOString();const bootstrap=options.bootstrap===false?{created:[],products:distributionStore.listProducts(),catalog:[]}:ensurePortfolioProducts();const active=distributionStore.listMissions().filter(item=>item.status==="active");const selected=active.slice(0,bounded(options.maxMissions,Number(process.env.PORTFOLIO_MAX_MISSIONS_PER_TICK)||5,1,20));const missionReports:Array<{missionId:string;productId:string|null;report?:unknown;error?:string}>=[];let first=true;
+  for(const mission of selected){try{const report=await runAutopilot({missionId:mission.id,leadTarget:bounded(options.leadTarget,Number(process.env.PORTFOLIO_LEAD_TARGET)||25,1,100),researchPerTick:bounded(options.researchPerTick,Number(process.env.PORTFOLIO_RESEARCH_PER_TICK)||10,1,10),outreachPerTick:bounded(options.outreachPerTick,Number(process.env.PORTFOLIO_OUTREACH_PER_TICK)||5,1,20),smmDays:bounded(options.smmDays,Number(process.env.PORTFOLIO_SMM_DAYS)||7,3,14),pollInbox:first&&options.pollInbox!==false,runActions:false});missionReports.push({missionId:mission.id,productId:mission.input.productId||null,report});}catch(error){missionReports.push({missionId:mission.id,productId:mission.input.productId||null,error:error instanceof Error?error.message:"Portfolio mission failed"});}first=false;}
+  let execution:unknown={processed:0,results:[],skipped:"runActions=false"};if(options.runActions!==false){try{execution=await runDueAutoActions(40);}catch(error){execution={error:error instanceof Error?error.message:"Portfolio action runner failed"};}}
+  return{startedAt,finishedAt:new Date().toISOString(),portfolio:{catalogSize:bootstrap.catalog.length,createdProducts:bootstrap.created.map(item=>item.name),products:distributionStore.listProducts().map(item=>({id:item.id,name:item.name,sourceUrl:item.sourceUrl||null}))},missions:{active:active.length,processed:selected.length,reports:missionReports},execution,snapshot:distributionStore.snapshot().stats};
+}

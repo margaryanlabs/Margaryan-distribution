@@ -1,27 +1,18 @@
 import type { ContentDraft, DashboardSnapshot, DistributionActionRecord, DistributionPlan, InboundReply, Lead, LearningReport, MeetingRecord, MissionInput, MissionRecord, OutreachSequence, PerformanceEvent, PlannedAction, ProductRecord, VoiceCallRecord } from "@/lib/types";
 
-type MemoryState={missions:MissionRecord[];actions:DistributionActionRecord[];content:ContentDraft[];leads:Lead[];products:ProductRecord[];outreach:OutreachSequence[];replies:InboundReply[];calls:VoiceCallRecord[];meetings:MeetingRecord[];performance:PerformanceEvent[];learnings:LearningReport[]};
+export type MemoryState={missions:MissionRecord[];actions:DistributionActionRecord[];content:ContentDraft[];leads:Lead[];products:ProductRecord[];outreach:OutreachSequence[];replies:InboundReply[];calls:VoiceCallRecord[];meetings:MeetingRecord[];performance:PerformanceEvent[];learnings:LearningReport[]};
 declare global { var __margaryanDistributionMemory: MemoryState | undefined; }
-function state():MemoryState{
-  if(!globalThis.__margaryanDistributionMemory)globalThis.__margaryanDistributionMemory={missions:[],actions:[],content:[],leads:[],products:[],outreach:[],replies:[],calls:[],meetings:[],performance:[],learnings:[]};
-  const current=globalThis.__margaryanDistributionMemory;current.calls??=[];current.meetings??=[];current.performance??=[];current.learnings??=[];return current;
-}
+function emptyState():MemoryState{return{missions:[],actions:[],content:[],leads:[],products:[],outreach:[],replies:[],calls:[],meetings:[],performance:[],learnings:[]};}
+function normalizeState(input?:Partial<MemoryState>):MemoryState{const fallback=emptyState();if(!input)return fallback;return{missions:Array.isArray(input.missions)?input.missions:fallback.missions,actions:Array.isArray(input.actions)?input.actions:fallback.actions,content:Array.isArray(input.content)?input.content:fallback.content,leads:Array.isArray(input.leads)?input.leads:fallback.leads,products:Array.isArray(input.products)?input.products:fallback.products,outreach:Array.isArray(input.outreach)?input.outreach:fallback.outreach,replies:Array.isArray(input.replies)?input.replies:fallback.replies,calls:Array.isArray(input.calls)?input.calls:fallback.calls,meetings:Array.isArray(input.meetings)?input.meetings:fallback.meetings,performance:Array.isArray(input.performance)?input.performance:fallback.performance,learnings:Array.isArray(input.learnings)?input.learnings:fallback.learnings};}
+function state():MemoryState{if(!globalThis.__margaryanDistributionMemory)globalThis.__margaryanDistributionMemory=emptyState();globalThis.__margaryanDistributionMemory=normalizeState(globalThis.__margaryanDistributionMemory);return globalThis.__margaryanDistributionMemory;}
+function cloneState(value:MemoryState):MemoryState{return JSON.parse(JSON.stringify(value)) as MemoryState;}
 function now(){return new Date().toISOString();}
 function recordsFor(missionId:string,actions:PlannedAction[]):DistributionActionRecord[]{const createdAt=now();return actions.map(action=>({...action,recordId:crypto.randomUUID(),missionId,status:action.mode==="BLOCKED"?"blocked":"queued",scheduledAt:new Date(Date.now()+action.scheduledOffsetHours*3600000).toISOString(),createdAt,updatedAt:createdAt,retryCount:0}));}
 function normalizeEmail(value:string){return value.trim().toLowerCase();}
 function normalizeHost(value?:string){if(!value)return"";try{return new URL(value).hostname.toLowerCase().replace(/^www\./,"");}catch{return value.toLowerCase().replace(/^https?:\/\//,"").split("/")[0].replace(/^www\./,"");}}
 function leadScope(lead:Pick<Lead,"missionId">){return lead.missionId||"unscoped";}
 function leadIdentityKeys(lead:Pick<Lead,"missionId"|"company"|"country"|"website"|"email">){const scope=leadScope(lead);const keys:string[]=[];const host=normalizeHost(lead.website);if(host)keys.push(`${scope}|domain:${host}`);if(lead.email)keys.push(`${scope}|email:${normalizeEmail(lead.email)}`);keys.push(`${scope}|company:${lead.company.trim().toLowerCase()}|${(lead.country||"").trim().toLowerCase()}`);return keys;}
-function mergeLead(existing:Lead,incoming:Omit<Lead,"id">){
-  const sourceUrls=Array.from(new Set([...(existing.sourceUrls||[]),...(incoming.sourceUrls||[])])).slice(0,8);
-  Object.assign(existing,{
-    website:incoming.website||existing.website,country:incoming.country||existing.country,fitReason:incoming.fitReason||existing.fitReason,research:incoming.research||existing.research,
-    email:incoming.email||existing.email,phone:incoming.phone||existing.phone,contactName:incoming.contactName||existing.contactName,role:incoming.role||existing.role,
-    linkedinUrl:incoming.linkedinUrl||existing.linkedinUrl,instagramUrl:incoming.instagramUrl||existing.instagramUrl,sourceUrls,
-    score:Math.max(existing.score||0,incoming.score||0),timezone:incoming.timezone||existing.timezone
-  });
-  return existing;
-}
+function mergeLead(existing:Lead,incoming:Omit<Lead,"id">){const sourceUrls=Array.from(new Set([...(existing.sourceUrls||[]),...(incoming.sourceUrls||[])])).slice(0,8);Object.assign(existing,{website:incoming.website||existing.website,country:incoming.country||existing.country,fitReason:incoming.fitReason||existing.fitReason,research:incoming.research||existing.research,email:incoming.email||existing.email,phone:incoming.phone||existing.phone,contactName:incoming.contactName||existing.contactName,role:incoming.role||existing.role,linkedinUrl:incoming.linkedinUrl||existing.linkedinUrl,instagramUrl:incoming.instagramUrl||existing.instagramUrl,sourceUrls,score:Math.max(existing.score||0,incoming.score||0),timezone:incoming.timezone||existing.timezone});return existing;}
 export const memoryStore={
  createMission(input:MissionInput,plan:DistributionPlan){const createdAt=now();const mission:MissionRecord={id:crypto.randomUUID(),input,plan,status:"active",createdAt,updatedAt:createdAt};state().missions.unshift(mission);const actions=recordsFor(mission.id,plan.actions);state().actions.push(...actions);return{mission,actions};},
  getMission(id:string){return state().missions.find(x=>x.id===id);},listMissions(){return[...state().missions];},
@@ -42,5 +33,8 @@ export const memoryStore={
  addProduct(product:Omit<ProductRecord,"id"|"createdAt"|"updatedAt">){const createdAt=now();const item:ProductRecord={...product,id:crypto.randomUUID(),createdAt,updatedAt:createdAt};state().products.unshift(item);return item;},listProducts(){return[...state().products];},getProduct(id:string){return state().products.find(x=>x.id===id);},
  addPerformance(event:Omit<PerformanceEvent,"id"|"createdAt">){const item:PerformanceEvent={...event,id:crypto.randomUUID(),createdAt:now()};state().performance.unshift(item);return item;},listPerformance(){return[...state().performance].sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt));},
  addLearning(report:Omit<LearningReport,"id"|"generatedAt">){const item:LearningReport={...report,id:crypto.randomUUID(),generatedAt:now()};state().learnings.unshift(item);return item;},listLearnings(){return[...state().learnings].sort((a,b)=>b.generatedAt.localeCompare(a.generatedAt));},
+ exportState(){return cloneState(state());},
+ replaceState(next:MemoryState){globalThis.__margaryanDistributionMemory=normalizeState(cloneState(next));return this.snapshot();},
+ resetState(){globalThis.__margaryanDistributionMemory=emptyState();return this.snapshot();},
  snapshot():DashboardSnapshot{const missions=this.listMissions(),actions=this.listActions(),content=this.listContent(),leads=this.listLeads(),products=this.listProducts(),outreach=this.listOutreach(),replies=this.listReplies(),calls=this.listCalls(),meetings=this.listMeetings(),performance=this.listPerformance(),learnings=this.listLearnings();return{missions,actions,content,leads,products,outreach,replies,calls,meetings,performance,learnings,stats:{activeMissions:missions.filter(x=>x.status==="active").length,queuedActions:actions.filter(x=>x.status==="queued"||x.status==="approved").length,approvalsNeeded:actions.filter(x=>x.mode==="APPROVE"&&x.status==="queued").length,completedActions:actions.filter(x=>x.status==="succeeded").length,researchedLeads:leads.length,products:products.length,outreachPrepared:outreach.length,inboundReplies:replies.length,positiveReplies:replies.filter(x=>x.decision.intent==="positive").length,voiceCalls:calls.length,meetings:meetings.length,bookedMeetings:meetings.filter(x=>x.status==="booked").length,performanceEvents:performance.length,learningReports:learnings.length}};}
 };
