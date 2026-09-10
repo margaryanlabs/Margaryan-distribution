@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { distributionStore } from "@/lib/store";
 import { evaluateExecution } from "@/lib/compliance";
 import { executeDistributionAction } from "@/lib/agent/executor";
+import { evaluateActionDependencies, evaluateColdSequenceLeadState } from "@/lib/agent/action-dependencies";
 import { checkDailyExecutionLimit } from "@/lib/limits";
 import type { ExecuteRequest } from "@/lib/types";
 
@@ -15,8 +16,13 @@ function syncMeetingBooking(payload:Record<string,unknown>,result:unknown){
 export async function POST(_:Request,context:{params:Promise<{id:string}>}){
   const{id}=await context.params;const action=distributionStore.getAction(id);if(!action)return NextResponse.json({error:"Action not found"},{status:404});
   if(!["approved","queued","failed"].includes(action.status))return NextResponse.json({error:`Cannot execute action in ${action.status} state`},{status:409});
-  const daily=checkDailyExecutionLimit(action.channel,action.kind);if(!daily.allowed){distributionStore.updateAction(id,{status:"blocked",error:daily.reason});return NextResponse.json({error:daily.reason},{status:429});}
   const leadId=typeof action.payload.leadId==="string"?action.payload.leadId:undefined;const lead=leadId?distributionStore.getLead(leadId):undefined;
+  const dependency=evaluateActionDependencies(action);if(!dependency.allowed){
+    const status=dependency.waiting?409:410;if(dependency.terminal)distributionStore.updateAction(id,{status:"rejected",error:dependency.reason,rejectedAt:new Date().toISOString()});
+    return NextResponse.json({error:dependency.reason,waiting:Boolean(dependency.waiting)},{status});
+  }
+  const leadState=evaluateColdSequenceLeadState(action,lead);if(!leadState.allowed){distributionStore.updateAction(id,{status:"rejected",error:leadState.reason,rejectedAt:new Date().toISOString()});return NextResponse.json({error:leadState.reason},{status:410});}
+  const daily=checkDailyExecutionLimit(action.channel,action.kind);if(!daily.allowed){distributionStore.updateAction(id,{status:"blocked",error:daily.reason});return NextResponse.json({error:daily.reason},{status:429});}
   const payload:Record<string,unknown>={...action.payload,missionId:action.missionId,actionId:action.recordId,leadLanguage:lead?.language};
   const request:ExecuteRequest={channel:action.channel,kind:action.kind,mode:action.mode,payload,policyContext:{optedOut:Boolean(lead?.optedOut||payload.optedOut===true),doNotCall:Boolean(lead?.doNotCall||payload.doNotCall===true),jurisdictionVerified:payload.jurisdictionVerified===true,withinAllowedHours:payload.withinAllowedHours===true}};
   const gate=evaluateExecution(request);if(!gate.allowed){distributionStore.updateAction(id,{status:action.mode==="APPROVE"?"queued":"blocked",error:gate.reason});return NextResponse.json({error:gate.reason},{status:409});}

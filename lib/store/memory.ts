@@ -9,6 +9,19 @@ function state():MemoryState{
 function now(){return new Date().toISOString();}
 function recordsFor(missionId:string,actions:PlannedAction[]):DistributionActionRecord[]{const createdAt=now();return actions.map(action=>({...action,recordId:crypto.randomUUID(),missionId,status:action.mode==="BLOCKED"?"blocked":"queued",scheduledAt:new Date(Date.now()+action.scheduledOffsetHours*3600000).toISOString(),createdAt,updatedAt:createdAt,retryCount:0}));}
 function normalizeEmail(value:string){return value.trim().toLowerCase();}
+function normalizeHost(value?:string){if(!value)return"";try{return new URL(value).hostname.toLowerCase().replace(/^www\./,"");}catch{return value.toLowerCase().replace(/^https?:\/\//,"").split("/")[0].replace(/^www\./,"");}}
+function leadScope(lead:Pick<Lead,"missionId">){return lead.missionId||"unscoped";}
+function leadIdentityKeys(lead:Pick<Lead,"missionId"|"company"|"country"|"website"|"email">){const scope=leadScope(lead);const keys:string[]=[];const host=normalizeHost(lead.website);if(host)keys.push(`${scope}|domain:${host}`);if(lead.email)keys.push(`${scope}|email:${normalizeEmail(lead.email)}`);keys.push(`${scope}|company:${lead.company.trim().toLowerCase()}|${(lead.country||"").trim().toLowerCase()}`);return keys;}
+function mergeLead(existing:Lead,incoming:Omit<Lead,"id">){
+  const sourceUrls=Array.from(new Set([...(existing.sourceUrls||[]),...(incoming.sourceUrls||[])])).slice(0,8);
+  Object.assign(existing,{
+    website:incoming.website||existing.website,country:incoming.country||existing.country,fitReason:incoming.fitReason||existing.fitReason,research:incoming.research||existing.research,
+    email:incoming.email||existing.email,phone:incoming.phone||existing.phone,contactName:incoming.contactName||existing.contactName,role:incoming.role||existing.role,
+    linkedinUrl:incoming.linkedinUrl||existing.linkedinUrl,instagramUrl:incoming.instagramUrl||existing.instagramUrl,sourceUrls,
+    score:Math.max(existing.score||0,incoming.score||0),timezone:incoming.timezone||existing.timezone
+  });
+  return existing;
+}
 export const memoryStore={
  createMission(input:MissionInput,plan:DistributionPlan){const createdAt=now();const mission:MissionRecord={id:crypto.randomUUID(),input,plan,status:"active",createdAt,updatedAt:createdAt};state().missions.unshift(mission);const actions=recordsFor(mission.id,plan.actions);state().actions.push(...actions);return{mission,actions};},
  getMission(id:string){return state().missions.find(x=>x.id===id);},listMissions(){return[...state().missions];},
@@ -16,7 +29,7 @@ export const memoryStore={
  updateAction(recordId:string,patch:Partial<DistributionActionRecord>){const action=state().actions.find(x=>x.recordId===recordId);if(!action)return undefined;Object.assign(action,patch,{updatedAt:now()});return action;},
  stopPendingLeadActions(leadId:string,reason:string){const stopped:DistributionActionRecord[]=[];for(const action of state().actions){if(action.payload.leadId!==leadId)continue;if(!["queued","approved"].includes(action.status))continue;action.status="rejected";action.error=reason;action.rejectedAt=now();action.updatedAt=now();stopped.push(action);}return stopped;},
  addContent(drafts:Omit<ContentDraft,"id"|"createdAt">[]){const created=drafts.map(d=>({...d,id:crypto.randomUUID(),createdAt:now()}));state().content.unshift(...created);return created;},listContent(){return[...state().content];},getContent(id:string){return state().content.find(x=>x.id===id);},updateContent(id:string,patch:Partial<ContentDraft>){const item=state().content.find(x=>x.id===id);if(!item)return undefined;Object.assign(item,patch);return item;},
- addLeads(leads:Omit<Lead,"id">[]){const existing=new Set(state().leads.map(l=>`${l.company.toLowerCase()}|${(l.website||"").toLowerCase()}`));const created:Lead[]=[];for(const lead of leads){const key=`${lead.company.toLowerCase()}|${(lead.website||"").toLowerCase()}`;if(existing.has(key))continue;const item:Lead={...lead,id:crypto.randomUUID()};state().leads.unshift(item);existing.add(key);created.push(item);}return created;},
+ addLeads(leads:Omit<Lead,"id">[]){const created:Lead[]=[];for(const lead of leads){const keys=leadIdentityKeys(lead);const existing=state().leads.find(candidate=>{const candidateKeys=new Set(leadIdentityKeys(candidate));return keys.some(key=>candidateKeys.has(key));});if(existing){mergeLead(existing,lead);continue;}const item:Lead={...lead,id:crypto.randomUUID()};state().leads.unshift(item);created.push(item);}return created;},
  listLeads(){return[...state().leads].sort((a,b)=>(b.score||0)-(a.score||0));},getLead(id:string){return state().leads.find(x=>x.id===id);},findLeadByEmail(email:string){const target=normalizeEmail(email);return state().leads.find(x=>x.email&&normalizeEmail(x.email)===target);},
  updateLead(id:string,patch:Partial<Lead>){const lead=state().leads.find(x=>x.id===id);if(!lead)return undefined;Object.assign(lead,patch);return lead;},
  enqueueActions(missionId:string,actions:PlannedAction[]){const records=recordsFor(missionId,actions);state().actions.push(...records);return records;},
