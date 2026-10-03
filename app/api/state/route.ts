@@ -8,6 +8,7 @@ function runtimeReadiness(){
  return{
   ...storage,
   execution:isLiveExecutionEnabled()?"live":"dry-run",
+  security:{operatorAuthConfigured:Boolean(process.env.DISTRIBUTION_BASIC_USER&&process.env.DISTRIBUTION_BASIC_PASSWORD)},
   automation:{portfolioCronConfigured:Boolean(process.env.CRON_SECRET),workerConfigured:Boolean(process.env.WORKER_SECRET||process.env.AUTOPILOT_SECRET)},
   adapters:{
    openai:Boolean(process.env.OPENAI_API_KEY),

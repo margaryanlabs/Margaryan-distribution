@@ -7,12 +7,15 @@ export function GET() {
   return NextResponse.json({
     ok: true,
     service: "margaryan-distribution",
-    version: "0.7",
+    version: "0.8",
     time: new Date().toISOString(),
     storage: runtime.storage,
     durable: runtime.durable,
     persistence: runtime.persistence,
     execution: isLiveExecutionEnabled() ? "live" : "dry-run",
+    security: {
+      operatorAuthConfigured: Boolean(process.env.DISTRIBUTION_BASIC_USER && process.env.DISTRIBUTION_BASIC_PASSWORD),
+    },
     automation: {
       portfolioCronConfigured: Boolean(process.env.CRON_SECRET),
       workerConfigured: Boolean(process.env.WORKER_SECRET || process.env.AUTOPILOT_SECRET),
