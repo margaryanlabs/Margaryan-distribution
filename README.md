@@ -10,9 +10,24 @@ It turns the job into a governed execution loop:
 
 **COMMAND → PRODUCT BRAIN → PLAN → RESEARCH → QUEUE → POLICY → APPROVAL → EXECUTE → OBSERVE → SUMMARIZE → LEARN → NEXT ACTION**
 
+## V0.7 — Promptence Revenue Machine
+
+V0.7 keeps Margaryan Distribution as a standalone multi-product distribution OS, but makes **Promptence the first internal customer** and adds a real product-specific sales motion instead of generic lead scoring.
+
+New in V0.7:
+- dedicated `/sales` Revenue Command Center for Promptence
+- structured ICP segments, buyer roles, trigger signals, qualification rules and disqualifiers
+- current Promptence offer ladder: free signal, $39/$129/$349 self-serve, $1,500 Diagnostic, $3,500 Remediation Sprint, $7,500 Infrastructure
+- evidence-backed lead fields: segment, buying signals, pain hypotheses, priority, qualification reasons/gaps, recommended offer and offer value
+- Promptence-specific minimum qualification score before sequence preparation
+- outreach copy uses actual researched signals and sells the next logical commitment rather than the whole platform
+- safe `/api/sales/promptence/advance` loop prepares research/outreach/learning without directly executing outbound actions
+- Product Brain catalog refreshes existing seeded products so the latest commercial truth reaches durable state
+- revenue cockpit explicitly separates potential offer value from verified revenue
+
 ## V0.6 — Portfolio Director
 
-V0.6 adds a portfolio-level control plane on top of the existing distribution workforce.
+V0.6 added a portfolio-level control plane on top of the existing distribution workforce.
 
 Implemented:
 - Command Center UI
