@@ -6,6 +6,7 @@ import styles from "./sales.module.css";
 
 type StateResponse=DashboardSnapshot&{runtime?:{
  storage?:string;durable?:boolean;execution?:string;persistence?:string;
+ security?:{operatorAuthConfigured?:boolean};
  automation?:{portfolioCronConfigured?:boolean;workerConfigured?:boolean};
  adapters?:{openai?:boolean;gmail?:boolean;calendar?:boolean;linkedin?:boolean;instagram?:boolean;x?:boolean;voice?:boolean};
 }};
@@ -41,7 +42,8 @@ export default function SalesPage(){
  const verifiedRevenue=(state?.performance||[]).filter(event=>missionIds.has(event.missionId)).reduce((sum,event)=>sum+Number(event.metrics.revenueUsd||0),0);
  const minScore=promptence?.salesMotion?.minimumLeadScore||68;
  const readiness=[
-  {label:"Durable CRM",ok:Boolean(state?.runtime?.durable),detail:state?.runtime?.durable?"checkpoint attached":"memory only"},
+  {label:"Operator auth",ok:Boolean(state?.runtime?.security?.operatorAuthConfigured),detail:state?.runtime?.security?.operatorAuthConfigured?"cockpit protected":"public runtime until credentials are set"},
+  {label:"Durable CRM",ok:Boolean(state?.runtime?.durable),detail:state?.runtime?.durable?state?.runtime?.storage||"checkpoint attached":"memory only"},
   {label:"AI research",ok:Boolean(state?.runtime?.adapters?.openai),detail:state?.runtime?.adapters?.openai?"model connected":"OpenAI key missing"},
   {label:"Inbox",ok:Boolean(state?.runtime?.adapters?.gmail),detail:state?.runtime?.adapters?.gmail?"Gmail connected":"reply polling offline"},
   {label:"Meetings",ok:Boolean(state?.runtime?.adapters?.calendar),detail:state?.runtime?.adapters?.calendar?"Calendar connected":"booking offline"},
@@ -55,6 +57,8 @@ export default function SalesPage(){
    return priority||((b.score||0)-(a.score||0));
  });
  const eligible=leads.filter(lead=>(lead.score||0)>=minScore&&isReachable(lead)&&!lead.optedOut&&lead.stage!=="do_not_contact").length;
+ const firstTouchQueue=actions.filter(action=>action.channel==="email"&&action.kind==="send_email"&&Number(action.payload.sequenceStep)===1&&["queued","approved"].includes(action.status)).slice(0,8);
+ const leadById=new Map(leads.map(lead=>[lead.id,lead]));
 
  async function bootstrap(){
   setBusy("bootstrap");setNotice("Initializing Promptence Product Brain and the first dedicated revenue mission…");
@@ -74,6 +78,27 @@ export default function SalesPage(){
   setBusy("research");setNotice("Researching the next evidence-backed Promptence accounts…");
   try{const res=await fetch("/api/research/leads",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({missionId:mission.id,limit:10})});const data=await res.json();if(!res.ok)throw new Error(data.error||"Research failed");setNotice("Research complete: "+String(data.researched||0)+" reviewed, "+String(data.added||0)+" net-new accounts added.");await refresh();}
   catch(error){setNotice(error instanceof Error?error.message:"Research failed");}finally{setBusy(null);}
+ }
+
+ async function reviewAction(actionId:string,decision:"approve"|"reject"){
+  setBusy(actionId+decision);
+  try{
+   const res=await fetch(`/api/actions/${encodeURIComponent(actionId)}/${decision}`,{method:"POST"});
+   const data=await res.json();if(!res.ok)throw new Error(data.error||`Action ${decision} failed`);
+   setNotice(decision==="approve"?"First-touch approved. It is still not sent until live execution is enabled or you explicitly send it in live mode.":"First-touch rejected and removed from the send path.");
+   await refresh();
+  }catch(error){setNotice(error instanceof Error?error.message:"Review failed");}finally{setBusy(null);}
+ }
+
+ async function executeAction(actionId:string){
+  if(state?.runtime?.execution!=="live"){setNotice("Live send is disabled. The system will not pretend a dry-run was a real email.");return;}
+  setBusy(actionId+"send");
+  try{
+   const res=await fetch(`/api/actions/${encodeURIComponent(actionId)}/execute`,{method:"POST"});
+   const data=await res.json();if(!res.ok)throw new Error(data.error||"Send failed");
+   setNotice("Provider accepted the first-touch action. Refreshing factual pipeline state.");
+   await refresh();
+  }catch(error){setNotice(error instanceof Error?error.message:"Send failed");}finally{setBusy(null);}
  }
 
  return <main className={styles.shell}>
@@ -120,6 +145,27 @@ export default function SalesPage(){
     ["QUALIFIED",qualified],
     ["WON",won]
    ].map(([label,value],index)=><div key={String(label)}><span>{String(label)}</span><strong>{String(value)}</strong>{index<5&&<i>→</i>}</div>)}
+  </section>
+
+  <section className={styles.reviewPanel}>
+   <div className={styles.sectionHead}><div><span>HUMAN REVIEW QUEUE</span><h3>Approve evidence-led first touches before money leaves the building</h3></div><b>{firstTouchQueue.length}</b></div>
+   {firstTouchQueue.length===0?<div className={styles.empty}>No Promptence first-touch emails are waiting for review yet.</div>:
+   <div className={styles.reviewList}>{firstTouchQueue.map(action=>{
+    const leadId=typeof action.payload.leadId==="string"?action.payload.leadId:"";
+    const lead=leadById.get(leadId);
+    const subject=typeof action.payload.subject==="string"?action.payload.subject:"No subject";
+    const body=typeof action.payload.body==="string"?action.payload.body:"No body";
+    const quality=typeof action.payload.qualityScore==="number"?Math.round(action.payload.qualityScore):null;
+    return <article key={action.recordId} className={styles.reviewItem}>
+     <div className={styles.reviewMeta}><div><strong>{lead?.company||action.objective}</strong><small>{lead?.segment||"Promptence prospect"} · fit {Math.round(lead?.score||0)} {quality!==null?`· copy ${quality}/100`:""}</small></div><span className={action.status==="approved"?styles.approvedBadge:styles.reviewBadge}>{action.status.toUpperCase()}</span></div>
+     <div className={styles.emailPreview}><b>{subject}</b><p>{body}</p></div>
+     <div className={styles.reviewActions}>
+      {action.status==="queued"&&<><button onClick={()=>void reviewAction(action.recordId,"approve")} disabled={busy===action.recordId+"approve"}>{busy===action.recordId+"approve"?"Approving…":"Approve"}</button><button className={styles.dangerButton} onClick={()=>void reviewAction(action.recordId,"reject")} disabled={busy===action.recordId+"reject"}>Reject</button></>}
+      {action.status==="approved"&&<button onClick={()=>void executeAction(action.recordId)} disabled={state?.runtime?.execution!=="live"||busy===action.recordId+"send"}>{state?.runtime?.execution==="live"?"Send now":"Live send disabled"}</button>}
+      {lead&&<a href={`/leads/${lead.id}`}>Inspect account →</a>}
+     </div>
+    </article>;
+   })}</div>}
   </section>
 
   <div className={styles.grid}>
