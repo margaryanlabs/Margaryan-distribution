@@ -4,7 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import type { DashboardSnapshot, Lead, MissionRecord, ProductRecord } from "@/lib/types";
 import styles from "./sales.module.css";
 
-type StateResponse=DashboardSnapshot&{runtime?:{storage?:string;durable?:boolean;execution?:string;persistence?:string}};
+type StateResponse=DashboardSnapshot&{runtime?:{
+ storage?:string;durable?:boolean;execution?:string;persistence?:string;
+ automation?:{portfolioCronConfigured?:boolean;workerConfigured?:boolean};
+ adapters?:{openai?:boolean;gmail?:boolean;calendar?:boolean;linkedin?:boolean;instagram?:boolean;x?:boolean;voice?:boolean};
+}};
 function money(value:number){return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(value);}
 function short(value?:string){if(!value)return "—";return new Intl.DateTimeFormat("en",{month:"short",day:"2-digit",hour:"2-digit",minute:"2-digit"}).format(new Date(value));}
 function isReachable(lead:Lead){return Boolean(lead.email||lead.phone||lead.linkedinUrl||lead.instagramUrl);}
@@ -36,6 +40,14 @@ export default function SalesPage(){
  const qualifiedPotential=leads.filter(lead=>["replied","qualified","meeting"].includes(lead.stage)).reduce((sum,lead)=>sum+(lead.estimatedValueUsd||0),0);
  const verifiedRevenue=(state?.performance||[]).filter(event=>missionIds.has(event.missionId)).reduce((sum,event)=>sum+Number(event.metrics.revenueUsd||0),0);
  const minScore=promptence?.salesMotion?.minimumLeadScore||68;
+ const readiness=[
+  {label:"Durable CRM",ok:Boolean(state?.runtime?.durable),detail:state?.runtime?.durable?"checkpoint attached":"memory only"},
+  {label:"AI research",ok:Boolean(state?.runtime?.adapters?.openai),detail:state?.runtime?.adapters?.openai?"model connected":"OpenAI key missing"},
+  {label:"Inbox",ok:Boolean(state?.runtime?.adapters?.gmail),detail:state?.runtime?.adapters?.gmail?"Gmail connected":"reply polling offline"},
+  {label:"Meetings",ok:Boolean(state?.runtime?.adapters?.calendar),detail:state?.runtime?.adapters?.calendar?"Calendar connected":"booking offline"},
+  {label:"Worker",ok:Boolean(state?.runtime?.automation?.workerConfigured),detail:state?.runtime?.automation?.workerConfigured?"automation secret set":"manual passes only"},
+  {label:"Live send",ok:state?.runtime?.execution==="live",detail:state?.runtime?.execution==="live"?"execution enabled":"safe dry-run"}
+ ];
  const preparedLeadIds=new Set(outreach.map(item=>item.leadId));
  const ordered=[...leads].sort((a,b)=>{
    const rank={P0:4,P1:3,P2:2,P3:1} as const;
@@ -138,6 +150,11 @@ export default function SalesPage(){
     <section className={styles.card}>
      <div className={styles.sectionHead}><div><span>OFFER LADDER</span><h3>Sell the next commitment</h3></div></div>
      <div className={styles.offers}>{(promptence?.salesMotion?.offers||[]).slice(0,7).map(offer=><div key={offer.code}><span>{offer.name}</span><b>{typeof offer.priceUsd==="number"?money(offer.priceUsd):"custom"}</b></div>)}</div>
+    </section>
+
+    <section className={styles.card}>
+     <div className={styles.sectionHead}><div><span>ACTIVATION READINESS</span><h3>What is real right now</h3></div><b>{readiness.filter(item=>item.ok).length}/{readiness.length}</b></div>
+     <div className={styles.readiness}>{readiness.map(item=><div key={item.label}><i className={item.ok?styles.readyDot:styles.blockedDot}/><p><strong>{item.label}</strong><small>{item.detail}</small></p></div>)}</div>
     </section>
 
     <section className={styles.card}>
