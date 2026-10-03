@@ -19,6 +19,7 @@ export default function SalesPage(){
  const[state,setState]=useState<StateResponse|null>(null);
  const[busy,setBusy]=useState<string|null>(null);
  const[notice,setNotice]=useState("Promptence is the first internal client. External execution remains governed by existing approval and compliance gates.");
+ const[intake,setIntake]=useState({company:"",website:"",email:"",fitReason:"",sourceUrl:""});
 
  async function refresh(){const res=await fetch("/api/state",{cache:"no-store"});const data=await res.json() as StateResponse;if(!res.ok)throw new Error((data as unknown as {error?:string}).error||"State load failed");setState(data);}
  useEffect(()=>{void refresh().catch(error=>setNotice(error instanceof Error?error.message:"State load failed"));},[]);
@@ -81,6 +82,18 @@ export default function SalesPage(){
   setBusy("research");setNotice("Researching the next evidence-backed Promptence accounts…");
   try{const res=await fetch("/api/research/leads",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({missionId:mission.id,limit:10})});const data=await res.json();if(!res.ok)throw new Error(data.error||"Research failed");setNotice("Research complete: "+String(data.researched||0)+" reviewed, "+String(data.added||0)+" net-new accounts added.");await refresh();}
   catch(error){setNotice(error instanceof Error?error.message:"Research failed");}finally{setBusy(null);}
+ }
+
+ async function addProspect(){
+  if(!mission||!intake.company.trim()){setNotice("Bootstrap the Promptence mission and enter a company first.");return;}
+  setBusy("intake");
+  try{
+   const res=await fetch("/api/leads",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({missionId:mission.id,...intake})});
+   const data=await res.json();if(!res.ok)throw new Error(data.error||"Prospect intake failed");
+   setNotice(data.created?"Prospect added conservatively. It is NOT qualified for outreach until evidence review raises it above the Promptence threshold.":"Existing prospect record enriched without creating a duplicate.");
+   setIntake({company:"",website:"",email:"",fitReason:"",sourceUrl:""});
+   await refresh();
+  }catch(error){setNotice(error instanceof Error?error.message:"Prospect intake failed");}finally{setBusy(null);}
  }
 
  async function reviewAction(actionId:string,decision:"approve"|"reject"){
@@ -148,6 +161,19 @@ export default function SalesPage(){
     ["QUALIFIED",qualified],
     ["WON",won]
    ].map(([label,value],index)=><div key={String(label)}><span>{String(label)}</span><strong>{String(value)}</strong>{index<5&&<i>→</i>}</div>)}
+  </section>
+
+  <section className={styles.intakePanel}>
+   <div className={styles.sectionHead}><div><span>MANUAL PROSPECT INTAKE</span><h3>Start the first pipeline before autonomous research is connected</h3></div><b>NO BYPASS</b></div>
+   <p className={styles.intakeNote}>Manual prospects enter at a conservative score and cannot auto-send. Add only public business information and one evidence source when possible.</p>
+   <div className={styles.intakeGrid}>
+    <input value={intake.company} onChange={event=>setIntake(current=>({...current,company:event.target.value}))} placeholder="Company *"/>
+    <input value={intake.website} onChange={event=>setIntake(current=>({...current,website:event.target.value}))} placeholder="Website"/>
+    <input value={intake.email} onChange={event=>setIntake(current=>({...current,email:event.target.value}))} placeholder="Public business email"/>
+    <input value={intake.sourceUrl} onChange={event=>setIntake(current=>({...current,sourceUrl:event.target.value}))} placeholder="Evidence/source URL"/>
+   </div>
+   <textarea value={intake.fitReason} onChange={event=>setIntake(current=>({...current,fitReason:event.target.value}))} placeholder="Why this account might fit Promptence — factual notes only"/>
+   <div className={styles.intakeActions}><span>{state?.runtime?.durable?"Enters as NEW · score 30–45 · P2 · qualification pending":"Durable CRM required before storing real prospects"}</span><button onClick={()=>void addProspect()} disabled={!mission||!state?.runtime?.durable||!intake.company.trim()||busy==="intake"} title={!state?.runtime?.durable?"Attach durable CRM first":undefined}>{busy==="intake"?"Adding…":state?.runtime?.durable?"Add prospect":"Intake locked"}</button></div>
   </section>
 
   <section className={styles.reviewPanel}>
