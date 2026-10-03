@@ -17,8 +17,8 @@ function fallback(input: MissionInput, product?: ProductRecord): DistributionPla
   return {
     missionName: "Distribution mission",
     thesis: product ? `${input.goal} Product: ${product.oneLiner}` : input.goal,
-    audience: product?.targetCustomer ? [product.targetCustomer] : [`Relevant buyers in ${input.market || "target market"}`],
-    contentPillars: ["Problem education", "Proof", "Product demonstration", "Founder perspective"],
+    audience: product?.salesMotion?.segments?.length ? product.salesMotion.segments.map(segment=>segment.label) : product?.targetCustomer ? [product.targetCustomer] : [`Relevant buyers in ${input.market || "target market"}`],
+    contentPillars: product?.salesMotion ? ["Buyer problem evidence", "Category / competitive evidence", "Product proof", "Operator perspective"] : ["Problem education", "Proof", "Product demonstration", "Founder perspective"],
     actions: [
       { id: "research-1", channel: "email", kind: "research", objective: "Build and score target accounts", rationale: "Relevance before volume", mode: "AUTO", scheduledOffsetHours: 0, payload: {} },
       { id: "email-1", channel: "email", kind: "send_email", objective: "Personalized first touch", rationale: "Direct measurable outreach", mode: publicMode, scheduledOffsetHours: 2, payload: { subject: "Generated at execution time", body: "Generated at execution time" } },
@@ -27,7 +27,7 @@ function fallback(input: MissionInput, product?: ProductRecord): DistributionPla
       { id: "instagram-1", channel: "instagram", kind: "publish_post", objective: "Publish visual proof", rationale: "Repurpose campaign creatively", mode: "APPROVE", scheduledOffsetHours: 12, payload: { caption: "Generated at execution time", mediaUrl: "" } },
       { id: "voice-1", channel: "voice", kind: "call", objective: "Qualify warm responders", rationale: "Use voice after intent appears", mode: "BLOCKED", scheduledOffsetHours: 24, payload: {} }
     ],
-    successMetrics: ["Qualified replies", "Meetings booked", "Positive reply rate", "Content engagement", "Attributed pipeline"],
+    successMetrics: product?.salesMotion?.successDefinition?.length ? product.salesMotion.successDefinition : ["Qualified replies", "Meetings booked", "Positive reply rate", "Content engagement", "Attributed pipeline"],
     stopConditions: ["Explicit opt-out", "High complaint rate", "Channel restriction", "Unverified calling jurisdiction"]
   };
 }
@@ -41,10 +41,12 @@ export async function buildDistributionPlan(input: MissionInput, product?: Produ
       "You are the planning brain of Margaryan Distribution, a governed autonomous distribution OS.",
       "Translate the business goal into a practical multi-channel plan across sales outreach and SMM only where useful.",
       "Use the supplied product brain as the source of truth. Never invent proof, customers, metrics or capabilities absent from it.",
+      "When the product has a structured salesMotion, treat its ICP segments, qualification rules, offer ladder, sequence rules and success definition as binding commercial context. Optimize for movement toward verified revenue, not activity volume.",
       "Use official provider APIs and never propose credential scraping, browser automation that bypasses platform rules, deceptive identity claims, or spam-at-scale.",
       "Use APPROVE for cold outreach, public brand posts, or other reputationally sensitive actions unless the user's autonomy preference and channel rules clearly allow AUTO.",
       "Use BLOCKED for voice calling until jurisdiction, do-not-call and permitted-hours checks are verified.",
-      "Prefer low-volume relevance, personalization, opt-outs, measurable experiments and explicit handoff points."
+      "Prefer low-volume relevance, personalization, opt-outs, measurable experiments and explicit handoff points.",
+      "For Promptence specifically, sell the next commitment: concrete free signal when proof is needed, paid Diagnostic when a problem is confirmed, Sprint only after implementation need is evidenced, then recurring monitoring where appropriate."
     ].join(" "),
     input: JSON.stringify({ mission: input, product: product || null }),
     text: { format: { type: "json_schema", name: "distribution_plan", strict: true, schema: planSchema } }
