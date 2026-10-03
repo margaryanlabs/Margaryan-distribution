@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { distributionStore } from "@/lib/store";
+import { storageRuntime, withDurableState } from "@/lib/store/checkpoint";
 import type { ContentDraft, Language } from "@/lib/types";
 
 function fallback(topic: string, language: Language): Omit<ContentDraft, "id" | "createdAt">[] {
@@ -13,27 +14,34 @@ function fallback(topic: string, language: Language): Omit<ContentDraft, "id" | 
 }
 
 export async function POST(req: Request) {
-  const body = await req.json() as { topic?: string; language?: Language; missionId?: string };
-  const topic = body.topic?.trim();
-  if (!topic) return NextResponse.json({ error: "topic is required" }, { status: 400 });
-  const language: Language = body.language === "ru" ? "ru" : "en";
+  try{
+    const body = await req.json() as { topic?: string; language?: Language; missionId?: string };
+    const topic = body.topic?.trim();
+    if (!topic) return NextResponse.json({ error: "topic is required" }, { status: 400 });
+    const language: Language = body.language === "ru" ? "ru" : "en";
 
-  let drafts = fallback(topic, language);
-  if (process.env.OPENAI_API_KEY) {
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const response = await client.responses.create({
-      model: process.env.OPENAI_CONTENT_MODEL || "gpt-5.6-luna",
-      instructions: "Create channel-native B2B distribution content. No fake claims, no invented metrics, no engagement bait. Return valid JSON array only with channel, title, body, callToAction. Channels: x, linkedin, instagram.",
-      input: `Language: ${language}. Topic/mission: ${topic}`
+    const{result,persistence}=await withDurableState(async()=>{
+      if(body.missionId&&!distributionStore.getMission(body.missionId))return NextResponse.json({error:"Mission not found"},{status:404});
+      let drafts = fallback(topic, language);
+      if (process.env.OPENAI_API_KEY) {
+        const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+        const response = await client.responses.create({
+          model: process.env.OPENAI_CONTENT_MODEL || "gpt-5.6-luna",
+          instructions: "Create channel-native B2B distribution content. No fake claims, no invented metrics, no engagement bait. Return valid JSON array only with channel, title, body, callToAction. Channels: x, linkedin, instagram.",
+          input: `Language: ${language}. Topic/mission: ${topic}`
+        });
+        try {
+          const parsed = JSON.parse(response.output_text.replace(/^\`\`\`json\s*/i, "").replace(/\`\`\`$/i, "").trim()) as Array<{ channel: "x" | "linkedin" | "instagram"; title: string; body: string; callToAction?: string }>;
+          if (Array.isArray(parsed) && parsed.length) drafts = parsed.map((item) => ({ ...item, language, missionId: body.missionId, status: "draft" as const }));
+        } catch {}
+      }
+      const saved = distributionStore.addContent(drafts.map((draft) => ({ ...draft, missionId: body.missionId })));
+      return NextResponse.json({ drafts: saved });
     });
-    try {
-      const parsed = JSON.parse(response.output_text.replace(/^```json\s*/i, "").replace(/```$/i, "").trim()) as Array<{ channel: "x" | "linkedin" | "instagram"; title: string; body: string; callToAction?: string }>;
-      if (Array.isArray(parsed) && parsed.length) drafts = parsed.map((item) => ({ ...item, language, missionId: body.missionId, status: "draft" as const }));
-    } catch {
-      // Fallback remains available if the model output is not parseable.
-    }
+    result.headers.set("x-distribution-storage",storageRuntime().storage);
+    result.headers.set("x-distribution-persisted",String(Boolean(persistence.saved)));
+    return result;
+  }catch(error){
+    return NextResponse.json({error:error instanceof Error?error.message:"Content generation failed",runtime:storageRuntime()},{status:500});
   }
-
-  const saved = distributionStore.addContent(drafts.map((draft) => ({ ...draft, missionId: body.missionId })));
-  return NextResponse.json({ drafts: saved });
 }
