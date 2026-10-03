@@ -3,10 +3,10 @@ import { distributionStore } from "@/lib/store";
 import type { LearningRanking, LearningReport, PerformanceEvent, PerformanceMetrics } from "@/lib/types";
 
 type Bucket={key:string;metrics:Required<Omit<PerformanceMetrics,"spend">>&{spend:number}};
-const zero=()=>({impressions:0,engagements:0,clicks:0,replies:0,positiveReplies:0,meetings:0,conversions:0,spend:0});
+const zero=()=>({impressions:0,engagements:0,clicks:0,replies:0,positiveReplies:0,meetings:0,conversions:0,revenueUsd:0,spend:0});
 function add(target:Bucket["metrics"],metrics:PerformanceMetrics){for(const key of Object.keys(target) as Array<keyof Bucket["metrics"]>){const value=Number(metrics[key]||0);if(Number.isFinite(value)&&value>0)target[key]+=value;}}
-function score(metrics:Bucket["metrics"]){return Number((metrics.conversions*1000+metrics.meetings*250+metrics.positiveReplies*100+metrics.replies*25+metrics.clicks*2+metrics.engagements*.1).toFixed(2));}
-function ranking(map:Map<string,Bucket["metrics"]>):LearningRanking[]{return[...map.entries()].map(([key,metrics])=>({key,impressions:metrics.impressions,engagements:metrics.engagements,clicks:metrics.clicks,replies:metrics.replies,positiveReplies:metrics.positiveReplies,meetings:metrics.meetings,conversions:metrics.conversions,score:score(metrics)})).sort((a,b)=>b.score-a.score);}
+function score(metrics:Bucket["metrics"]){return Number((metrics.conversions*1000+metrics.revenueUsd*.2+metrics.meetings*250+metrics.positiveReplies*100+metrics.replies*25+metrics.clicks*2+metrics.engagements*.1).toFixed(2));}
+function ranking(map:Map<string,Bucket["metrics"]>):LearningRanking[]{return[...map.entries()].map(([key,metrics])=>({key,impressions:metrics.impressions,engagements:metrics.engagements,clicks:metrics.clicks,replies:metrics.replies,positiveReplies:metrics.positiveReplies,meetings:metrics.meetings,conversions:metrics.conversions,revenueUsd:metrics.revenueUsd,score:score(metrics)})).sort((a,b)=>b.score-a.score);}
 function aggregate(events:PerformanceEvent[],dimension:(event:PerformanceEvent)=>string|undefined){const map=new Map<string,Bucket["metrics"]>();for(const event of events){const key=dimension(event);if(!key)continue;const metrics=map.get(key)||zero();add(metrics,event.metrics);map.set(key,metrics);}return ranking(map);}
 
 export async function generateLearningReport(missionId:string):Promise<LearningReport>{
