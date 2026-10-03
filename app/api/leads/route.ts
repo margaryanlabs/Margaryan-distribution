@@ -25,6 +25,7 @@ export async function GET(){
 
 export async function POST(request:Request){
   try{
+    if(!storageRuntime().durable)return NextResponse.json({error:"Durable CRM is required before adding real prospects",runtime:storageRuntime()},{status:503});
     const body=await request.json() as {
       missionId?:unknown;company?:unknown;website?:unknown;email?:unknown;contactName?:unknown;role?:unknown;
       country?:unknown;fitReason?:unknown;sourceUrl?:unknown;linkedinUrl?:unknown;
