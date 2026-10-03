@@ -50,6 +50,9 @@ export default function SalesPage(){
   {label:"Worker",ok:Boolean(state?.runtime?.automation?.workerConfigured),detail:state?.runtime?.automation?.workerConfigured?"automation secret set":"manual passes only"},
   {label:"Live send",ok:state?.runtime?.execution==="live",detail:state?.runtime?.execution==="live"?"execution enabled":"safe dry-run"}
  ];
+ const researchReady=Boolean(state?.runtime?.durable&&state?.runtime?.adapters?.openai);
+ const advanceReady=researchReady;
+ const activationNext=!state?.runtime?.security?.operatorAuthConfigured?"Protect operator cockpit":!state?.runtime?.durable?"Attach dedicated durable CRM":!state?.runtime?.adapters?.openai?"Connect AI research runtime":!state?.runtime?.adapters?.gmail?"Connect inbox for reply learning":!state?.runtime?.automation?.workerConfigured?"Enable worker cadence":state?.runtime?.execution!=="live"?"Run assisted mode before live send":"Revenue machine active";
  const preparedLeadIds=new Set(outreach.map(item=>item.leadId));
  const ordered=[...leads].sort((a,b)=>{
    const rank={P0:4,P1:3,P2:2,P3:1} as const;
@@ -116,8 +119,8 @@ export default function SalesPage(){
     <p>{mission?.input.goal||"Bootstrap the dedicated Promptence sales motion. The agent will prioritize agencies and B2B SaaS accounts with explicit AI-search, SEO, content or category-competition signals."}</p>
     <div className={styles.buttons}>
      <button onClick={bootstrap} disabled={busy==="bootstrap"}>{busy==="bootstrap"?"Initializing…":mission?"Refresh Promptence brain":"Bootstrap Promptence sales"}</button>
-     <button className={styles.secondary} onClick={research} disabled={!mission||busy==="research"}>{busy==="research"?"Researching…":"Research 10 accounts"}</button>
-     <button className={styles.secondary} onClick={advance} disabled={!mission||busy==="advance"}>{busy==="advance"?"Advancing…":"Advance sales machine"}</button>
+     <button className={styles.secondary} onClick={research} disabled={!mission||!researchReady||busy==="research"} title={!researchReady?"Requires durable CRM + AI research runtime":undefined}>{busy==="research"?"Researching…":researchReady?"Research 10 accounts":"Research locked"}</button>
+     <button className={styles.secondary} onClick={advance} disabled={!mission||!advanceReady||busy==="advance"} title={!advanceReady?"Requires durable CRM + AI research runtime":undefined}>{busy==="advance"?"Advancing…":advanceReady?"Advance sales machine":"Autopilot locked"}</button>
     </div>
    </div>
    <div className={styles.target}>
@@ -205,6 +208,7 @@ export default function SalesPage(){
 
     <section className={styles.card}>
      <div className={styles.sectionHead}><div><span>MISSION HEALTH</span><h3>What happens next</h3></div></div>
+     <div className={styles.nextActivation}><span>NEXT ACTIVATION STEP</span><strong>{activationNext}</strong></div>
      <dl className={styles.health}>
       <div><dt>Mission</dt><dd>{mission?.plan.missionName||"not started"}</dd></div>
       <div><dt>Created</dt><dd>{short(mission?.createdAt)}</dd></div>
