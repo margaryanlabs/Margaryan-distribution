@@ -34,6 +34,7 @@ export default function SalesPage(){
  const qualified=leads.filter(lead=>["qualified","meeting","won"].includes(lead.stage)).length;
  const won=leads.filter(lead=>lead.stage==="won").length;
  const qualifiedPotential=leads.filter(lead=>["replied","qualified","meeting"].includes(lead.stage)).reduce((sum,lead)=>sum+(lead.estimatedValueUsd||0),0);
+ const verifiedRevenue=(state?.performance||[]).filter(event=>missionIds.has(event.missionId)).reduce((sum,event)=>sum+Number(event.metrics.revenueUsd||0),0);
  const minScore=promptence?.salesMotion?.minimumLeadScore||68;
  const preparedLeadIds=new Set(outreach.map(item=>item.leadId));
  const ordered=[...leads].sort((a,b)=>{
@@ -95,6 +96,7 @@ export default function SalesPage(){
    <article><span>REPLIES</span><strong>{replies.length}</strong><small>{positiveReplies} positive</small></article>
    <article><span>MEETINGS</span><strong>{meetings.filter(item=>item.status==="booked").length}</strong><small>{meetings.length} total records</small></article>
    <article><span>QUALIFIED POTENTIAL</span><strong>{money(qualifiedPotential)}</strong><small>offer value, not revenue</small></article>
+   <article><span>VERIFIED REVENUE</span><strong>{money(verifiedRevenue)}</strong><small>recorded factual sales</small></article>
   </section>
 
   <section className={styles.flow}>
@@ -119,7 +121,7 @@ export default function SalesPage(){
       <div className={styles.fit}><strong>{Math.round(lead.score||0)}</strong><small>{(lead.qualificationReasons||[])[0]||lead.fitReason||"Fit evidence pending"}</small></div>
       <div className={styles.evidence}><p>{(lead.buyingSignals||[])[0]||lead.fitReason||"No explicit buying signal stored yet."}</p>{lead.sourceUrls?.[0]&&<a href={lead.sourceUrls[0]} target="_blank" rel="noreferrer">source ↗</a>}</div>
       <div className={styles.offer}><strong>{lead.recommendedOffer||"Free AI visibility signal"}</strong><small>{lead.estimatedValueUsd?money(lead.estimatedValueUsd):"proof-first"}</small></div>
-      <div className={styles.state}><span>{stageLabel(lead.stage)}</span><small>{preparedLeadIds.has(lead.id)?"sequence ready":lead.nextAction||"research"}</small></div>
+      <div className={styles.state}><span>{stageLabel(lead.stage)}</span><small>{preparedLeadIds.has(lead.id)?"sequence ready":lead.nextAction||"research"}</small><a href={`/leads/${lead.id}`}>open →</a></div>
      </article>)}
     </div>}
    </section>
