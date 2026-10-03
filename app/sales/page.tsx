@@ -173,7 +173,7 @@ export default function SalesPage(){
     <input value={intake.sourceUrl} onChange={event=>setIntake(current=>({...current,sourceUrl:event.target.value}))} placeholder="Evidence/source URL"/>
    </div>
    <textarea value={intake.fitReason} onChange={event=>setIntake(current=>({...current,fitReason:event.target.value}))} placeholder="Why this account might fit Promptence — factual notes only"/>
-   <div className={styles.intakeActions}><span>Enters as NEW · score 30–45 · P2 · qualification pending</span><button onClick={()=>void addProspect()} disabled={!mission||!intake.company.trim()||busy==="intake"}>{busy==="intake"?"Adding…":"Add prospect"}</button></div>
+   <div className={styles.intakeActions}><span>{state?.runtime?.durable?"Enters as NEW · score 30–45 · P2 · qualification pending":"Durable CRM required before storing real prospects"}</span><button onClick={()=>void addProspect()} disabled={!mission||!state?.runtime?.durable||!intake.company.trim()||busy==="intake"} title={!state?.runtime?.durable?"Attach durable CRM first":undefined}>{busy==="intake"?"Adding…":state?.runtime?.durable?"Add prospect":"Intake locked"}</button></div>
   </section>
 
   <section className={styles.reviewPanel}>
