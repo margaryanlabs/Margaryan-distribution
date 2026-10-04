@@ -15,8 +15,26 @@ function cleanMoney(value:unknown){const amount=Number(value);return Number.isFi
 export async function researchBusinessLeads(mission:MissionRecord,limit=8,product?:ProductRecord,options:{excludeCompanies?:string[]}={}):Promise<LeadCandidate[]>{
   if(!process.env.OPENAI_API_KEY)throw new Error("OPENAI_API_KEY is required for live lead research");
   const client=new OpenAI({apiKey:process.env.OPENAI_API_KEY});const language:Language=mission.input.language;const capped=Math.min(Math.max(1,limit),10);
+  const researchProduct=product?{
+    name:product.name,
+    sourceUrl:product.sourceUrl,
+    oneLiner:product.oneLiner,
+    targetCustomer:product.targetCustomer,
+    pains:product.pains,
+    proof:product.proof,
+    pricingNotes:product.pricingNotes,
+    positioning:product.positioning,
+    salesMotion:product.salesMotion?{
+      minimumLeadScore:product.salesMotion.minimumLeadScore,
+      segments:product.salesMotion.segments,
+      triggerSignals:product.salesMotion.triggerSignals,
+      qualificationRules:product.salesMotion.qualificationRules,
+      offers:product.salesMotion.offers
+    }:undefined
+  }:null;
   const response=await client.responses.create({
-    model:process.env.OPENAI_RESEARCH_MODEL||"gpt-5.6-terra",
+    model:process.env.OPENAI_RESEARCH_MODEL||"gpt-6.1-sol",
+    max_output_tokens:1800,
     tools:[{type:"web_search_preview",search_context_size:"low"}],
     instructions:[
       "You are the evidence-first account research layer of a B2B distribution system.",
@@ -33,7 +51,7 @@ export async function researchBusinessLeads(mission:MissionRecord,limit=8,produc
       `Return JSON only: an array of at most ${capped} objects with company, website, country, fitReason, score (0-100), research, email, phone, contactName, role, linkedinUrl, instagramUrl, sourceUrls, segment, buyingSignals:string[], painHypotheses:string[], recommendedOfferCode, recommendedOffer, estimatedValueUsd, priority (P0|P1|P2|P3), qualificationReasons:string[], qualificationGaps:string[].`,
       `Write fitReason and research in ${language==="ru"?"Russian":"English"}.`
     ].join(" "),
-    input:JSON.stringify({goal:mission.input.goal,market:mission.input.market,audience:mission.plan.audience,thesis:mission.plan.thesis,product:product||null,excludeCompanies:(options.excludeCompanies||[]).slice(0,100)})
+    input:JSON.stringify({goal:mission.input.goal,market:mission.input.market,audience:mission.plan.audience,thesis:mission.plan.thesis,product:researchProduct,excludeCompanies:(options.excludeCompanies||[]).slice(0,100)})
   });
   const parsed=JSON.parse(cleanJson(response.output_text)) as LeadCandidate[];if(!Array.isArray(parsed))throw new Error("Lead research returned an invalid payload");
   return parsed.slice(0,capped).filter(lead=>typeof lead.company==="string"&&lead.company.trim()).map(lead=>{
