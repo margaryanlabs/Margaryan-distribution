@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 function unauthorized() {return new NextResponse("Authentication required",{status:401,headers:{"WWW-Authenticate":'Basic realm="Margaryan Distribution", charset="UTF-8"',"Cache-Control":"no-store"}});}
 function unavailable(message:string){return new NextResponse(message,{status:503,headers:{"Cache-Control":"no-store"}});}
 function safeEqual(a:string,b:string){if(a.length!==b.length)return false;let diff=0;for(let i=0;i<a.length;i+=1)diff|=a.charCodeAt(i)^b.charCodeAt(i);return diff===0;}
-function isMachinePath(path:string){return path==="/api/portfolio/tick"||path==="/api/autopilot/tick"||path==="/api/worker/tick";}
+function isMachinePath(path:string){return path==="/api/portfolio/tick"||path==="/api/autopilot/tick"||path.startsWith("/api/worker/");}
 function machineAuthorized(request:NextRequest){
  const path=request.nextUrl.pathname;
  const authorization=request.headers.get("authorization")||"";
