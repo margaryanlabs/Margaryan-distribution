@@ -33,6 +33,9 @@ function fallback(input: MissionInput, product?: ProductRecord): DistributionPla
 }
 
 export async function buildDistributionPlan(input: MissionInput, product?: ProductRecord): Promise<DistributionPlan> {
+  // Structured sales motions already encode the commercial doctrine. Keep their bootstrap deterministic,
+  // cheaper and immune to model/schema drift; AI is used downstream for evidence research and copy.
+  if (product?.salesMotion) return fallback(input, product);
   if (!process.env.OPENAI_API_KEY) return fallback(input, product);
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const response = await client.responses.create({
