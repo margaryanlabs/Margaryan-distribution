@@ -35,7 +35,7 @@ export async function runDueAutoActions(limit=10){
     if(!gate.allowed){distributionStore.updateAction(action.recordId,{status:"blocked",error:gate.reason});results.push({id:action.recordId,status:"blocked",reason:gate.reason});continue;}
     try{
       const result=await executeDistributionAction(request);const simulated=typeof result==="object"&&result!==null&&"simulated" in result&&Boolean((result as {simulated?:boolean}).simulated);
-      distributionStore.updateAction(action.recordId,{status:"succeeded",result,executedAt:new Date().toISOString(),error:undefined});
+      distributionStore.updateAction(action.recordId,simulated?{status:"approved",result,executedAt:undefined,error:undefined}:{status:"succeeded",result,executedAt:new Date().toISOString(),error:undefined});
       if(!simulated&&action.kind==="publish_post"&&typeof payload.contentId==="string")distributionStore.updateContent(payload.contentId,{status:"published"});
       if(!simulated&&action.channel==="email"&&action.kind==="send_email"&&leadId&&lead&&!["replied","qualified","meeting","won","lost","do_not_contact"].includes(lead.stage))distributionStore.updateLead(leadId,{stage:"contacted"});
       if(!simulated&&action.channel==="calendar"&&action.kind==="book_meeting")syncMeetingBooking(payload,result);
@@ -43,7 +43,7 @@ export async function runDueAutoActions(limit=10){
         const provider=result as {sid:string;status?:string};
         distributionStore.upsertCall({callSid:provider.sid,missionId:action.missionId,leadId,actionId:action.recordId,objective:typeof payload.objective==="string"?payload.objective:action.objective,status:"initiated",providerStatus:provider.status||"queued",transcript:[],startedAt:new Date().toISOString()});
       }
-      results.push({id:action.recordId,status:"succeeded",channel:action.channel,kind:action.kind,simulated});
+      results.push({id:action.recordId,status:simulated?"simulated":"succeeded",channel:action.channel,kind:action.kind,simulated});
     }catch(error){
       const message=error instanceof Error?error.message:"unknown error";const classification=classifyExecutionError(message);const retry=nextRetry(action.retryCount);
       if(classification.transient&&retry.retry){const scheduledAt=new Date(Date.now()+retry.delayMs).toISOString();distributionStore.updateAction(action.recordId,{status:"queued",error:`Retry scheduled: ${message}`,retryCount:retry.nextCount,scheduledAt});results.push({id:action.recordId,status:"retry_scheduled",retryCount:retry.nextCount,scheduledAt,error:message});continue;}
