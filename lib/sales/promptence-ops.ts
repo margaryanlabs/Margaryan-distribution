@@ -41,7 +41,9 @@ export async function researchPromptenceBatch(missionId:string,limit=10){
   if(!product||product.name.trim().toLowerCase()!=="promptence")throw new Error("Mission is not a Promptence sales mission");
 
   const capped=Math.max(1,Math.min(10,Number(limit||10)));
-  const candidates=await researchBusinessLeads(mission,capped,product);
+  const existing=distributionStore.listLeads().filter(lead=>lead.missionId===mission.id);
+  const excludeCompanies=existing.map(lead=>[lead.company,lead.website].filter(Boolean).join(" | "));
+  const candidates=await researchBusinessLeads(mission,capped,product,{excludeCompanies});
   const created=distributionStore.addLeads(candidates.map(candidate=>({
     ...candidate,
     missionId:mission.id,
