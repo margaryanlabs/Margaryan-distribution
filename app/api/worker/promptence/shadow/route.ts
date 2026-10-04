@@ -15,15 +15,20 @@ export async function POST(req:Request){
     let body:{limit?:number;operation?:"research"|"report"}={};
     try{body=await req.json() as typeof body;}catch{}
     const operation=body.operation==="report"?"report":"research";
-    const limit=Math.max(1,Math.min(10,Number(body.limit||10)));
+    const requested=Math.max(1,Math.min(3,Number(body.limit||1)));
 
     const {result,hydration,persistence}=await withDurableState(async()=>{
       const bootstrap=await bootstrapPromptenceSales();
-      const research=operation==="research"?await researchPromptenceBatch(bootstrap.mission.id,limit):null;
+      const before=promptenceShadowReport(bootstrap.mission.id);
+      const targetAccounts=Math.max(1,Number(process.env.PROMPTENCE_SHADOW_TARGET||10));
+      const remaining=Math.max(0,targetAccounts-before.totals.accounts);
+      const limit=Math.min(requested,remaining);
+      const research=operation==="research"&&limit>0?await researchPromptenceBatch(bootstrap.mission.id,limit):null;
       const report=promptenceShadowReport(bootstrap.mission.id);
       return{
         operation,
         missionCreated:bootstrap.created,
+        targetAccounts:Math.max(1,Number(process.env.PROMPTENCE_SHADOW_TARGET||10)),
         researched:research?.researched||0,
         added:research?.added||0,
         report
