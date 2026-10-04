@@ -12,13 +12,12 @@ function cleanList(value:unknown,limit=6){return Array.isArray(value)?value.map(
 function cleanPriority(value:unknown):Lead["priority"]{return value==="P0"||value==="P1"||value==="P2"||value==="P3"?value:undefined;}
 function cleanMoney(value:unknown){const amount=Number(value);return Number.isFinite(amount)&&amount>=0&&amount<=1000000?Math.round(amount):undefined;}
 
-export async function researchBusinessLeads(mission:MissionRecord,limit=8,product?:ProductRecord):Promise<LeadCandidate[]>{
+export async function researchBusinessLeads(mission:MissionRecord,limit=8,product?:ProductRecord,options:{excludeCompanies?:string[]}={}):Promise<LeadCandidate[]>{
   if(!process.env.OPENAI_API_KEY)throw new Error("OPENAI_API_KEY is required for live lead research");
   const client=new OpenAI({apiKey:process.env.OPENAI_API_KEY});const language:Language=mission.input.language;const capped=Math.min(Math.max(1,limit),10);
   const response=await client.responses.create({
     model:process.env.OPENAI_RESEARCH_MODEL||"gpt-5.6-terra",
-    reasoning:{effort:"medium"},
-    tools:[{type:"web_search_preview",search_context_size:"medium"}],
+    tools:[{type:"web_search_preview",search_context_size:"low"}],
     instructions:[
       "You are the evidence-first account research layer of a B2B distribution system.",
       "Find real active businesses that plausibly match the mission using current public web information. Prioritize buying intent, an obvious operational pain, product fit, and reachable official business channels over raw volume.",
@@ -30,10 +29,11 @@ export async function researchBusinessLeads(mission:MissionRecord,limit=8,produc
       "Every material fit claim must be traceable to sourceUrls. Prefer official sources and recent pages; include no more than five source URLs per business.",
       "Score conservatively. A high score requires concrete evidence. For products with a structured sales motion, identify the closest segment, explicit buyingSignals, evidence-based painHypotheses, qualificationReasons, qualificationGaps and the next logical offer. estimatedValueUsd is the current listed price of that recommended offer, not expected revenue.",
       "Avoid directories, lead farms, obvious duplicates, dead websites, businesses with no plausible need, and results whose contact data cannot be verified.",
+      "Do not return any company listed in excludeCompanies. Treat obvious brand/domain variants as the same company.",
       `Return JSON only: an array of at most ${capped} objects with company, website, country, fitReason, score (0-100), research, email, phone, contactName, role, linkedinUrl, instagramUrl, sourceUrls, segment, buyingSignals:string[], painHypotheses:string[], recommendedOfferCode, recommendedOffer, estimatedValueUsd, priority (P0|P1|P2|P3), qualificationReasons:string[], qualificationGaps:string[].`,
       `Write fitReason and research in ${language==="ru"?"Russian":"English"}.`
     ].join(" "),
-    input:JSON.stringify({goal:mission.input.goal,market:mission.input.market,audience:mission.plan.audience,thesis:mission.plan.thesis,product:product||null})
+    input:JSON.stringify({goal:mission.input.goal,market:mission.input.market,audience:mission.plan.audience,thesis:mission.plan.thesis,product:product||null,excludeCompanies:(options.excludeCompanies||[]).slice(0,100)})
   });
   const parsed=JSON.parse(cleanJson(response.output_text)) as LeadCandidate[];if(!Array.isArray(parsed))throw new Error("Lead research returned an invalid payload");
   return parsed.slice(0,capped).filter(lead=>typeof lead.company==="string"&&lead.company.trim()).map(lead=>{
