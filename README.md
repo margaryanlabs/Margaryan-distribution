@@ -10,6 +10,16 @@ It turns the job into a governed execution loop:
 
 **COMMAND → PRODUCT BRAIN → PLAN → RESEARCH → QUEUE → POLICY → APPROVAL → EXECUTE → OBSERVE → SUMMARIZE → LEARN → NEXT ACTION**
 
+## V0.11.1 — Promptence Autopilot Cost Guard
+
+V0.11.1 keeps the hourly seller useful without letting research spend scale accidentally.
+
+New in V0.11.1:
+- Promptence missions are prioritized in portfolio ticks so the first internal customer cannot be starved by other active missions
+- autonomous Promptence research defaults to one new account per tick and can be tuned with `PROMPTENCE_AUTOPILOT_RESEARCH_PER_TICK`
+- known companies/domains are passed into research exclusions before every autonomous research call to reduce duplicate search and token waste
+- health/version reporting now matches the deployed package version
+
 ## V0.11 — Revenue Close Loop
 
 V0.11 closes the operator gap between outreach and verified pipeline movement.
