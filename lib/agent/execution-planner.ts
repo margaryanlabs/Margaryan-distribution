@@ -219,7 +219,7 @@ export async function stageExecutionPlan(plan:ExecutionPlan):Promise<StagedExecu
         const result=await prepareLeadOutreach(mission,lead,product,{forceApproval:true,plannerPlanId:plan.id});
         if(result.sequence)preparedOutreach+=1;
         if(result.existing)notes.push(lead.company+": existing outreach sequence reused; no duplicate actions created.");
-        if(result.skipped)notes.push(lead.company+": "+result.skipped);
+        if("skipped" in result&&result.skipped)notes.push(lead.company+": "+result.skipped);
       }
     }else if(step.kind==="prepare_campaign"){
       const result=await prepareSmmCampaign(mission,Math.max(1,Math.min(3,step.days||3)),{plannerPlanId:plan.id});
