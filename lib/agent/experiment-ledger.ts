@@ -1,4 +1,5 @@
 import {buildDecisionEngineReport} from "@/lib/agent/decision-engine";
+import {distributionStore} from "@/lib/store";
 import type {DashboardSnapshot,ExperimentConfidence,ExperimentRecord,ExperimentVariant,Lead,PerformanceMetrics} from "@/lib/types";
 
 export interface ExperimentDesign{
@@ -195,4 +196,23 @@ export function analyzeExperiment(state:DashboardSnapshot,experiment:ExperimentR
 
 export function buildExperimentLedger(state:DashboardSnapshot,missionId:string){
   return state.experiments.filter(item=>item.missionId===missionId).map(item=>analyzeExperiment(state,item)).sort((a,b)=>b.experiment.createdAt.localeCompare(a.experiment.createdAt));
+}
+
+
+export function reconcileExperiment(experimentId:string,options:{completeIfWindowClosed?:boolean}={}){
+  const experiment=distributionStore.getExperiment(experimentId);
+  if(!experiment)throw new Error("Experiment not found");
+  const before=distributionStore.snapshot();
+  const analysis=analyzeExperiment(before,experiment);
+  const windowClosed=Boolean(experiment.endsAt&&Date.parse(experiment.endsAt)<=Date.now());
+  const shouldComplete=experiment.status==="running"&&options.completeIfWindowClosed===true&&windowClosed;
+  const notes=[...experiment.notes];
+  if(shouldComplete&&!notes.includes("Experiment window elapsed; ledger closed with the evidence available at that time.")){
+    notes.push("Experiment window elapsed; ledger closed with the evidence available at that time.");
+  }
+  const updated=distributionStore.updateExperiment(experiment.id,{
+    variants:analysis.experiment.variants,
+    ...(shouldComplete?{status:"completed" as const,completedAt:new Date().toISOString(),notes}:{notes})
+  })||experiment;
+  return analyzeExperiment(distributionStore.snapshot(),updated);
 }
