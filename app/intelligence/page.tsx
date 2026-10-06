@@ -7,6 +7,7 @@ import type {DecisionEngineReport} from "@/lib/agent/decision-engine";
 import type {ExecutionPlan,StagedExecutionPlan} from "@/lib/agent/execution-planner";
 import type {ResourceAllocationReport,AllocationScenarioId} from "@/lib/agent/resource-allocator";
 import type {ExperimentAnalysis} from "@/lib/agent/experiment-ledger";
+import type {GrowthMemoryReport} from "@/lib/agent/growth-memory";
 import styles from "./intelligence.module.css";
 
 type QualityResponse={
@@ -55,6 +56,7 @@ export default function IntelligencePage(){
   const[allocationBusy,setAllocationBusy]=useState(false);
   const[experiments,setExperiments]=useState<ExperimentAnalysis[]>([]);
   const[experimentBusy,setExperimentBusy]=useState<string|null>(null);
+  const[growthMemory,setGrowthMemory]=useState<GrowthMemoryReport|null>(null);
   const[missionId,setMissionId]=useState("");
   const[hours,setHours]=useState(168);
   const[busy,setBusy]=useState(false);
@@ -86,6 +88,14 @@ export default function IntelligencePage(){
     const data=await res.json() as {experiments?:ExperimentAnalysis[];error?:string};
     if(!res.ok)throw new Error(data.error||"Experiment ledger failed");
     setExperiments(data.experiments||[]);
+  }
+
+  async function loadGrowthMemory(id:string){
+    if(!id){setGrowthMemory(null);return;}
+    const res=await fetch("/api/intelligence/growth-memory?missionId="+encodeURIComponent(id),{cache:"no-store"});
+    const data=await res.json() as GrowthMemoryReport&{error?:string};
+    if(!res.ok)throw new Error(data.error||"Growth Memory failed");
+    setGrowthMemory(data);
   }
 
   async function updateExperiment(experimentId:string,action:"refresh"|"complete"|"stop"){
@@ -121,7 +131,7 @@ export default function IntelligencePage(){
       const promptenceMission=nextState.missions.find(item=>item.status==="active"&&item.input.productId===promptence?.id);
       const scopedMissionId=missionId||promptenceMission?.id||nextState.missions.find(item=>item.status==="active")?.id||nextState.missions[0]?.id||"";
       if(!missionId&&scopedMissionId)setMissionId(scopedMissionId);
-      if(scopedMissionId)await Promise.all([loadDecisions(scopedMissionId),loadAllocator(scopedMissionId,allocationUnits),loadExperiments(scopedMissionId)]);
+      if(scopedMissionId)await Promise.all([loadDecisions(scopedMissionId),loadAllocator(scopedMissionId,allocationUnits),loadExperiments(scopedMissionId),loadGrowthMemory(scopedMissionId)]);
       setExecutionPlan(null);setStagedPlan(null);
       setNotice("Decision Engine refreshed from CRM state, performance evidence, learning, quality and operational truth.");
     }catch(error){
@@ -151,7 +161,7 @@ export default function IntelligencePage(){
       if(!res.ok)throw new Error(data.error||"Execution plan staging failed");
       setStagedPlan(data);
       setNotice(data.alreadyStaged?"This plan was already staged; no duplicate work was created.":"Plan staged into governed preparation and approval queues. No external action was executed.");
-      await Promise.all([loadDecisions(executionPlan.missionId),loadExperiments(executionPlan.missionId)]);
+      await Promise.all([loadDecisions(executionPlan.missionId),loadExperiments(executionPlan.missionId),loadGrowthMemory(executionPlan.missionId)]);
     }catch(error){setNotice(error instanceof Error?error.message:"Execution plan staging failed");}
     finally{setPlanBusy(null);}
   }
@@ -213,7 +223,7 @@ export default function IntelligencePage(){
     <section className={styles.context}>
       <label>
         <span>MISSION SCOPE</span>
-        <select value={missionId} onChange={event=>{const id=event.target.value;setMissionId(id);setExecutionPlan(null);setStagedPlan(null);void Promise.all([loadDecisions(id),loadAllocator(id,allocationUnits),loadExperiments(id)]).catch(error=>setNotice(error instanceof Error?error.message:"Intelligence refresh failed"));}}>
+        <select value={missionId} onChange={event=>{const id=event.target.value;setMissionId(id);setExecutionPlan(null);setStagedPlan(null);void Promise.all([loadDecisions(id),loadAllocator(id,allocationUnits),loadExperiments(id),loadGrowthMemory(id)]).catch(error=>setNotice(error instanceof Error?error.message:"Intelligence refresh failed"));}}>
           <option value="">Select mission</option>
           {(state?.missions||[]).map(item=><option key={item.id} value={item.id}>{item.plan.missionName}</option>)}
         </select>
@@ -255,6 +265,61 @@ export default function IntelligencePage(){
       <div className={styles.funnel}>
         {funnel.map(([label,value],index)=><div key={label}><span>{label}</span><strong>{typeof value==="number"?compact(value):value}</strong>{index<funnel.length-1&&<i>→</i>}</div>)}
       </div>
+    </section>
+
+    <section className={styles.growthMemory}>
+      <div className={styles.sectionHead}>
+        <div><span>GROWTH MEMORY / STRATEGY GRAPH</span><h2>What the sales machine is learning across cycles</h2></div>
+        <b>{growthMemory?.patterns.length||0} remembered patterns</b>
+      </div>
+
+      <div className={styles.memorySummary}>
+        <div><span>TOUCHED ACCOUNTS</span><strong>{growthMemory?.evidenceSummary.touchedAccounts||0}</strong></div>
+        <div><span>SUCCEEDED TOUCHES</span><strong>{growthMemory?.evidenceSummary.succeededTouches||0}</strong></div>
+        <div><span>POSITIVE REPLIES</span><strong>{growthMemory?.evidenceSummary.positiveReplies||0}</strong></div>
+        <div><span>MEETINGS</span><strong>{growthMemory?.evidenceSummary.meetings||0}</strong></div>
+        <div><span>WINS</span><strong>{growthMemory?.evidenceSummary.wins||0}</strong></div>
+        <div><span>ATTRIBUTED REVENUE</span><strong>{money(growthMemory?.evidenceSummary.attributedRevenueUsd||0)}</strong></div>
+      </div>
+
+      <div className={styles.memoryColumns}>
+        <div className={styles.memoryLane}>
+          <div className={styles.subHead}><span>PROMOTE / REUSE</span><b>{growthMemory?.promoted.length||0}</b></div>
+          {(growthMemory?.promoted||[]).slice(0,5).map((item,index)=><article key={item.key} className={styles.memoryPromoted}>
+            <header><b>{String(index+1).padStart(2,"0")}</b><span>{item.confidence.toUpperCase()} · SCORE {item.score}</span></header>
+            <div className={styles.motionPath}>
+              <strong>{item.segment}</strong>
+              {item.trigger&&<><i>→</i><strong>{item.trigger}</strong></>}
+              {item.offer&&<><i>→</i><strong>{item.offer}</strong></>}
+              {item.channel&&item.channel!=="system"&&<><i>→</i><strong>{item.channel.toUpperCase()}</strong></>}
+              {item.messageProfile&&<><i>→</i><strong>{item.messageProfile}</strong></>}
+            </div>
+            <footer>{item.evidence.slice(0,4).map((evidence,i)=><span key={i}>{evidence}</span>)}</footer>
+          </article>)}
+          {!growthMemory?.promoted.length&&<div className={styles.empty}>No motion has enough downstream evidence to promote yet. The system will keep exploring.</div>}
+        </div>
+
+        <div className={styles.memoryLane}>
+          <div className={styles.subHead}><span>STOP REPEATING</span><b>{growthMemory?.deprioritized.length||0}</b></div>
+          {(growthMemory?.deprioritized||[]).slice(0,5).map((item,index)=><article key={item.key} className={styles.memoryDeprioritized}>
+            <header><b>{String(index+1).padStart(2,"0")}</b><span>{item.confidence.toUpperCase()} · {item.exposures} EXPOSURES</span></header>
+            <div className={styles.motionPath}>
+              <strong>{item.segment}</strong>
+              {item.offer&&<><i>→</i><strong>{item.offer}</strong></>}
+              {item.channel&&item.channel!=="system"&&<><i>→</i><strong>{item.channel.toUpperCase()}</strong></>}
+              {item.messageProfile&&<><i>→</i><strong>{item.messageProfile}</strong></>}
+            </div>
+            <footer>{item.evidence.slice(0,4).map((evidence,i)=><span key={i}>{evidence}</span>)}</footer>
+          </article>)}
+          {!growthMemory?.deprioritized.length&&<div className={styles.empty}>No repeatedly weak motion has enough exposure to suppress yet.</div>}
+        </div>
+      </div>
+
+      <div className={styles.memoryGuidance}>
+        <section><span>NEXT RESEARCH BIAS</span>{(growthMemory?.researchGuidance||[]).map((item,index)=><p key={index}>{item}</p>)}{!growthMemory?.researchGuidance.length&&<p>Keep research broad until downstream signal becomes repeatable.</p>}</section>
+        <section><span>NEXT OUTREACH BIAS</span>{(growthMemory?.outreachGuidance||[]).map((item,index)=><p key={index}>{item}</p>)}{!growthMemory?.outreachGuidance.length&&<p>Use lead-specific evidence and continue controlled message exploration.</p>}</section>
+      </div>
+      <div className={styles.memoryDisclaimer}>{growthMemory?.disclaimer||"Growth Memory will appear after durable CRM outcomes accumulate."}</div>
     </section>
 
     <section className={styles.allocator}>
