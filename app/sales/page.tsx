@@ -61,7 +61,13 @@ export default function SalesPage(){
    return priority||((b.score||0)-(a.score||0));
  });
  const eligible=leads.filter(lead=>(lead.score||0)>=minScore&&isReachable(lead)&&!lead.optedOut&&lead.stage!=="do_not_contact").length;
- const firstTouchQueue=actions.filter(action=>action.channel==="email"&&action.kind==="send_email"&&Number(action.payload.sequenceStep)===1&&["queued","approved"].includes(action.status)).slice(0,8);
+ const revenueQueue=actions
+  .filter(action=>action.mode==="APPROVE"&&["queued","approved"].includes(action.status)&&["send_email","reply","book_meeting","call"].includes(action.kind))
+  .sort((a,b)=>{
+   const rank=(action:typeof a)=>action.kind==="reply"?0:action.kind==="book_meeting"?1:Number(action.payload.sequenceStep)===2?2:Number(action.payload.sequenceStep)===1?3:4;
+   return rank(a)-rank(b)||a.scheduledAt.localeCompare(b.scheduledAt);
+  })
+  .slice(0,12);
  const leadById=new Map(leads.map(lead=>[lead.id,lead]));
 
  async function bootstrap(){
@@ -101,18 +107,18 @@ export default function SalesPage(){
   try{
    const res=await fetch(`/api/actions/${encodeURIComponent(actionId)}/${decision}`,{method:"POST"});
    const data=await res.json();if(!res.ok)throw new Error(data.error||`Action ${decision} failed`);
-   setNotice(decision==="approve"?"First-touch approved. It is still not sent until live execution is enabled or you explicitly send it in live mode.":"First-touch rejected and removed from the send path.");
+   setNotice(decision==="approve"?"Action approved. It remains governed until live execution is enabled or you explicitly execute it.":"Action rejected and removed from the active revenue path.");
    await refresh();
   }catch(error){setNotice(error instanceof Error?error.message:"Review failed");}finally{setBusy(null);}
  }
 
  async function executeAction(actionId:string){
-  if(state?.runtime?.execution!=="live"){setNotice("Live send is disabled. The system will not pretend a dry-run was a real email.");return;}
+  if(state?.runtime?.execution!=="live"){setNotice("Live execution is disabled. The system will not pretend a dry-run was a real external action.");return;}
   setBusy(actionId+"send");
   try{
    const res=await fetch(`/api/actions/${encodeURIComponent(actionId)}/execute`,{method:"POST"});
    const data=await res.json();if(!res.ok)throw new Error(data.error||"Send failed");
-   setNotice("Provider accepted the first-touch action. Refreshing factual pipeline state.");
+   setNotice("Provider accepted the action. Refreshing factual pipeline and conversion state.");
    await refresh();
   }catch(error){setNotice(error instanceof Error?error.message:"Send failed");}finally{setBusy(null);}
  }
@@ -177,21 +183,23 @@ export default function SalesPage(){
   </section>
 
   <section className={styles.reviewPanel}>
-   <div className={styles.sectionHead}><div><span>HUMAN REVIEW QUEUE</span><h3>Approve evidence-led first touches before money leaves the building</h3></div><b>{firstTouchQueue.length}</b></div>
-   {firstTouchQueue.length===0?<div className={styles.empty}>No Promptence first-touch emails are waiting for review yet.</div>:
-   <div className={styles.reviewList}>{firstTouchQueue.map(action=>{
+   <div className={styles.sectionHead}><div><span>HUMAN REVENUE QUEUE</span><h3>One queue for first touch, follow-up, inbound reply and meeting booking</h3></div><b>{revenueQueue.length}</b></div>
+   <p className={styles.queueNote}>Replies and verified meeting actions rise above cold outreach. Nothing here bypasses approval, opt-out, dependency, quality or execution gates.</p>
+   {revenueQueue.length===0?<div className={styles.empty}>No Promptence revenue actions are waiting for operator review.</div>:
+   <div className={styles.reviewList}>{revenueQueue.map(action=>{
     const leadId=typeof action.payload.leadId==="string"?action.payload.leadId:"";
     const lead=leadById.get(leadId);
-    const subject=typeof action.payload.subject==="string"?action.payload.subject:"No subject";
-    const body=typeof action.payload.body==="string"?action.payload.body:"No body";
+    const subject=typeof action.payload.subject==="string"?action.payload.subject:"";
+    const body=typeof action.payload.body==="string"?action.payload.body:action.rationale;
     const quality=typeof action.payload.qualityScore==="number"?Math.round(action.payload.qualityScore):null;
+    const queueLabel=action.kind==="reply"?"INBOUND REPLY":action.kind==="book_meeting"?"BOOK MEETING":Number(action.payload.sequenceStep)===2?"FOLLOW-UP":Number(action.payload.sequenceStep)===1?"FIRST TOUCH":action.kind.replaceAll("_"," ").toUpperCase();
     return <article key={action.recordId} className={styles.reviewItem}>
-     <div className={styles.reviewMeta}><div><strong>{lead?.company||action.objective}</strong><small>{lead?.segment||"Promptence prospect"} · fit {Math.round(lead?.score||0)} {quality!==null?`· copy ${quality}/100`:""}</small></div><span className={action.status==="approved"?styles.approvedBadge:styles.reviewBadge}>{action.status.toUpperCase()}</span></div>
-     <div className={styles.emailPreview}><b>{subject}</b><p>{body}</p></div>
+     <div className={styles.reviewMeta}><div><span className={styles.queueKind}>{queueLabel}</span><strong>{lead?.company||action.objective}</strong><small>{lead?.segment||"Promptence prospect"} · due {short(action.scheduledAt)} {quality!==null?"· copy "+quality+"/100":""}</small></div><span className={action.status==="approved"?styles.approvedBadge:styles.reviewBadge}>{action.status.toUpperCase()}</span></div>
+     <div className={styles.emailPreview}>{subject&&<b>{subject}</b>}<p>{body}</p></div>
      <div className={styles.reviewActions}>
       {action.status==="queued"&&<><button onClick={()=>void reviewAction(action.recordId,"approve")} disabled={busy===action.recordId+"approve"}>{busy===action.recordId+"approve"?"Approving…":"Approve"}</button><button className={styles.dangerButton} onClick={()=>void reviewAction(action.recordId,"reject")} disabled={busy===action.recordId+"reject"}>Reject</button></>}
-      {action.status==="approved"&&<button onClick={()=>void executeAction(action.recordId)} disabled={state?.runtime?.execution!=="live"||busy===action.recordId+"send"}>{state?.runtime?.execution==="live"?"Send now":"Live send disabled"}</button>}
-      {lead&&<a href={`/leads/${lead.id}`}>Inspect account →</a>}
+      {action.status==="approved"&&<button onClick={()=>void executeAction(action.recordId)} disabled={state?.runtime?.execution!=="live"||busy===action.recordId+"send"}>{state?.runtime?.execution==="live"?(action.kind==="book_meeting"?"Book now":action.kind==="reply"?"Send reply":"Execute now"):"Live execution disabled"}</button>}
+      {lead&&<a href={"/leads/"+lead.id}>Inspect account →</a>}
      </div>
     </article>;
    })}</div>}
