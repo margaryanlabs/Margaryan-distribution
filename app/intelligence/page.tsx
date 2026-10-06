@@ -390,6 +390,10 @@ export default function IntelligencePage(){
           <div><span>EXECUTION PLAN PREVIEW</span><h3>{executionPlan.title}</h3><p>{executionPlan.rationale}</p></div>
           <button onClick={()=>void stagePlan()} disabled={planBusy==="stage"}>{planBusy==="stage"?"Staging…":"Stage governed plan"}</button>
         </div>
+        {executionPlan.experiment&&<div className={styles.planExperiment}>
+          <div><span>EXPERIMENT DESIGN</span><strong>{executionPlan.experiment.hypothesis}</strong><small>{executionPlan.experiment.assignment.replaceAll("_"," ")} · primary metric {executionPlan.experiment.primaryMetric} · {executionPlan.experiment.windowHours}h window</small></div>
+          <div>{executionPlan.experiment.variants.map(variant=><span key={variant.id}><b>{variant.role.toUpperCase()}</b> {variant.label} · {variant.leadIds.length?variant.leadIds.length+" leads":variant.plannedShare+"% planned share"}</span>)}</div>
+        </div>}
         <div className={styles.planSteps}>
           {executionPlan.steps.map((step,index)=><article key={step.id}>
             <b>{String(index+1).padStart(2,"0")}</b>
@@ -403,7 +407,7 @@ export default function IntelligencePage(){
           <strong>{stagedPlan.alreadyStaged?"Already staged":"Staged successfully"}</strong>
           <span>{stagedPlan.preparedOutreach} outreach sequences prepared</span>
           <span>{stagedPlan.preparedCampaignAssets} campaign assets prepared</span>
-          <span>{stagedPlan.queuedInternalActions} internal actions queued for approval</span>
+          <span>{stagedPlan.queuedInternalActions} internal actions queued for approval</span>{stagedPlan.experimentRegistered&&<span>experiment registered · {stagedPlan.experimentId}</span>}
         </div>}
       </section>}
 
