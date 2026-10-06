@@ -10,6 +10,29 @@ It turns the job into a governed execution loop:
 
 **COMMAND → PRODUCT BRAIN → PLAN → RESEARCH → QUEUE → POLICY → APPROVAL → EXECUTE → OBSERVE → SUMMARIZE → LEARN → NEXT ACTION**
 
+## V0.17 — Experiment Ledger & Causal Learning
+
+V0.17 adds durable experiment memory so Distribution can distinguish controlled tests from observational correlations.
+
+New in V0.17:
+- durable `ExperimentRecord` entities are stored inside the versioned CRM checkpoint
+- governed Execution Planner can register experiments before external outcomes are observed
+- fresh comparable email-reachable leads can be assigned by UUID hash into baseline vs single-signal CTA holdout cohorts
+- channel experiments are explicitly marked observational and cannot use causal language
+- actions, content and performance events carry `experimentId` / `variantId` attribution
+- Experiment Ledger tracks hypothesis, assignment quality, arms, exposure, primary metric, rate, uplift, confidence and conclusion
+- small or unbalanced samples remain `insufficient` or `directional`; they never become automatic winners
+- analyze actions reconcile experiment evidence and can close an elapsed experiment window
+- `/api/intelligence/experiments` supports read-only ledger inspection plus durable refresh / complete / stop lifecycle actions
+- experiment conclusions feed back into Learning Reports
+- Resource Allocator weights controlled holdout evidence above observational channel rankings
+
+Guardrails:
+- causal language is allowed only for eligible pre-outcome hash holdouts with enough exposure
+- observational channel comparisons remain directional regardless of apparent uplift
+- a single experiment never triggers automatic scaling
+- staging experiments never bypasses approval, quality, opt-out, dependency, provider or daily-limit gates
+
 ## V0.16 — Experiment & Resource Allocator
 
 V0.16 adds a non-monetary resource allocation layer above Decision Engine and Execution Planner.
