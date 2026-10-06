@@ -3,7 +3,7 @@ import { assessDistributionCopy } from "@/lib/agent/quality-gate";
 import { distributionStore } from "@/lib/store";
 import type { Lead, MissionRecord, PlannedAction, ProductRecord } from "@/lib/types";
 
-export async function prepareLeadOutreach(mission:MissionRecord,lead:Lead,product?:ProductRecord,options:{forceApproval?:boolean;plannerPlanId?:string}={}){
+export async function prepareLeadOutreach(mission:MissionRecord,lead:Lead,product?:ProductRecord,options:{forceApproval?:boolean;plannerPlanId?:string;experimentId?:string;variantId?:string}={}){
   const existing=distributionStore.listOutreach().find(item=>item.missionId===mission.id&&item.leadId===lead.id);
   if(existing)return{sequence:existing,queued:[],existing:true};
   if(lead.optedOut||lead.stage==="do_not_contact")return{sequence:undefined,queued:[],existing:false,skipped:"Lead is opted out"};
@@ -18,7 +18,7 @@ export async function prepareLeadOutreach(mission:MissionRecord,lead:Lead,produc
     if(options.forceApproval)return"APPROVE";
     return mission.input.autonomy==="auto"?"AUTO":"APPROVE";
   };
-  const qualityPayload=(quality:typeof initialQuality)=>({qualityScore:quality.score,qualityIssues:quality.issues,...(options.plannerPlanId?{plannerPlanId:options.plannerPlanId}:{})});
+  const qualityPayload=(quality:typeof initialQuality)=>({qualityScore:quality.score,qualityIssues:quality.issues,...(options.plannerPlanId?{plannerPlanId:options.plannerPlanId}:{}),...(options.experimentId?{experimentId:options.experimentId}:{}),...(options.variantId?{variantId:options.variantId}:{})});
   const initialActionId=`email-initial-${lead.id}`;
   const followupActionId=`email-followup-${lead.id}`;
   const voiceDependency=lead.email?{dependsOnActionId:initialActionId}:{};
