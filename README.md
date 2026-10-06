@@ -10,6 +10,24 @@ It turns the job into a governed execution loop:
 
 **COMMAND → PRODUCT BRAIN → PLAN → RESEARCH → QUEUE → POLICY → APPROVAL → EXECUTE → OBSERVE → SUMMARIZE → LEARN → NEXT ACTION**
 
+## V0.13 — Three-Space Revenue OS
+
+V0.13 reorganizes Margaryan Distribution around three primary operating workspaces instead of a flat collection of tools.
+
+Primary workspaces:
+- **Revenue** — accounts, outreach, replies, meetings, pipeline and verified revenue
+- **Marketing** — campaigns, content, channels, demand and performance handoff
+- **Intelligence** — executive readout, commercial funnel, learning rankings, next-best-actions, quality and runtime risk
+
+New in V0.13:
+- new `/intelligence` Decision Intelligence workspace using existing CRM, performance, learning, quality and operations evidence
+- executive readout and operator attention are visible beside mission-level commercial intelligence
+- channel and pillar rankings are consolidated with next experiments instead of living in isolated analytics screens
+- quality and runtime risk are surfaced in the same decision layer without inventing attribution
+- the global dock now treats Revenue / Marketing / Intelligence as the three primary workspaces
+- Leads / Inbox / Meetings remain fast flow tools while Command, Products, Connections, Autopilot, Quality, Operations, Analytics, Calls and Brief move under System
+- legacy drill-down pages remain available and unchanged for detailed inspection
+
 ## V0.12 — Marketing Command
 
 V0.12 turns the legacy SMM workspace into a demand and distribution cockpit instead of a simple content generator.
