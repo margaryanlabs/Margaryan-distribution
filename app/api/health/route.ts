@@ -7,7 +7,7 @@ export function GET() {
   return NextResponse.json({
     ok: true,
     service: "margaryan-distribution",
-    version: "0.17.0",
+    version: "0.17.1",
     time: new Date().toISOString(),
     storage: runtime.storage,
     durable: runtime.durable,
@@ -19,6 +19,8 @@ export function GET() {
     automation: {
       portfolioCronConfigured: Boolean(process.env.CRON_SECRET),
       workerConfigured: Boolean(process.env.WORKER_SECRET || process.env.AUTOPILOT_SECRET),
+      workerFullSalesLoop: true,
+      workerLiveExecutionConfigured: process.env.WORKER_LIVE_EXECUTION === "true",
     },
     adapters: {
       openai: Boolean(process.env.OPENAI_API_KEY),
