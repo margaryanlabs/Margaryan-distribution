@@ -10,6 +10,17 @@ It turns the job into a governed execution loop:
 
 **COMMAND → PRODUCT BRAIN → PLAN → RESEARCH → QUEUE → POLICY → APPROVAL → EXECUTE → OBSERVE → SUMMARIZE → LEARN → NEXT ACTION**
 
+## V0.11 — Revenue Close Loop
+
+V0.11 closes the operator gap between outreach and verified pipeline movement.
+
+New in V0.11:
+- one Promptence Human Revenue Queue for first touch, follow-up, inbound replies and approved meeting bookings
+- reply and meeting work is prioritized above cold outreach so warm demand is not buried
+- verified Google Calendar bookings now move the lead to `meeting`, set the next action to meeting preparation, and stop remaining cold outreach
+- each real provider-accepted booking records an idempotent meeting performance event instead of leaving calendar truth disconnected from CRM truth
+- the same conversion synchronization runs for both background AUTO execution and explicit operator execution
+
 ## V0.7 — Promptence Revenue Machine
 
 V0.7 keeps Margaryan Distribution as a standalone multi-product distribution OS, but makes **Promptence the first internal customer** and adds a real product-specific sales motion instead of generic lead scoring.
