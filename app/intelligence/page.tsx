@@ -6,6 +6,7 @@ import type {ExecutiveBrief} from "@/lib/agent/executive-brief";
 import type {DecisionEngineReport} from "@/lib/agent/decision-engine";
 import type {ExecutionPlan,StagedExecutionPlan} from "@/lib/agent/execution-planner";
 import type {ResourceAllocationReport,AllocationScenarioId} from "@/lib/agent/resource-allocator";
+import type {ExperimentAnalysis} from "@/lib/agent/experiment-ledger";
 import styles from "./intelligence.module.css";
 
 type QualityResponse={
@@ -52,6 +53,8 @@ export default function IntelligencePage(){
   const[selectedScenario,setSelectedScenario]=useState<AllocationScenarioId|null>(null);
   const[allocationUnits,setAllocationUnits]=useState(100);
   const[allocationBusy,setAllocationBusy]=useState(false);
+  const[experiments,setExperiments]=useState<ExperimentAnalysis[]>([]);
+  const[experimentBusy,setExperimentBusy]=useState<string|null>(null);
   const[missionId,setMissionId]=useState("");
   const[hours,setHours]=useState(168);
   const[busy,setBusy]=useState(false);
@@ -77,6 +80,26 @@ export default function IntelligencePage(){
     }finally{setAllocationBusy(false);}
   }
 
+  async function loadExperiments(id:string){
+    if(!id){setExperiments([]);return;}
+    const res=await fetch("/api/intelligence/experiments?missionId="+encodeURIComponent(id),{cache:"no-store"});
+    const data=await res.json() as {experiments?:ExperimentAnalysis[];error?:string};
+    if(!res.ok)throw new Error(data.error||"Experiment ledger failed");
+    setExperiments(data.experiments||[]);
+  }
+
+  async function updateExperiment(experimentId:string,action:"refresh"|"complete"|"stop"){
+    setExperimentBusy(experimentId+":"+action);
+    try{
+      const res=await fetch("/api/intelligence/experiments",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({experimentId,action})});
+      const data=await res.json() as {ok?:boolean;error?:string};
+      if(!res.ok)throw new Error(data.error||"Experiment update failed");
+      await loadExperiments(missionId);
+      setNotice(action==="refresh"?"Experiment evidence reconciled.":action==="complete"?"Experiment marked complete with the evidence currently available.":"Experiment stopped; historical evidence remains in the ledger.");
+    }catch(error){setNotice(error instanceof Error?error.message:"Experiment update failed");}
+    finally{setExperimentBusy(null);}
+  }
+
   async function refresh(nextHours=hours){
     setBusy(true);
     try{
@@ -98,7 +121,7 @@ export default function IntelligencePage(){
       const promptenceMission=nextState.missions.find(item=>item.status==="active"&&item.input.productId===promptence?.id);
       const scopedMissionId=missionId||promptenceMission?.id||nextState.missions.find(item=>item.status==="active")?.id||nextState.missions[0]?.id||"";
       if(!missionId&&scopedMissionId)setMissionId(scopedMissionId);
-      if(scopedMissionId)await Promise.all([loadDecisions(scopedMissionId),loadAllocator(scopedMissionId,allocationUnits)]);
+      if(scopedMissionId)await Promise.all([loadDecisions(scopedMissionId),loadAllocator(scopedMissionId,allocationUnits),loadExperiments(scopedMissionId)]);
       setExecutionPlan(null);setStagedPlan(null);
       setNotice("Decision Engine refreshed from CRM state, performance evidence, learning, quality and operational truth.");
     }catch(error){
@@ -128,7 +151,7 @@ export default function IntelligencePage(){
       if(!res.ok)throw new Error(data.error||"Execution plan staging failed");
       setStagedPlan(data);
       setNotice(data.alreadyStaged?"This plan was already staged; no duplicate work was created.":"Plan staged into governed preparation and approval queues. No external action was executed.");
-      await loadDecisions(executionPlan.missionId);
+      await Promise.all([loadDecisions(executionPlan.missionId),loadExperiments(executionPlan.missionId)]);
     }catch(error){setNotice(error instanceof Error?error.message:"Execution plan staging failed");}
     finally{setPlanBusy(null);}
   }
@@ -190,7 +213,7 @@ export default function IntelligencePage(){
     <section className={styles.context}>
       <label>
         <span>MISSION SCOPE</span>
-        <select value={missionId} onChange={event=>{const id=event.target.value;setMissionId(id);setExecutionPlan(null);setStagedPlan(null);void Promise.all([loadDecisions(id),loadAllocator(id,allocationUnits)]).catch(error=>setNotice(error instanceof Error?error.message:"Intelligence refresh failed"));}}>
+        <select value={missionId} onChange={event=>{const id=event.target.value;setMissionId(id);setExecutionPlan(null);setStagedPlan(null);void Promise.all([loadDecisions(id),loadAllocator(id,allocationUnits),loadExperiments(id)]).catch(error=>setNotice(error instanceof Error?error.message:"Intelligence refresh failed"));}}>
           <option value="">Select mission</option>
           {(state?.missions||[]).map(item=><option key={item.id} value={item.id}>{item.plan.missionName}</option>)}
         </select>
@@ -299,6 +322,47 @@ export default function IntelligencePage(){
           </section>
         </div>)}
         <div className={styles.allocationGuardrail}>{allocation.disclaimer}</div>
+      </div>}
+    </section>
+
+    <section className={styles.experimentLedger}>
+      <div className={styles.sectionHead}>
+        <div><span>EXPERIMENT LEDGER</span><h2>What we actually tested — and how strong the evidence is</h2></div>
+        <b>{experiments.length} recorded</b>
+      </div>
+      {experiments.length===0?<div className={styles.empty}>No staged plan has created an experiment yet. Eligible execution plans will register a baseline and variant automatically.</div>:
+      <div className={styles.experimentGrid}>
+        {experiments.slice(0,8).map(item=>{
+          const baseline=item.variants.find(variant=>variant.role==="baseline");
+          const variant=item.variants.find(variant=>variant.role==="variant");
+          return <article key={item.experiment.id}>
+            <header>
+              <div><span>{item.experiment.dimension.toUpperCase()} · {item.experiment.assignment.replaceAll("_"," ").toUpperCase()}</span><h3>{item.experiment.hypothesis}</h3></div>
+              <div className={styles.experimentStatus}><b>{item.confidence.toUpperCase()}</b><small>{item.status.replaceAll("_"," ")}</small></div>
+            </header>
+            <div className={styles.armGrid}>
+              {[baseline,variant].filter(Boolean).map(arm=><div key={arm!.id} className={arm!.role==="variant"?styles.variantArm:undefined}>
+                <span>{arm!.role.toUpperCase()}</span>
+                <strong>{arm!.label}</strong>
+                <div><b>{arm!.exposureCount}</b><small>exposures</small></div>
+                <div><b>{arm!.primaryMetricValue}</b><small>{item.experiment.primaryMetric}</small></div>
+                <div><b>{arm!.ratePerExposure.toFixed(2)}</b><small>per exposure</small></div>
+              </div>)}
+            </div>
+            <div className={styles.experimentVerdict}>
+              <span>{item.causalLanguageAllowed?"CONTROLLED HOLDOUT":"DIRECTIONAL ONLY"}</span>
+              <p>{item.conclusion}</p>
+              {typeof item.upliftPercent==="number"&&<b>{item.upliftPercent>0?"+":""}{item.upliftPercent}% vs baseline</b>}
+            </div>
+            <footer>
+              <div>{item.guardrails.slice(0,2).map((rule,index)=><span key={index}>{rule}</span>)}</div>
+              <div className={styles.experimentActions}>
+                <button onClick={()=>void updateExperiment(item.experiment.id,"refresh")} disabled={Boolean(experimentBusy)}>Refresh</button>
+                {item.experiment.status==="running"&&<><button onClick={()=>void updateExperiment(item.experiment.id,"complete")} disabled={Boolean(experimentBusy)}>Complete</button><button className={styles.stopExperiment} onClick={()=>void updateExperiment(item.experiment.id,"stop")} disabled={Boolean(experimentBusy)}>Stop</button></>}
+              </div>
+            </footer>
+          </article>;
+        })}
       </div>}
     </section>
 
