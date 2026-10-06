@@ -10,6 +10,21 @@ It turns the job into a governed execution loop:
 
 **COMMAND → PRODUCT BRAIN → PLAN → RESEARCH → QUEUE → POLICY → APPROVAL → EXECUTE → OBSERVE → SUMMARIZE → LEARN → NEXT ACTION**
 
+## V0.17.1 — Full Sales Worker
+
+V0.17.1 fixes the production hourly-worker gap: the existing `/api/worker/tick` endpoint now runs the complete governed sales-preparation loop instead of only executing actions that were already queued.
+
+Hourly worker behavior:
+- requires durable CRM before autonomous preparation
+- prioritizes one active mission (Promptence first through Portfolio Director ordering)
+- keeps Promptence research at one new research request per tick
+- targets 25 reachable leads and prepares up to five qualified outreach sequences per tick
+- polls known-lead inbox when provider credentials exist
+- updates factual learning when new performance evidence exists
+- maintains the current seven-day content campaign queue
+- external AUTO execution requires **both** `EXECUTION_ENABLED=true` and `WORKER_LIVE_EXECUTION=true`
+- without the second opt-in, worker runs in `full-loop-preparation-only` mode
+
 ## V0.17 — Experiment Ledger & Causal Learning
 
 V0.17 adds durable experiment memory so Distribution can distinguish controlled tests from observational correlations.
