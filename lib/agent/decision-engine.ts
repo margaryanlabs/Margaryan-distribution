@@ -1,7 +1,8 @@
 import type {DashboardSnapshot,Lead,LearningRanking} from "@/lib/types";
+import {buildGrowthMemory} from "@/lib/agent/growth-memory";
 
 export type DecisionKind="focus"|"scale_test"|"hold"|"fix"|"review";
-export type DecisionScope="account"|"channel"|"segment"|"offer"|"quality"|"operations";
+export type DecisionScope="account"|"channel"|"segment"|"offer"|"motion"|"quality"|"operations";
 export type DecisionConfidence="low"|"medium"|"high";
 
 export interface DecisionDirective{
@@ -159,6 +160,7 @@ export function buildDecisionEngineReport(state:DashboardSnapshot,missionId:stri
   const actions=state.actions.filter(item=>item.missionId===missionId);
   const content=state.content.filter(item=>item.missionId===missionId);
   const directives:DecisionDirective[]=[];
+  const growthMemory=buildGrowthMemory(state,missionId);
 
   const priorityAccounts=leads
     .filter(item=>!["won","lost","do_not_contact"].includes(item.stage))
@@ -257,6 +259,37 @@ export function buildDecisionEngineReport(state:DashboardSnapshot,missionId:stri
   }
 
   directives.push(...segmentDirectives(leads),...offerDirectives(leads));
+
+  const winningMotion=growthMemory.promoted.find(item=>item.level==="full_motion")||growthMemory.promoted.find(item=>item.level==="segment_offer");
+  if(winningMotion&&winningMotion.confidence!=="low"){
+    directives.push({
+      id:"memory-focus-"+winningMotion.key,kind:"focus",scope:"motion",target:winningMotion.key,
+      title:"Reuse the strongest remembered GTM motion",
+      recommendation:"Bias the next small research/outreach batch toward this motion while preserving exploration against alternatives.",
+      reason:"Growth Memory has repeated downstream evidence for this combination across durable CRM outcomes.",
+      evidence:[
+        winningMotion.segment+(winningMotion.offer?" · "+winningMotion.offer:"")+(winningMotion.channel?" · "+winningMotion.channel:""),
+        ...winningMotion.evidence.slice(0,3)
+      ],
+      confidence:winningMotion.confidence,priority:82+Math.min(10,winningMotion.meetings*2+winningMotion.wins*4)
+    });
+  }
+
+  const losingMotion=growthMemory.deprioritized.find(item=>item.level==="full_motion")||growthMemory.deprioritized.find(item=>item.level==="segment_offer");
+  if(losingMotion){
+    directives.push({
+      id:"memory-hold-"+losingMotion.key,kind:"hold",scope:"motion",target:losingMotion.key,
+      title:"Stop repeating a low-signal motion",
+      recommendation:"Reduce net-new volume for this exact motion until a new trigger, message or offer hypothesis is tested.",
+      reason:"Durable Growth Memory shows repeated exposure without recorded warm downstream outcomes.",
+      evidence:[
+        losingMotion.segment+(losingMotion.offer?" · "+losingMotion.offer:"")+(losingMotion.channel?" · "+losingMotion.channel:""),
+        ...losingMotion.evidence.slice(0,3)
+      ],
+      confidence:losingMotion.confidence,priority:73+Math.min(8,losingMotion.exposures)
+    });
+  }
+
   directives.sort((a,b)=>b.priority-a.priority);
 
   const headline=directives.length
