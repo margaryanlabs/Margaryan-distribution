@@ -5,6 +5,7 @@ function max(name:string,fallback:number){const value=Number(process.env[name]||
 function dayKey(value:string){return value.slice(0,10);}
 
 export function dailyLimitFor(channel:Channel,kind:ActionKind){
+  if(kind==="research"||kind==="analyze")return undefined;
   if(channel==="email")return{limit:max("MAX_EMAILS_PER_DAY",40),label:"email sends"};
   if(channel==="voice")return{limit:max("MAX_CALLS_PER_DAY",20),label:"voice calls"};
   if(["x","linkedin","instagram"].includes(channel)&&kind==="publish_post")return{limit:max("MAX_SOCIAL_POSTS_PER_DAY",12),label:"social posts"};
