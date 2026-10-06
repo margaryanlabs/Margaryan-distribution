@@ -195,7 +195,7 @@ export default function Home() {
       <section className="workspace">
         <header className="topbar">
           <div><span className="eyebrow">MARGARYAN DISTRIBUTION / CONTROL PLANE</span><h1>Command Center</h1></div>
-          <div className="topbarActions"><a className="ghost" href="/sales">Revenue →</a><a className="ghost" href="/smm">Marketing →</a><button className="ghost" onClick={()=>void refresh()}>Refresh</button></div>
+          <div className="topbarActions"><a className="ghost" href="/sales">Revenue →</a><a className="ghost" href="/smm">Marketing →</a><a className="ghost" href="/intelligence">Intelligence →</a><button className="ghost" onClick={()=>void refresh()}>Refresh</button></div>
         </header>
 
         <div className="notice"><span/> {notice}</div>
