@@ -10,6 +10,19 @@ It turns the job into a governed execution loop:
 
 **COMMAND → PRODUCT BRAIN → PLAN → RESEARCH → QUEUE → POLICY → APPROVAL → EXECUTE → OBSERVE → SUMMARIZE → LEARN → NEXT ACTION**
 
+## V0.14 — Decision Engine
+
+V0.14 upgrades Intelligence from a read-only dashboard into an evidence-ranked operating decision layer.
+
+New in V0.14:
+- deterministic Decision Engine over existing CRM, learning and performance evidence
+- ranked directives across accounts, channels, ICP segments, offers, quality and operational health
+- conservative channel postures: `increase_test`, `keep_testing`, `rework`, or `insufficient_evidence`
+- Top-5 account queue scored from stage, priority, fit, buying signals, value, reachability and next-action urgency
+- safeguards against false causality: scale guidance means controlled experiments, not automatic budget increases
+- overdue-account, approval-bottleneck, execution-exception and low-quality interventions
+- `/api/intelligence/decisions` exposes mission-scoped decision output without mutating CRM state
+
 ## V0.13 — Three-Space Revenue OS
 
 V0.13 reorganizes Margaryan Distribution around three primary operating workspaces instead of a flat collection of tools.
