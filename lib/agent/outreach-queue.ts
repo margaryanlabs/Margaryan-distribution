@@ -2,12 +2,13 @@ import { composeOutreachSequence } from "@/lib/agent/outreach";
 import { assessDistributionCopy } from "@/lib/agent/quality-gate";
 import { distributionStore } from "@/lib/store";
 import type { Lead, MissionRecord, PlannedAction, ProductRecord } from "@/lib/types";
+import type { GrowthMemoryReport } from "@/lib/agent/growth-memory";
 
-export async function prepareLeadOutreach(mission:MissionRecord,lead:Lead,product?:ProductRecord,options:{forceApproval?:boolean;plannerPlanId?:string;experimentId?:string;variantId?:string;experimentProfile?:"baseline"|"single_signal_cta"}={}){
+export async function prepareLeadOutreach(mission:MissionRecord,lead:Lead,product?:ProductRecord,options:{forceApproval?:boolean;plannerPlanId?:string;experimentId?:string;variantId?:string;experimentProfile?:"baseline"|"single_signal_cta";growthMemory?:GrowthMemoryReport}={}){
   const existing=distributionStore.listOutreach().find(item=>item.missionId===mission.id&&item.leadId===lead.id);
   if(existing)return{sequence:existing,queued:[],existing:true};
   if(lead.optedOut||lead.stage==="do_not_contact")return{sequence:undefined,queued:[],existing:false,skipped:"Lead is opted out"};
-  const draft=await composeOutreachSequence(mission,lead,product,{experimentProfile:options.experimentProfile});
+  const draft=await composeOutreachSequence(mission,lead,product,{experimentProfile:options.experimentProfile,growthMemory:options.growthMemory});
   const sequence=distributionStore.addOutreach({...draft,missionId:mission.id,leadId:lead.id,language:mission.input.language});
   const initialQuality=assessDistributionCopy({text:draft.emailInitial.body,subject:draft.emailInitial.subject,channel:"email",product,lead});
   const followupQuality=assessDistributionCopy({text:draft.emailFollowup.body,subject:draft.emailFollowup.subject,channel:"email",product,lead});
