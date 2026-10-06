@@ -51,7 +51,7 @@ function hash(value:string){
   return out>>>0;
 }
 function comparablePool(leads:Lead[]){
-  const active=leads.filter(item=>ACTIVE.has(item.stage)&&!item.optedOut&&(item.email||item.linkedinUrl));
+  const active=leads.filter(item=>ACTIVE.has(item.stage)&&!item.optedOut&&Boolean(item.email));
   const groups=new Map<string,Lead[]>();
   for(const lead of active){
     const key=[lead.segment||"unsegmented",lead.recommendedOfferCode||lead.recommendedOffer||"no-offer"].join("::");
@@ -95,7 +95,8 @@ export function designExperimentForDirective(state:DashboardSnapshot,missionId:s
   }
 
   if(["account","segment","offer"].includes(directive.scope)||directive.kind==="focus"){
-    const missionLeads=state.leads.filter(item=>item.missionId===missionId);
+    const usedLeadIds=new Set(state.outreach.filter(item=>item.missionId===missionId).map(item=>item.leadId));
+    const missionLeads=state.leads.filter(item=>item.missionId===missionId&&!usedLeadIds.has(item.id));
     const pool=comparablePool(missionLeads);
     const assigned=assignHoldout(pool,plannerPlanId);
     if(assigned.baseline.length>=2&&assigned.variant.length>=2){
