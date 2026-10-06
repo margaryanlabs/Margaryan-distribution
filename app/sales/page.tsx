@@ -126,7 +126,7 @@ export default function SalesPage(){
  return <main className={styles.shell}>
   <header className={styles.topbar}>
    <div><span className={styles.eyebrow}>MARGARYAN DISTRIBUTION / FIRST CLIENT: PROMPTENCE</span><h1>Revenue Command</h1><p>One operating view from account research to verified revenue. No fake pipeline, no invented proof, no anonymous mass outreach.</p></div>
-   <div className={styles.runtime}><span className={state?.runtime?.execution==="live"?styles.live:styles.safe}/><div><b>{(state?.runtime?.execution||"dry-run").toUpperCase()}</b><small>{state?.runtime?.durable?"DURABLE STATE":"MEMORY STATE"}</small></div></div>
+   <div className={styles.topbarTools}><div className={styles.workspaceLinks}><a href="/smm">Marketing</a><a href="/intelligence">Intelligence</a></div><div className={styles.runtime}><span className={state?.runtime?.execution==="live"?styles.live:styles.safe}/><div><b>{(state?.runtime?.execution||"dry-run").toUpperCase()}</b><small>{state?.runtime?.durable?"DURABLE STATE":"MEMORY STATE"}</small></div></div></div>
   </header>
 
   <div className={styles.notice}><span/> {notice}</div>
