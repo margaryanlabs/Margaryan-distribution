@@ -1,4 +1,5 @@
 import {buildDecisionEngineReport} from "@/lib/agent/decision-engine";
+import {buildExperimentLedger} from "@/lib/agent/experiment-ledger";
 import type {DashboardSnapshot,Lead,LearningRanking} from "@/lib/types";
 
 export type AllocationBucket="pipeline"|"research"|"channel_experiments"|"offer_icp_tests"|"quality_ops";
@@ -46,6 +47,8 @@ export interface ResourceAllocationReport{
     approvalBacklog:number;
     executionExceptions:number;
     rankedChannels:number;
+    controlledExperiments:number;
+    directionalExperiments:number;
   };
   disclaimer:string;
 }
@@ -136,6 +139,9 @@ export function buildResourceAllocationReport(state:DashboardSnapshot,missionId:
   const events=state.performance.filter(item=>item.missionId===missionId);
   const learning=[...state.learnings].filter(item=>item.missionId===missionId).sort((a,b)=>b.generatedAt.localeCompare(a.generatedAt))[0];
   const decisions=buildDecisionEngineReport(state,missionId);
+  const experiments=buildExperimentLedger(state,missionId);
+  const controlledExperiments=experiments.filter(item=>item.causalLanguageAllowed&&["ready_to_compare","completed"].includes(item.status));
+  const directionalExperiments=experiments.filter(item=>!item.causalLanguageAllowed&&["directional","ready_to_compare","completed"].includes(item.status));
 
   const open=leads.filter(item=>ACTIVE_STAGES.has(item.stage));
   const warm=open.filter(item=>WARM_STAGES.has(item.stage));
@@ -145,7 +151,7 @@ export function buildResourceAllocationReport(state:DashboardSnapshot,missionId:
   const rankedChannels=learning?.channelRankings||[];
 
   const evidenceStrength=clamp(
-    events.length*.8+warm.length*5+rankedChannels.filter(item=>item.replies||item.meetings||item.revenueUsd).length*10,
+    events.length*.8+warm.length*5+rankedChannels.filter(item=>item.replies||item.meetings||item.revenueUsd).length*10+controlledExperiments.length*22+directionalExperiments.length*6,
     0,100
   );
   const opsRisk=clamp(exceptions.length*10+approvals.length*3,0,100);
@@ -235,7 +241,7 @@ export function buildResourceAllocationReport(state:DashboardSnapshot,missionId:
     ],
     evidenceSummary:{
       events:events.length,openAccounts:open.length,warmAccounts:warm.length,overdueAccounts:overdue.length,
-      approvalBacklog:approvals.length,executionExceptions:exceptions.length,rankedChannels:rankedChannels.length
+      approvalBacklog:approvals.length,executionExceptions:exceptions.length,rankedChannels:rankedChannels.length,controlledExperiments:controlledExperiments.length,directionalExperiments:directionalExperiments.length
     },
     disclaimer:"Resource allocation is non-monetary decision support. Percentages describe relative attention for the next experiment cycle and must not be interpreted as guaranteed outcomes."
   };

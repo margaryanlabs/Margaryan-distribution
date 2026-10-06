@@ -1,4 +1,5 @@
 import { generateLearningReport } from "@/lib/agent/learning";
+import { reconcileExperiment } from "@/lib/agent/experiment-ledger";
 import { researchBusinessLeads } from "@/lib/agent/research";
 import { executeProviderAction } from "@/lib/integrations";
 import { distributionStore } from "@/lib/store";
@@ -55,12 +56,15 @@ export async function executeDistributionAction(request: ExecuteRequest) {
     const missionId = missionIdFrom(request.payload);
     if (!missionId) throw new Error("Internal analyze action requires missionId");
     const report = await generateLearningReport(missionId);
+    const experimentId=typeof request.payload.experimentId==="string"?request.payload.experimentId:undefined;
+    const experiment=experimentId?reconcileExperiment(experimentId,{completeIfWindowClosed:true}):undefined;
     return {
       internal: true,
       kind: "analyze",
       reportId: report.id,
       evidenceEvents: report.evidenceEventIds.length,
       summary: report.summary,
+      ...(experiment?{experiment:{id:experiment.experiment.id,status:experiment.status,confidence:experiment.confidence,conclusion:experiment.conclusion,causalLanguageAllowed:experiment.causalLanguageAllowed}}:{})
     };
   }
 

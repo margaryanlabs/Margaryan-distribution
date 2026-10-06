@@ -1,6 +1,7 @@
 import {buildDecisionEngineReport} from "@/lib/agent/decision-engine";
 import {prepareLeadOutreach} from "@/lib/agent/outreach-queue";
 import {prepareSmmCampaign} from "@/lib/agent/smm-queue";
+import {createExperimentRecord,designExperimentForDirective,type ExperimentDesign} from "@/lib/agent/experiment-ledger";
 import {distributionStore} from "@/lib/store";
 import type {DashboardSnapshot,PlannedAction} from "@/lib/types";
 
@@ -25,6 +26,7 @@ export interface ExecutionPlan{
   rationale:string;
   steps:ExecutionPlanStep[];
   guardrails:string[];
+  experiment?:ExperimentDesign;
   generatedAt:string;
 }
 export interface StagedExecutionPlan{
@@ -33,6 +35,8 @@ export interface StagedExecutionPlan{
   preparedOutreach:number;
   preparedCampaignAssets:number;
   queuedInternalActions:number;
+  experimentId?:string;
+  experimentRegistered:boolean;
   notes:string[];
 }
 
@@ -48,14 +52,17 @@ export function buildExecutionPlan(state:DashboardSnapshot,missionId:string,dire
   if(!directive)throw new Error("Decision directive not found");
 
   const steps:ExecutionPlanStep[]=[];
-  const topLeadIds=targetAccounts(state,missionId,3);
+  const planId=idFor(missionId,directiveId);
+  const experiment=designExperimentForDirective(state,missionId,directiveId,planId);
+  const experimentalLeadIds=experiment?.dimension==="message"?experiment.variants.flatMap(item=>item.leadIds):[];
+  const topLeadIds=experimentalLeadIds.length?experimentalLeadIds:targetAccounts(state,missionId,3);
 
   if(directive.scope==="account"||directive.kind==="focus"){
     if(topLeadIds.length){
       steps.push({
         id:"prepare-outreach",kind:"prepare_outreach",
         title:"Prepare governed outreach for the highest-priority accounts",
-        detail:"Generate or reuse personalized sequences for up to three priority accounts. All external messages are forced into approval mode.",
+        detail:experiment?.dimension==="message"?"Prepare the pre-assigned baseline and variant cohorts. All external messages remain in approval mode.":"Generate or reuse personalized sequences for priority accounts. All external messages are forced into approval mode.",
         approvalRequired:false,externalExecution:false,targetLeadIds:topLeadIds
       });
     }
@@ -185,7 +192,7 @@ export function buildExecutionPlan(state:DashboardSnapshot,missionId:string,dire
   }
 
   return{
-    id:idFor(missionId,directiveId),
+    id:planId,
     missionId,directiveId,
     title:"Execution plan — "+directive.title,
     rationale:directive.reason,
@@ -194,61 +201,90 @@ export function buildExecutionPlan(state:DashboardSnapshot,missionId:string,dire
       "No external email, social post, call or calendar action is executed by staging this plan.",
       "Prepared outbound is forced into APPROVE mode even if the mission is configured for auto.",
       "Internal research and measurement steps are queued for approval instead of running immediately.",
-      "Existing compliance, quality, opt-out, dependency and daily-limit gates remain authoritative."
+      "Existing compliance, quality, opt-out, dependency and daily-limit gates remain authoritative.",
+      ...(experiment?["Experiment assignment is fixed before external outcomes are observed; performance events are attributed back to the ledger."]:[])
     ],
+    experiment,
     generatedAt:new Date().toISOString()
   };
 }
 
 export async function stageExecutionPlan(plan:ExecutionPlan):Promise<StagedExecutionPlan>{
+  const existingExperiment=distributionStore.listExperiments().find(item=>item.plannerPlanId===plan.id&&item.missionId===plan.missionId);
   const existingPlannerActions=distributionStore.listActions().filter(action=>action.payload.plannerPlanId===plan.id);
-  if(existingPlannerActions.length)return{plan,alreadyStaged:true,preparedOutreach:0,preparedCampaignAssets:0,queuedInternalActions:0,notes:["This execution plan is already staged. Existing governed actions were left unchanged."]};
+  if(existingPlannerActions.length&&(!plan.experiment||existingExperiment))return{plan,alreadyStaged:true,preparedOutreach:0,preparedCampaignAssets:0,queuedInternalActions:0,experimentId:existingExperiment?.id,experimentRegistered:Boolean(existingExperiment),notes:["This execution plan is already staged. Existing governed actions and experiment assignments were left unchanged."]};
+
   const mission=distributionStore.getMission(plan.missionId);
   if(!mission)throw new Error("Mission not found");
   const product=mission.input.productId?distributionStore.getProduct(mission.input.productId):undefined;
+  const experiment=existingExperiment||(plan.experiment?distributionStore.addExperiment(createExperimentRecord(plan.experiment,plan.missionId,plan.id,plan.directiveId)):undefined);
   let preparedOutreach=0;
   let preparedCampaignAssets=0;
   const internal:PlannedAction[]=[];
   const notes:string[]=[];
+
+  const variantForLead=(leadId:string)=>{
+    if(!experiment)return undefined;
+    return experiment.variants.find(item=>item.leadIds.includes(leadId));
+  };
+  const baselineVariant=experiment?.variants.find(item=>item.role==="baseline");
+  const targetVariant=experiment?.variants.find(item=>item.role==="variant");
 
   for(const step of plan.steps){
     if(step.kind==="prepare_outreach"){
       for(const leadId of step.targetLeadIds||[]){
         const lead=distributionStore.getLead(leadId);
         if(!lead||lead.missionId!==plan.missionId)continue;
-        const result=await prepareLeadOutreach(mission,lead,product,{forceApproval:true,plannerPlanId:plan.id});
+        const variant=variantForLead(leadId);
+        const result=await prepareLeadOutreach(mission,lead,product,{
+          forceApproval:true,plannerPlanId:plan.id,
+          experimentId:experiment?.id,variantId:variant?.id,
+          experimentProfile:variant?.role==="variant"?"single_signal_cta":"baseline"
+        });
         if(result.sequence)preparedOutreach+=1;
         if(result.existing)notes.push(lead.company+": existing outreach sequence reused; no duplicate actions created.");
         if("skipped" in result&&result.skipped)notes.push(lead.company+": "+result.skipped);
       }
     }else if(step.kind==="prepare_campaign"){
-      const result=await prepareSmmCampaign(mission,Math.max(1,Math.min(3,step.days||3)),{plannerPlanId:plan.id});
+      const result=await prepareSmmCampaign(mission,Math.max(1,Math.min(3,step.days||3)),{
+        plannerPlanId:plan.id,
+        experimentId:experiment?.dimension==="channel"?experiment.id:undefined,
+        targetChannel:experiment?.dimension==="channel"?targetVariant?.target:undefined,
+        baselineVariantId:experiment?.dimension==="channel"?baselineVariant?.id:undefined,
+        targetVariantId:experiment?.dimension==="channel"?targetVariant?.id:undefined
+      });
       preparedCampaignAssets+=result.drafts.length;
     }else if(step.kind==="queue_research"){
       internal.push({
-        id:"planner-research-"+crypto.randomUUID(),
-        channel:"email",
-        kind:"research",
+        id:"planner-research-"+crypto.randomUUID(),channel:"email",kind:"research",
         objective:"Decision Engine research increment",
         rationale:"Internal research staged from an approved execution plan; no prospect is contacted by this action.",
-        mode:"APPROVE",
-        scheduledOffsetHours:0,
+        mode:"APPROVE",scheduledOffsetHours:0,
         payload:{limit:Math.max(1,Math.min(1,step.limit||1)),plannerPlanId:plan.id}
       });
     }else if(step.kind==="queue_measurement"){
       internal.push({
-        id:"planner-measure-"+crypto.randomUUID(),
-        channel:"email",
-        kind:"analyze",
-        objective:"Decision Engine evidence re-measurement",
-        rationale:"Internal learning pass staged from an execution plan.",
-        mode:"APPROVE",
-        scheduledOffsetHours:Math.max(1,step.scheduledOffsetHours||72),
-        payload:{plannerPlanId:plan.id}
+        id:"planner-measure-"+crypto.randomUUID(),channel:"email",kind:"analyze",
+        objective:experiment?"Experiment Ledger re-measurement":"Decision Engine evidence re-measurement",
+        rationale:experiment?"Internal experiment analysis staged for the configured evidence window.":"Internal learning pass staged from an execution plan.",
+        mode:"APPROVE",scheduledOffsetHours:Math.max(1,step.scheduledOffsetHours||72),
+        payload:{plannerPlanId:plan.id,...(experiment?{experimentId:experiment.id}:{})}
       });
     }
   }
 
   const queued=internal.length?distributionStore.enqueueActions(plan.missionId,internal):[];
-  return{plan,alreadyStaged:false,preparedOutreach,preparedCampaignAssets,queuedInternalActions:queued.length,notes};
+
+  if(experiment){
+    const taggedActions=distributionStore.listActions().filter(action=>action.payload.experimentId===experiment.id);
+    const taggedContent=distributionStore.listContent().filter(item=>item.experimentId===experiment.id);
+    const variants=experiment.variants.map(variant=>({
+      ...variant,
+      actionIds:Array.from(new Set(taggedActions.filter(action=>action.payload.variantId===variant.id).map(action=>action.recordId))),
+      contentIds:Array.from(new Set(taggedContent.filter(item=>item.variantId===variant.id).map(item=>item.id)))
+    }));
+    distributionStore.updateExperiment(experiment.id,{variants});
+  }
+
+  return{plan,alreadyStaged:false,preparedOutreach,preparedCampaignAssets,queuedInternalActions:queued.length,experimentId:experiment?.id,experimentRegistered:Boolean(experiment),notes};
 }
