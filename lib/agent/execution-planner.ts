@@ -29,6 +29,7 @@ export interface ExecutionPlan{
 }
 export interface StagedExecutionPlan{
   plan:ExecutionPlan;
+  alreadyStaged:boolean;
   preparedOutreach:number;
   preparedCampaignAssets:number;
   queuedInternalActions:number;
@@ -200,6 +201,8 @@ export function buildExecutionPlan(state:DashboardSnapshot,missionId:string,dire
 }
 
 export async function stageExecutionPlan(plan:ExecutionPlan):Promise<StagedExecutionPlan>{
+  const existingPlannerActions=distributionStore.listActions().filter(action=>action.payload.plannerPlanId===plan.id);
+  if(existingPlannerActions.length)return{plan,alreadyStaged:true,preparedOutreach:0,preparedCampaignAssets:0,queuedInternalActions:0,notes:["This execution plan is already staged. Existing governed actions were left unchanged."]};
   const mission=distributionStore.getMission(plan.missionId);
   if(!mission)throw new Error("Mission not found");
   const product=mission.input.productId?distributionStore.getProduct(mission.input.productId):undefined;
@@ -213,13 +216,13 @@ export async function stageExecutionPlan(plan:ExecutionPlan):Promise<StagedExecu
       for(const leadId of step.targetLeadIds||[]){
         const lead=distributionStore.getLead(leadId);
         if(!lead||lead.missionId!==plan.missionId)continue;
-        const result=await prepareLeadOutreach(mission,lead,product,{forceApproval:true});
+        const result=await prepareLeadOutreach(mission,lead,product,{forceApproval:true,plannerPlanId:plan.id});
         if(result.sequence)preparedOutreach+=1;
         if(result.existing)notes.push(lead.company+": existing outreach sequence reused; no duplicate actions created.");
         if(result.skipped)notes.push(lead.company+": "+result.skipped);
       }
     }else if(step.kind==="prepare_campaign"){
-      const result=await prepareSmmCampaign(mission,Math.max(1,Math.min(3,step.days||3)));
+      const result=await prepareSmmCampaign(mission,Math.max(1,Math.min(3,step.days||3)),{plannerPlanId:plan.id});
       preparedCampaignAssets+=result.drafts.length;
     }else if(step.kind==="queue_research"){
       internal.push({
@@ -247,5 +250,5 @@ export async function stageExecutionPlan(plan:ExecutionPlan):Promise<StagedExecu
   }
 
   const queued=internal.length?distributionStore.enqueueActions(plan.missionId,internal):[];
-  return{plan,preparedOutreach,preparedCampaignAssets,queuedInternalActions:queued.length,notes};
+  return{plan,alreadyStaged:false,preparedOutreach,preparedCampaignAssets,queuedInternalActions:queued.length,notes};
 }
