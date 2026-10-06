@@ -3,6 +3,7 @@
 import {useEffect,useMemo,useState} from "react";
 import type {DashboardSnapshot,LearningRanking,PerformanceEvent} from "@/lib/types";
 import type {ExecutiveBrief} from "@/lib/agent/executive-brief";
+import type {DecisionEngineReport} from "@/lib/agent/decision-engine";
 import styles from "./intelligence.module.css";
 
 type QualityResponse={
@@ -41,10 +42,19 @@ export default function IntelligencePage(){
   const[quality,setQuality]=useState<QualityResponse|null>(null);
   const[ops,setOps]=useState<OperationsResponse|null>(null);
   const[brief,setBrief]=useState<ExecutiveBrief|null>(null);
+  const[decisions,setDecisions]=useState<DecisionEngineReport|null>(null);
   const[missionId,setMissionId]=useState("");
   const[hours,setHours]=useState(168);
   const[busy,setBusy]=useState(false);
   const[notice,setNotice]=useState("Intelligence uses recorded evidence and operational truth. It does not invent attribution or revenue.");
+
+  async function loadDecisions(id:string){
+    if(!id){setDecisions(null);return;}
+    const res=await fetch("/api/intelligence/decisions?missionId="+encodeURIComponent(id),{cache:"no-store"});
+    const data=await res.json() as DecisionEngineReport&{error?:string};
+    if(!res.ok)throw new Error(data.error||"Decision engine failed");
+    setDecisions(data);
+  }
 
   async function refresh(nextHours=hours){
     setBusy(true);
@@ -63,12 +73,12 @@ export default function IntelligencePage(){
       ]);
       if(!stateRes.ok)throw new Error("State load failed");
       setState(nextState);setQuality(nextQuality);setOps(nextOps);setBrief(nextBrief);
-      if(!missionId){
-        const promptence=nextState.products.find(item=>item.name.trim().toLowerCase()==="promptence");
-        const promptenceMission=nextState.missions.find(item=>item.status==="active"&&item.input.productId===promptence?.id);
-        setMissionId(promptenceMission?.id||nextState.missions.find(item=>item.status==="active")?.id||nextState.missions[0]?.id||"");
-      }
-      setNotice("Intelligence refreshed from CRM state, evidence events, quality gates and operational exceptions.");
+      const promptence=nextState.products.find(item=>item.name.trim().toLowerCase()==="promptence");
+      const promptenceMission=nextState.missions.find(item=>item.status==="active"&&item.input.productId===promptence?.id);
+      const scopedMissionId=missionId||promptenceMission?.id||nextState.missions.find(item=>item.status==="active")?.id||nextState.missions[0]?.id||"";
+      if(!missionId&&scopedMissionId)setMissionId(scopedMissionId);
+      if(scopedMissionId)await loadDecisions(scopedMissionId);
+      setNotice("Decision Engine refreshed from CRM state, performance evidence, learning, quality and operational truth.");
     }catch(error){
       setNotice(error instanceof Error?error.message:"Intelligence refresh failed");
     }finally{setBusy(false);}
@@ -131,7 +141,7 @@ export default function IntelligencePage(){
     <section className={styles.context}>
       <label>
         <span>MISSION SCOPE</span>
-        <select value={missionId} onChange={event=>setMissionId(event.target.value)}>
+        <select value={missionId} onChange={event=>{const id=event.target.value;setMissionId(id);void loadDecisions(id).catch(error=>setNotice(error instanceof Error?error.message:"Decision engine failed"));}}>
           <option value="">Select mission</option>
           {(state?.missions||[]).map(item=><option key={item.id} value={item.id}>{item.plan.missionName}</option>)}
         </select>
@@ -172,6 +182,46 @@ export default function IntelligencePage(){
       <div className={styles.sectionHead}><div><span>COMMERCIAL FUNNEL</span><h2>Account movement to verified revenue</h2></div><b>{leads.length} scoped accounts</b></div>
       <div className={styles.funnel}>
         {funnel.map(([label,value],index)=><div key={label}><span>{label}</span><strong>{typeof value==="number"?compact(value):value}</strong>{index<funnel.length-1&&<i>→</i>}</div>)}
+      </div>
+    </section>
+
+    <section className={styles.decisionEngine}>
+      <div className={styles.sectionHead}><div><span>DECISION ENGINE</span><h2>What to do now — ranked by evidence and urgency</h2></div><b>{decisions?.directives.length||0} directives</b></div>
+      <div className={styles.decisionHeadline}>
+        <div><span>TOP RECOMMENDATION</span><h3>{decisions?.headline||"No strong intervention is justified yet."}</h3><p>{decisions?.disclaimer||"Guidance stays conservative until enough factual evidence exists."}</p></div>
+        <div className={styles.evidenceChip}><span>EVIDENCE</span><strong>{decisions?.evidenceEventCount||0}</strong><small>factual events</small></div>
+      </div>
+
+      <div className={styles.directiveGrid}>
+        {(decisions?.directives||[]).slice(0,6).map((item,index)=><article key={item.id} className={styles["kind_"+item.kind]}>
+          <header><span>{String(index+1).padStart(2,"0")} · {item.scope.toUpperCase()}</span><b>{item.confidence.toUpperCase()}</b></header>
+          <h3>{item.title}</h3>
+          <p>{item.recommendation}</p>
+          <div className={styles.directiveReason}>{item.reason}</div>
+          <footer>{item.evidence.slice(0,3).map((evidence,i)=><span key={i}>{evidence}</span>)}</footer>
+        </article>)}
+        {!decisions?.directives.length&&<div className={styles.empty}>The engine does not have enough evidence for a strong intervention. Keep collecting factual outcomes.</div>}
+      </div>
+
+      <div className={styles.engineBottom}>
+        <div className={styles.accountPriority}>
+          <div className={styles.subHead}><span>TODAY'S ACCOUNTS</span><b>TOP 5</b></div>
+          {(decisions?.priorityAccounts||[]).map((account,index)=><a href={"/leads/"+account.leadId} key={account.leadId}>
+            <b>{String(index+1).padStart(2,"0")}</b>
+            <div><strong>{account.company}</strong><small>{account.stage.toUpperCase()} · score {account.score} · {account.reasons.join(" · ")}</small></div>
+            <em>{account.decisionScore}</em>
+          </a>)}
+          {!decisions?.priorityAccounts.length&&<div className={styles.empty}>No active accounts qualify for a priority queue yet.</div>}
+        </div>
+
+        <div className={styles.channelPosture}>
+          <div className={styles.subHead}><span>CHANNEL POSTURE</span><b>CONTROLLED TESTING</b></div>
+          {(decisions?.channelGuidance||[]).map(item=><div key={item.channel}>
+            <div><strong>{item.channel.toUpperCase()}</strong><small>{item.evidence}</small></div>
+            <span className={styles["posture_"+item.posture]}>{item.posture.replaceAll("_"," ")}</span>
+          </div>)}
+          {!decisions?.channelGuidance.length&&<div className={styles.empty}>No channel has enough evidence for a posture yet.</div>}
+        </div>
       </div>
     </section>
 
