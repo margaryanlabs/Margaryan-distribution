@@ -10,7 +10,21 @@ It turns the job into a governed execution loop:
 
 **COMMAND → PRODUCT BRAIN → PLAN → RESEARCH → QUEUE → POLICY → APPROVAL → EXECUTE → OBSERVE → SUMMARIZE → LEARN → NEXT ACTION**
 
-## V0.16 — Experiment & Resource Allocator\n\nV0.16 adds a non-monetary resource allocation layer above Decision Engine and Execution Planner.\n\nNew in V0.16:\n- compare three operating scenarios: Protect Pipeline, Balanced Discovery and Evidence Weighted\n- allocate relative attention/capacity units across pipeline, research, channel experiments, offer/ICP tests and quality/operations\n- dynamically choose a recommended scenario from pipeline pressure, evidence strength and execution risk\n- derive channel, ICP and offer mixes from recorded downstream evidence while preserving exploration floors\n- expose evidence summary for open/warm/overdue accounts, approvals, exceptions and performance events\n- connect every allocation scenario back to ranked Decision Engine directives and the existing Execution Planner\n- add 50 / 100 / 200 unit scenario comparison in `/intelligence`\n- `/api/intelligence/resource-allocation` is read-only and never spends money or mutates CRM state\n\n## V0.15 — Governed Execution Planner
+## V0.16 — Experiment & Resource Allocator
+
+V0.16 adds a non-monetary resource allocation layer above Decision Engine and Execution Planner.
+
+New in V0.16:
+- compare three operating scenarios: Protect Pipeline, Balanced Discovery and Evidence Weighted
+- allocate relative attention/capacity units across pipeline, research, channel experiments, offer/ICP tests and quality/operations
+- dynamically choose a recommended scenario from pipeline pressure, evidence strength and execution risk
+- derive channel, ICP and offer mixes from recorded downstream evidence while preserving exploration floors
+- expose evidence summary for open/warm/overdue accounts, approvals, exceptions and performance events
+- connect every allocation scenario back to ranked Decision Engine directives and the existing Execution Planner
+- add 50 / 100 / 200 unit scenario comparison in `/intelligence`
+- `/api/intelligence/resource-allocation` is read-only and never spends money or mutates CRM state
+
+## V0.15 — Governed Execution Planner
 
 V0.15 turns Decision Engine recommendations into concrete staged operating plans without bypassing human approval or provider safety gates.
 
