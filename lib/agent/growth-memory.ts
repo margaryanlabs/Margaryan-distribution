@@ -117,14 +117,24 @@ export function buildGrowthMemory(state:DashboardSnapshot,missionId:string):Grow
     const trigger=clean(lead.buyingSignals?.[0]);
     const outcome=leadOutcome(state,lead);
     const leadActions=actions.filter(action=>action.payload.leadId===lead.id);
-    const channels=leadActions.length?Array.from(new Set(leadActions.map(action=>action.channel))):(["system"] as Channel[]);
+    const allSucceeded=leadActions.filter(action=>action.status==="succeeded");
+    for(const level of ["segment","segment_offer"] as GrowthMemoryLevel[]){
+      const pattern=ensure(map,level,segment,offer);
+      pattern.leadIds.add(lead.id);
+      pattern.exposures+=allSucceeded.length;
+      pattern.replies+=outcome.replied?1:0;
+      pattern.positiveReplies+=outcome.positive?1:0;
+      pattern.meetings+=outcome.meeting?1:0;
+      pattern.wins+=outcome.win?1:0;
+      for(const action of leadActions)pattern.lastObservedAt=mergeTime(pattern.lastObservedAt,action.executedAt||action.updatedAt||action.createdAt);
+    }
 
+    const channels=Array.from(new Set(leadActions.map(action=>action.channel)));
     for(const channel of channels){
       const relevant=leadActions.filter(action=>action.channel===channel);
       const succeeded=relevant.filter(action=>action.status==="succeeded");
       const profile=relevant.map(action=>experimentProfile(state,typeof action.payload.experimentId==="string"?action.payload.experimentId:undefined,typeof action.payload.variantId==="string"?action.payload.variantId:undefined)).find(Boolean);
-      const levels:GrowthMemoryLevel[]=["segment","segment_offer","segment_offer_channel","full_motion"];
-      for(const level of levels){
+      for(const level of ["segment_offer_channel","full_motion"] as GrowthMemoryLevel[]){
         const pattern=ensure(map,level,segment,offer,channel,trigger,profile);
         pattern.leadIds.add(lead.id);
         pattern.exposures+=succeeded.length;
@@ -148,7 +158,12 @@ export function buildGrowthMemory(state:DashboardSnapshot,missionId:string):Grow
     const actionExperimentId=typeof action.payload.experimentId==="string"?String(action.payload.experimentId):undefined;
     const actionVariantId=typeof action.payload.variantId==="string"?String(action.payload.variantId):undefined;
     const profile=experimentProfile(state,event.experimentId||actionExperimentId,event.variantId||actionVariantId);
-    for(const level of ["segment","segment_offer","segment_offer_channel","full_motion"] as GrowthMemoryLevel[]){
+    for(const level of ["segment","segment_offer"] as GrowthMemoryLevel[]){
+      const pattern=ensure(map,level,segment,offer);
+      addMetrics(pattern,event.metrics);
+      pattern.lastObservedAt=mergeTime(pattern.lastObservedAt,event.occurredAt);
+    }
+    for(const level of ["segment_offer_channel","full_motion"] as GrowthMemoryLevel[]){
       const pattern=ensure(map,level,segment,offer,action.channel,trigger,profile);
       addMetrics(pattern,event.metrics);
       pattern.lastObservedAt=mergeTime(pattern.lastObservedAt,event.occurredAt);
