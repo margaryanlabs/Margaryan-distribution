@@ -3,7 +3,7 @@ import { assessDistributionCopy } from "@/lib/agent/quality-gate";
 import { distributionStore } from "@/lib/store";
 import type { Lead, MissionRecord, PlannedAction, ProductRecord } from "@/lib/types";
 
-export async function prepareLeadOutreach(mission:MissionRecord,lead:Lead,product?:ProductRecord){
+export async function prepareLeadOutreach(mission:MissionRecord,lead:Lead,product?:ProductRecord,options:{forceApproval?:boolean}={}){
   const existing=distributionStore.listOutreach().find(item=>item.missionId===mission.id&&item.leadId===lead.id);
   if(existing)return{sequence:existing,queued:[],existing:true};
   if(lead.optedOut||lead.stage==="do_not_contact")return{sequence:undefined,queued:[],existing:false,skipped:"Lead is opted out"};
@@ -15,6 +15,7 @@ export async function prepareLeadOutreach(mission:MissionRecord,lead:Lead,produc
   const voiceQuality=assessDistributionCopy({text:draft.callOpening,channel:"voice",product,lead});
   const emailMode=(quality:typeof initialQuality):PlannedAction["mode"]=>{
     if(!lead.email||!quality.pass)return"BLOCKED";
+    if(options.forceApproval)return"APPROVE";
     return mission.input.autonomy==="auto"?"AUTO":"APPROVE";
   };
   const qualityPayload=(quality:typeof initialQuality)=>({qualityScore:quality.score,qualityIssues:quality.issues});
