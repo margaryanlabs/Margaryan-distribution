@@ -277,6 +277,8 @@ export default function IntelligencePage(){
         <span><b>{allocation?.evidenceSummary.approvalBacklog||0}</b> approvals</span>
         <span><b>{allocation?.evidenceSummary.executionExceptions||0}</b> exceptions</span>
         <span><b>{allocation?.evidenceSummary.events||0}</b> evidence events</span>
+        <span><b>{allocation?.evidenceSummary.controlledExperiments||0}</b> controlled tests</span>
+        <span><b>{allocation?.evidenceSummary.directionalExperiments||0}</b> directional tests</span>
       </div>
 
       <div className={styles.scenarioGrid}>
