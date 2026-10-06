@@ -10,7 +10,7 @@ It turns the job into a governed execution loop:
 
 **COMMAND → PRODUCT BRAIN → PLAN → RESEARCH → QUEUE → POLICY → APPROVAL → EXECUTE → OBSERVE → SUMMARIZE → LEARN → NEXT ACTION**
 
-## V0.11.1 — Promptence Autopilot Cost Guard
+## V0.11.2 — Durable Autopilot Guard\n\nV0.11.2 fails closed before autonomous portfolio work if the runtime has no durable CRM.\n\nNew in V0.11.2:\n- both scheduled GET ticks and worker/operator POST ticks require durable storage before the portfolio director can run\n- a memory-only deployment returns 503 before research, inbox processing or external action execution can begin\n- this prevents a split-brain deployment from sending real outbound work that cannot be durably reconciled back into CRM state\n\n## V0.11.1 — Promptence Autopilot Cost Guard
 
 V0.11.1 keeps the hourly seller useful without letting research spend scale accidentally.
 
