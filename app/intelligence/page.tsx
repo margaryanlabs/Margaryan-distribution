@@ -4,6 +4,7 @@ import {useEffect,useMemo,useState} from "react";
 import type {DashboardSnapshot,LearningRanking,PerformanceEvent} from "@/lib/types";
 import type {ExecutiveBrief} from "@/lib/agent/executive-brief";
 import type {DecisionEngineReport} from "@/lib/agent/decision-engine";
+import type {ExecutionPlan,StagedExecutionPlan} from "@/lib/agent/execution-planner";
 import styles from "./intelligence.module.css";
 
 type QualityResponse={
@@ -43,6 +44,9 @@ export default function IntelligencePage(){
   const[ops,setOps]=useState<OperationsResponse|null>(null);
   const[brief,setBrief]=useState<ExecutiveBrief|null>(null);
   const[decisions,setDecisions]=useState<DecisionEngineReport|null>(null);
+  const[executionPlan,setExecutionPlan]=useState<ExecutionPlan|null>(null);
+  const[stagedPlan,setStagedPlan]=useState<StagedExecutionPlan|null>(null);
+  const[planBusy,setPlanBusy]=useState<string|null>(null);
   const[missionId,setMissionId]=useState("");
   const[hours,setHours]=useState(168);
   const[busy,setBusy]=useState(false);
@@ -78,10 +82,38 @@ export default function IntelligencePage(){
       const scopedMissionId=missionId||promptenceMission?.id||nextState.missions.find(item=>item.status==="active")?.id||nextState.missions[0]?.id||"";
       if(!missionId&&scopedMissionId)setMissionId(scopedMissionId);
       if(scopedMissionId)await loadDecisions(scopedMissionId);
+      setExecutionPlan(null);setStagedPlan(null);
       setNotice("Decision Engine refreshed from CRM state, performance evidence, learning, quality and operational truth.");
     }catch(error){
       setNotice(error instanceof Error?error.message:"Intelligence refresh failed");
     }finally{setBusy(false);}
+  }
+
+  async function previewPlan(directiveId:string){
+    if(!missionId)return;
+    setPlanBusy("preview:"+directiveId);setStagedPlan(null);
+    try{
+      const res=await fetch("/api/intelligence/execution-plan?missionId="+encodeURIComponent(missionId)+"&directiveId="+encodeURIComponent(directiveId),{cache:"no-store"});
+      const data=await res.json() as ExecutionPlan&{error?:string};
+      if(!res.ok)throw new Error(data.error||"Execution plan preview failed");
+      setExecutionPlan(data);
+      setNotice("Execution plan preview created. No CRM or external action was changed.");
+    }catch(error){setNotice(error instanceof Error?error.message:"Execution plan preview failed");}
+    finally{setPlanBusy(null);}
+  }
+
+  async function stagePlan(){
+    if(!executionPlan)return;
+    setPlanBusy("stage");
+    try{
+      const res=await fetch("/api/intelligence/execution-plan",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({missionId:executionPlan.missionId,directiveId:executionPlan.directiveId})});
+      const data=await res.json() as StagedExecutionPlan&{ok?:boolean;error?:string};
+      if(!res.ok)throw new Error(data.error||"Execution plan staging failed");
+      setStagedPlan(data);
+      setNotice(data.alreadyStaged?"This plan was already staged; no duplicate work was created.":"Plan staged into governed preparation and approval queues. No external action was executed.");
+      await loadDecisions(executionPlan.missionId);
+    }catch(error){setNotice(error instanceof Error?error.message:"Execution plan staging failed");}
+    finally{setPlanBusy(null);}
   }
 
   useEffect(()=>{void refresh(168);},[]);
@@ -141,7 +173,7 @@ export default function IntelligencePage(){
     <section className={styles.context}>
       <label>
         <span>MISSION SCOPE</span>
-        <select value={missionId} onChange={event=>{const id=event.target.value;setMissionId(id);void loadDecisions(id).catch(error=>setNotice(error instanceof Error?error.message:"Decision engine failed"));}}>
+        <select value={missionId} onChange={event=>{const id=event.target.value;setMissionId(id);setExecutionPlan(null);setStagedPlan(null);void loadDecisions(id).catch(error=>setNotice(error instanceof Error?error.message:"Decision engine failed"));}}>
           <option value="">Select mission</option>
           {(state?.missions||[]).map(item=><option key={item.id} value={item.id}>{item.plan.missionName}</option>)}
         </select>
@@ -199,9 +231,32 @@ export default function IntelligencePage(){
           <p>{item.recommendation}</p>
           <div className={styles.directiveReason}>{item.reason}</div>
           <footer>{item.evidence.slice(0,3).map((evidence,i)=><span key={i}>{evidence}</span>)}</footer>
+          <button className={styles.planButton} onClick={()=>void previewPlan(item.id)} disabled={planBusy==="preview:"+item.id}>{planBusy==="preview:"+item.id?"Planning…":"Build execution plan →"}</button>
         </article>)}
         {!decisions?.directives.length&&<div className={styles.empty}>The engine does not have enough evidence for a strong intervention. Keep collecting factual outcomes.</div>}
       </div>
+
+      {executionPlan&&<section className={styles.planPanel}>
+        <div className={styles.planHead}>
+          <div><span>EXECUTION PLAN PREVIEW</span><h3>{executionPlan.title}</h3><p>{executionPlan.rationale}</p></div>
+          <button onClick={()=>void stagePlan()} disabled={planBusy==="stage"}>{planBusy==="stage"?"Staging…":"Stage governed plan"}</button>
+        </div>
+        <div className={styles.planSteps}>
+          {executionPlan.steps.map((step,index)=><article key={step.id}>
+            <b>{String(index+1).padStart(2,"0")}</b>
+            <div><strong>{step.title}</strong><p>{step.detail}</p><small>{step.externalExecution?"EXTERNAL":"INTERNAL / PREPARATION"} · {step.approvalRequired?"APPROVAL REQUIRED":"NO EXTERNAL EXECUTION"}</small></div>
+          </article>)}
+        </div>
+        <div className={styles.guardrails}>
+          {executionPlan.guardrails.map((item,index)=><span key={index}>{item}</span>)}
+        </div>
+        {stagedPlan&&<div className={styles.stagedReceipt}>
+          <strong>{stagedPlan.alreadyStaged?"Already staged":"Staged successfully"}</strong>
+          <span>{stagedPlan.preparedOutreach} outreach sequences prepared</span>
+          <span>{stagedPlan.preparedCampaignAssets} campaign assets prepared</span>
+          <span>{stagedPlan.queuedInternalActions} internal actions queued for approval</span>
+        </div>}
+      </section>}
 
       <div className={styles.engineBottom}>
         <div className={styles.accountPriority}>
