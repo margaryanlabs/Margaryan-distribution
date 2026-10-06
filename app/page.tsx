@@ -4,12 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
 import type { ContentDraft, DashboardSnapshot, DistributionActionRecord, Language, Lead, MissionRecord, ProductRecord } from "@/lib/types";
 
-type Runtime = { storage: string; persistence: string; execution: string };
+type Runtime = { storage: string; persistence: string; execution: string; durable?: boolean };
 type StateResponse = DashboardSnapshot & { runtime: Runtime };
 type Provider = { id: string; name: string; configured: boolean; capability: string };
 type ConnectionsResponse = { executionEnabled: boolean; providers: Provider[] };
 
-const defaultGoal = "Sell Hay Engine to US dental clinics and run a 14-day content + outbound campaign.";
+const defaultGoal = "Get Promptence to its next 10 paid customers with evidence-led outbound and supporting content distribution.";
 
 function shortDate(value?: string) {
   if (!value) return "—";
@@ -28,14 +28,14 @@ export default function Home() {
   const [language, setLanguage] = useState<Language>("en");
   const [autonomy, setAutonomy] = useState<"auto" | "approve" | "draft">("approve");
   const [selectedProductId, setSelectedProductId] = useState("");
-  const [productName, setProductName] = useState("Hay Engine");
+  const [productName, setProductName] = useState("Promptence");
   const [productSource, setProductSource] = useState("");
-  const [productNotes, setProductNotes] = useState("AI receptionist / dispatcher for businesses. English and Russian distribution first.");
+  const [productNotes, setProductNotes] = useState("AI visibility and remediation platform. Research the company first, prove the signal, then sell the next smallest useful commitment.");
   const [state, setState] = useState<StateResponse | null>(null);
   const [connections, setConnections] = useState<ConnectionsResponse | null>(null);
   const [selectedMission, setSelectedMission] = useState<MissionRecord | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [notice, setNotice] = useState("No database attached. V0.4 is running in safe in-memory mode.");
+  const [notice, setNotice] = useState("Command Center is loading the current distribution runtime and active revenue missions.");
 
   async function refresh() {
     const [stateRes, connectionRes] = await Promise.all([
@@ -46,8 +46,10 @@ export default function Home() {
     const nextConnections = await connectionRes.json() as ConnectionsResponse;
     setState(nextState);
     setConnections(nextConnections);
-    if (!selectedMission && nextState.missions[0]) setSelectedMission(nextState.missions[0]);
-    if (!selectedProductId && nextState.products[0]) setSelectedProductId(nextState.products[0].id);
+    const promptence = nextState.products.find((product) => product.name.trim().toLowerCase() === "promptence");
+    const promptenceMission = nextState.missions.find((mission) => mission.status === "active" && mission.input.productId === promptence?.id);
+    if (!selectedMission) setSelectedMission(promptenceMission || nextState.missions.find((mission) => mission.status === "active") || nextState.missions[0] || null);
+    if (!selectedProductId && (promptence || nextState.products[0])) setSelectedProductId((promptence || nextState.products[0]).id);
   }
 
   useEffect(() => { void refresh(); }, []);
@@ -167,21 +169,6 @@ export default function Home() {
     }
   }
 
-  async function tickWorker() {
-    setBusy("worker");
-    try {
-      const res = await fetch("/api/worker/tick", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Worker failed");
-      setNotice(`Worker processed ${data.processed} due action(s).`);
-      await refresh();
-    } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Worker failed");
-    } finally {
-      setBusy(null);
-    }
-  }
-
   const stats = state?.stats ?? { activeMissions: 0, queuedActions: 0, approvalsNeeded: 0, completedActions: 0, researchedLeads: 0, products: 0 };
   const selectedProduct = state?.products.find((product) => product.id === selectedProductId);
 
@@ -207,14 +194,14 @@ export default function Home() {
 
       <section className="workspace">
         <header className="topbar">
-          <div><span className="eyebrow">AUTONOMOUS DISTRIBUTION WORKFORCE</span><h1>Command Center</h1></div>
-          <button className="ghost" onClick={tickWorker} disabled={busy === "worker"}>{busy === "worker" ? "Running…" : "Run worker"}</button>
+          <div><span className="eyebrow">MARGARYAN DISTRIBUTION / CONTROL PLANE</span><h1>Command Center</h1></div>
+          <div className="topbarActions"><a className="ghost" href="/sales">Revenue →</a><a className="ghost" href="/smm">Marketing →</a><button className="ghost" onClick={()=>void refresh()}>Refresh</button></div>
         </header>
 
         <div className="notice"><span/> {notice}</div>
 
         <section id="products" className="panel productBrainPanel">
-          <div className="panelHead"><div><span>PRODUCT BRAIN</span><h3>Teach the agent what it is distributing</h3></div><span className="muted">No database · reusable in memory</span></div>
+          <div className="panelHead"><div><span>PRODUCT BRAIN</span><h3>Teach the agent what it is distributing</h3></div><span className="muted">{state?.runtime.durable?"Durable · shared across workers":"Session memory only"}</span></div>
           <div className="productBrainGrid">
             <div className="productForm">
               <label><span>PRODUCT NAME</span><input value={productName} onChange={(event: ChangeEvent<HTMLInputElement>) => setProductName(event.target.value)} /></label>
@@ -326,10 +313,10 @@ export default function Home() {
         </section>
 
         <section id="runtime" className="runtimeStrip">
-          <div><span>STORAGE</span><b>MEMORY / NO DATABASE</b></div>
-          <div><span>PERSISTENCE</span><b>PROCESS LIFETIME</b></div>
+          <div><span>STORAGE</span><b>{state?.runtime.storage?.toUpperCase() || "UNKNOWN"}</b></div>
+          <div><span>PERSISTENCE</span><b>{state?.runtime.persistence?.toUpperCase() || (state?.runtime.durable?"DURABLE":"SESSION")}</b></div>
           <div><span>EXECUTION</span><b>{state?.runtime.execution?.toUpperCase() || "DRY-RUN"}</b></div>
-          <div><span>BACKEND</span><b>PERSISTENT ADAPTER LATER</b></div>
+          <div><span>CONTROL MODE</span><b>{connections?.executionEnabled?"LIVE / GOVERNED":"ASSISTED / SAFE"}</b></div>
         </section>
       </section>
     </main>
