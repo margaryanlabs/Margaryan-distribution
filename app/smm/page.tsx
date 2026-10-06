@@ -125,7 +125,8 @@ export default function SmmPage(){
         <p>One operating view for campaign creation, channel quality, distribution performance and the handoff from attention to revenue.</p>
       </div>
       <div className={styles.headerActions}>
-        <a href="/sales">Revenue Command</a>
+        <a href="/sales">Revenue</a>
+        <a href="/intelligence">Intelligence</a>
         <button onClick={()=>void refresh()}>Refresh</button>
       </div>
     </header>
