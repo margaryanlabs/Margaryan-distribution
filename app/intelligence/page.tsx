@@ -5,6 +5,7 @@ import type {DashboardSnapshot,LearningRanking,PerformanceEvent} from "@/lib/typ
 import type {ExecutiveBrief} from "@/lib/agent/executive-brief";
 import type {DecisionEngineReport} from "@/lib/agent/decision-engine";
 import type {ExecutionPlan,StagedExecutionPlan} from "@/lib/agent/execution-planner";
+import type {ResourceAllocationReport,AllocationScenarioId} from "@/lib/agent/resource-allocator";
 import styles from "./intelligence.module.css";
 
 type QualityResponse={
@@ -47,6 +48,10 @@ export default function IntelligencePage(){
   const[executionPlan,setExecutionPlan]=useState<ExecutionPlan|null>(null);
   const[stagedPlan,setStagedPlan]=useState<StagedExecutionPlan|null>(null);
   const[planBusy,setPlanBusy]=useState<string|null>(null);
+  const[allocation,setAllocation]=useState<ResourceAllocationReport|null>(null);
+  const[selectedScenario,setSelectedScenario]=useState<AllocationScenarioId|null>(null);
+  const[allocationUnits,setAllocationUnits]=useState(100);
+  const[allocationBusy,setAllocationBusy]=useState(false);
   const[missionId,setMissionId]=useState("");
   const[hours,setHours]=useState(168);
   const[busy,setBusy]=useState(false);
@@ -58,6 +63,18 @@ export default function IntelligencePage(){
     const data=await res.json() as DecisionEngineReport&{error?:string};
     if(!res.ok)throw new Error(data.error||"Decision engine failed");
     setDecisions(data);
+  }
+
+  async function loadAllocator(id:string,units=allocationUnits){
+    if(!id){setAllocation(null);return;}
+    setAllocationBusy(true);
+    try{
+      const res=await fetch("/api/intelligence/resource-allocation?missionId="+encodeURIComponent(id)+"&units="+units,{cache:"no-store"});
+      const data=await res.json() as ResourceAllocationReport&{error?:string};
+      if(!res.ok)throw new Error(data.error||"Resource allocator failed");
+      setAllocation(data);
+      setSelectedScenario(current=>current&&data.scenarios.some(item=>item.id===current)?current:data.recommendedScenarioId);
+    }finally{setAllocationBusy(false);}
   }
 
   async function refresh(nextHours=hours){
@@ -81,7 +98,7 @@ export default function IntelligencePage(){
       const promptenceMission=nextState.missions.find(item=>item.status==="active"&&item.input.productId===promptence?.id);
       const scopedMissionId=missionId||promptenceMission?.id||nextState.missions.find(item=>item.status==="active")?.id||nextState.missions[0]?.id||"";
       if(!missionId&&scopedMissionId)setMissionId(scopedMissionId);
-      if(scopedMissionId)await loadDecisions(scopedMissionId);
+      if(scopedMissionId)await Promise.all([loadDecisions(scopedMissionId),loadAllocator(scopedMissionId,allocationUnits)]);
       setExecutionPlan(null);setStagedPlan(null);
       setNotice("Decision Engine refreshed from CRM state, performance evidence, learning, quality and operational truth.");
     }catch(error){
@@ -173,7 +190,7 @@ export default function IntelligencePage(){
     <section className={styles.context}>
       <label>
         <span>MISSION SCOPE</span>
-        <select value={missionId} onChange={event=>{const id=event.target.value;setMissionId(id);setExecutionPlan(null);setStagedPlan(null);void loadDecisions(id).catch(error=>setNotice(error instanceof Error?error.message:"Decision engine failed"));}}>
+        <select value={missionId} onChange={event=>{const id=event.target.value;setMissionId(id);setExecutionPlan(null);setStagedPlan(null);void Promise.all([loadDecisions(id),loadAllocator(id,allocationUnits)]).catch(error=>setNotice(error instanceof Error?error.message:"Intelligence refresh failed"));}}>
           <option value="">Select mission</option>
           {(state?.missions||[]).map(item=><option key={item.id} value={item.id}>{item.plan.missionName}</option>)}
         </select>
@@ -215,6 +232,74 @@ export default function IntelligencePage(){
       <div className={styles.funnel}>
         {funnel.map(([label,value],index)=><div key={label}><span>{label}</span><strong>{typeof value==="number"?compact(value):value}</strong>{index<funnel.length-1&&<i>→</i>}</div>)}
       </div>
+    </section>
+
+    <section className={styles.allocator}>
+      <div className={styles.sectionHead}>
+        <div><span>EXPERIMENT & RESOURCE ALLOCATOR</span><h2>How to distribute the next cycle of attention</h2></div>
+        <div className={styles.allocatorControls}>
+          <span>{allocationBusy?"RECALCULATING":"NON-MONETARY UNITS"}</span>
+          <select value={allocationUnits} onChange={event=>{const value=Number(event.target.value);setAllocationUnits(value);void loadAllocator(missionId,value).catch(error=>setNotice(error instanceof Error?error.message:"Resource allocator failed"));}}>
+            <option value={50}>50 units</option>
+            <option value={100}>100 units</option>
+            <option value={200}>200 units</option>
+          </select>
+        </div>
+      </div>
+
+      <div className={styles.allocationEvidence}>
+        <span><b>{allocation?.evidenceSummary.openAccounts||0}</b> open accounts</span>
+        <span><b>{allocation?.evidenceSummary.warmAccounts||0}</b> warm</span>
+        <span><b>{allocation?.evidenceSummary.overdueAccounts||0}</b> overdue</span>
+        <span><b>{allocation?.evidenceSummary.approvalBacklog||0}</b> approvals</span>
+        <span><b>{allocation?.evidenceSummary.executionExceptions||0}</b> exceptions</span>
+        <span><b>{allocation?.evidenceSummary.events||0}</b> evidence events</span>
+      </div>
+
+      <div className={styles.scenarioGrid}>
+        {(allocation?.scenarios||[]).map(scenario=>{
+          const active=(selectedScenario||allocation?.recommendedScenarioId)===scenario.id;
+          const buckets=[
+            ["Pipeline",scenario.buckets.pipeline],
+            ["Research",scenario.buckets.research],
+            ["Channels",scenario.buckets.channel_experiments],
+            ["Offer / ICP",scenario.buckets.offer_icp_tests],
+            ["Quality / Ops",scenario.buckets.quality_ops]
+          ] as const;
+          return <article key={scenario.id} className={active?styles.scenarioActive:undefined} onClick={()=>setSelectedScenario(scenario.id)}>
+            <header><div><span>{scenario.recommended?"RECOMMENDED":"SCENARIO"}</span><h3>{scenario.name}</h3></div><b>{scenario.confidence.toUpperCase()}</b></header>
+            <p>{scenario.thesis}</p>
+            <div className={styles.allocationBars}>
+              {buckets.map(([label,units])=><div key={label}><span>{label}</span><i><em style={{width:(units/scenario.totalUnits*100)+"%"}}/></i><b>{units}</b></div>)}
+            </div>
+            <div className={styles.scenarioGoal}><span>LEARNING GOAL</span><p>{scenario.learningGoal}</p></div>
+          </article>;
+        })}
+      </div>
+
+      {allocation&&<div className={styles.allocationDetail}>
+        {allocation.scenarios.filter(item=>item.id===(selectedScenario||allocation.recommendedScenarioId)).map(scenario=><div key={scenario.id} className={styles.allocationDetailGrid}>
+          <section>
+            <div className={styles.subHead}><span>CHANNEL MIX</span><b>{scenario.buckets.channel_experiments} units</b></div>
+            <div className={styles.mixList}>{scenario.channelMix.map(item=><div key={item.key}><div><strong>{item.label}</strong><small>{item.rationale}</small></div><span>{item.units} · {item.percent}%</span></div>)}{!scenario.channelMix.length&&<div className={styles.empty}>No channel has enough evidence for a weighted split yet.</div>}</div>
+          </section>
+          <section>
+            <div className={styles.subHead}><span>ICP / OFFER LEARNING</span><b>exploration floor preserved</b></div>
+            <div className={styles.mixList}>
+              {[...scenario.segmentMix,...scenario.offerMix].slice(0,6).map(item=><div key={item.key}><div><strong>{item.label}</strong><small>{item.evidence.join(" · ")||item.rationale}</small></div><span>{item.units}</span></div>)}
+              {!scenario.segmentMix.length&&!scenario.offerMix.length&&<div className={styles.empty}>More CRM outcomes are needed before weighting ICP or offer tests.</div>}
+            </div>
+          </section>
+          <section className={styles.directivePortfolio}>
+            <div className={styles.subHead}><span>PLANS TO BUILD</span><b>{scenario.suggestedDirectives.length}</b></div>
+            {scenario.suggestedDirectives.map((item,index)=><button key={item.id} onClick={()=>void previewPlan(item.id)} disabled={planBusy==="preview:"+item.id}>
+              <b>{String(index+1).padStart(2,"0")}</b><div><strong>{item.title}</strong><small>{item.scope.toUpperCase()} · priority {item.priority}</small></div><span>Plan →</span>
+            </button>)}
+            {!scenario.suggestedDirectives.length&&<div className={styles.empty}>No directive is strong enough to turn into an execution plan yet.</div>}
+          </section>
+        </div>)}
+        <div className={styles.allocationGuardrail}>{allocation.disclaimer}</div>
+      </div>}
     </section>
 
     <section className={styles.decisionEngine}>
