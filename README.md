@@ -10,6 +10,20 @@ It turns the job into a governed execution loop:
 
 **COMMAND → PRODUCT BRAIN → PLAN → RESEARCH → QUEUE → POLICY → APPROVAL → EXECUTE → OBSERVE → SUMMARIZE → LEARN → NEXT ACTION**
 
+## V0.12 — Marketing Command
+
+V0.12 turns the legacy SMM workspace into a demand and distribution cockpit instead of a simple content generator.
+
+New in V0.12:
+- `/smm` is now Marketing Command / Demand Engine with mission and Product Brain context
+- content is connected visually to impressions, engagement, clicks, replies, meetings and verified revenue
+- channel intelligence compares LinkedIn, X, Instagram and email using the existing performance evidence
+- campaign learning recommendations and production health are visible beside the channel matrix
+- the editorial queue surfaces status, quality, scheduling and media blockers
+- the repurpose flow is upgraded into a dedicated channel-pack studio
+- the global workspace dock now highlights the current workspace and prioritizes Revenue + Marketing
+- the legacy Command Center no longer hardcodes V0.4 memory/no-database claims and now prefers Promptence context
+
 ## V0.11.2 — Durable Autopilot Guard
 
 V0.11.2 fails closed before autonomous portfolio work if the runtime has no durable CRM.
