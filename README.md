@@ -10,6 +10,20 @@ It turns the job into a governed execution loop:
 
 **COMMAND → PRODUCT BRAIN → PLAN → RESEARCH → QUEUE → POLICY → APPROVAL → EXECUTE → OBSERVE → SUMMARIZE → LEARN → NEXT ACTION**
 
+## V0.15 — Governed Execution Planner
+
+V0.15 turns Decision Engine recommendations into concrete staged operating plans without bypassing human approval or provider safety gates.
+
+New in V0.15:
+- two-phase workflow: Preview plan → Stage governed plan
+- decision directives translate into concrete preparation steps for priority accounts, controlled content experiments, research increments and evidence re-measurement
+- planner-created outreach is forced to `APPROVE` even when a mission is configured for auto
+- content experiments create drafts and governed publish actions; staging never publishes directly
+- internal research and learning actions are queued for approval instead of running immediately
+- plan IDs are attached to generated actions so repeated staging does not duplicate campaigns or outbound work
+- internal research/analyze work no longer consumes email-send daily limits
+- `/api/intelligence/execution-plan` supports read-only preview and durable governed staging
+
 ## V0.14 — Decision Engine
 
 V0.14 upgrades Intelligence from a read-only dashboard into an evidence-ranked operating decision layer.
