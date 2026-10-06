@@ -13,6 +13,8 @@ export interface AllocationSlice{
   evidence:string[];
 }
 
+export interface AllocationDirectiveRef{ id:string; title:string; scope:string; kind:string; priority:number; }
+
 export interface AllocationScenario{
   id:AllocationScenarioId;
   name:string;
@@ -24,6 +26,7 @@ export interface AllocationScenario{
   channelMix:AllocationSlice[];
   segmentMix:AllocationSlice[];
   offerMix:AllocationSlice[];
+  suggestedDirectives:AllocationDirectiveRef[];
   operatingRules:string[];
   learningGoal:string;
 }
@@ -193,6 +196,18 @@ export function buildResourceAllocationReport(state:DashboardSnapshot,missionId:
     }
   ];
 
+  function suggestedFor(id:AllocationScenarioId){
+    const list=decisions.directives;
+    const preferred=id==="protect_pipeline"
+      ? list.filter(item=>item.scope==="account"||item.scope==="operations"||item.scope==="quality")
+      : id==="evidence_weighted"
+        ? list.filter(item=>item.kind==="scale_test"||item.scope==="segment"||item.scope==="offer"||item.scope==="account")
+        : list.filter(item=>item.scope!=="quality"||item.kind==="fix");
+    return [...preferred,...list.filter(item=>!preferred.some(candidate=>candidate.id===item.id))]
+      .slice(0,3)
+      .map(item=>({id:item.id,title:item.title,scope:item.scope,kind:item.kind,priority:item.priority}));
+  }
+
   const scenarios=scenarioDefs.map(def=>{
     const normalized=roundToTotal(def.weights,units);
     const buckets:Record<AllocationBucket,number>={
@@ -203,6 +218,7 @@ export function buildResourceAllocationReport(state:DashboardSnapshot,missionId:
       channelMix:buildMix(channelEntries,buckets.channel_experiments,true),
       segmentMix:buildMix(segmentEntries,Math.max(0,Math.round(buckets.research*.65)),true),
       offerMix:buildMix(offerEntries,buckets.offer_icp_tests,true),
+      suggestedDirectives:suggestedFor(def.id),
       operatingRules:def.rules,
       learningGoal:def.learningGoal
     };
