@@ -7,7 +7,7 @@ export function GET() {
   return NextResponse.json({
     ok: true,
     service: "margaryan-distribution",
-    version: "0.14.0",
+    version: "0.15.0",
     time: new Date().toISOString(),
     storage: runtime.storage,
     durable: runtime.durable,

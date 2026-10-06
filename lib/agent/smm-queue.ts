@@ -21,7 +21,7 @@ function adaptiveSchedule(missionId:string,items:Awaited<ReturnType<typeof build
   }).map((item,index)=>({...item,scheduledOffsetHours:slots[index]??item.scheduledOffsetHours}));
 }
 
-export async function prepareSmmCampaign(mission:MissionRecord,days=7){
+export async function prepareSmmCampaign(mission:MissionRecord,days=7,options:{plannerPlanId?:string}={}){
   const product=mission.input.productId?distributionStore.getProduct(mission.input.productId):undefined;
   const items=adaptiveSchedule(mission.id,await buildSmmCampaign(mission,product,days));const groupId=crypto.randomUUID();
   const assessments=items.map(item=>assessDistributionCopy({text:item.body,channel:item.channel,product}));
@@ -31,7 +31,7 @@ export async function prepareSmmCampaign(mission:MissionRecord,days=7){
     if(!quality.pass){mode="BLOCKED";rationale=`Quality gate failed (${quality.score}/100): ${quality.issues.join("; ")}`;}
     if(mission.input.autonomy==="draft"){mode="BLOCKED";rationale="Mission is draft-only";}
     if(item.channel==="instagram"&&item.requiresMedia){mode="BLOCKED";rationale=`${quality.pass?"Quality passed. ":""}Instagram creative asset required before publishing`;}
-    const basePayload={contentId:draft.id,qualityScore:quality.score,qualityIssues:quality.issues};
+    const basePayload={contentId:draft.id,qualityScore:quality.score,qualityIssues:quality.issues,...(options.plannerPlanId?{plannerPlanId:options.plannerPlanId}:{})};
     const payload=item.channel==="x"?(item.format==="thread"?{...basePayload,threadPosts:splitThread(item.body)}:{...basePayload,text:item.body}):item.channel==="linkedin"?{...basePayload,commentary:item.body}:{...basePayload,caption:item.body,mediaUrl:""};
     return{id:`smm-${groupId}-${index}`,channel:item.channel,kind:"publish_post",objective:`Publish ${item.title}`,rationale,mode,scheduledOffsetHours:item.scheduledOffsetHours,payload};
   });
