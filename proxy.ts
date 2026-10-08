@@ -37,6 +37,9 @@ export function proxy(request:NextRequest){
  const expectedPassword=process.env.DISTRIBUTION_BASIC_PASSWORD;
  const operatorAuthConfigured=Boolean(expectedUser&&expectedPassword);
 
+ // Private message data must never be accessible on an unauthenticated demo deployment.
+ if((path==="/linkedin"||path.startsWith("/linkedin/")||path.startsWith("/api/linkedin/agent"))&&!operatorAuthConfigured)return unavailable("Set DISTRIBUTION_BASIC_USER and DISTRIBUTION_BASIC_PASSWORD to enable private LinkedIn conversations.");
+
  if(isMachinePath(path)&&!operatorAuthConfigured)return unavailable("Machine endpoint disabled until CRON_SECRET, WORKER_SECRET, AUTOPILOT_SECRET, or operator auth is configured.");
 
  if(process.env.NODE_ENV==="production"&&sensitiveRuntimeConfigured()&&!operatorAuthConfigured){
