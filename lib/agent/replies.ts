@@ -42,7 +42,7 @@ function fallback(args: { text: string; language: Language; lead?: Lead; product
   return { intent, summary: russian ? "Ответ требует ручной проверки." : "Reply needs human review.", confidence: 0.45, recommendedAction: "review", draftReply: "", nextActionDelayHours: 0, urgency: "medium", reasoning: "No strong intent pattern detected." };
 }
 
-export async function classifyInboundReply(args: { from: string; subject: string; text: string; language: Language; lead?: Lead; mission?: MissionRecord; product?: ProductRecord }): Promise<InboundReplyDecision> {
+export async function classifyInboundReply(args: { from: string; subject: string; text: string; context?: string; language: Language; lead?: Lead; mission?: MissionRecord; product?: ProductRecord }): Promise<InboundReplyDecision> {
   if (!process.env.OPENAI_API_KEY) return fallback(args);
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const response = await client.responses.create({
@@ -50,7 +50,7 @@ export async function classifyInboundReply(args: { from: string; subject: string
     reasoning: { effort: "low" },
     instructions: [
       "You are the reply-intelligence layer of a governed B2B sales agent.",
-      "Classify only the supplied message. Never infer facts that are not present.",
+      "Classify intent from only the latest inbound message. Earlier context is for coherent drafting, not for overriding stop requests. Never infer facts that are not present.",
       "An explicit unsubscribe or do-not-contact request must always map to intent=unsubscribe and recommendedAction=stop.",
       "A clear rejection maps to negative/stop. An out-of-office reply maps to ooo/wait.",
       "For positive interest or a factual question, draft a concise response using only verified product context supplied below.",
@@ -58,7 +58,7 @@ export async function classifyInboundReply(args: { from: string; subject: string
       "The draft must not pressure the recipient. Keep it under 100 words.",
       `Write summary, reasoning and draftReply in ${args.language === "ru" ? "Russian" : "English"}.`
     ].join(" "),
-    input: JSON.stringify({ message: { from: args.from, subject: args.subject, text: args.text }, lead: args.lead || null, mission: args.mission?.input || null, product: args.product || null }),
+    input: JSON.stringify({ message: { from: args.from, subject: args.subject, text: args.text, earlierConversationContext: args.context || "" }, lead: args.lead || null, mission: args.mission?.input || null, product: args.product || null }),
     text: { format: { type: "json_schema", name: "inbound_reply_decision", strict: true, schema: replySchema } }
   });
   const parsed = JSON.parse(response.output_text) as InboundReplyDecision;

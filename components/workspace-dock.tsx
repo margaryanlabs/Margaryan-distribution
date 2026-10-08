@@ -11,6 +11,7 @@ const primary=[
 const flow=[
   ["Leads","/leads"],
   ["Inbox","/inbox"],
+  ["LinkedIn Agent","/linkedin"],
   ["Meetings","/meetings"]
 ] as const;
 
