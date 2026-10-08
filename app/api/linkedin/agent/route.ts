@@ -140,7 +140,7 @@ export async function PATCH(req: Request) {
       if (lead?.optedOut || lead?.stage === "do_not_contact") return { code: 409, error: "Contact opted out" };
       const now = new Date().toISOString();
       const updated: LinkedInAgentThread = { ...thread, draftStatus: "confirmed_sent", updatedAt: now,
-        messages: [...thread.messages, { id: crypto.randomUUID(), direction: "outbound", text: thread.draftReply, at: now, source: "operator_confirmed" }].slice(-100) };
+        messages: [...thread.messages, { id: crypto.randomUUID(), direction: "outbound" as const, text: thread.draftReply, at: now, source: "operator_confirmed" as const }].slice(-100) };
       distributionStore.upsertLinkedInThread(updated);
       if (lead && ["new", "researched"].includes(lead.stage)) distributionStore.updateLead(lead.id, { stage: "contacted" });
       return { code: 200, thread: updated, duplicate: false };
