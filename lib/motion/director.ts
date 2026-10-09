@@ -56,10 +56,62 @@ const COPY: Record<Language, {
   }
 };
 const BRAND_CLOSE: Record<Language, Record<MotionBrand, string>> = {
-  ru: {veto:"РЕШЕНИЯ. НЕ ОБЕЩАНИЯ.",promptence:"БУДЬТЕ ВИДИМЫ В AI.",raios:"КОНТРОЛИРУЙТЕ МАРЖУ.",labs:"СОЗДАЁМ СЛЕДУЮЩЕЕ."},
-  en: {veto:"DECISIONS. NOT PROMISES.",promptence:"BE SEEN IN AI SEARCH.",raios:"MAKE MARGINS VISIBLE.",labs:"BUILD WHAT COMES NEXT."},
-  hy: {veto:"ՈՐՈՇՈՒՄՆԵՐ, ՈՉ ԽՈՍՏՈՒՄՆԵՐ։",promptence:"ԵՐԵՎԱՑԵՔ AI ՈՐՈՆՄԱՆ ՄԵՋ։",raios:"ՏԵՍԱՆԵԼԻ ԴԱՐՁՐՈՒ ՄԱՐԺԱՆ։",labs:"ԿԱՌՈՒՑՈՒՄ ԵՆՔ ԱՊԱԳԱՆ։"}
+  ru: {
+    veto:"РЕШЕНИЯ. НЕ ОБЕЩАНИЯ.",promptence:"БУДЬТЕ ВИДИМЫ В AI.",raios:"КОНТРОЛИРУЙТЕ МАРЖУ.",labs:"СОЗДАЁМ СЛЕДУЮЩЕЕ.",
+    ingu:"СТИЛЬ КАК ИСКУССТВО.",meqena:"НОВЫЙ ПУТЬ К АВТОМОБИЛЮ.",suren:"СТРАТЕГИЯ ПРЕЖДЕ ВЫБОРА.",
+    veto_private:"КОНТРОЛЬ НАД НАСТРОЙКАМИ.",veto_sport:"АНАЛИЗИРУЙ ЦЕНУ.",armat:"СДЕЛАНО В АРМЕНИИ."
+  },
+  en: {
+    veto:"DECISIONS. NOT PROMISES.",promptence:"BE SEEN IN AI SEARCH.",raios:"MAKE MARGINS VISIBLE.",labs:"BUILD WHAT COMES NEXT.",
+    ingu:"FASHION AS A POINT OF VIEW.",meqena:"DISCOVER THE DRIVE.",suren:"STRATEGY BEFORE THE VIEW.",
+    veto_private:"TOOLS FOR YOUR CONTROL.",veto_sport:"AUDIT THE PRICE.",armat:"MADE IN ARMENIA."
+  },
+  hy: {
+    veto:"ՈՐՈՇՈՒՄՆԵՐ, ՈՉ ԽՈՍՏՈՒՄՆԵՐ։",promptence:"ԵՐԵՎԱՑԵՔ AI ՈՐՈՆՄԱՆ ՄԵՋ։",raios:"ՏԵՍԱՆԵԼԻ ԴԱՐՁՐՈՒ ՄԱՐԺԱՆ։",labs:"ԿԱՌՈՒՑՈՒՄ ԵՆՔ ԱՊԱԳԱՆ։",
+    ingu:"ՆՈՐ ՏԵՍԱՆԿՅՈՒՆ ՆՈՐԱՁԵՎՈՒԹՅԱՆ ՄԱՍԻՆ։",meqena:"ԲԱՑԱՀԱՅՏԵՔ ՁԵՐ ՀԱՋՈՐԴ ՄԵՔԵՆԱՆ։",
+    suren:"ՌԱԶՄԱՎԱՐՈՒԹՅՈՒՆ՝ ԸՆՏՐՈՒԹՅՈՒՆԻՑ ԱՌԱՋ։",veto_private:"ՎԵՐԱՀՍԿԵՔ ՁԵՐ ԿԱՐԳԱՎՈՐՈՒՄՆԵՐԸ։",
+    veto_sport:"ՎԵՐԼՈՒԾԵՔ ԳԻՆԸ։",armat:"ԱՐՏԱԴՐՎԱԾ Է ՀԱՅԱՍՏԱՆՈՒՄ։"
+  }
 };
+const BRAND_NARRATIVE: Record<Language, Record<MotionBrand, [string, string, string, string]>> = {
+  en: {
+    veto:["NOISE IS NOT A SIGNAL.","MARKETS NEED CONTEXT.","UNDERSTAND THE RISK.","DECIDE WITH DISCIPLINE."],
+    promptence:["SEARCH IS CHANGING.","YOUR CUSTOMER ASKS AI.","CAN AI FIND YOUR BRAND?","MEASURE WHAT CHANGES."],
+    raios:["EVERY MARGIN MATTERS.","WHERE DOES PROFIT GO?","CONNECT THE OPERATIONS.","VERIFY THE IMPROVEMENT."],
+    labs:["IDEAS NEED MOTION.","BUILD THE UNEXPECTED.","SYSTEMS WITH PURPOSE.","MAKE THE FUTURE TANGIBLE."],
+    ingu:["FASHION HAS A MEMORY.","DISCOVER THE ARCHIVE.","CURATED, NOT ENDLESS.","FIND YOUR POINT OF VIEW."],
+    meqena:["THE ROAD STARTS HERE.","FIND YOUR NEXT DRIVE.","DISCOVER AND COMPARE.","MOVE WITH CLARITY."],
+    suren:["THE VIEW IS NOT THE STRATEGY.","DUBAI BEYOND THE LISTING.","SEE THE CAPITAL CONTEXT.","DECIDE WITH PERSPECTIVE."],
+    veto_private:["KNOW YOUR SETTINGS.","YOUR DIGITAL SPACE.","UNDERSTAND YOUR CONTROLS.","CHOOSE WHAT IS ENABLED."],
+    veto_sport:["THE PRICE IS A QUESTION.","WHAT DO THE ODDS IMPLY?","AUDIT THE ASSUMPTIONS.","EVIDENCE OVER CERTAINTY."],
+    armat:["CRAFT BEGINS AT HOME.","MADE IN ARMENIA.","DISCOVER LOCAL MAKERS.","GO BEYOND THE BORDER."]
+  },
+  ru: {
+    veto:["НЕ ПУТАЙ ШУМ С СИГНАЛОМ.","РЫНКУ НУЖЕН КОНТЕКСТ.","УВИДЕТЬ РИСК.","ПРИНИМАТЬ ВЗВЕШЕННЫЕ РЕШЕНИЯ."],
+    promptence:["ПОИСК УЖЕ МЕНЯЕТСЯ.","КЛИЕНТ СПРАШИВАЕТ AI.","НАЙДЁТ ЛИ AI ВАШ БРЕНД?","ИЗМЕРЯЙТЕ ИЗМЕНЕНИЯ."],
+    raios:["КАЖДАЯ МАРЖА ИМЕЕТ ЗНАЧЕНИЕ.","ГДЕ ТЕРЯЕТСЯ ПРИБЫЛЬ?","СВЯЖИТЕ ВСЕ ПРОЦЕССЫ.","ПРОВЕРЯЙТЕ РЕЗУЛЬТАТ."],
+    labs:["ИДЕЯМ НУЖНО ДВИЖЕНИЕ.","СОЗДАВАТЬ НЕОЖИДАННОЕ.","СИСТЕМЫ СО СМЫСЛОМ.","СДЕЛАТЬ БУДУЩЕЕ ОЩУТИМЫМ."],
+    ingu:["У СТИЛЯ ЕСТЬ ИСТОРИЯ.","ОТКРОЙТЕ АРХИВ МОДЫ.","ОТБОР ВМЕСТО ШУМА.","НАЙДИТЕ СВОЙ СТИЛЬ."],
+    meqena:["ВСЁ НАЧИНАЕТСЯ С ДОРОГИ.","НАЙДИТЕ СВОЮ МАШИНУ.","ИСCЛЕДУЙТЕ И СРАВНИВАЙТЕ.","ВЫБИРАЙТЕ ОСОЗНАННО."],
+    suren:["ВИД — ЭТО НЕ СТРАТЕГИЯ.","ДУБАЙ ЗА ПРЕДЕЛАМИ ОБЪЯВЛЕНИЙ.","ПОНИМАЙТЕ КОНТЕКСТ КАПИТАЛА.","РЕШЕНИЯ С ПЕРСПЕКТИВОЙ."],
+    veto_private:["РАЗБЕРИТЕСЬ В НАСТРОЙКАХ.","ВАШЕ ЛИЧНОЕ ПРОСТРАНСТВО.","УПРАВЛЯЙТЕ СВОИМИ ОПЦИЯМИ.","ВЫ ЗНАЕТЕ, ЧТО ВКЛЮЧЕНО."],
+    veto_sport:["КОЭФФИЦИЕНТ — ЭТО ВОПРОС.","ЧТО ГОВОРИТ ЦЕНА?","ПРОВЕРЯЙТЕ ПРЕДПОСЫЛКИ.","ФАКТЫ ВАЖНЕЕ УВЕРЕННОСТИ."],
+    armat:["МАСТЕРСТВО НАЧИНАЕТСЯ ДОМА.","СДЕЛАНО В АРМЕНИИ.","ОТКРОЙТЕ НАШИХ ПРОИЗВОДИТЕЛЕЙ.","НОВЫЕ РЫНКИ ДЛЯ НАШИХ ИДЕЙ."]
+  },
+  hy: {
+    veto:["ԱՂՄՈՒԿԸ ԱԶԴԱՆՇԱՆ ՉԷ։","ՇՈՒԿԱՆ ՀԱՄԱՏԵՔՍՏ Է ՊԱՀԱՆՋՈՒՄ։","ՀԱՍԿԱՑԻՐ ՌԻՍԿԸ։","ՈՐՈՇԻՐ ԳԻՏԱԿՑՎԱԾ։"],
+    promptence:["ՈՐՈՆՈՒՄԸ ՓՈԽՎՈՒՄ Է։","ՀԱՃԱԽՈՐԴԸ ՀԱՐՑՆՈՒՄ Է AI-ԻՆ։","AI-Ը ԿԳՏՆԻ՞ ՁԵՐ ԲՐԵՆԴԸ։","ՉԱՓԵՔ ՓՈՓՈԽՈՒԹՅՈՒՆԸ։"],
+    raios:["ՅՈՒՐԱՔԱՆՉՅՈՒՐ ՄԱՐԺԱ ԿԱՐԵՎՈՐ Է։","Ո՞ՒՐ Է ԳՆՈՒՄ ՇԱՀՈՒՅԹԸ։","ՄԻԱՎՈՐԵՔ ԳՈՐԾԸՆԹԱՑՆԵՐԸ։","ՍՏՈՒԳԵՔ ԱՐԴՅՈՒՆՔԸ։"],
+    labs:["ԳԱՂԱՓԱՐՆԵՐԸ ՇԱՐԺՄԱՆ ԿԱՐԻՔ ՈՒՆԵՆ։","ԿԱՌՈՒՑԵՆՔ ՆՈՐԸ։","ՀԱՄԱԿԱՐԳԵՐ՝ ՆՊԱՏԱԿՈՎ։","ԱՊԱԳԱՆ ԴԱՐՁՆԵՆՔ ՇՈՇԱՓԵԼԻ։"],
+    ingu:["ՈՃԸ ՊԱՏՄՈՒԹՅՈՒՆ ՈՒՆԻ։","ԲԱՑԱՀԱՅՏԵՔ ՆՈՐԱՁԵՎՈՒԹՅԱՆ ԱՐԽԻՎԸ։","ԸՆՏՐԱՆԻ՝ ՈՉ ԱՆՎԵՐՋ ՑԱՆԿ։","ԳՏԵՔ ՁԵՐ ՈՃԸ։"],
+    meqena:["ՃԱՆԱՊԱՐՀԸ ՍԿՍՎՈՒՄ Է ԱՅՍՏԵՂ։","ԳՏԵՔ ՁԵՐ ՀԱՋՈՐԴ ՄԵՔԵՆԱՆ։","ԲԱՑԱՀԱՅՏԵՔ ԵՎ ՀԱՄԵՄԱՏԵՔ։","ԸՆՏՐԵՔ ԳԻՏԱԿՑՎԱԾ։"],
+    suren:["ՏԵՍԱՐԱՆԸ ԴԵՌ ՌԱԶՄԱՎԱՐՈՒԹՅՈՒՆ ՉԷ։","ԴՈՒԲԱՅ՝ ՀԱՅՏԱՐԱՐՈՒԹՅՈՒՆԻՑ ԱՅՆ ԿՈՂՄ։","ՀԱՍԿԱՑԵՔ ԿԱՊԻՏԱԼԻ ՀԱՄԱՏԵՔՍՏԸ։","ՈՐՈՇԵՔ ՀԵՌԱՆԿԱՐՈՎ։"],
+    veto_private:["ԻՄԱՑԵՔ ՁԵՐ ԿԱՐԳԱՎՈՐՈՒՄՆԵՐԸ։","ՁԵՐ ԹՎԱՅԻՆ ՏԱՐԱԾՔԸ։","ՎԵՐԱՀՍԿԵՔ ԸՆՏՐԱՆՔՆԵՐԸ։","ԻՄԱՑԵՔ՝ ԻՆՉՆ Է ՄԻԱՑՎԱԾ։"],
+    veto_sport:["ԳՈՐԾԱԿԻՑԸ ՀԱՐՑ Է։","Ի՞ՆՉ ԵՆ ՆՇԱՆԱԿՈՒՄ ԳՆԵՐԸ։","ՍՏՈՒԳԵՔ ԵՆԹԱԴՐՈՒԹՅՈՒՆՆԵՐԸ։","ՓԱՍՏԵՐ՝ ՈՉ ՎՍՏԱՀՈՒԹՅՈՒՆ։"],
+    armat:["ԱՐՀԵՍՏԸ ՍԿՍՎՈՒՄ Է ՏՆԻՑ։","ԱՐՏԱԴՐՎԱԾ Է ՀԱՅԱՍՏԱՆՈՒՄ։","ԲԱՑԱՀԱՅՏԵՔ ՀԱՅ ԱՐՏԱԴՐՈՂՆԵՐԻՆ։","ՆՈՐ ՇՈՒԿԱՆԵՐ՝ ՆՈՐ ՀՆԱՐԱՎՈՐՈՒԹՅՈՒՆՆԵՐ։"]
+  }
+};
+
 const DESIGN_WORDS = /^(создай|сделай|нарисуй|построй|напиши|покажи|create|make|show|build|design|generate|please|хочу|нужно|ролик|видео|video|clip|advert|реклама|film|cinematic|кинематографич|стиль|эффект|фон|background|transition|переход|цвет|color|seconds|секунд|for|для|про|about|с|with|и|the|a|an)$/i;
 
 function detectLanguage(prompt: string, desired?: MotionLanguage): Language {
@@ -179,7 +231,10 @@ export function createKeylessStoryboard(input: DirectorBrief): MotionProject {
     : style === "kinetic"
       ? ["kinetic", "opener", "network", "statement", "closer"]
       : ["opener", "statement", "orbit", "network", "closer"];
-  const headlines = [copy.hook, subject, copy.reveal, copy.proof, BRAND_INFO[brand].name];
+  const narrative = BRAND_NARRATIVE[lang][brand];
+  const explicitlyQuoted = phraseFromPrompt(prompt);
+  const groundedSubject = explicitlyQuoted ? explicitlyQuoted.toLocaleUpperCase(lang) : (narrative[1] || subject);
+  const headlines = [narrative[0], groundedSubject, narrative[2], narrative[3], BRAND_INFO[brand].name];
   const labels = [copy.kicker, copy.based, copy.signal, copy.kicker, copy.close];
   const supports = [subject, copy.support, subject, BRAND_CLOSE[lang][brand], copy.cta];
   // Two different briefs always affect the composition, scene rhythm, and on-screen subject.
@@ -197,7 +252,7 @@ export function createKeylessStoryboard(input: DirectorBrief): MotionProject {
   }));
   return sanitizeMotionProject({
     version: 1, title: BRAND_INFO[brand].name + " / " + TOPIC_LABEL[lang][topic],
-    brand, format, style, seed: hash, scenes
+    brand, format, style, seed: hash, language: lang, scenes
   });
 }
 

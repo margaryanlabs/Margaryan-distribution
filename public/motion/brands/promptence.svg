@@ -1,0 +1,9 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Promptence</title>
+  <rect x="1" y="1" width="62" height="62" rx="15" fill="#07100C" stroke="#1B2D24" stroke-width="2"/>
+  <path d="M15 52V24C15 20.686 17.686 18 21 18H34C43.389 18 50 23.768 50 32C50 40.232 43.389 46 34 46H25.5" stroke="#F4F0E7" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M28 10H34C45.598 10 55 19.402 55 31" stroke="#F4F0E7" stroke-width="6" stroke-linecap="round"/>
+  <path d="M55 35C55 46.5 49 55 39.5 59" stroke="#F4F0E7" stroke-width="6" stroke-linecap="round"/>
+  <path d="M31 33L53 11" stroke="#4EE6A1" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="31" cy="33" r="5" fill="#4EE6A1"/>
+</svg>

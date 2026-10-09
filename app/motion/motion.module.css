@@ -120,3 +120,22 @@
 .audioToggle { margin: 16px 0 9px; display: flex; gap: 10px; align-items: center; padding: 13px 12px; background: linear-gradient(100deg,#161c25,#0c1016); border: 1px solid #323a45; border-radius: 10px; color: #abb5c1; font-size: 10px; font-weight: 800; letter-spacing: .04em; cursor: pointer; }
 .audioToggle input { accent-color: var(--brand-accent); width: 17px; height: 17px; flex: none; cursor: pointer; }
 .audioToggle strong { margin-left: auto; color: var(--brand-accent); font-size: 10px; }
+
+
+/* Portfolio-wide direction & review surfaces. */
+.provenance { display:flex;flex-direction:column;gap:6px;background:linear-gradient(135deg,#15211c,#111820);border:1px solid #334139;border-radius:10px;padding:13px 14px;margin:0 0 18px; }
+.provenance b {color:var(--brand-accent);font-size:10px;letter-spacing:.085em}
+.provenance span {color:#dbe5df;font-size:11px;font-weight:700;overflow-wrap:anywhere}
+.provenance small {color:#899b94;font-size:10px;line-height:1.5}
+.qaPanel { margin-top:18px; padding:17px; border:1px solid #34433b; border-radius:11px; background:linear-gradient(125deg,#101c19,#101319) }
+.qaPanel > div {display:flex;justify-content:space-between;gap:15px;align-items:center}
+.qaPanel strong {font-size:10px;letter-spacing:.13em;color:#e6eceb}
+.qaPanel b {font-size:11px;color:var(--brand-accent);border:1px solid #456c58;padding:5px 8px;border-radius:5px}
+.qaPanel b[data-grade="BLOCKED"] {color:#ff8275;border-color:#ff827599}
+.qaPanel b[data-grade="REVIEW"] {color:#f7cb84;border-color:#9e814c}
+.qaPanel p {font-size:11px;color:#99a8a3;margin:14px 0 9px}
+.qaPanel small {display:block;color:#b1bcb7;line-height:1.55;font-size:10px;margin-top:6px}
+.voiceUpload {display:flex;flex-direction:column;gap:10px;margin:13px 0 7px;padding:12px 13px;border:1px dashed #3e4a4a;border-radius:9px;background:#10181b}
+.voiceUpload span {color:#bac6c0;font-size:10px;letter-spacing:.09em;font-weight:800}
+.voiceUpload input {width:100%;font-size:10px;color:#b4c8c5}
+.clearVoice {margin:0 0 9px;background:#1a2526;border:1px solid #39484a;border-radius:8px;color:#cbd5d2;padding:10px;max-width:100%;word-wrap:break-word;cursor:pointer;font-size:10px}
