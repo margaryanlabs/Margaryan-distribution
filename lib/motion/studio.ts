@@ -1,4 +1,4 @@
-export type MotionBrand = "veto" | "promptence" | "raios" | "labs";
+export type MotionBrand = "veto" | "promptence" | "raios" | "labs" | "ingu" | "meqena" | "suren" | "veto_private" | "veto_sport" | "armat";
 export type MotionFormat = "portrait" | "square" | "landscape";
 export type MotionSceneKind = "opener" | "statement" | "network" | "closer" | "kinetic" | "orbit";
 
@@ -18,13 +18,20 @@ export interface MotionProject {
   style?: "cinematic" | "kinetic" | "technical";
   seed?: number;
   scenes: MotionScene[];
+  language?: "en" | "ru" | "hy";
 }
 
 export const BRAND_INFO: Record<MotionBrand, { name: string; accent: string; soft: string; caption: string }> = {
   veto: { name: "VETO INTELLIGENCE", accent: "#ed434a", soft: "#ffa7a6", caption: "DECISION INTELLIGENCE" },
   promptence: { name: "PROMPTENCE", accent: "#4EE6A1", soft: "#C8F7DC", caption: "AI SEARCH INTELLIGENCE" },
   raios: { name: "RAIOS", accent: "#90b9f7", soft: "#d4e4ff", caption: "RESTAURANT INTELLIGENCE" },
-  labs: { name: "MARGARYAN LABS", accent: "#f2f2ec", soft: "#c6c8cf", caption: "INDEPENDENT AI SYSTEMS" }
+  labs: { name: "MARGARYAN LABS", accent: "#f2f2ec", soft: "#c6c8cf", caption: "INDEPENDENT AI SYSTEMS" },
+  ingu: { name: "INGU", accent: "#f5f0eb", soft: "#d7d1ce", caption: "THE FASHION ARCHIVE" },
+  meqena: { name: "MEQENA", accent: "#cbdce6", soft: "#e4ecf4", caption: "AUTOMOTIVE MARKETPLACE" },
+  suren: { name: "SUREN PRIVATE", accent: "#e7e3df", soft: "#c6c0bb", caption: "DUBAI PRIVATE INTELLIGENCE" },
+  veto_private: { name: "VETO PRIVATE", accent: "#ff553d", soft: "#ffc5ba", caption: "PRIVATE TELEGRAM EXPERIENCE" },
+  veto_sport: { name: "VETO SPORT", accent: "#ff2d2d", soft: "#ffd2d2", caption: "EVIDENCE BEFORE THE ODDS" },
+  armat: { name: "ARMAT", accent: "#e7b89d", soft: "#f6ddd2", caption: "ARMENIAN PRODUCT EXPORT" }
 };
 
 export const FORMAT_SIZE: Record<MotionFormat, { width: number; height: number }> = {
@@ -64,6 +71,60 @@ const STARTERS: Record<MotionBrand, { title: string; scenes: Omit<MotionScene, "
       { kind: "closer", eyebrow: "INTELLIGENCE IN MOTION", headline: "RAIOS", support: "Turn operations into clarity.", seconds: 4 }
     ]
   },
+  ingu: {
+    title: "INGU / THE FASHION ARCHIVE",
+    scenes: [
+      { kind: "kinetic", eyebrow: "THE ARCHIVE", headline: "STYLE IS A POINT OF VIEW.", support: "Not another endless feed.", seconds: 3.8 },
+      { kind: "orbit", eyebrow: "THE DISCOVERY", headline: "DISCOVER YOUR NEXT PIECE.", support: "An editorial approach to fashion.", seconds: 4.5 },
+      { kind: "network", eyebrow: "THE COLLECTION", headline: "MORE THAN A MARKETPLACE.", support: "Explore curated fashion.", seconds: 4.3 },
+      { kind: "closer", eyebrow: "THE FASHION ARCHIVE", headline: "INGU", support: "ingu.shop", seconds: 4.8 }
+    ]
+  },
+  meqena: {
+    title: "MEQENA / THE DRIVE",
+    scenes: [
+      { kind: "kinetic", eyebrow: "THE NEXT ROAD", headline: "YOUR NEXT CAR STARTS HERE.", support: "A new way to discover vehicles.", seconds: 4 },
+      { kind: "network", eyebrow: "DISCOVERY", headline: "EXPLORE WITH CLARITY.", support: "Find, compare and decide.", seconds: 4.5 },
+      { kind: "orbit", eyebrow: "BEYOND THE LISTING", headline: "THE MARKET IN MOTION.", support: "For drivers and dealers.", seconds: 4.5 },
+      { kind: "closer", eyebrow: "MEQENA", headline: "DISCOVER THE DRIVE.", support: "Automotive marketplace.", seconds: 4 }
+    ]
+  },
+  suren: {
+    title: "SUREN PRIVATE / BEYOND THE LISTING",
+    scenes: [
+      { kind: "opener", eyebrow: "DUBAI / PRIVATE ADVISORY", headline: "ACCESS IS NOT INSIGHT.", support: "See past the surface.", seconds: 4 },
+      { kind: "orbit", eyebrow: "CAPITAL FIRST", headline: "THINK BEYOND THE VIEW.", support: "Property decisions need context.", seconds: 5 },
+      { kind: "statement", eyebrow: "PRIVATE INTELLIGENCE", headline: "STRATEGY BEFORE SELECTION.", support: "Independent perspective on opportunities.", seconds: 5 },
+      { kind: "closer", eyebrow: "SUREN PRIVATE", headline: "DECIDE WITH PERSPECTIVE.", support: "Dubai real estate intelligence.", seconds: 4 }
+    ]
+  },
+  veto_private: {
+    title: "VETO PRIVATE / YOUR SPACE",
+    scenes: [
+      { kind: "kinetic", eyebrow: "YOUR MESSAGES", headline: "PRIVACY NEEDS CLARITY.", support: "Understand your controls.", seconds: 4 },
+      { kind: "network", eyebrow: "YOUR CONNECTION", headline: "KNOW WHAT IS ENABLED.", support: "Transparent settings and connection status.", seconds: 4.5 },
+      { kind: "orbit", eyebrow: "YOUR EXPERIENCE", headline: "DESIGNED FOR CONTROL.", support: "Tools for your Telegram experience.", seconds: 4.5 },
+      { kind: "closer", eyebrow: "VETO PRIVATE", headline: "YOUR SPACE. YOUR CHOICE.", support: "Privacy controls, explained.", seconds: 4 }
+    ]
+  },
+  veto_sport: {
+    title: "VETO SPORT / AUDIT THE PRICE",
+    scenes: [
+      { kind: "kinetic", eyebrow: "QUESTION THE ODDS", headline: "THE PRICE IS NOT THE TRUTH.", support: "Markets imply probabilities.", seconds: 4 },
+      { kind: "network", eyebrow: "SPORT INTELLIGENCE", headline: "INTERROGATE THE NUMBER.", support: "Assess uncertainty and context.", seconds: 4.5 },
+      { kind: "statement", eyebrow: "NO GUARANTEES", headline: "EVIDENCE BEFORE ACTION.", support: "No prediction removes risk.", seconds: 4.5 },
+      { kind: "closer", eyebrow: "VETO SPORT", headline: "AUDIT THE PRICE.", support: "Evidence. Discipline. Limits.", seconds: 4 }
+    ]
+  },
+  armat: {
+    title: "ARMAT / MADE IN ARMENIA",
+    scenes: [
+      { kind: "opener", eyebrow: "MADE IN ARMENIA", headline: "CRAFT HAS A STORY.", support: "From local makers to new markets.", seconds: 4 },
+      { kind: "network", eyebrow: "DISCOVER OUR MAKERS", headline: "FROM ORIGIN TO OPPORTUNITY.", support: "Bring Armenian production into view.", seconds: 4.5 },
+      { kind: "orbit", eyebrow: "EXPLORE ARMENIA", headline: "BUILT TO TRAVEL FARTHER.", support: "A marketplace for discovery.", seconds: 4.5 },
+      { kind: "closer", eyebrow: "ARMAT", headline: "ROOTED HERE. MADE TO GO.", support: "Armenian products, connected.", seconds: 4 }
+    ]
+  },
   labs: {
     title: "MARGARYAN / MOTION",
     scenes: [
@@ -83,7 +144,7 @@ export function makeMotionPreset(brand: MotionBrand = "veto", format: MotionForm
 export function sanitizeMotionProject(input: unknown): MotionProject {
   if (!input || typeof input !== "object") throw new Error("Invalid storyboard");
   const obj = input as Record<string, unknown>;
-  const brand: MotionBrand = ["veto", "promptence", "raios", "labs"].includes(String(obj.brand)) ? obj.brand as MotionBrand : "labs";
+  const brand: MotionBrand = Object.hasOwn(BRAND_INFO, String(obj.brand)) ? obj.brand as MotionBrand : "labs";
   const format: MotionFormat = ["portrait", "square", "landscape"].includes(String(obj.format)) ? obj.format as MotionFormat : "portrait";
   const sceneInput = Array.isArray(obj.scenes) ? obj.scenes.slice(0, 8) : [];
   if (sceneInput.length < 1) throw new Error("Storyboard must contain at least one scene");
@@ -103,7 +164,8 @@ export function sanitizeMotionProject(input: unknown): MotionProject {
   });
   const style = ["cinematic", "kinetic", "technical"].includes(String(obj.style)) ? obj.style as MotionProject["style"] : "cinematic";
   const seed = typeof obj.seed === "number" && Number.isFinite(obj.seed) ? Math.floor(obj.seed) >>> 0 : 41;
-  return { version: 1, title: clean(obj.title, 100) || "UNTITLED MOTION", brand, format, style, seed, scenes };
+  const language = ["en", "ru", "hy"].includes(String(obj.language)) ? obj.language as MotionProject["language"] : undefined;
+  return { version: 1, title: clean(obj.title, 100) || "UNTITLED MOTION", brand, format, style, seed, scenes, language };
 }
 
 export function durationOf(project: MotionProject) {
