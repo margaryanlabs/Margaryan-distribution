@@ -36,14 +36,20 @@ for(const owner of owners){
   try{results=await get("https://api.github.com/orgs/"+owner+"/repos?type=all&sort=updated&per_page=100&page=1");}
   catch(error){
     if(String(error).includes("GitHub 404")){
-      route="users";
-      results=await get("https://api.github.com/users/"+owner+"/repos?type=owner&sort=updated&per_page=100&page=1");
+      route=token?"user-auth":"users";
+      results=await get(route==="user-auth"
+        ? "https://api.github.com/user/repos?affiliation=owner,organization_member&sort=updated&per_page=100&page=1"
+        : "https://api.github.com/users/"+owner+"/repos?type=owner&sort=updated&per_page=100&page=1");
     }else throw error;
   }
   for(let page=1;page<=6;page++){
-    const entries=page===1?results:await get("https://api.github.com/"+route+"/"+owner+"/repos?type="+(route==="orgs"?"all":"owner")+"&sort=updated&per_page=100&page="+page);
+    const url=route==="user-auth"
+      ? "https://api.github.com/user/repos?affiliation=owner,organization_member&sort=updated&per_page=100&page="+page
+      : "https://api.github.com/"+route+"/"+owner+"/repos?type="+(route==="orgs"?"all":"owner")+"&sort=updated&per_page=100&page="+page;
+    const entries=page===1?results:await get(url);
     if(!Array.isArray(entries))throw Error("Unexpected GitHub response");
     for(const item of entries){
+      if(route==="user-auth" && item.owner?.login?.toLowerCase()!==owner.toLowerCase())continue;
       if(item.archived||item.disabled||item.fork)continue;
       all.push({
         repository:item.full_name,
