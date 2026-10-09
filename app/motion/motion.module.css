@@ -144,3 +144,10 @@
 .polishButton { margin-top:14px;width:100%;min-height:42px;border:1px solid #43584e;background:linear-gradient(110deg,#19312a,#101b1c);color:#dbeee7;border-radius:8px;font-size:10px;letter-spacing:.07em;font-weight:900;cursor:pointer;text-align:center; }
 .polishButton:hover {border-color:var(--brand-accent);box-shadow:0 4px 23px rgba(0,0,0,.25);}
 .polishButton:disabled {opacity:.5;cursor:not-allowed;}
+
+/* Voice timing measured from actual local media metadata; never claim forced alignment. */
+.audioTiming {margin:12px 0;display:grid;grid-template-columns:1fr auto;gap:8px;
+  border:1px solid #374a42;border-radius:9px;background:#12201b;padding:13px;color:#bfdbce;}
+.audioTiming strong {font-size:11px;color:var(--brand-accent);letter-spacing:.07em;}
+.audioTiming span {font-size:11px;color:#e3eee8;font-weight:700;}
+.audioTiming small {grid-column:1/-1;font-size:10px;line-height:1.5;color:#a7b9b2;}

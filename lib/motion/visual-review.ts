@@ -2,6 +2,7 @@ import { FORMAT_SIZE, durationOf, type MotionProject } from "./studio";
 import { drawMotionFrame } from "./render-engine";
 import { preloadMotionLogo } from "./brand-assets";
 import { inspectFramePixels } from "./quality";
+import { fitShotCopy } from "./typography";
 
 export interface VisualReview {
   pass: boolean;
@@ -44,6 +45,18 @@ export async function reviewMotionVisuals(project: MotionProject): Promise<Visua
   bg.fillStyle="#0b1015";bg.fillRect(0,0,board.width,board.height);
   bg.font="700 12px Arial,sans-serif";
   const warnings:string[]=[];
+  // Native typography must remain intact for HY/RU/EN; never encode glyphs
+  // into an AI image. Detect if the preferred Armenian font failed to load.
+  if(project.language==="hy"){
+    const loaded=await document.fonts.load('700 28px "Noto Sans Armenian"',"Հայերեն").catch(()=>[]);
+    if(!loaded.length) warnings.push("ARMENIAN FONT REVIEW: preferred Noto Sans Armenian did not load; inspect glyph shapes and fallback.");
+  }
+  const virtualW=1080,virtualH=virtualW*size.height/size.width;
+  for(const [i,scene] of project.scenes.entries()){
+    const geometry=fitShotCopy(ctx,scene.headline.toLocaleUpperCase(project.language||"en"),scene.support,virtualW,virtualH);
+    for(const reason of geometry.reasons)warnings.push("SHOT "+String(i+1).padStart(2,"0")+" / TEXT: "+reason);
+    if(geometry.title.fontSize<32)warnings.push("SHOT "+String(i+1).padStart(2,"0")+" / TEXT: headline is below minimum mobile readability.");
+  }
   let lastPixels:Uint8ClampedArray | null = null;
   for(const [i,item] of samples.entries()){
     drawMotionFrame(ctx,project,item.time,previewWidth,previewHeight);
@@ -75,7 +88,7 @@ export async function reviewMotionVisuals(project: MotionProject): Promise<Visua
   }
   const blob=await new Promise<Blob>((resolve,reject)=>board.toBlob(b=>b?resolve(b):reject(new Error("Contact sheet export failed")),"image/png"));
   return {
-    pass:!warnings.some(w=>/blank|unavailable|transparency|low dynamic range/i.test(w)),
+    pass:!warnings.some(w=>/blank|unavailable|transparency|low dynamic range|overlap cinematic safe area|too many lines|exceeds available height|below minimum mobile readability/i.test(w)),
     warnings,sceneCoverage:project.scenes.length,
     frames:samples.length,sheet:blob
   };

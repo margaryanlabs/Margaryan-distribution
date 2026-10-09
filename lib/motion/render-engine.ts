@@ -5,6 +5,7 @@ import {
 import { drawProductComposition } from "./product-compositions";
 import { drawCinematicSet } from "./cinematic-craft";
 import { getLoadedMotionLogo } from "./brand-assets";
+import { FILM_FONT, fitShotCopy } from "./typography";
 
 const TAU = Math.PI * 2;
 const clamp = (x: number, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -182,60 +183,54 @@ function drawTechnical(ctx: CanvasRenderingContext2D, W: number, H: number, t: n
   ctx.restore();
 }
 
-function renderText(ctx: CanvasRenderingContext2D, scene: MotionScene, W: number, H: number, progress: number, accent: string, t: number, style: MotionProject["style"]) {
-  const landscape = H < 810;
-  const pad = landscape ? 82 : 88;
-  const textMax = landscape ? W * .4 : W - pad * 2;
-  const inProgress = cubic(progress * 5.8);
-  const outProgress = smooth((1 - progress) * 10);
-  const opacity = inProgress * outProgress;
-  const y = H * (landscape ? .235 : H < 1250 ? .265 : .305);
+function renderText(
+  ctx:CanvasRenderingContext2D,scene:MotionScene,W:number,H:number,
+  progress:number,accent:string,t:number,style:MotionProject["style"],language:MotionProject["language"]
+){
+  const headline=scene.headline.toLocaleUpperCase(language||"en");
+  const g=fitShotCopy(ctx,headline,scene.support,W,H);
+  const fadeIn=cubic(progress*5.8);
+  const fadeOut=smooth((1-progress)*10);
+  const opacity=fadeIn*fadeOut;
+  const originalAlpha=ctx.globalAlpha;
   ctx.save();
-  const masterAlpha = ctx.globalAlpha;
-  ctx.textAlign = "left"; ctx.textBaseline = "top";
-  ctx.globalAlpha = masterAlpha * opacity;
-  ctx.font = "700 20px Arial, sans-serif";
-  ctx.fillStyle = accent; ctx.fillText(scene.eyebrow.toLocaleUpperCase(), pad, y - 73);
-  const maxLines = landscape ? 2 : 4;
-  let size = landscape ? 81 : H < 1250 ? 99 : 116;
-  let words: string[] = [];
-  // Fit the headline into its safe area in ALL aspect ratios.
-  for (; size >= 30; size -= 2) {
-    ctx.font = "900 " + size + "px Arial, sans-serif";
-    words = textLines(ctx, scene.headline.toLocaleUpperCase(), textMax);
-    if (words.length <= maxLines) break;
+  ctx.globalAlpha=originalAlpha*opacity;
+  ctx.textAlign="left";ctx.textBaseline="top";
+  ctx.font='800 19px '+FILM_FONT;
+  // The eyebrow uses the same fit-to-width policy as headlines.
+  let eyebrowSize=H<810?15:19;
+  const kicker=scene.eyebrow.toLocaleUpperCase(language||"en");
+  for(;eyebrowSize>10;eyebrowSize--){
+    ctx.font='800 '+eyebrowSize+'px '+FILM_FONT;
+    if(ctx.measureText(kicker).width<=g.width)break;
   }
-  const lineHeight = size * 1.04;
-  const textHeight = words.length * lineHeight;
-  const maxAllowed = Math.max(130, H * (landscape ? .28 : .27));
-  if (textHeight > maxAllowed) {
-    size *= maxAllowed / textHeight;
-    ctx.font = "900 " + size + "px Arial, sans-serif";
-    words = textLines(ctx, scene.headline.toLocaleUpperCase(), textMax);
-  }
-  const paintHeight = Math.min(words.length, maxLines) * size * 1.04;
-  const reveal = scene.kind === "kinetic" || style === "kinetic";
-  ctx.fillStyle = "#f3f5f8";
-  words.slice(0, maxLines).forEach((line, i) => {
-    const step = cubic((progress - i * .07) * (reveal ? 5.2 : 7.5));
+  ctx.fillStyle=accent;ctx.fillText(kicker,g.x,g.eyebrowY);
+  const stagger=scene.kind==="kinetic"||style==="kinetic";
+  ctx.font='850 '+g.title.fontSize+'px '+FILM_FONT;
+  ctx.fillStyle="#F3F5F8";
+  for(const [index,line] of g.title.lines.entries()){
+    const reveal=cubic((progress-index*.075)*(stagger?5.2:7.5));
     ctx.save();
-    ctx.globalAlpha = masterAlpha * opacity * step;
-    const shiftX = reveal ? (1 - step) * (i % 2 ? -160 : 130) : (1 - step) * -45;
-    const shiftY = !reveal ? (1 - step) * 50 : 0;
-    ctx.shadowColor = accent + "44"; ctx.shadowBlur = 18;
-    ctx.fillText(line, pad + shiftX, y + i * size * 1.04 + shiftY);
+    ctx.globalAlpha=originalAlpha*opacity*reveal;
+    const dx=stagger?(1-reveal)*(index%2?-120:115):-(1-reveal)*38;
+    const dy=stagger?0:(1-reveal)*38;
+    ctx.shadowColor=accent+"42";ctx.shadowBlur=10;
+    ctx.fillText(line,g.x+dx,g.titleY+index*g.title.lineHeight+dy);
     ctx.restore();
+  }
+  // Subtitle is kept in an explicit lower region, separate from hero graphics.
+  const supportY=g.titleY+g.title.totalHeight+g.supportGap;
+  ctx.fillStyle="#B1BDC7";
+  ctx.font='400 '+g.supportSize+'px '+FILM_FONT;
+  g.supportLines.forEach((line,index)=>{
+    ctx.fillText(line,g.x,supportY+index*(g.supportSize+10));
   });
-  const supportY = y + paintHeight + (landscape ? 15 : 46);
-  const supportSize = landscape ? 19 : H < 1250 ? 22 : 27;
-  ctx.fillStyle = "#9ba8b6"; ctx.font = "400 " + supportSize + "px Arial, sans-serif";
-  const supportLines = textLines(ctx, scene.support, textMax).slice(0, landscape ? 2 : 3);
-  supportLines.forEach((line, i) => ctx.fillText(line, pad, supportY + i * (supportSize + 11)));
-  // A discreet light streak anchors every major title.
-  ctx.fillStyle = accent;
-  ctx.fillRect(pad, y + paintHeight + (landscape ? -4 : 15), Math.max(10, 60 + Math.sin(t * 2) * 18), 3);
+  ctx.fillStyle=accent;
+  ctx.fillRect(g.x,g.titleY+g.title.totalHeight+(H<810?4:13),
+    Math.max(13,53+Math.sin(t*2)*13),2.5);
   ctx.restore();
 }
+
 function drawShot(ctx: CanvasRenderingContext2D, project: MotionProject, index: number, localTime: number, absoluteTime: number, W: number, H: number, alpha: number) {
   const scene = project.scenes[index];
   const accent = BRAND_INFO[project.brand].accent;
@@ -250,7 +245,7 @@ function drawShot(ctx: CanvasRenderingContext2D, project: MotionProject, index: 
   if (scene.kind === "network") {
     drawProductComposition(ctx, project, scene, absoluteTime, W, H, accent);
   }
-  renderText(ctx, scene, W, H, progress, accent, absoluteTime, project.style);
+  renderText(ctx, scene, W, H, progress, accent, absoluteTime, project.style, project.language);
   ctx.restore();
 }
 
