@@ -9,7 +9,7 @@ import {
 import { drawMotionFrame } from "@/lib/motion/render-engine";
 import { preloadMotionLogo } from "@/lib/motion/brand-assets";
 import { PORTFOLIO, PORTFOLIO_BRANDS } from "@/lib/motion/portfolio";
-import { auditMotionProject, inspectFramePixels } from "@/lib/motion/quality";
+import { auditMotionProject, inspectFramePixels, autoPolishMotionProject } from "@/lib/motion/quality";
 import { createProceduralSoundtrack, type ProceduralAudioSession } from "@/lib/motion/sound-engine";
 import { createKeylessStoryboard, getLocalDirectorExamples, type MotionLanguage, type MotionStyle } from "@/lib/motion/director";
 import styles from "./motion.module.css";
@@ -171,8 +171,9 @@ export default function MotionStudioPage() {
     try {
       // No network access, API credentials or hosted models are needed.
       const next = createKeylessStoryboard({ prompt: brief, brand: project.brand, format: project.format, language, style });
+      const finished = autoPolishMotionProject(next);
       setPlaying(false); jump(0); setSelectedIndex(0);
-      setProject(next);
+      setProject(finished.project);
       setNotice("Создано " + next.scenes.length + " сцен полностью в браузере. Можно редактировать и экспортировать видео.");
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Could not generate storyboard");
@@ -290,9 +291,9 @@ export default function MotionStudioPage() {
   return <main className={styles.root} style={{ "--brand-accent": info.accent } as CSSProperties}>
     <header className={styles.header}>
       <div>
-        <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / MOTION OS V0.4</p>
+        <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / MOTION OS V0.5</p>
         <h1>Motion <em>Studio.</em></h1>
-        <p className={styles.deck}>Portfolio-wide motion production · source-verified brand marks · EN / RU / HY storyboards · audio mixing · preflight QA. Core rendering works without API keys.</p>
+        <p className={styles.deck}>Cinematic direction · real brand assets · EN / RU / HY · original voice mixing · automatic scene polish · offline H.264 master workflow.</p>
       </div>
       <div className={styles.headerRight}>
         <span className={styles.liveDot}/> KEYLESS / LOCAL ENGINE
@@ -368,6 +369,14 @@ export default function MotionStudioPage() {
         {voiceover && <button type="button" className={styles.clearVoice} onClick={()=>setVoiceover(null)}>Remove narration · {voiceover.name}</button>}
         <div className={styles.qaPanel}>
           <div><strong>PRODUCTION PREFLIGHT</strong><b data-grade={qa.grade}>{qa.grade}</b></div>
+          <button type="button" className={styles.polishButton} disabled={exporting}
+            onClick={()=>{
+              const result=autoPolishMotionProject(project);
+              setProject(result.project);
+              setNotice(result.changes.length
+                ? "AUTO POLISH: "+result.changes.join(" · ")
+                : "AUTO POLISH: All safe structural and copy fixes already applied.");
+            }}>✦ AUTO POLISH SCENES</button>
           <p>{qa.scenes} shots · {qa.seconds.toFixed(1)}s · {qa.warnings} reviews · {qa.blockers} blockers</p>
           {qa.checks.filter(c=>c.severity!=="info").slice(0,4).map(c=><small key={c.id}>• {c.message}</small>)}
         </div>
@@ -428,7 +437,7 @@ export default function MotionStudioPage() {
             </button>
           </div>
         </div>
-        <p className={styles.footnote}>Local code-based graphics use no AI API key. Verified marks come from known repositories. Private repos are not fetched by this public page. Upload narration to mix it; the engine does not synthesize human speech without a separate provider. Automatic QA checks structure and sampled frames, not aesthetic judgment. Real-time WebM/MP4 export depends on the browser. Manual final review required before publication.</p>
+        <p className={styles.footnote}>Local cinema staging runs without paid video APIs. Source-verified marks are original SVGs; private GitHub sources are never exposed here. Browser EXPORT may produce WebM depending on support. For deterministic professional H.264/AAC MP4, use the offline <code>npm run motion:master</code> workflow in the repository; it needs a local computer with FFmpeg/Chromium. QA checks structure and sampled frames but cannot certify taste, factual claims or music licenses. Final creative review is still required.</p>
       </section>
     </div>
   </main>;
