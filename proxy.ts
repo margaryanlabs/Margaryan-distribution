@@ -33,6 +33,9 @@ export function proxy(request:NextRequest){
  if(machineAuthorized(request))return NextResponse.next();
 
  const path=request.nextUrl.pathname;
+ // This exact public surface contains no CRM data, tokens, server AI calls or external effects.
+ // Do not open other /api, /motion/* or Distribution routes without operator authentication.
+ if(path==="/motion"||path==="/api/motion/storyboard")return NextResponse.next();
  const expectedUser=process.env.DISTRIBUTION_BASIC_USER;
  const expectedPassword=process.env.DISTRIBUTION_BASIC_PASSWORD;
  const operatorAuthConfigured=Boolean(expectedUser&&expectedPassword);
