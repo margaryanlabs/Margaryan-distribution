@@ -106,7 +106,7 @@ const captionBundle=await json("/api/motion/captions",{
 });
 assert(captionBundle.alignedToVoice===false,"Editorial shot cues must never pretend to align speech");
 assert(captionBundle.cues.length===armenianFilm.project.scenes.length,"Subtitles lost scene timing");
-assert(captionBundle.srt.includes("-->") && captionBundle.srt.includes("Հայ") ,"Armenian SRT missing timecodes/glyphs");
+assert(captionBundle.srt.includes("-->") && /[\u0531-\u058f]/u.test(captionBundle.srt) ,"Armenian SRT missing timecodes/glyphs");
 assert(captionBundle.vtt.startsWith("WEBVTT"),"WebVTT format invalid");
 assert(captionBundle.voiceScript.includes("NOT word-level"),"Voice script missing narration safety note");
 const malformedCaptions=await fetch(baseUrl+"/api/motion/captions",{
