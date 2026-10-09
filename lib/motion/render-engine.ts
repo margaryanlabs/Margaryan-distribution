@@ -251,6 +251,26 @@ function drawShot(ctx: CanvasRenderingContext2D, project: MotionProject, index: 
   ctx.restore();
 }
 
+/** Original Promptence monogram from the official Promptence v18 SVG geometry. */
+function drawPromptenceMark(ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
+  ctx.save();
+  ctx.translate(x, y); ctx.scale(size / 64, size / 64);
+  ctx.fillStyle = "#07100C";
+  ctx.strokeStyle = "#1B2D24"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.roundRect(1, 1, 62, 62, 15); ctx.fill(); ctx.stroke();
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  ctx.strokeStyle = "#F4F0E7"; ctx.lineWidth = 7;
+  ctx.stroke(new Path2D("M15 52V24C15 20.686 17.686 18 21 18H34C43.389 18 50 23.768 50 32C50 40.232 43.389 46 34 46H25.5"));
+  ctx.lineWidth = 6;
+  ctx.stroke(new Path2D("M28 10H34C45.598 10 55 19.402 55 31"));
+  ctx.stroke(new Path2D("M55 35C55 46.5 49 55 39.5 59"));
+  ctx.strokeStyle = "#4EE6A1";
+  ctx.stroke(new Path2D("M31 33L53 11"));
+  ctx.fillStyle = "#4EE6A1";
+  ctx.beginPath(); ctx.arc(31, 33, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
 /** Pure time-addressable canvas graphics: same scene and timestamp produce the same pixels. */
 export function drawMotionFrame(ctx: CanvasRenderingContext2D, project: MotionProject, time: number, width: number, height: number) {
   const W = 1080, H = W * height / width;
@@ -269,10 +289,11 @@ export function drawMotionFrame(ctx: CanvasRenderingContext2D, project: MotionPr
   const pad = H < 810 ? 82 : 88;
   // Brand bars / metainformation are drawn above scene transitions.
   const top = H < 810 ? 28 : 55;
-  ctx.fillStyle = accent; ctx.fillRect(pad, top + 3, 43, 6);
+  if (project.brand === "promptence") drawPromptenceMark(ctx, pad, top - 18, 54);
+  else { ctx.fillStyle = accent; ctx.fillRect(pad, top + 3, 43, 6); }
   ctx.fillStyle = "#d8e0e9"; ctx.font = "700 19px Arial, sans-serif";
   ctx.textBaseline = "middle"; ctx.textAlign = "left";
-  ctx.fillText(BRAND_INFO[project.brand].name, pad + 60, top + 8);
+  ctx.fillText(BRAND_INFO[project.brand].name, pad + 65, top + 8);
   ctx.textAlign = "right"; ctx.fillStyle = "#8a96a3"; ctx.font = "700 13px Arial, sans-serif";
   ctx.fillText("MOTION ENGINE / " + String(index + 1).padStart(2,"0"), W - pad, top + 8);
   const footer = H - (H < 810 ? 65 : 103);
