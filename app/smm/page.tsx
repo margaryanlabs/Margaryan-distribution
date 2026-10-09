@@ -127,6 +127,7 @@ export default function SmmPage(){
       <div className={styles.headerActions}>
         <a href="/sales">Revenue</a>
         <a href="/intelligence">Intelligence</a>
+        <a href="/motion">Motion Studio ↗</a>
         <button onClick={()=>void refresh()}>Refresh</button>
       </div>
     </header>
