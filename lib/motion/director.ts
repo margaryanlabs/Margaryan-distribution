@@ -3,6 +3,7 @@ import {
   type MotionBrand, type MotionFormat, type MotionProject, type MotionScene, type MotionSceneKind
 } from "./studio";
 import { specialCampaign } from "./special-campaigns";
+import { honorRequestedTiming } from "./timing";
 
 /**
  * Keyless Motion Director.
@@ -233,9 +234,9 @@ export function createKeylessStoryboard(input: DirectorBrief): MotionProject {
   const style = input.style || (/(быстро|динамич|fast|energetic|kinetic)/i.test(prompt) ? "kinetic" :
     /(data|данн|цифр|аналити|terminal|технолог|code|dashboard)/i.test(prompt) ? "technical" : "cinematic");
   const directed = specialCampaign(brand,lang,format,style,hash);
-  if (directed) return directed;
+  if (directed) return honorRequestedTiming(directed,prompt);
   if (brand === "promptence" && topic === "visibility") {
-    return promptenceCampaign(lang, format, style, hash);
+    return honorRequestedTiming(promptenceCampaign(lang, format, style, hash),prompt);
   }
   const pace = style === "kinetic" ? 3 : style === "technical" ? 4.5 : 5;
   const styles: MotionSceneKind[] = style === "technical"
@@ -262,10 +263,10 @@ export function createKeylessStoryboard(input: DirectorBrief): MotionProject {
     support: supports[index].slice(0, 180),
     seconds: Math.max(2, Math.min(8, pace + (index === 0 ? -.7 : 0) + (index === 4 ? -.8 : 0) + ((hash >> (index * 3)) % 3) * .25))
   }));
-  return sanitizeMotionProject({
+  return honorRequestedTiming(sanitizeMotionProject({
     version: 1, title: BRAND_INFO[brand].name + " / " + TOPIC_LABEL[lang][topic],
     brand, format, style, seed: hash, language: lang, scenes
-  });
+  }),prompt);
 }
 
 export function getLocalDirectorExamples(brand: MotionBrand) {
