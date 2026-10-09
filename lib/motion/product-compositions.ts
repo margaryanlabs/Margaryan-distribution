@@ -124,7 +124,7 @@ export function drawProductComposition(ctx:CanvasRenderingContext2D,project:Moti
   const x=landscape?W*.48:95,y=landscape?H*.45:H*.65,w=landscape?W*.47:W-190;
   const availableHeight=Math.max(130,H-(landscape?92:140)-y);
   const scaleY=Math.min(1,availableHeight/315);
-  ctx.save();ctx.globalAlpha=.84;ctx.translate(x,y);ctx.scale(1,scaleY);ctx.translate(-x,-y);
+  ctx.save();ctx.globalAlpha*=.84;ctx.translate(x,y);ctx.scale(1,scaleY);ctx.translate(-x,-y);
   if(project.brand==="promptence")promptence(ctx,scene,x,y,w,accent,t);
   else if(project.brand==="veto"||project.brand==="veto_sport")veto(ctx,x,y,w,accent,t);
   else if(project.brand==="raios")raios(ctx,x,y,w,accent,t);
