@@ -7,6 +7,7 @@ import {
   type MotionBrand, type MotionFormat, type MotionProject, type MotionScene
 } from "@/lib/motion/studio";
 import { drawMotionFrame } from "@/lib/motion/render-engine";
+import { createProceduralSoundtrack, type ProceduralAudioSession } from "@/lib/motion/sound-engine";
 import { createKeylessStoryboard, getLocalDirectorExamples, type MotionLanguage, type MotionStyle } from "@/lib/motion/director";
 import styles from "./motion.module.css";
 
@@ -31,6 +32,7 @@ export default function MotionStudioPage() {
   const [brief, setBrief] = useState(defaultBrief);
   const [style, setStyle] = useState<MotionStyle>("cinematic");
   const [language, setLanguage] = useState<MotionLanguage>("auto");
+  const [soundEnabled, setSoundEnabled] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [playhead, setPlayhead] = useState(0);
@@ -144,7 +146,9 @@ export default function MotionStudioPage() {
       setNotice("Your browser does not support canvas recording. Use current desktop Chrome or Edge for export.");
       return;
     }
-    const types = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"];
+    const types = soundEnabled
+      ? ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm", "video/mp4"]
+      : ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"];
     const mimeType = types.find(type => MediaRecorder.isTypeSupported(type));
     if (!mimeType) { setNotice("No supported video recording format found. Use Chrome or Edge."); return; }
     setPlaying(false); setExporting(true); setExportProgress(0);
@@ -155,10 +159,20 @@ export default function MotionStudioPage() {
     const ctx = canvas.getContext("2d");
     if (!ctx) { setExporting(false); setNotice("Canvas renderer could not start."); return; }
     let stream: MediaStream | null = null;
+    let audioSession: ProceduralAudioSession | null = null;
     let raf = 0;
     let recorder: MediaRecorder | null = null;
     try {
       stream = canvas.captureStream(30);
+      if (soundEnabled) {
+        try {
+          audioSession = await createProceduralSoundtrack(project);
+          stream.addTrack(audioSession.track);
+        } catch (audioError) {
+          setNotice("Synth soundtrack unavailable — exporting the video without sound. " +
+            (audioError instanceof Error ? audioError.message : ""));
+        }
+      }
       drawMotionFrame(ctx, project, 0, width, height);
       recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8_000_000 });
       const chunks: BlobPart[] = [];
@@ -183,13 +197,14 @@ export default function MotionStudioPage() {
       const ext = mimeType.includes("mp4") ? "mp4" : "webm";
       const blob = new Blob(chunks, { type: mimeType });
       downloadFile("margaryan-motion-" + project.brand + "-" + project.format + "." + ext, blob);
-      setNotice("Video rendered locally: " + ext.toUpperCase() + ", " + width + " × " + height + ". No external publish or upload.");
+      setNotice("Video rendered locally: " + ext.toUpperCase() + ", " + width + " × " + height + (audioSession ? " + original synth score." : " (silent).") + " No external upload.");
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Render failed");
     } finally {
       cancelAnimationFrame(raf);
       if (recorder && recorder.state !== "inactive") recorder.stop();
       stream?.getTracks().forEach(track => track.stop());
+      if (audioSession) await audioSession.close();
       setExporting(false);
     }
   }
@@ -214,7 +229,7 @@ export default function MotionStudioPage() {
   return <main className={styles.root} style={{ "--brand-accent": info.accent } as CSSProperties}>
     <header className={styles.header}>
       <div>
-        <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / V0.1</p>
+        <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / V0.2</p>
         <h1>Motion <em>Studio.</em></h1>
         <p className={styles.deck}>Your own programmable motion engine. Storyboard, preview and export in the browser — zero API keys, zero AI credits.</p>
       </div>
@@ -272,6 +287,11 @@ export default function MotionStudioPage() {
         <div className={styles.specs}><span>RUN TIME</span><b>{timeLabel(total)} / {project.scenes.length} scenes</b></div>
         <div className={styles.specs}><span>RENDER</span><b>LOCAL · 30 FPS</b></div>
         <div className={styles.specs}><span>GENERATION COST</span><b>0 CREDITS · NO KEYS</b></div>
+        <label className={styles.audioToggle}>
+          <input type="checkbox" checked={soundEnabled} disabled={exporting} onChange={event => setSoundEnabled(event.target.checked)}/>
+          ORIGINAL SYNTH SOUNDTRACK <strong>{soundEnabled ? "ON" : "OFF"}</strong>
+        </label>
+        <p className={styles.hint}>Optional procedural sound is recorded with the exported video, not played in preview. No music libraries or downloads.</p>
         <div className={styles.divider}/>
         <div className={styles.sectionHeader}><span>03 / SCENE INSPECTOR</span><strong>{String(selectedIndex + 1).padStart(2, "0")}</strong></div>
         <label className={styles.field}><span>VISUAL COMPOSITION</span>
@@ -279,6 +299,8 @@ export default function MotionStudioPage() {
             <option value="opener">Cinematic opener</option>
             <option value="statement">Strong statement</option>
             <option value="network">Signal network</option>
+            <option value="kinetic">Kinetic typography</option>
+            <option value="orbit">Orbit / parallax</option>
             <option value="closer">Closing frame</option>
           </select>
         </label>
@@ -327,7 +349,7 @@ export default function MotionStudioPage() {
             </button>
           </div>
         </div>
-        <p className={styles.footnote}>Runs without API keys, OpenRouter, OpenAI or Supabase. Export uses your browser MediaRecorder in real time (typically WebM; MP4 only when natively supported). Procedural graphics are not neural image/video synthesis; no licensed music, synthetic voice or automatic social publishing.</p>
+        <p className={styles.footnote}>Runs without API keys, OpenRouter, OpenAI or Supabase. Export uses your browser MediaRecorder in real time (typically WebM; MP4 only when natively supported). Procedural graphics are not neural image/video synthesis; optional original synth audio, but no voiceover or automatic social publishing.</p>
       </section>
     </div>
   </main>;
