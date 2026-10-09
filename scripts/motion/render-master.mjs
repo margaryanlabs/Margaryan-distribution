@@ -62,6 +62,15 @@ try {
     const f=await stat(resolve(file));
     if(!f.isFile()||f.size>250_000_000)throw Error("Oversized/invalid audio: "+file);
   }
+  if(opts.voice){
+    const speech=run("ffprobe",["-v","error","-show_entries","format=duration","-of","default=nw=1:nk=1",resolve(opts.voice)]);
+    const speechSeconds=Number(speech.stdout?.trim());
+    if(speech.status!==0||!Number.isFinite(speechSeconds))throw Error("Cannot inspect narration duration");
+    if(speechSeconds>duration-.3)throw Error(
+      "Narration duration "+speechSeconds.toFixed(1)+"s exceeds safe film ending "+(duration-.3).toFixed(1)+"s. Use FIT FILM TO NARRATION or trim recording."
+    );
+    process.stdout.write("Narration timing validated: "+speechSeconds.toFixed(1)+"s inside "+duration.toFixed(1)+"s film.\n");
+  }
   if(run("ffmpeg",["-version"]).status!==0)throw Error("Install FFmpeg with libx264 support first");
   const {chromium}=await import("playwright").catch(()=>{
     throw Error("Playwright required on render workstation: npm install --no-save playwright");
@@ -76,6 +85,21 @@ try {
   const response=await page.goto(url.href,{waitUntil:"domcontentloaded",timeout:45_000});
   if(!response?.ok())throw Error("Local studio did not load. Start npm run dev. HTTP "+response?.status());
   await page.waitForFunction(()=>typeof window.__motionFrame==="function",{timeout:30_000});
+  // Preload brand font before recording the first exact frame. Glyph fallback
+  // remains available offline, but Armenian-specific typography is reviewed.
+  const typography=await page.evaluate(async (language)=>{
+    if(language!=="hy")return {language,loaded:true};
+    try{
+      const fonts=await Promise.race([
+        document.fonts.load('700 40px "Noto Sans Armenian"',"Հայերեն"),
+        new Promise(resolve=>setTimeout(()=>resolve([]),6000))
+      ]);
+      return {language,loaded:Array.isArray(fonts)&&fonts.length>0};
+    }catch{return {language,loaded:false};}
+  },project.language||"en");
+  if(!typography.loaded){
+    process.stderr.write("WARNING: Armenian-specific font did not load. Inspect final Armenian glyphs in contact sheet.\n");
+  }
   await page.evaluate(()=>document.fonts.ready);
   if(errors.length)throw Error("Studio runtime error: "+errors.slice(0,3).join("; "));
 
@@ -128,13 +152,29 @@ try {
     throw Error("Encoded master format/dimensions incorrect");
   }
   if(audio.length&&!track)throw Error("Audio requested but MP4 audio track missing");
+  // Deliver platform-native sidecars as part of the video master bundle.
+  const captionsURL=new URL("/api/motion/captions",url.href);
+  const captionsResponse=await fetch(captionsURL,{
+    method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({project}),signal:AbortSignal.timeout(15_000)
+  });
+  if(!captionsResponse.ok)throw Error("Media encoded but caption sidecars failed: HTTP "+captionsResponse.status);
+  const captions=await captionsResponse.json();
+  if(!captions.srt||!captions.vtt||!captions.voiceScript)throw Error("Caption endpoint did not return a complete bundle");
+  const prefix=outputPath.replace(/\.mp4$/i,"");
+  await Promise.all([
+    writeFile(prefix+".srt",captions.srt),
+    writeFile(prefix+".vtt",captions.vtt),
+    writeFile(prefix+"-narration-guide.txt",captions.voiceScript)
+  ]);
   const sheet=await makeSheet(outputPath,duration);
   const report={
     engine:"MARGARYAN MOTION OS / OFFLINE MASTER",frames,expectedFps:fps,
     expectedDuration:duration,file:outputPath,codec:video.codec_name,
     width:video.width,height:video.height,audioCodec:track?.codec_name||null,
     audioIncluded:!!track,voiceRequested:!!opts.voice,musicRequested:!!opts.music,
-    contactSheet:sheet,
+    contactSheet:sheet,captionFiles:[".srt",".vtt","-narration-guide.txt"],
+    voiceTimingVerified:Boolean(opts.voice),
     note:"Technical checks cannot independently certify aesthetics, truth of claims, or music/voice licensing."
   };
   await writeFile(outputPath.replace(/\.mp4$/i,"")+".render-report.json",JSON.stringify(report,null,2)+"\n");
