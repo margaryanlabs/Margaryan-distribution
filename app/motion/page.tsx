@@ -11,6 +11,8 @@ import { preloadMotionLogo } from "@/lib/motion/brand-assets";
 import { PORTFOLIO, PORTFOLIO_BRANDS } from "@/lib/motion/portfolio";
 import { auditMotionProject, inspectFramePixels, autoPolishMotionProject } from "@/lib/motion/quality";
 import { reviewMotionVisuals } from "@/lib/motion/visual-review";
+import { createCaptionBundle } from "@/lib/motion/captions";
+import { rescaleProjectToSeconds } from "@/lib/motion/timing";
 import { createProceduralSoundtrack, type ProceduralAudioSession } from "@/lib/motion/sound-engine";
 import { createKeylessStoryboard, getLocalDirectorExamples, type MotionLanguage, type MotionStyle } from "@/lib/motion/director";
 import styles from "./motion.module.css";
@@ -38,6 +40,7 @@ export default function MotionStudioPage() {
   const [language, setLanguage] = useState<MotionLanguage>("auto");
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [voiceover, setVoiceover] = useState<File | null>(null);
+  const [narrationSeconds, setNarrationSeconds] = useState<number | null>(null);
   const [assetRevision, setAssetRevision] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -54,6 +57,18 @@ export default function MotionStudioPage() {
   const info = BRAND_INFO[project.brand];
   const provenance = PORTFOLIO[project.brand];
   const qa = auditMotionProject(project);
+  useEffect(() => {
+    if(!voiceover){setNarrationSeconds(null);return;}
+    let active=true;
+    const url=URL.createObjectURL(voiceover);
+    const probe=new Audio();
+    probe.preload="metadata";
+    probe.onloadedmetadata=()=>{if(active&&Number.isFinite(probe.duration))setNarrationSeconds(probe.duration);};
+    probe.onerror=()=>{if(active)setNarrationSeconds(null);};
+    probe.src=url;
+    return()=>{active=false;probe.src="";URL.revokeObjectURL(url);};
+  },[voiceover]);
+
   // Operator render bridge for deterministic offline masters (Playwright -> FFmpeg).
   // It does not read auth state, secrets, CRM data or arbitrary URLs. Canvas remains
   // local to this browser; exporting to disk requires the separate operator CLI.
@@ -198,6 +213,21 @@ export default function MotionStudioPage() {
       setNotice("QUALITY GATE BLOCKED: " + qa.checks.filter(c=>c.severity==="block").map(c=>c.message).join("; "));
       return;
     }
+    if(narrationSeconds !== null && narrationSeconds > total - 0.3){
+      setNotice("NARRATION TIMING: Voice is longer than safe film time. Press FIT FILM TO NARRATION or edit the recorded track.");
+      return;
+    }
+    try{
+      const checked=await reviewMotionVisuals(project);
+      if(!checked.pass){
+        downloadFile("motion-"+project.brand+"-qa-review.png",checked.sheet);
+        setNotice("FILM QA: Correct these issues before export: "+checked.warnings.join(" / "));
+        return;
+      }
+    }catch(error){
+      setNotice("FILM QA FAILED: "+(error instanceof Error?error.message:"Cannot render preview frames"));
+      return;
+    }
     setPlaying(false); setExporting(true); setExportProgress(0);
     setNotice("Recording frames in real time. Keep this browser tab visible until export is complete.");
     const { width, height } = FORMAT_SIZE[project.format];
@@ -293,7 +323,7 @@ export default function MotionStudioPage() {
   return <main className={styles.root} style={{ "--brand-accent": info.accent } as CSSProperties}>
     <header className={styles.header}>
       <div>
-        <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / MOTION OS V0.6</p>
+        <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / MOTION OS V0.7</p>
         <h1>Motion <em>Studio.</em></h1>
         <p className={styles.deck}>Cinematic direction · real brand assets · EN / RU / HY · original voice mixing · automatic scene polish · offline H.264 master workflow.</p>
       </div>
@@ -368,7 +398,25 @@ export default function MotionStudioPage() {
             else {setVoiceover(file);setNotice(file?"Narration loaded locally: "+file.name:"Narration cleared.");}
           }}/>
         </label>
-        {voiceover && <button type="button" className={styles.clearVoice} onClick={()=>setVoiceover(null)}>Remove narration · {voiceover.name}</button>}
+        {voiceover && <>
+          <div className={styles.audioTiming}>
+            <strong>VOICE / {narrationSeconds===null?"ANALYSING LENGTH":narrationSeconds.toFixed(1)+"s"}</strong>
+            <span>FILM / {total.toFixed(1)}s</span>
+            <small>{narrationSeconds===null?"Audio metadata pending; check recording manually."
+              : narrationSeconds>total-.3?"Voice runs past the final scene. Adjust timeline before export."
+              : narrationSeconds<total*.62?"Voice ends early. Review pauses and ending."
+              :"Voice duration fits; spoken-word sync still needs listening."}</small>
+          </div>
+          <button type="button" className={styles.clearVoice} onClick={()=>setVoiceover(null)}>Remove narration · {voiceover.name}</button>
+          {narrationSeconds!==null && <button type="button" className={styles.polishButton} disabled={exporting}
+            onClick={()=>{
+              try{
+                const target=Math.min(64,Math.ceil((narrationSeconds+.8)*10)/10);
+                const next=rescaleProjectToSeconds(project,target);
+                setProject(next);setNotice("TIMING UPDATED: Film now "+durationOf(next).toFixed(1)+"s for "+narrationSeconds.toFixed(1)+"s narration. This is scene-level timing, not word-level lip sync.");
+              }catch(error){setNotice(error instanceof Error?error.message:"Voice timing cannot fit these scenes.");}
+            }}>◷ FIT FILM TO NARRATION</button>}
+        </>}
         <div className={styles.qaPanel}>
           <div><strong>PRODUCTION PREFLIGHT</strong><b data-grade={qa.grade}>{qa.grade}</b></div>
           <button type="button" className={styles.polishButton} disabled={exporting}
@@ -445,6 +493,21 @@ export default function MotionStudioPage() {
           <div className={styles.exportActions}>
             <label className={styles.importLabel}>Import JSON<input type="file" accept=".json,application/json" onChange={event => { void importJson(event.target.files?.[0]); event.currentTarget.value = ""; }}/></label>
             <button onClick={saveJson}>Save project</button>
+            <button onClick={()=>{
+              const c=createCaptionBundle(project);
+              downloadFile(project.brand+"-"+c.language+".srt",new Blob([c.srt],{type:"text/plain;charset=utf-8"}));
+              setNotice("SRT exported: editorial on-screen captions. Re-align if your spoken narration differs.");
+            }}>SUBTITLES SRT</button>
+            <button onClick={()=>{
+              const c=createCaptionBundle(project);
+              downloadFile(project.brand+"-"+c.language+".vtt",new Blob([c.vtt],{type:"text/vtt;charset=utf-8"}));
+              setNotice("WebVTT exported: shot titles, not a speech transcript.");
+            }}>WEBVTT</button>
+            <button onClick={()=>{
+              const c=createCaptionBundle(project);
+              downloadFile(project.brand+"-"+c.language+"-voice-script.txt",new Blob([c.voiceScript],{type:"text/plain;charset=utf-8"}));
+              setNotice("Editorial narration guide exported. Review timing with recorded voice.");
+            }}>VOICE SCRIPT</button>
             <button className={styles.exportButton} disabled={exporting || generating} onClick={() => void exportVideo()}>
               {exporting ? "RENDERING " + exportProgress + "%" : qa.pass ? "QA + EXPORT VIDEO ↗" : "FIX QA BLOCKERS"}
             </button>
