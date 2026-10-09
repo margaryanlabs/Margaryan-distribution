@@ -16,6 +16,8 @@ async function json(path, init) {
 // Motion Studio must produce an editable, meaningful scene plan without any AI credentials.
 const motionPage = await fetch(baseUrl + "/motion");
 assert(motionPage.ok, "Motion Studio page did not render");
+const originalMark = await fetch(baseUrl + "/motion/brands/promptence.svg");
+assert(originalMark.ok && (await originalMark.text()).includes("<svg"), "Original Promptence mark is not accessible from public Motion Studio");
 const invalid = await fetch(baseUrl + "/api/motion/storyboard", {
   method: "POST", headers: { "content-type": "application/json" },
   body: JSON.stringify({ prompt: "hi", brand: "veto", format: "portrait" }),
