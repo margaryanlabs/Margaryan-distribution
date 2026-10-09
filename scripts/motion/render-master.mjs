@@ -1,0 +1,148 @@
+#!/usr/bin/env node
+/**
+ * Deterministic offline MP4 master; no AI video API, cloud worker or
+ * browser MediaRecorder. Requires operator-local Studio, Playwright + FFmpeg.
+ * npm run motion:master -- project.json master.mp4 --fps 30
+ * Optional --voice narration.wav --music licensed-music.mp3
+ * Optional --url http://127.0.0.1:3000/motion
+ * Install locally: npm install --no-save playwright
+ */
+import { readFile, writeFile, mkdir, stat } from "node:fs/promises";
+import { spawn, spawnSync } from "node:child_process";
+import { once } from "node:events";
+import { dirname, resolve, extname } from "node:path";
+import process from "node:process";
+
+function parse(argv) {
+  const positional=[],opts={};
+  for(let i=0;i<argv.length;i++){
+    if(argv[i].startsWith("--")){
+      const key=argv[i].slice(2);
+      if(!["url","fps","crf","voice","music","chromium"].includes(key))throw Error("Unknown option: "+key);
+      const value=argv[++i];if(!value||value.startsWith("--"))throw Error("Missing value for --"+key);
+      opts[key]=value;
+    }else positional.push(argv[i]);
+  }
+  if(positional.length!==2)throw Error("Usage: npm run motion:master -- project.json final.mp4 [--url http://127.0.0.1:3000/motion] [--fps 30] [--crf 18] [--voice audio.wav] [--music music.mp3]");
+  return {projectPath:resolve(positional[0]),outputPath:resolve(positional[1]),opts};
+}
+const run=(cmd,args,options={})=>spawnSync(cmd,args,{encoding:"utf8",timeout:80_000,maxBuffer:2_000_000,...options});
+async function makeSheet(file,duration){
+  const rate=Math.max(.04,8/Math.max(2,duration));
+  const name=file.replace(/\.mp4$/i,"")+"-contact-sheet.jpg";
+  const r=run("ffmpeg",["-y","-v","error","-i",file,"-vf",
+    "fps="+rate.toFixed(5)+",scale=270:-2,tile=4x2:padding=8:margin=8:color=0x101419",
+    "-frames:v","1","-q:v","3",name],{timeout:120_000});
+  if(r.status!==0)process.stderr.write("Contact sheet warning: "+(r.stderr||"FFmpeg failed").slice(0,500)+"\n");
+  return r.status===0?name:null;
+}
+
+let browser,ffmpeg;
+try {
+  const {projectPath,outputPath,opts}=parse(process.argv.slice(2));
+  const url=new URL(opts.url||"http://127.0.0.1:3000/motion");
+  if(url.protocol!=="http:"||!["127.0.0.1","localhost","[::1]"].includes(url.hostname)||url.pathname!=="/motion"){
+    throw Error("--url must be a local Motion Studio URL: http://127.0.0.1:PORT/motion");
+  }
+  if(extname(outputPath).toLowerCase()!==".mp4")throw Error("Output must end with .mp4");
+  const fps=opts.fps?Number(opts.fps):30;
+  if(!Number.isInteger(fps)||fps<24||fps>60)throw Error("FPS must be 24–60");
+  const crf=opts.crf?Number(opts.crf):18;
+  if(!Number.isInteger(crf)||crf<14||crf>28)throw Error("CRF must be 14–28");
+
+  const project=JSON.parse(await readFile(projectPath,"utf8"));
+  if(!project||!Array.isArray(project.scenes)||project.scenes.length<1||project.scenes.length>8)throw Error("Invalid project scenes");
+  const duration=project.scenes.reduce((s,x)=>s+Math.max(2,Math.min(8,Number(x.seconds)||4)),0);
+  if(duration>64)throw Error("Film exceeds 64-second limit");
+  const formats={portrait:[1080,1920],square:[1080,1080],landscape:[1920,1080]};
+  const dims=formats[project.format];
+  if(!dims)throw Error("Invalid project format");
+  const frames=Math.max(1,Math.round(duration*fps));
+  for(const file of [opts.voice,opts.music].filter(Boolean)){
+    const f=await stat(resolve(file));
+    if(!f.isFile()||f.size>250_000_000)throw Error("Oversized/invalid audio: "+file);
+  }
+  if(run("ffmpeg",["-version"]).status!==0)throw Error("Install FFmpeg with libx264 support first");
+  const {chromium}=await import("playwright").catch(()=>{
+    throw Error("Playwright required on render workstation: npm install --no-save playwright");
+  });
+  browser=await chromium.launch({
+    headless:true,
+    ...(opts.chromium||process.env.CHROMIUM_EXECUTABLE?{executablePath:opts.chromium||process.env.CHROMIUM_EXECUTABLE}:{})
+  });
+  const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1,reducedMotion:"no-preference"});
+  const errors=[];
+  page.on("pageerror",e=>errors.push(e.message));
+  const response=await page.goto(url.href,{waitUntil:"domcontentloaded",timeout:45_000});
+  if(!response?.ok())throw Error("Local studio did not load. Start npm run dev. HTTP "+response?.status());
+  await page.waitForFunction(()=>typeof window.__motionFrame==="function",{timeout:30_000});
+  await page.evaluate(()=>document.fonts.ready);
+  if(errors.length)throw Error("Studio runtime error: "+errors.slice(0,3).join("; "));
+
+  const audio=[];
+  if(opts.voice)audio.push({path:resolve(opts.voice),vol:1});
+  if(opts.music)audio.push({path:resolve(opts.music),vol:opts.voice?.16:.75});
+
+  const args=["-y","-hide_banner","-loglevel","error","-f","image2pipe","-framerate",String(fps),"-vcodec","png","-i","pipe:0"];
+  for(const a of audio)args.push("-i",a.path);
+  let audioMap=[];
+  if(audio.length){
+    const parts=[];
+    for(let i=0;i<audio.length;i++){
+      parts.push("["+(i+1)+":a:0]volume="+audio[i].vol+",apad,atrim=0:"+duration.toFixed(3)+"[aud"+i+"]");
+    }
+    parts.push(audio.length>1?
+      "[aud0][aud1]amix=inputs=2:duration=first:dropout_transition=0[aout]":
+      "[aud0]anull[aout]");
+    audioMap=["-filter_complex",parts.join(";"),"-map","0:v:0","-map","[aout]","-c:a","aac","-b:a","192k"];
+  } else audioMap=["-an"];
+  args.push(...audioMap,"-c:v","libx264","-preset","medium","-crf",String(crf),
+    "-pix_fmt","yuv420p","-profile:v","high","-r",String(fps),
+    "-t",duration.toFixed(3),"-movflags","+faststart",outputPath);
+
+  await mkdir(dirname(outputPath),{recursive:true});
+  ffmpeg=spawn("ffmpeg",args,{stdio:["pipe","ignore","pipe"]});
+  let log="",encoderFailed=false;
+  ffmpeg.stderr.on("data",chunk=>{log+=String(chunk);if(log.length>6000)log=log.slice(-6000);});
+  ffmpeg.stdin.on("error",()=>{encoderFailed=true;});
+  let last=0;
+  for(let i=0;i<frames;i++){
+    if(encoderFailed||ffmpeg.exitCode!==null)throw Error("FFmpeg stopped: "+log);
+    const png=await page.evaluate(async ({project,time})=>window.__motionFrame({project,time}),
+      {project,time:i/fps});
+    const bytes=Buffer.from(png,"base64");
+    if(bytes.length<900)throw Error("Empty frame "+i);
+    if(!ffmpeg.stdin.write(bytes))await once(ffmpeg.stdin,"drain");
+    const pct=Math.floor((i+1)*100/frames);
+    if(pct>=last+10){last=pct;process.stdout.write("Rendered "+pct+"% ("+(i+1)+"/"+frames+")\n");}
+  }
+  ffmpeg.stdin.end();
+  const [status]=await once(ffmpeg,"close");
+  if(status!==0)throw Error("FFmpeg encode failed: "+log.slice(-1700));
+  const probe=run("ffprobe",["-v","error","-show_entries","stream=index,codec_name,codec_type,width,height,avg_frame_rate","-show_entries","format=duration","-of","json",outputPath]);
+  if(probe.status!==0)throw Error("Encoded MP4 could not be probed");
+  const parsed=JSON.parse(probe.stdout);
+  const video=parsed.streams?.find(x=>x.codec_type==="video");
+  const track=parsed.streams?.find(x=>x.codec_type==="audio");
+  if(!video||video.width!==dims[0]||video.height!==dims[1]||video.codec_name!=="h264"){
+    throw Error("Encoded master format/dimensions incorrect");
+  }
+  if(audio.length&&!track)throw Error("Audio requested but MP4 audio track missing");
+  const sheet=await makeSheet(outputPath,duration);
+  const report={
+    engine:"MARGARYAN MOTION OS / OFFLINE MASTER",frames,expectedFps:fps,
+    expectedDuration:duration,file:outputPath,codec:video.codec_name,
+    width:video.width,height:video.height,audioCodec:track?.codec_name||null,
+    audioIncluded:!!track,voiceRequested:!!opts.voice,musicRequested:!!opts.music,
+    contactSheet:sheet,
+    note:"Technical checks cannot independently certify aesthetics, truth of claims, or music/voice licensing."
+  };
+  await writeFile(outputPath.replace(/\.mp4$/i,"")+".render-report.json",JSON.stringify(report,null,2)+"\n");
+  process.stdout.write("Motion Master complete:\n"+JSON.stringify(report,null,2)+"\n");
+}catch(error){
+  process.stderr.write("Motion Master: "+(error instanceof Error?error.message:String(error))+"\n");
+  process.exitCode=1;
+}finally{
+  if(ffmpeg&&!ffmpeg.killed&&ffmpeg.exitCode===null)ffmpeg.kill("SIGTERM");
+  if(browser)await browser.close().catch(()=>undefined);
+}
