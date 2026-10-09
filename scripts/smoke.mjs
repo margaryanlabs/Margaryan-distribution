@@ -91,6 +91,15 @@ for(const spec of [
 
 
 
+const timedFilm=await json("/api/motion/storyboard",{
+  method:"POST",headers:{"content-type":"application/json"},
+  body:JSON.stringify({
+    prompt:"Create a 22 seconds cinematic film for TUN about goal-first real estate decisions",
+    brand:"tun",format:"portrait",language:"en",style:"cinematic"
+  })
+});
+const timedTotal=timedFilm.project.scenes.reduce((n,scene)=>n+scene.seconds,0);
+assert(Math.abs(timedTotal-22)<0.05,"Natural-language 22-second brief was not honored");
 const health = await json("/api/health");
 assert(health.ok === true, "health endpoint is not healthy");
 assert(health.execution === "dry-run", "CI smoke test must never run with live execution");
