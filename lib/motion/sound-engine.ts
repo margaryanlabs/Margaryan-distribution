@@ -9,13 +9,16 @@ export interface ProceduralAudioSession {
   close(): Promise<void>;
 }
 const NOTES = [55, 65.41, 73.42, 82.41, 98.00, 110, 130.81];
-export async function createProceduralSoundtrack(project: MotionProject): Promise<ProceduralAudioSession> {
+export async function createProceduralSoundtrack(
+  project: MotionProject,
+  options: { voiceover?: File | null; synth?: boolean } = {}
+): Promise<ProceduralAudioSession> {
   if (typeof AudioContext === "undefined") throw new Error("Web Audio not supported.");
   const context = new AudioContext({ sampleRate: 44_100 });
   try {
     const destination = context.createMediaStreamDestination();
     const master = context.createGain();
-    master.gain.setValueAtTime(0.26, context.currentTime);
+    master.gain.setValueAtTime(options.voiceover ? 0.065 : 0.26, context.currentTime);
     const compressor = context.createDynamicsCompressor();
     compressor.threshold.value = -19;
     compressor.knee.value = 22;
@@ -24,9 +27,21 @@ export async function createProceduralSoundtrack(project: MotionProject): Promis
     compressor.release.value = .2;
     master.connect(compressor); compressor.connect(destination);
 
-    const start = context.currentTime + .13;
+    const start = context.currentTime + .4;
     const length = durationOf(project);
     const root = project.brand === "veto" ? 0 : project.brand === "promptence" ? 2 : project.brand === "raios" ? 3 : 4;
+    if (options.voiceover) {
+      if (options.voiceover.size > 15_000_000) throw new Error("Voiceover must be under 15 MB");
+      if (!options.voiceover.type.startsWith("audio/")) throw new Error("Upload an MP3, WAV, M4A or other supported audio file");
+      const decoded = await context.decodeAudioData(await options.voiceover.arrayBuffer());
+      if (decoded.duration > length + 2) throw new Error("Voiceover is longer than the film; edit timing or use shorter narration.");
+      const voice = context.createBufferSource();
+      voice.buffer = decoded;
+      const voiceGain = context.createGain();
+      voiceGain.gain.setValueAtTime(0.82, context.currentTime);
+      voice.connect(voiceGain); voiceGain.connect(compressor);
+      voice.start(start);
+    }
     function oscillator(note: number, wave: OscillatorType, t: number, seconds: number, volume: number, slide = 0) {
       const node = context.createOscillator();
       const level = context.createGain();
@@ -39,6 +54,7 @@ export async function createProceduralSoundtrack(project: MotionProject): Promis
       node.connect(level); level.connect(master);
       node.start(t); node.stop(t + seconds + .05);
     }
+    if (options.synth !== false) {
     // Drone foundations: restrained cinema textures, always below foreground typography.
     for (let i = 0; i < Math.ceil(length / 3); i++) {
       const step = start + i * 3;
@@ -66,6 +82,7 @@ export async function createProceduralSoundtrack(project: MotionProject): Promis
         oscillator(80, "triangle", start + cursor, .55, .055, -38);
       }
       cursor += scene.seconds;
+    }
     }
     await context.resume();
     const track = destination.stream.getAudioTracks()[0];
