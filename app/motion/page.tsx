@@ -52,6 +52,32 @@ export default function MotionStudioPage() {
   const info = BRAND_INFO[project.brand];
   const provenance = PORTFOLIO[project.brand];
   const qa = auditMotionProject(project);
+  // Operator render bridge for deterministic offline masters (Playwright -> FFmpeg).
+  // It does not read auth state, secrets, CRM data or arbitrary URLs. Canvas remains
+  // local to this browser; exporting to disk requires the separate operator CLI.
+  useEffect(() => {
+    type FrameArgs = { project: unknown; time: number; format?: MotionFormat };
+    type FrameHost = Window & { __motionFrame?: (input: FrameArgs) => Promise<string> };
+    const host = window as FrameHost;
+    const renderCanvas = document.createElement("canvas");
+    let renderContext: CanvasRenderingContext2D | null = null;
+    host.__motionFrame = async (input: FrameArgs) => {
+      const shot = sanitizeMotionProject(input.project);
+      const dims = FORMAT_SIZE[shot.format];
+      await preloadMotionLogo(shot.brand);
+      if (renderCanvas.width !== dims.width || renderCanvas.height !== dims.height) {
+        renderCanvas.width = dims.width; renderCanvas.height = dims.height;
+        renderContext = null;
+      }
+      if (!renderContext) renderContext = renderCanvas.getContext("2d", { alpha: false });
+      if (!renderContext) throw new Error("Offline movie canvas is unavailable");
+      const t = Number.isFinite(input.time) ? Math.max(0, Math.min(durationOf(shot), input.time)) : 0;
+      drawMotionFrame(renderContext, shot, t, dims.width, dims.height);
+      return renderCanvas.toDataURL("image/png").slice("data:image/png;base64,".length);
+    };
+    return () => { delete host.__motionFrame; };
+  }, []);
+
 
   useEffect(() => {
     try {
