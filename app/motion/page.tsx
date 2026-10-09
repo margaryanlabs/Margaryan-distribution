@@ -112,6 +112,7 @@ export default function MotionStudioPage() {
   function loadBrand(brand: MotionBrand) {
     setPlaying(false); jump(0); setSelectedIndex(0);
     setProject(makeMotionPreset(brand, project.format));
+    setBrief(getLocalDirectorExamples(brand)[0]);
     setNotice("Loaded " + BRAND_INFO[brand].name + " template. Create a new keyless storyboard or edit any scene.");
   }
   function addScene() {
