@@ -10,7 +10,7 @@ export interface PortfolioSource {
   repository: string | null;
   assetPath: string | null;
   localLogo: string | null;
-  logoStatus: "source-verified" | "pending-source";
+  logoStatus: "source-verified" | "component-derived" | "pending-source";
   product: string;
   site?: string;
   directorMotif: string;
@@ -91,6 +91,30 @@ export const PORTFOLIO: Record<MotionBrand, PortfolioSource> = {
     product: "sports price and decision analysis",
     directorMotif: "odds as prices, audited probabilities, event context"
   },
+  tun: {
+    repository: null,
+    assetPath: "src/components/tun/BrandMark.tsx",
+    localLogo: "/motion/brands/tun-component-preview.svg",
+    logoStatus: "component-derived",
+    product: "TUN: goal-first AI real estate advisor and decision intelligence",
+    directorMotif: "home decision journey, personal goal, property trade-offs, risk before transaction"
+  },
+  hay_engine: {
+    repository: "margaryanlabs/Hay_engine",
+    assetPath: "components/HayLogo.tsx",
+    localLogo: "/motion/brands/hay-engine.svg",
+    logoStatus: "source-verified",
+    product: "Armenian-first language, pronunciation, creator and marketing OS",
+    directorMotif: "Armenian letters, typography, speech, code-switching and original content creation"
+  },
+  reality_engine: {
+    repository: null,
+    assetPath: null,
+    localLogo: null,
+    logoStatus: "pending-source",
+    product: "Scenario simulation and probabilistic decision-support engine",
+    directorMotif: "base/bull/bear/stress branching, causal graph, sensitivity, uncertainty"
+  },
   armat: {
     repository: null,
     assetPath: null,
@@ -102,5 +126,5 @@ export const PORTFOLIO: Record<MotionBrand, PortfolioSource> = {
 };
 export const PORTFOLIO_BRANDS = Object.keys(PORTFOLIO) as MotionBrand[];
 export const VERIFIED_LOGOS = Object.fromEntries(
-  Object.entries(PORTFOLIO).filter(([,p]) => p.logoStatus === "source-verified").map(([k,p]) => [k,p.localLogo])
+  Object.entries(PORTFOLIO).filter(([,p]) => (p.logoStatus === "source-verified" || p.logoStatus === "component-derived") && p.localLogo).map(([k,p]) => [k,p.localLogo])
 ) as Partial<Record<MotionBrand,string>>;

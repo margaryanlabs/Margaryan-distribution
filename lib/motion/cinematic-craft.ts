@@ -100,7 +100,10 @@ const PROCESS:Record<MotionBrand,string[]> = {
   suren:["DISCOVER","ASSESS","STRATEGY","DECIDE"],
   veto_private:["EXPLORE","UNDERSTAND","ENABLE","CONTROL"],
   veto_sport:["OBSERVE","PRICE","TEST","REVIEW"],
-  armat:["DISCOVER","CONNECT","EXPORT","GROW"]
+  armat:["DISCOVER","CONNECT","EXPORT","GROW"],
+  tun:["GOAL","OPTIONS","RISKS","DECIDE"],
+  hay_engine:["SPEAK","WRITE","CREATE","PUBLISH"],
+  reality_engine:["MODEL","SIMULATE","STRESS","DECIDE"]
 };
 function processRibbon(ctx:CanvasRenderingContext2D,project:MotionProject,W:number,H:number,accent:string,t:number,progress:number) {
   const landscape=H<810,labels=PROCESS[project.brand];
@@ -142,7 +145,7 @@ function brandReveal(ctx:CanvasRenderingContext2D,project:MotionProject,W:number
   } else {
     // Correct wordmark is preferable to invented icon art.
     ctx.textAlign="center";ctx.textBaseline="middle";
-    ctx.fillStyle="#fafcfc";ctx.font="800 "+(landscape?36:46)+'px "Noto Sans Armenian", Arial, sans-serif';
+    ctx.fillStyle="#fafcfc";ctx.font="800 "+(landscape?36:46)+'px "Noto Sans Armenian","Noto Sans",Arial,sans-serif';
     const text=BRAND_INFO[project.brand].name;
     const metric=ctx.measureText(text).width;
     const factor=Math.min(1,(landscape?260:640)/Math.max(1,metric));

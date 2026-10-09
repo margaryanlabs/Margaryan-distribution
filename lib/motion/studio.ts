@@ -1,4 +1,4 @@
-export type MotionBrand = "veto" | "promptence" | "raios" | "labs" | "ingu" | "meqena" | "suren" | "veto_private" | "veto_sport" | "armat";
+export type MotionBrand = "veto" | "promptence" | "raios" | "labs" | "ingu" | "meqena" | "suren" | "veto_private" | "veto_sport" | "armat" | "tun" | "hay_engine" | "reality_engine";
 export type MotionFormat = "portrait" | "square" | "landscape";
 export type MotionSceneKind = "opener" | "statement" | "network" | "closer" | "kinetic" | "orbit";
 
@@ -31,7 +31,10 @@ export const BRAND_INFO: Record<MotionBrand, { name: string; accent: string; sof
   suren: { name: "SUREN PRIVATE", accent: "#e7e3df", soft: "#c6c0bb", caption: "DUBAI PRIVATE INTELLIGENCE" },
   veto_private: { name: "VETO PRIVATE", accent: "#ff553d", soft: "#ffc5ba", caption: "PRIVATE TELEGRAM EXPERIENCE" },
   veto_sport: { name: "VETO SPORT", accent: "#ff2d2d", soft: "#ffd2d2", caption: "EVIDENCE BEFORE THE ODDS" },
-  armat: { name: "ARMAT", accent: "#e7b89d", soft: "#f6ddd2", caption: "ARMENIAN PRODUCT EXPORT" }
+  armat: { name: "ARMAT", accent: "#e7b89d", soft: "#f6ddd2", caption: "ARMENIAN PRODUCT EXPORT" },
+  tun: { name: "TUN", accent: "#D8C5A2", soft: "#FFF8EB", caption: "REAL ESTATE DECISION INTELLIGENCE" },
+  hay_engine: { name: "HAY ENGINE", accent: "#D9FF63", soft: "#F4F5F6", caption: "ARMENIAN-FIRST LANGUAGE & CREATOR OS" },
+  reality_engine: { name: "REALITY ENGINE", accent: "#91A8BC", soft: "#DDE9F3", caption: "SCENARIO-BASED DECISION INTELLIGENCE" }
 };
 
 export const FORMAT_SIZE: Record<MotionFormat, { width: number; height: number }> = {
@@ -123,6 +126,39 @@ const STARTERS: Record<MotionBrand, { title: string; scenes: Omit<MotionScene, "
       { kind: "network", eyebrow: "DISCOVER OUR MAKERS", headline: "FROM ORIGIN TO OPPORTUNITY.", support: "Bring Armenian production into view.", seconds: 4.5 },
       { kind: "orbit", eyebrow: "EXPLORE ARMENIA", headline: "BUILT TO TRAVEL FARTHER.", support: "A marketplace for discovery.", seconds: 4.5 },
       { kind: "closer", eyebrow: "ARMAT", headline: "ROOTED HERE. MADE TO GO.", support: "Armenian products, connected.", seconds: 4 }
+    ]
+  },
+  tun: {
+    title: "TUN / THE DECISION BEGINS WITH YOU",
+    scenes: [
+      { kind:"kinetic", eyebrow:"A BETTER FIRST QUESTION", headline:"NOT WHICH PROPERTY.",support:"Start with your real goal.",seconds:3.6 },
+      { kind:"opener", eyebrow:"HOME / INVESTMENT / FUTURE",headline:"WHAT DOES HOME MEAN TO YOU?",support:"Every real-estate decision starts with a person.",seconds:4.6 },
+      { kind:"network", eyebrow:"THE ADVISOR",headline:"SEE THE TRADE-OFFS.",support:"Understand options, risk and uncertainty.",seconds:4.6 },
+      { kind:"statement", eyebrow:"FROM GOAL TO STRATEGY",headline:"GOALS. CONTEXT. DECISIONS.",support:"No endless listings. No sales pressure.",seconds:4.5 },
+      { kind:"orbit", eyebrow:"INTRODUCING",headline:"TUN",support:"Real estate intelligence. Without the sales agenda.",seconds:4.1 },
+      { kind:"closer", eyebrow:"THE RIGHT DECISION IS PERSONAL",headline:"START WITH YOUR GOAL.",support:"TUN / Margaryan Labs",seconds:4.5 }
+    ]
+  },
+  hay_engine: {
+    title:"HAY ENGINE / NATURALLY ARMENIAN",
+    scenes:[
+      {kind:"kinetic",eyebrow:"LANGUAGE IS IDENTITY",headline:"ARMENIAN DESERVES BETTER.",support:"Typography. Pronunciation. Meaning.",seconds:3.6},
+      {kind:"opener",eyebrow:"BUILT AROUND THE LANGUAGE",headline:"CREATE NATURALLY.",support:"Armenian-first creative intelligence.",seconds:4.3},
+      {kind:"network",eyebrow:"CREATOR AND LANGUAGE ENGINE",headline:"SPEAK. WRITE. CREATE.",support:"Language tools and creative workflows.",seconds:4.5},
+      {kind:"statement",eyebrow:"THREE LANGUAGES",headline:"HY. EN. RU.",support:"Preserve names, meaning and brand identity.",seconds:4.1},
+      {kind:"orbit",eyebrow:"INTRODUCING",headline:"HAY ENGINE",support:"Create anything. Naturally Armenian.",seconds:4.5},
+      {kind:"closer",eyebrow:"THE LANGUAGE COMES FIRST",headline:"ՀԱՅԵՐԵՆՈՎ։",support:"HAY ENGINE / Margaryan Labs",seconds:4.8}
+    ]
+  },
+  reality_engine: {
+    title:"REALITY ENGINE / MODEL THE DECISION",
+    scenes:[
+      {kind:"kinetic",eyebrow:"BEFORE THE CONSEQUENCES",headline:"EVERY DECISION HAS BRANCHES.",support:"What happens if your assumptions change?",seconds:3.8},
+      {kind:"opener",eyebrow:"SCENARIO INTELLIGENCE",headline:"MODEL WHAT COULD HAPPEN.",support:"Base. Bull. Bear. Stress.",seconds:4.5},
+      {kind:"network",eyebrow:"SECOND-ORDER EFFECTS",headline:"FOLLOW THE CONSEQUENCES.",support:"Dependencies. Risk. Uncertainty.",seconds:4.5},
+      {kind:"statement",eyebrow:"FROM UNCERTAINTY TO CONTEXT",headline:"TEST THE ASSUMPTIONS.",support:"Scenarios are not guarantees.",seconds:4.6},
+      {kind:"orbit",eyebrow:"INTRODUCING",headline:"REALITY ENGINE",support:"Decision-support simulations.",seconds:4.2},
+      {kind:"closer",eyebrow:"SIMULATE BEFORE COMMITTING",headline:"MODEL THE DECISION.",support:"Reality Engine / Margaryan Labs",seconds:4.5}
     ]
   },
   labs: {

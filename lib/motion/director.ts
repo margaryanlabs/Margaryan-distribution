@@ -2,6 +2,8 @@ import {
   BRAND_INFO, makeMotionPreset, sanitizeMotionProject,
   type MotionBrand, type MotionFormat, type MotionProject, type MotionScene, type MotionSceneKind
 } from "./studio";
+import { specialCampaign } from "./special-campaigns";
+import { honorRequestedTiming } from "./timing";
 
 /**
  * Keyless Motion Director.
@@ -59,18 +61,18 @@ const BRAND_CLOSE: Record<Language, Record<MotionBrand, string>> = {
   ru: {
     veto:"РЕШЕНИЯ. НЕ ОБЕЩАНИЯ.",promptence:"БУДЬТЕ ВИДИМЫ В AI.",raios:"КОНТРОЛИРУЙТЕ МАРЖУ.",labs:"СОЗДАЁМ СЛЕДУЮЩЕЕ.",
     ingu:"СТИЛЬ КАК ИСКУССТВО.",meqena:"НОВЫЙ ПУТЬ К АВТОМОБИЛЮ.",suren:"СТРАТЕГИЯ ПРЕЖДЕ ВЫБОРА.",
-    veto_private:"КОНТРОЛЬ НАД НАСТРОЙКАМИ.",veto_sport:"АНАЛИЗИРУЙ ЦЕНУ.",armat:"СДЕЛАНО В АРМЕНИИ."
+    veto_private:"КОНТРОЛЬ НАД НАСТРОЙКАМИ.",veto_sport:"АНАЛИЗИРУЙ ЦЕНУ.",armat:"СДЕЛАНО В АРМЕНИИ.",tun:"НАЧНИ СВОЮ ИСТОРИЮ.",hay_engine:"ТВОРИ НА АРМЯНСКОМ.",reality_engine:"СНАЧАЛА МОДЕЛИРУЙ."
   },
   en: {
     veto:"DECISIONS. NOT PROMISES.",promptence:"BE SEEN IN AI SEARCH.",raios:"MAKE MARGINS VISIBLE.",labs:"BUILD WHAT COMES NEXT.",
     ingu:"FASHION AS A POINT OF VIEW.",meqena:"DISCOVER THE DRIVE.",suren:"STRATEGY BEFORE THE VIEW.",
-    veto_private:"TOOLS FOR YOUR CONTROL.",veto_sport:"AUDIT THE PRICE.",armat:"MADE IN ARMENIA."
+    veto_private:"TOOLS FOR YOUR CONTROL.",veto_sport:"AUDIT THE PRICE.",armat:"MADE IN ARMENIA.",tun:"START WITH YOUR GOAL.",hay_engine:"NATURALLY ARMENIAN.",reality_engine:"MODEL BEFORE YOU DECIDE."
   },
   hy: {
     veto:"ՈՐՈՇՈՒՄՆԵՐ, ՈՉ ԽՈՍՏՈՒՄՆԵՐ։",promptence:"ԵՐԵՎԱՑԵՔ AI ՈՐՈՆՄԱՆ ՄԵՋ։",raios:"ՏԵՍԱՆԵԼԻ ԴԱՐՁՐՈՒ ՄԱՐԺԱՆ։",labs:"ԿԱՌՈՒՑՈՒՄ ԵՆՔ ԱՊԱԳԱՆ։",
     ingu:"ՆՈՐ ՏԵՍԱՆԿՅՈՒՆ ՆՈՐԱՁԵՎՈՒԹՅԱՆ ՄԱՍԻՆ։",meqena:"ԲԱՑԱՀԱՅՏԵՔ ՁԵՐ ՀԱՋՈՐԴ ՄԵՔԵՆԱՆ։",
     suren:"ՌԱԶՄԱՎԱՐՈՒԹՅՈՒՆ՝ ԸՆՏՐՈՒԹՅՈՒՆԻՑ ԱՌԱՋ։",veto_private:"ՎԵՐԱՀՍԿԵՔ ՁԵՐ ԿԱՐԳԱՎՈՐՈՒՄՆԵՐԸ։",
-    veto_sport:"ՎԵՐԼՈՒԾԵՔ ԳԻՆԸ։",armat:"ԱՐՏԱԴՐՎԱԾ Է ՀԱՅԱՍՏԱՆՈՒՄ։"
+    veto_sport:"ՎԵՐԼՈՒԾԵՔ ԳԻՆԸ։",armat:"ԱՐՏԱԴՐՎԱԾ Է ՀԱՅԱՍՏԱՆՈՒՄ։",tun:"ՍԿՍԵՔ ՁԵՐ ՆՊԱՏԱԿԻՑ։",hay_engine:"ՍՏԵՂԾԵՔ ՀԱՅԵՐԵՆ։",reality_engine:"ՆԱԽ ՄՈԴԵԼԱՎՈՐԵՔ։"
   }
 };
 const BRAND_NARRATIVE: Record<Language, Record<MotionBrand, [string, string, string, string]>> = {
@@ -84,7 +86,10 @@ const BRAND_NARRATIVE: Record<Language, Record<MotionBrand, [string, string, str
     suren:["THE VIEW IS NOT THE STRATEGY.","DUBAI BEYOND THE LISTING.","SEE THE CAPITAL CONTEXT.","DECIDE WITH PERSPECTIVE."],
     veto_private:["KNOW YOUR SETTINGS.","YOUR DIGITAL SPACE.","UNDERSTAND YOUR CONTROLS.","CHOOSE WHAT IS ENABLED."],
     veto_sport:["THE PRICE IS A QUESTION.","WHAT DO THE ODDS IMPLY?","AUDIT THE ASSUMPTIONS.","EVIDENCE OVER CERTAINTY."],
-    armat:["CRAFT BEGINS AT HOME.","MADE IN ARMENIA.","DISCOVER LOCAL MAKERS.","GO BEYOND THE BORDER."]
+    armat:["CRAFT BEGINS AT HOME.","MADE IN ARMENIA.","DISCOVER LOCAL MAKERS.","GO BEYOND THE BORDER."],
+    tun:["PROPERTY IS NOT THE FIRST QUESTION.","START WITH YOUR OWN GOAL.","SEE THE TRADE-OFFS.","DECIDE WITHOUT PRESSURE."],
+    hay_engine:["ARMENIAN IS MORE THAN A TRANSLATION.","CREATE IN YOUR OWN LANGUAGE.","LET WORDS SOUND RIGHT.","NATURALLY ARMENIAN."],
+    reality_engine:["EVERY DECISION HAS BRANCHES.","SIMULATE THE POSSIBILITIES.","SEE UNCERTAINTY AND RISK.","MODEL BEFORE YOU DECIDE."]
   },
   ru: {
     veto:["НЕ ПУТАЙ ШУМ С СИГНАЛОМ.","РЫНКУ НУЖЕН КОНТЕКСТ.","УВИДЕТЬ РИСК.","ПРИНИМАТЬ ВЗВЕШЕННЫЕ РЕШЕНИЯ."],
@@ -96,7 +101,10 @@ const BRAND_NARRATIVE: Record<Language, Record<MotionBrand, [string, string, str
     suren:["ВИД — ЭТО НЕ СТРАТЕГИЯ.","ДУБАЙ ЗА ПРЕДЕЛАМИ ОБЪЯВЛЕНИЙ.","ПОНИМАЙТЕ КОНТЕКСТ КАПИТАЛА.","РЕШЕНИЯ С ПЕРСПЕКТИВОЙ."],
     veto_private:["РАЗБЕРИТЕСЬ В НАСТРОЙКАХ.","ВАШЕ ЛИЧНОЕ ПРОСТРАНСТВО.","УПРАВЛЯЙТЕ СВОИМИ ОПЦИЯМИ.","ВЫ ЗНАЕТЕ, ЧТО ВКЛЮЧЕНО."],
     veto_sport:["КОЭФФИЦИЕНТ — ЭТО ВОПРОС.","ЧТО ГОВОРИТ ЦЕНА?","ПРОВЕРЯЙТЕ ПРЕДПОСЫЛКИ.","ФАКТЫ ВАЖНЕЕ УВЕРЕННОСТИ."],
-    armat:["МАСТЕРСТВО НАЧИНАЕТСЯ ДОМА.","СДЕЛАНО В АРМЕНИИ.","ОТКРОЙТЕ НАШИХ ПРОИЗВОДИТЕЛЕЙ.","НОВЫЕ РЫНКИ ДЛЯ НАШИХ ИДЕЙ."]
+    armat:["МАСТЕРСТВО НАЧИНАЕТСЯ ДОМА.","СДЕЛАНО В АРМЕНИИ.","ОТКРОЙТЕ НАШИХ ПРОИЗВОДИТЕЛЕЙ.","НОВЫЕ РЫНКИ ДЛЯ НАШИХ ИДЕЙ."],
+    tun:["НАЧНИ НЕ С КВАРТИРЫ.","НАЧНИ СО СВОЕЙ ЦЕЛИ.","УВИДЬ КОМПРОМИССЫ.","ПРИНИМАЙ РЕШЕНИЕ БЕЗ ДАВЛЕНИЯ."],
+    hay_engine:["АРМЯНСКИЙ — БОЛЬШЕ ЧЕМ ПЕРЕВОД.","СОЗДАВАЙ НА СВОЁМ ЯЗЫКЕ.","ЗВУЧИ ЕСТЕСТВЕННО.","АРМЯНСКИЙ НА ПЕРВОМ МЕСТЕ."],
+    reality_engine:["У КАЖДОГО РЕШЕНИЯ ЕСТЬ ВЕТВИ.","ПРОВЕРЬ НЕСКОЛЬКО СЦЕНАРИЕВ.","УВИДЬ НЕОПРЕДЕЛЁННОСТЬ.","МОДЕЛИРУЙ ПЕРЕД РЕШЕНИЕМ."]
   },
   hy: {
     veto:["ԱՂՄՈՒԿԸ ԱԶԴԱՆՇԱՆ ՉԷ։","ՇՈՒԿԱՆ ՀԱՄԱՏԵՔՍՏ Է ՊԱՀԱՆՋՈՒՄ։","ՀԱՍԿԱՑԻՐ ՌԻՍԿԸ։","ՈՐՈՇԻՐ ԳԻՏԱԿՑՎԱԾ։"],
@@ -108,7 +116,10 @@ const BRAND_NARRATIVE: Record<Language, Record<MotionBrand, [string, string, str
     suren:["ՏԵՍԱՐԱՆԸ ԴԵՌ ՌԱԶՄԱՎԱՐՈՒԹՅՈՒՆ ՉԷ։","ԴՈՒԲԱՅ՝ ՀԱՅՏԱՐԱՐՈՒԹՅՈՒՆԻՑ ԱՅՆ ԿՈՂՄ։","ՀԱՍԿԱՑԵՔ ԿԱՊԻՏԱԼԻ ՀԱՄԱՏԵՔՍՏԸ։","ՈՐՈՇԵՔ ՀԵՌԱՆԿԱՐՈՎ։"],
     veto_private:["ԻՄԱՑԵՔ ՁԵՐ ԿԱՐԳԱՎՈՐՈՒՄՆԵՐԸ։","ՁԵՐ ԹՎԱՅԻՆ ՏԱՐԱԾՔԸ։","ՎԵՐԱՀՍԿԵՔ ԸՆՏՐԱՆՔՆԵՐԸ։","ԻՄԱՑԵՔ՝ ԻՆՉՆ Է ՄԻԱՑՎԱԾ։"],
     veto_sport:["ԳՈՐԾԱԿԻՑԸ ՀԱՐՑ Է։","Ի՞ՆՉ ԵՆ ՆՇԱՆԱԿՈՒՄ ԳՆԵՐԸ։","ՍՏՈՒԳԵՔ ԵՆԹԱԴՐՈՒԹՅՈՒՆՆԵՐԸ։","ՓԱՍՏԵՐ՝ ՈՉ ՎՍՏԱՀՈՒԹՅՈՒՆ։"],
-    armat:["ԱՐՀԵՍՏԸ ՍԿՍՎՈՒՄ Է ՏՆԻՑ։","ԱՐՏԱԴՐՎԱԾ Է ՀԱՅԱՍՏԱՆՈՒՄ։","ԲԱՑԱՀԱՅՏԵՔ ՀԱՅ ԱՐՏԱԴՐՈՂՆԵՐԻՆ։","ՆՈՐ ՇՈՒԿԱՆԵՐ՝ ՆՈՐ ՀՆԱՐԱՎՈՐՈՒԹՅՈՒՆՆԵՐ։"]
+    armat:["ԱՐՀԵՍՏԸ ՍԿՍՎՈՒՄ Է ՏՆԻՑ։","ԱՐՏԱԴՐՎԱԾ Է ՀԱՅԱՍՏԱՆՈՒՄ։","ԲԱՑԱՀԱՅՏԵՔ ՀԱՅ ԱՐՏԱԴՐՈՂՆԵՐԻՆ։","ՆՈՐ ՇՈՒԿԱՆԵՐ՝ ՆՈՐ ՀՆԱՐԱՎՈՐՈՒԹՅՈՒՆՆԵՐ։"],
+    tun:["ՍԿՍԵՔ ՈՉ ԹԵ ԲՆԱԿԱՐԱՆԻՑ։","ՍԿՍԵՔ ՁԵՐ ՆՊԱՏԱԿԻՑ։","ՏԵՍԵՔ ՓՈԽԶԻՋՈՒՄՆԵՐԸ։","ՈՐՈՇՈՒՄ՝ ԱՌԱՆՑ ՃՆՇՄԱՆ։"],
+    hay_engine:["ՀԱՅԵՐԵՆԸ ԱՎԵԼԻՆ Է, ՔԱՆ ԹԱՐԳՄԱՆՈՒԹՅՈՒՆԸ։","ՍՏԵՂԾԵՔ ՁԵՐ ԼԵԶՎՈՎ։","ԹՈՂ ԲԱՌԵՐԸ ՃԻՇՏ ՀՆՉԵՆ։","ԲՆԱԿԱՆ ՀԱՅԵՐԵՆ։"],
+    reality_engine:["ՅՈՒՐԱՔԱՆՉՅՈՒՐ ՈՐՈՇՈՒՄ ՈՒՆԻ ՏԱՐԲԵՐԱԿՆԵՐ։","ՄՈԴԵԼԱՎՈՐԵՔ ՍՑԵՆԱՐՆԵՐԸ։","ՏԵՍԵՔ ՌԻՍԿՆ ՈՒ ԱՆՈՐՈՇՈՒԹՅՈՒՆԸ։","ՆԱԽ ՄՈԴԵԼԱՎՈՐԵՔ։"]
   }
 };
 
@@ -204,7 +215,7 @@ function promptenceCampaign(lang: Language, format: MotionFormat, style: MotionS
   }));
   return sanitizeMotionProject({
     version: 1, brand: "promptence", format, style, seed,
-    title: "PROMPTENCE / DIRECTOR'S CUT / " + lang.toUpperCase(), scenes
+    title: "PROMPTENCE / DIRECTOR'S CUT / " + lang.toUpperCase(), language: lang, scenes
   });
 }
 
@@ -222,8 +233,10 @@ export function createKeylessStoryboard(input: DirectorBrief): MotionProject {
   const hash = seedFrom([prompt, brand, format, input.style || "cinematic", lang].join("|"));
   const style = input.style || (/(быстро|динамич|fast|energetic|kinetic)/i.test(prompt) ? "kinetic" :
     /(data|данн|цифр|аналити|terminal|технолог|code|dashboard)/i.test(prompt) ? "technical" : "cinematic");
+  const directed = specialCampaign(brand,lang,format,style,hash);
+  if (directed) return honorRequestedTiming(directed,prompt);
   if (brand === "promptence" && topic === "visibility") {
-    return promptenceCampaign(lang, format, style, hash);
+    return honorRequestedTiming(promptenceCampaign(lang, format, style, hash),prompt);
   }
   const pace = style === "kinetic" ? 3 : style === "technical" ? 4.5 : 5;
   const styles: MotionSceneKind[] = style === "technical"
@@ -250,10 +263,10 @@ export function createKeylessStoryboard(input: DirectorBrief): MotionProject {
     support: supports[index].slice(0, 180),
     seconds: Math.max(2, Math.min(8, pace + (index === 0 ? -.7 : 0) + (index === 4 ? -.8 : 0) + ((hash >> (index * 3)) % 3) * .25))
   }));
-  return sanitizeMotionProject({
+  return honorRequestedTiming(sanitizeMotionProject({
     version: 1, title: BRAND_INFO[brand].name + " / " + TOPIC_LABEL[lang][topic],
     brand, format, style, seed: hash, language: lang, scenes
-  });
+  }),prompt);
 }
 
 export function getLocalDirectorExamples(brand: MotionBrand) {

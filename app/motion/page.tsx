@@ -10,6 +10,7 @@ import { drawMotionFrame } from "@/lib/motion/render-engine";
 import { preloadMotionLogo } from "@/lib/motion/brand-assets";
 import { PORTFOLIO, PORTFOLIO_BRANDS } from "@/lib/motion/portfolio";
 import { auditMotionProject, inspectFramePixels, autoPolishMotionProject } from "@/lib/motion/quality";
+import { reviewMotionVisuals } from "@/lib/motion/visual-review";
 import { createProceduralSoundtrack, type ProceduralAudioSession } from "@/lib/motion/sound-engine";
 import { createKeylessStoryboard, getLocalDirectorExamples, type MotionLanguage, type MotionStyle } from "@/lib/motion/director";
 import styles from "./motion.module.css";
@@ -43,6 +44,7 @@ export default function MotionStudioPage() {
   const [playhead, setPlayhead] = useState(0);
   const [generating, setGenerating] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [visualReviewing, setVisualReviewing] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
   const [notice, setNotice] = useState("Собственный локальный движок: генерация сцен, графика и экспорт без API-ключей, кредитов и сервера рендеринга.");
   const previewRef = useRef<HTMLCanvasElement>(null);
@@ -291,7 +293,7 @@ export default function MotionStudioPage() {
   return <main className={styles.root} style={{ "--brand-accent": info.accent } as CSSProperties}>
     <header className={styles.header}>
       <div>
-        <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / MOTION OS V0.5</p>
+        <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / MOTION OS V0.6</p>
         <h1>Motion <em>Studio.</em></h1>
         <p className={styles.deck}>Cinematic direction · real brand assets · EN / RU / HY · original voice mixing · automatic scene polish · offline H.264 master workflow.</p>
       </div>
@@ -377,6 +379,17 @@ export default function MotionStudioPage() {
                 ? "AUTO POLISH: "+result.changes.join(" · ")
                 : "AUTO POLISH: All safe structural and copy fixes already applied.");
             }}>✦ AUTO POLISH SCENES</button>
+          <button type="button" className={styles.polishButton} disabled={exporting||generating||visualReviewing}
+            onClick={async()=>{
+              if(visualReviewing)return;
+              setVisualReviewing(true);
+              try{
+                const report=await reviewMotionVisuals(project);
+                downloadFile("motion-"+project.brand+"-"+(project.language||language)+"-visual-review.png",report.sheet);
+                setNotice("VISUAL QA: "+report.sceneCoverage+" shots, "+report.frames+" sampled frames. "+(report.warnings.length?report.warnings.join(" · "):"All sampled frames have usable image contrast. Human creative review still required."));
+              }catch(error){setNotice(error instanceof Error?error.message:"Visual preflight failed");}
+              finally{setVisualReviewing(false);}
+            }}>{visualReviewing?"REVIEWING FRAMES...":"◈ REVIEW ALL SHOTS / CONTACT SHEET"}</button>
           <p>{qa.scenes} shots · {qa.seconds.toFixed(1)}s · {qa.warnings} reviews · {qa.blockers} blockers</p>
           {qa.checks.filter(c=>c.severity!=="info").slice(0,4).map(c=><small key={c.id}>• {c.message}</small>)}
         </div>

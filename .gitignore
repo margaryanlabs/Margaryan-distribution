@@ -5,3 +5,6 @@ node_modules
 *.log
 .DS_Store
 *.tsbuildinfo
+
+# Operator-only Motion OS output (may contain private repository names)
+/out/motion/

@@ -69,8 +69,37 @@ const privateFilm = await json("/api/motion/storyboard", {
 });
 assert(privateFilm.project?.brand==="veto_private", "Extended brand catalog mismatch");
 assert(privateFilm.project.scenes.length>=4, "Extended portfolio lacks an actual storyboard");
+const newMarks=["/motion/brands/hay-engine.svg","/motion/brands/tun-component-preview.svg"];
+for (const markPath of newMarks) {
+  const mark=await fetch(baseUrl+markPath);
+  assert(mark.ok && (await mark.text()).includes("<svg"),"New verified/component-based brand visual could not load: "+markPath);
+}
+for(const spec of [
+  {brand:"tun",language:"ru",prompt:"Сделай рекламу TUN, где личная цель важнее списка недвижимости",script:/[\u0400-\u04ff]/u},
+  {brand:"hay_engine",language:"hy",prompt:"Ստեղծիր HAY Engine տեսանյութ հայերեն տեքստով",script:/[\u0531-\u058f]/u},
+  {brand:"reality_engine",language:"en",prompt:"Show scenario risk and decision simulations in Reality Engine",script:/[A-Za-z]/}
+]){
+  const film=await json("/api/motion/storyboard",{
+    method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({prompt:spec.prompt,brand:spec.brand,format:"portrait",language:spec.language,style:"cinematic"})
+  });
+  assert(film.project.brand===spec.brand,"Motion portfolio ID missing: "+spec.brand);
+  assert(film.project.language===spec.language,"Motion storyboard locale missing for "+spec.brand);
+  assert(film.project.scenes.some(scene=>spec.script.test(scene.headline)),"No supported script for "+spec.brand);
+  assert(film.project.scenes.length>=5,"Not enough product storytelling for "+spec.brand);
+}
 
 
+
+const timedFilm=await json("/api/motion/storyboard",{
+  method:"POST",headers:{"content-type":"application/json"},
+  body:JSON.stringify({
+    prompt:"Create a 22 seconds cinematic film for TUN about goal-first real estate decisions",
+    brand:"tun",format:"portrait",language:"en",style:"cinematic"
+  })
+});
+const timedTotal=timedFilm.project.scenes.reduce((n,scene)=>n+scene.seconds,0);
+assert(Math.abs(timedTotal-22)<0.05,"Natural-language 22-second brief was not honored");
 const health = await json("/api/health");
 assert(health.ok === true, "health endpoint is not healthy");
 assert(health.execution === "dry-run", "CI smoke test must never run with live execution");
