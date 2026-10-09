@@ -139,3 +139,8 @@
 .voiceUpload span {color:#bac6c0;font-size:10px;letter-spacing:.09em;font-weight:800}
 .voiceUpload input {width:100%;font-size:10px;color:#b4c8c5}
 .clearVoice {margin:0 0 9px;background:#1a2526;border:1px solid #39484a;border-radius:8px;color:#cbd5d2;padding:10px;max-width:100%;word-wrap:break-word;cursor:pointer;font-size:10px}
+
+/* Cinematic production quality action: separate from paid AI and code exports. */
+.polishButton { margin-top:14px;width:100%;min-height:42px;border:1px solid #43584e;background:linear-gradient(110deg,#19312a,#101b1c);color:#dbeee7;border-radius:8px;font-size:10px;letter-spacing:.07em;font-weight:900;cursor:pointer;text-align:center; }
+.polishButton:hover {border-color:var(--brand-accent);box-shadow:0 4px 23px rgba(0,0,0,.25);}
+.polishButton:disabled {opacity:.5;cursor:not-allowed;}

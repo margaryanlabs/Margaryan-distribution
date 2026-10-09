@@ -1,4 +1,4 @@
-import { BRAND_INFO, durationOf, type MotionProject } from "./studio";
+import { BRAND_INFO, durationOf, sanitizeMotionProject, type MotionProject } from "./studio";
 import { PORTFOLIO } from "./portfolio";
 export type MotionSeverity = "block" | "warn" | "info";
 export interface MotionQAItem { id: string; severity: MotionSeverity; message: string }
@@ -72,4 +72,58 @@ export function inspectFramePixels(data: Uint8ClampedArray, width: number, heigh
   if(alphaMin<240)return {valid:false,reason:"Unexpected transparency in rendered frame"};
   if(max-min<18)return {valid:false,reason:"Low dynamic range / possible blank frame"};
   return {valid:true,contrast:max-min,meanLuma:light/count,meanRGB:energy/count};
+}
+
+
+export interface MotionPolishResult { project:MotionProject; changes:string[] }
+/**
+ * Idempotent and strictly non-generative quality cleanup:
+ * - normalizes invisible Unicode controls and accidental excessive punctuation;
+ * - makes a multi-shot film end on a closing shot;
+ * - creates basic layout variety if the author chose only one visual composition.
+ * No claims, branding facts or multilingual copy are invented by this pass.
+ */
+export function autoPolishMotionProject(original: MotionProject): MotionPolishResult {
+  const project=sanitizeMotionProject(original);
+  const changes:string[]=[];
+  const tidy=(value:string)=>{
+    return value.normalize("NFC")
+      .replace(/[\u200B-\u200D\u2060\uFEFF]/gu,"")
+      .replace(/[\u0000-\u001F\u007F]/gu," ")
+      .replace(/\s+/gu," ")
+      .replace(/([!?։՞])\1{2,}/gu,"$1")
+      .trim();
+  };
+  project.scenes=project.scenes.map((scene,index)=>{
+    const next={...scene};
+    for(const field of ["headline","eyebrow","support"] as const){
+      const cleaned=tidy(next[field]);
+      if(cleaned!==next[field]){
+        next[field]=cleaned;
+        changes.push("Cleaned "+field+" on shot "+(index+1));
+      }
+    }
+    return next;
+  });
+  if(project.scenes.length>=3){
+    const final=project.scenes.at(-1)!;
+    if(final.kind!=="closer"){
+      final.kind="closer";
+      changes.push("Reserved final shot for brand closure");
+    }
+  }
+  const variety=new Set(project.scenes.map(scene=>scene.kind));
+  if(project.scenes.length>=4 && variety.size<3){
+    const first=project.scenes[0];
+    if(first.kind!=="kinetic"){
+      first.kind="kinetic";
+      changes.push("Added an editorial kinetic opening");
+    }
+    const interior=project.scenes[Math.floor(project.scenes.length/2)];
+    if(interior.kind!=="network"){
+      interior.kind="network";
+      changes.push("Added a product/diagram scene");
+    }
+  }
+  return {project,changes};
 }

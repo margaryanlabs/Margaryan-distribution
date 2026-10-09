@@ -3,6 +3,7 @@ import {
   type MotionProject, type MotionScene
 } from "./studio";
 import { drawProductComposition } from "./product-compositions";
+import { drawCinematicSet } from "./cinematic-craft";
 import { getLoadedMotionLogo } from "./brand-assets";
 
 const TAU = Math.PI * 2;
@@ -188,10 +189,11 @@ function renderText(ctx: CanvasRenderingContext2D, scene: MotionScene, W: number
   const inProgress = cubic(progress * 5.8);
   const outProgress = smooth((1 - progress) * 10);
   const opacity = inProgress * outProgress;
-  const y = H * (landscape ? .28 : .34);
+  const y = H * (landscape ? .235 : H < 1250 ? .265 : .305);
   ctx.save();
+  const masterAlpha = ctx.globalAlpha;
   ctx.textAlign = "left"; ctx.textBaseline = "top";
-  ctx.globalAlpha = opacity;
+  ctx.globalAlpha = masterAlpha * opacity;
   ctx.font = "700 20px Arial, sans-serif";
   ctx.fillStyle = accent; ctx.fillText(scene.eyebrow.toLocaleUpperCase(), pad, y - 73);
   const maxLines = landscape ? 2 : 4;
@@ -205,7 +207,7 @@ function renderText(ctx: CanvasRenderingContext2D, scene: MotionScene, W: number
   }
   const lineHeight = size * 1.04;
   const textHeight = words.length * lineHeight;
-  const maxAllowed = Math.max(130, H * (landscape ? .33 : .27));
+  const maxAllowed = Math.max(130, H * (landscape ? .28 : .27));
   if (textHeight > maxAllowed) {
     size *= maxAllowed / textHeight;
     ctx.font = "900 " + size + "px Arial, sans-serif";
@@ -217,7 +219,7 @@ function renderText(ctx: CanvasRenderingContext2D, scene: MotionScene, W: number
   words.slice(0, maxLines).forEach((line, i) => {
     const step = cubic((progress - i * .07) * (reveal ? 5.2 : 7.5));
     ctx.save();
-    ctx.globalAlpha = opacity * step;
+    ctx.globalAlpha = masterAlpha * opacity * step;
     const shiftX = reveal ? (1 - step) * (i % 2 ? -160 : 130) : (1 - step) * -45;
     const shiftY = !reveal ? (1 - step) * 50 : 0;
     ctx.shadowColor = accent + "44"; ctx.shadowBlur = 18;
@@ -225,9 +227,9 @@ function renderText(ctx: CanvasRenderingContext2D, scene: MotionScene, W: number
     ctx.restore();
   });
   const supportY = y + paintHeight + (landscape ? 15 : 46);
-  const supportSize = landscape ? 23 : 27;
+  const supportSize = landscape ? 19 : H < 1250 ? 22 : 27;
   ctx.fillStyle = "#9ba8b6"; ctx.font = "400 " + supportSize + "px Arial, sans-serif";
-  const supportLines = textLines(ctx, scene.support, textMax).slice(0, landscape ? 1 : 3);
+  const supportLines = textLines(ctx, scene.support, textMax).slice(0, landscape ? 2 : 3);
   supportLines.forEach((line, i) => ctx.fillText(line, pad, supportY + i * (supportSize + 11)));
   // A discreet light streak anchors every major title.
   ctx.fillStyle = accent;
@@ -241,15 +243,13 @@ function drawShot(ctx: CanvasRenderingContext2D, project: MotionProject, index: 
   const seed = (project.seed || 0) + index * 197;
   ctx.save(); ctx.globalAlpha = alpha;
   drawBackground(ctx, W, H, accent, absoluteTime, seed, project.style === "technical");
-  switch (scene.kind) {
-    case "network": drawNetwork(ctx, W, H, absoluteTime, accent, seed); break;
-    case "kinetic": drawKinetic(ctx, W, H, absoluteTime, accent, seed); break;
-    case "orbit": drawOrbit(ctx, W, H, absoluteTime, accent, seed, progress); break;
-    case "closer": drawOrbit(ctx, W, H, absoluteTime, accent, seed, progress); break;
-    case "opener": drawOrbit(ctx, W, H, absoluteTime, accent, seed, progress); break;
-    case "statement": project.style === "technical" ? drawTechnical(ctx, W, H, absoluteTime, accent) : drawKinetic(ctx, W, H, absoluteTime, accent, seed); break;
+  // A shot has its own optical staging, hero moment and tempo.
+  // Product interfaces are deliberately selective rather than repeated behind
+  // every headline, which made the previous film resemble a slide carousel.
+  drawCinematicSet(ctx, project, scene, index, absoluteTime, progress, W, H);
+  if (scene.kind === "network") {
+    drawProductComposition(ctx, project, scene, absoluteTime, W, H, accent);
   }
-  drawProductComposition(ctx,project,scene,absoluteTime,W,H,accent);
   renderText(ctx, scene, W, H, progress, accent, absoluteTime, project.style);
   ctx.restore();
 }
@@ -287,7 +287,25 @@ export function drawMotionFrame(ctx: CanvasRenderingContext2D, project: MotionPr
   const transition = Math.min(.6, scene.seconds * .18);
   if (local > scene.seconds - transition && index < project.scenes.length - 1) {
     const amount = smooth((local - (scene.seconds - transition)) / transition);
-    drawShot(ctx, project, index + 1, (local - (scene.seconds - transition)) * .9, t, W, H, amount);
+    // Alternating editorial transition grammar: soft cross-dissolve / directional
+    // vertical wipe / diagonal iris. The source shot remains fully drawn below.
+    ctx.save();
+    if (index % 3 === 1) {
+      const top = H * (1 - amount);
+      ctx.beginPath();ctx.rect(0, top, W, H - top);ctx.clip();
+      drawShot(ctx, project, index + 1, Math.max(.05, amount * transition), t, W, H, 1);
+    } else if (index % 3 === 2) {
+      const span = W * 1.7;
+      ctx.beginPath();ctx.moveTo(-W + amount * span,0);
+      ctx.lineTo(amount * span,0);
+      ctx.lineTo(amount * span - W *.6,H);
+      ctx.lineTo(-W + amount * span - W*.6,H);
+      ctx.closePath();ctx.clip();
+      drawShot(ctx, project, index + 1, Math.max(.05, amount * transition), t, W, H, 1);
+    } else {
+      drawShot(ctx, project, index + 1, Math.max(.05, amount * transition), t, W, H, amount);
+    }
+    ctx.restore();
   }
   const pad = H < 810 ? 82 : 88;
   // Brand bars / metainformation are drawn above scene transitions.
