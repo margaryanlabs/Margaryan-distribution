@@ -13,6 +13,16 @@ async function json(path, init) {
   return body;
 }
 
+// Motion Studio stays isolated from outbound automation and rejects malformed AI briefs.
+const motionPage = await fetch(baseUrl + "/motion");
+assert(motionPage.ok, "Motion Studio page did not render");
+const badStoryboard = await fetch(baseUrl + "/api/motion/storyboard", {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ prompt: "too short", brand: "veto", format: "portrait" }),
+});
+assert(badStoryboard.status === 400, "Motion AI endpoint did not reject an invalid brief");
+
 const health = await json("/api/health");
 assert(health.ok === true, "health endpoint is not healthy");
 assert(health.execution === "dry-run", "CI smoke test must never run with live execution");
