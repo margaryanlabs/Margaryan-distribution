@@ -233,7 +233,7 @@ export function createKeylessStoryboard(input: DirectorBrief): MotionProject {
       : ["opener", "statement", "orbit", "network", "closer"];
   const narrative = BRAND_NARRATIVE[lang][brand];
   const explicitlyQuoted = phraseFromPrompt(prompt);
-  const groundedSubject = explicitlyQuoted ? explicitlyQuoted.toLocaleUpperCase(lang) : narrative[1];
+  const groundedSubject = explicitlyQuoted ? explicitlyQuoted.toLocaleUpperCase(lang) : (narrative[1] || subject);
   const headlines = [narrative[0], groundedSubject, narrative[2], narrative[3], BRAND_INFO[brand].name];
   const labels = [copy.kicker, copy.based, copy.signal, copy.kicker, copy.close];
   const supports = [subject, copy.support, subject, BRAND_CLOSE[lang][brand], copy.cta];
