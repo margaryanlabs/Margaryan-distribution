@@ -5,6 +5,7 @@ import {usePathname} from "next/navigation";
 const primary=[
   ["Revenue","/sales"],
   ["Marketing","/smm"],
+  ["Motion Studio","/motion"],
   ["Intelligence","/intelligence"]
 ] as const;
 
