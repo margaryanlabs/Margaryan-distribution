@@ -2,6 +2,8 @@ import {
   BRAND_INFO, durationOf, sceneAt,
   type MotionProject, type MotionScene
 } from "./studio";
+import { drawProductComposition } from "./product-compositions";
+import { getLoadedMotionLogo } from "./brand-assets";
 
 const TAU = Math.PI * 2;
 const clamp = (x: number, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -182,7 +184,7 @@ function drawTechnical(ctx: CanvasRenderingContext2D, W: number, H: number, t: n
 function renderText(ctx: CanvasRenderingContext2D, scene: MotionScene, W: number, H: number, progress: number, accent: string, t: number, style: MotionProject["style"]) {
   const landscape = H < 810;
   const pad = landscape ? 82 : 88;
-  const textMax = W - pad * 2;
+  const textMax = landscape ? W * .4 : W - pad * 2;
   const inProgress = cubic(progress * 5.8);
   const outProgress = smooth((1 - progress) * 10);
   const opacity = inProgress * outProgress;
@@ -247,6 +249,7 @@ function drawShot(ctx: CanvasRenderingContext2D, project: MotionProject, index: 
     case "opener": drawOrbit(ctx, W, H, absoluteTime, accent, seed, progress); break;
     case "statement": project.style === "technical" ? drawTechnical(ctx, W, H, absoluteTime, accent) : drawKinetic(ctx, W, H, absoluteTime, accent, seed); break;
   }
+  drawProductComposition(ctx,project,scene,absoluteTime,W,H,accent);
   renderText(ctx, scene, W, H, progress, accent, absoluteTime, project.style);
   ctx.restore();
 }
@@ -289,7 +292,11 @@ export function drawMotionFrame(ctx: CanvasRenderingContext2D, project: MotionPr
   const pad = H < 810 ? 82 : 88;
   // Brand bars / metainformation are drawn above scene transitions.
   const top = H < 810 ? 28 : 55;
-  if (project.brand === "promptence") drawPromptenceMark(ctx, pad, top - 18, 54);
+  const mark = getLoadedMotionLogo(project.brand);
+  if (mark) {
+    const scale = Math.min(54 / mark.naturalWidth, 54 / mark.naturalHeight);
+    ctx.drawImage(mark, pad, top - 18 + (54 - mark.naturalHeight * scale)/2, mark.naturalWidth*scale, mark.naturalHeight*scale);
+  } else if (project.brand === "promptence") drawPromptenceMark(ctx, pad, top - 18, 54);
   else { ctx.fillStyle = accent; ctx.fillRect(pad, top + 3, 43, 6); }
   ctx.fillStyle = "#d8e0e9"; ctx.font = "700 19px Arial, sans-serif";
   ctx.textBaseline = "middle"; ctx.textAlign = "left";
