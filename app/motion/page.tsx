@@ -187,7 +187,13 @@ export default function MotionStudioPage() {
       for (const scene of project.scenes) {
         const candidate = cursor + scene.seconds * .5;
         drawMotionFrame(ctx, project, candidate, width, height);
-        const sample = ctx.getImageData(0,0,Math.min(270,width),Math.min(270,height));
+        const thumbnail = document.createElement("canvas");
+        thumbnail.width = 180;
+        thumbnail.height = Math.round(180 * height / width);
+        const thumbCtx = thumbnail.getContext("2d", { willReadFrequently: true });
+        if (!thumbCtx) throw new Error("QA canvas unavailable");
+        thumbCtx.drawImage(canvas, 0, 0, thumbnail.width, thumbnail.height);
+        const sample = thumbCtx.getImageData(0,0,thumbnail.width,thumbnail.height);
         const check = inspectFramePixels(sample.data, sample.width, sample.height);
         if (!check.valid) throw new Error("Video QA blocked scene: " + check.reason);
         cursor += scene.seconds;
@@ -226,7 +232,7 @@ export default function MotionStudioPage() {
       const ext = mimeType.includes("mp4") ? "mp4" : "webm";
       const blob = new Blob(chunks, { type: mimeType });
       downloadFile("margaryan-motion-" + project.brand + "-" + project.format + "." + ext, blob);
-      setNotice("Video rendered locally: " + ext.toUpperCase() + ", " + width + " × " + height + (voiceover ? " + narration" : "") + (soundEnabled ? " + synth soundtrack" : "") + ". No external upload.");
+      setNotice("Video rendered locally: " + ext.toUpperCase() + ", " + width + " × " + height + (audioSession && voiceover ? " + narration" : "") + (audioSession && soundEnabled ? " + synth soundtrack" : "") + ". No external upload.");
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Render failed");
     } finally {
