@@ -3,7 +3,8 @@ import type { MotionBrand } from "./studio";
 /**
  * Editorial metadata only — never treat these repo paths as license to read private
  * GitHub contents in a public browser. "verified" means asset bytes were copied from
- * the named source and checked for branded markup; it does not attest to currentness.
+ * a controlled source and checked for branded markup; it does not attest to currentness.
+ * Private repository IDs are deliberately NOT embedded in this public site.
  */
 export interface PortfolioSource {
   repository: string | null;
@@ -16,7 +17,7 @@ export interface PortfolioSource {
 }
 export const PORTFOLIO: Record<MotionBrand, PortfolioSource> = {
   promptence: {
-    repository: "margaryan-labs/ai-revenue-navigator",
+    repository: null,
     assetPath: "public/promptence-signal-mark.svg",
     localLogo: "/motion/brands/promptence.svg",
     logoStatus: "source-verified",
@@ -25,7 +26,7 @@ export const PORTFOLIO: Record<MotionBrand, PortfolioSource> = {
     directorMotif: "semantic search, answer citations, source cards, discovery trails"
   },
   veto: {
-    repository: "margaryanlabs/decision-command",
+    repository: null,
     assetPath: null,
     localLogo: null,
     logoStatus: "pending-source",
@@ -33,7 +34,7 @@ export const PORTFOLIO: Record<MotionBrand, PortfolioSource> = {
     directorMotif: "risk, context, market regimes, probability under uncertainty"
   },
   raios: {
-    repository: "margaryan-labs/ai-os-foundation",
+    repository: null,
     assetPath: "public/raios-mark.png",
     localLogo: null,
     logoStatus: "pending-source",
@@ -50,7 +51,7 @@ export const PORTFOLIO: Record<MotionBrand, PortfolioSource> = {
     directorMotif: "creative technology, independent research, systems engineering"
   },
   ingu: {
-    repository: "margaryan-labs/ingu-stone-sourcing",
+    repository: null,
     assetPath: "public/brand/ingu-script-logo.svg",
     localLogo: "/motion/brands/ingu.svg",
     logoStatus: "source-verified",
@@ -59,7 +60,7 @@ export const PORTFOLIO: Record<MotionBrand, PortfolioSource> = {
     directorMotif: "fashion editorial, textiles, museum archive, negative space"
   },
   meqena: {
-    repository: "margaryanlabs/Shtapauto",
+    repository: null,
     assetPath: null,
     localLogo: null,
     logoStatus: "pending-source",
@@ -67,7 +68,7 @@ export const PORTFOLIO: Record<MotionBrand, PortfolioSource> = {
     directorMotif: "road, travel, object detail, automotive motion"
   },
   suren: {
-    repository: "margaryan-labs/suren-private",
+    repository: null,
     assetPath: null,
     localLogo: null,
     logoStatus: "pending-source",
