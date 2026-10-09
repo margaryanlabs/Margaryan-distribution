@@ -109,6 +109,53 @@ function intelligentSubject(prompt: string, lang: Language, topic: Topic) {
   return terms.length > 0 ? terms.slice(0, 3).join(" ").toLocaleUpperCase(lang) : TOPIC_LABEL[lang].general;
 }
 
+/**
+ * Director's-cut narrative for Promptence: a coherent seven-beat campaign,
+ * with no false visibility numbers or invented AI provider results.
+ * This is content direction, not an AI model inference.
+ */
+function promptenceCampaign(lang: Language, format: MotionFormat, style: MotionStyle, seed: number): MotionProject {
+  const locales = {
+    en: [
+      ["THE SHIFT", "SEARCH IS CHANGING.", "The answer is the new front page."],
+      ["A NEW BEHAVIOR", "YOUR CUSTOMER ASKS AI.", "What appears in the answer?"],
+      ["THE BLIND SPOT", "WHAT IF YOU'RE NOT THERE?", "Visibility cannot be assumed."],
+      ["THE REVEAL", "MAKE THE INVISIBLE VISIBLE.", "Promptence / AI Search Intelligence."],
+      ["THE PROCESS", "DISCOVER. MEASURE. DIAGNOSE.", "Prioritize what matters."],
+      ["THE PROOF LOOP", "SEE WHAT CHANGED.", "Measure progress with evidence."],
+      ["THE NEXT FRONT PAGE", "BE VISIBLE IN THE ANSWER.", "promptence.tech"]
+    ],
+    ru: [
+      ["ПЕРЕМЕНЫ", "ПОИСК МЕНЯЕТСЯ.", "Теперь клиенты спрашивают искусственный интеллект."],
+      ["НОВАЯ ПРИВЫЧКА", "ВАШ КЛИЕНТ СПРАШИВАЕТ AI.", "Что он увидит в ответе?"],
+      ["НЕВИДИМАЯ ПРОБЛЕМА", "А ЕСЛИ ВАС ТАМ НЕТ?", "Видимость необходимо измерять."],
+      ["РЕШЕНИЕ", "СДЕЛАЙ НЕВИДИМОЕ ВИДИМЫМ.", "Promptence / аналитика AI-поиска."],
+      ["ПРОЦЕСС", "НАЙТИ. ИЗМЕРИТЬ. ПОНЯТЬ.", "Определить важные действия."],
+      ["ПРОВЕРКА", "ПОКАЖИ, ЧТО ИЗМЕНИЛОСЬ.", "Оценивай прогресс по фактам."],
+      ["НОВАЯ ВИДИМОСТЬ", "БУДЬТЕ В ОТВЕТЕ AI.", "promptence.tech"]
+    ],
+    hy: [
+      ["ՓՈՓՈԽՈՒԹՅՈՒՆ", "ՈՐՈՆՈՒՄԸ ՓՈԽՎՈՒՄ Է։", "Պատասխանը նոր առաջին էջն է։"],
+      ["ՆՈՐ ՍՈՎՈՐՈՒԹՅՈՒՆ", "ՀԱՃԱԽՈՐԴԸ ՀԱՐՑՆՈՒՄ Է AI-ԻՆ։", "Ի՞նչ է հայտնվում պատասխանում։"],
+      ["ԱՆՏԵՍԱՆԵԼԻ ԽՆԴԻՐ", "ԻՍԿ ԵԹԵ ԴՈՒՔ ԱՅՆՏԵՂ ՉԿԱ՞Ք։", "Տեսանելիությունը պետք է չափել։"],
+      ["ԲԱՑԱՀԱՅՏՈՒՄ", "ՏԵՍԱՆԵԼԻ ԴԱՐՁՐՈՒ ԱՆՏԵՍԱՆԵԼԻՆ։", "Promptence / AI որոնման վերլուծություն։"],
+      ["ԳՈՐԾԸՆԹԱՑ", "ՀԱՅՏՆԱԲԵՐԵԼ։ ՉԱՓԵԼ։ ՀԱՍԿԱՆԱԼ։", "Ընտրել հաջորդ քայլերը։"],
+      ["ՍՏՈՒԳՈՒՄ", "ՏԵՍՆԵԼ ՓՈՓՈԽՈՒԹՅՈՒՆԸ։", "Արդյունքը գնահատել փաստերով։"],
+      ["ՏԵՍԱՆԵԼԻՈՒԹՅՈՒՆ", "ԵՐԵՎԱՑԵՔ AI-Ի ՊԱՏԱՍԽԱՆՈՒՄ։", "promptence.tech"]
+    ]
+  } as const;
+  const kinds: MotionSceneKind[] = ["kinetic", "opener", "network", "orbit", "statement", "network", "closer"];
+  const lengths = [3.8, 4.6, 4.3, 4.5, 4.3, 3.6, 4.9];
+  const scenes = locales[lang].map(([eyebrow, headline, support], index) => ({
+    id: "scene-" + (index + 1),
+    kind: kinds[index], eyebrow, headline, support, seconds: lengths[index]
+  }));
+  return sanitizeMotionProject({
+    version: 1, brand: "promptence", format, style, seed,
+    title: "PROMPTENCE / DIRECTOR'S CUT / " + lang.toUpperCase(), scenes
+  });
+}
+
 export function createKeylessStoryboard(input: DirectorBrief): MotionProject {
   const { prompt, brand, format } = input;
   if (typeof prompt !== "string" || prompt.trim().length < 6 || prompt.length > 2000) {
@@ -123,6 +170,9 @@ export function createKeylessStoryboard(input: DirectorBrief): MotionProject {
   const hash = seedFrom([prompt, brand, format, input.style || "cinematic", lang].join("|"));
   const style = input.style || (/(быстро|динамич|fast|energetic|kinetic)/i.test(prompt) ? "kinetic" :
     /(data|данн|цифр|аналити|terminal|технолог|code|dashboard)/i.test(prompt) ? "technical" : "cinematic");
+  if (brand === "promptence" && topic === "visibility") {
+    return promptenceCampaign(lang, format, style, hash);
+  }
   const pace = style === "kinetic" ? 3 : style === "technical" ? 4.5 : 5;
   const styles: MotionSceneKind[] = style === "technical"
     ? ["opener", "network", "kinetic", "orbit", "closer"]
