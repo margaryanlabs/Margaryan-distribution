@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 import {
   BRAND_INFO, FORMAT_SIZE, drawMotionFrame, durationOf, makeMotionPreset,
   sanitizeMotionProject, sceneAt,
@@ -54,6 +54,14 @@ export default function MotionStudioPage() {
   }, [project, hydrated]);
 
   useEffect(() => {
+    if (playing) return;
+    const canvas = previewRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (canvas && ctx) drawMotionFrame(ctx, project, timeRef.current, canvas.width, canvas.height);
+  }, [project, playing, playhead]);
+
+  useEffect(() => {
+    if (!playing) return;
     const canvas = previewRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
@@ -146,10 +154,11 @@ export default function MotionStudioPage() {
     canvas.width = width; canvas.height = height;
     const ctx = canvas.getContext("2d");
     if (!ctx) { setExporting(false); setNotice("Canvas renderer could not start."); return; }
-    const stream = canvas.captureStream(30);
+    let stream: MediaStream | null = null;
     let raf = 0;
     let recorder: MediaRecorder | null = null;
     try {
+      stream = canvas.captureStream(30);
       drawMotionFrame(ctx, project, 0, width, height);
       recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8_000_000 });
       const chunks: BlobPart[] = [];
@@ -180,7 +189,7 @@ export default function MotionStudioPage() {
     } finally {
       cancelAnimationFrame(raf);
       if (recorder && recorder.state !== "inactive") recorder.stop();
-      stream.getTracks().forEach(track => track.stop());
+      stream?.getTracks().forEach(track => track.stop());
       setExporting(false);
     }
   }
@@ -202,12 +211,12 @@ export default function MotionStudioPage() {
   const previewHeight = Math.round(previewWidth * formatSize.height / formatSize.width);
   const activeIndex = sceneAt(project, playhead).index;
 
-  return <main className={styles.root} style={{ "--brand-accent": info.accent } as React.CSSProperties}>
+  return <main className={styles.root} style={{ "--brand-accent": info.accent } as CSSProperties}>
     <header className={styles.header}>
       <div>
         <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / V0.1</p>
         <h1>Motion <em>Studio.</em></h1>
-        <p className={styles.deck}>From a single idea to a frame-accurate, editable motion story. Built for the Margaryan portfolio.</p>
+        <p className={styles.deck}>From a single idea to a deterministic, editable motion story. Built for the Margaryan portfolio.</p>
       </div>
       <div className={styles.headerRight}>
         <span className={styles.liveDot}/> LOCAL RENDER ENGINE
