@@ -48,6 +48,26 @@ const storyOther = await json("/api/motion/storyboard", {
   }),
 });
 assert(storyOther.project.title !== story.project.title, "Different briefs should produce different motion stories");
+const armenianFilm = await json("/api/motion/storyboard", {
+  method:"POST",headers:{"content-type":"application/json"},
+  body:JSON.stringify({
+    prompt:"Ստեղծիր նորաձևության կինեմատոգրաֆիկ տեսանյութ INGU ապրանքանիշի համար։",
+    brand:"ingu",format:"portrait",language:"hy",style:"kinetic"
+  })
+});
+assert(armenianFilm.project?.brand==="ingu", "Portfolio brand not retained by local director");
+assert(armenianFilm.project?.language==="hy", "Armenian locale was not saved in the project");
+assert(armenianFilm.project.scenes.some(scene => /[\u0531-\u058f]/u.test(scene.headline)), "Armenian output is missing Armenian text");
+const privateFilm = await json("/api/motion/storyboard", {
+  method:"POST",headers:{"content-type":"application/json"},
+  body:JSON.stringify({
+    prompt:"Создай короткий видеоролик о настройках конфиденциальности VETO Private",
+    brand:"veto_private",format:"square",language:"ru",style:"technical"
+  })
+});
+assert(privateFilm.project?.brand==="veto_private", "Extended brand catalog mismatch");
+assert(privateFilm.project.scenes.length>=4, "Extended portfolio lacks an actual storyboard");
+
 
 const health = await json("/api/health");
 assert(health.ok === true, "health endpoint is not healthy");
