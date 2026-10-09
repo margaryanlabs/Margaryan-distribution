@@ -115,6 +115,55 @@ function armat(ctx:CanvasRenderingContext2D,x:number,y:number,w:number,accent:st
   }
   label(ctx,"CRAFTED AT ORIGIN / ARMENIA",x+22,y+265,17,accent,700);
 }
+
+/** TUN uses its documented goal-first decision philosophy, not fake listings. */
+function tun(ctx:CanvasRenderingContext2D,x:number,y:number,w:number,accent:string,t:number) {
+  softGlow(ctx,x+w*.55,y+132,accent,240);
+  panel(ctx,x,y,w,290,accent);
+  label(ctx,"YOUR GOAL COMES FIRST / CONCEPT",x+24,y+29,14,accent,800);
+  const goals=["LIVE","RENT","INVEST","SELL"];
+  const n=Math.floor(Math.abs(t)*.42)%goals.length;
+  goals.forEach((g,i)=>{
+    const cx=x+27+i*(w-52)/4,top=y+104;
+    rounded(ctx,cx,top,(w-80)/4,76,12,i===n?"#403a30":"#21272b",i===n?accent+"cc":"#47504e");
+    label(ctx,g,cx+12,top+27,15,i===n?"#FFF8EB":"#B2B8B5",800);
+  });
+  label(ctx,"Start with the person. Understand the trade-offs.",x+26,y+240,15,"#D6D0C6",500);
+}
+/** HAY wordform remains actual vector text, never generated lettering in media. */
+function hay(ctx:CanvasRenderingContext2D,x:number,y:number,w:number,accent:string,t:number) {
+  softGlow(ctx,x+w*.5,y+160,accent,270);
+  panel(ctx,x,y,w,290,accent);
+  label(ctx,"ARMENIAN-FIRST LANGUAGE / CONCEPT",x+25,y+29,14,accent,800);
+  ctx.textAlign="left";ctx.textBaseline="top";
+  ctx.font='700 66px "Noto Sans Armenian","DejaVu Sans",sans-serif';
+  ctx.fillStyle="#F4F5F6";ctx.fillText("Հայերեն",x+27,y+88);
+  const words=["SPEECH","TEXT","CREATOR"];
+  words.forEach((word,i)=>{
+    const xx=x+23+i*(w-46)/3,yy=y+207;
+    rounded(ctx,xx,yy,(w-70)/3,48,9,i===Math.floor(t*.5)%3?"#394525":"#202822",accent+"56");
+    label(ctx,word,xx+9,yy+17,14,i===Math.floor(t*.5)%3?accent:"#B8C2BA",800);
+  });
+}
+/** Reality Engine simulations are explicitly conceptual; there are no invented predictions. */
+function reality(ctx:CanvasRenderingContext2D,x:number,y:number,w:number,accent:string,t:number) {
+  softGlow(ctx,x+w*.57,y+145,accent,230);
+  panel(ctx,x,y,w,300,accent);
+  label(ctx,"SCENARIO SIMULATION / ILLUSTRATIVE",x+25,y+29,14,accent,800);
+  const scenarios=["BASE","BULL","BEAR","STRESS"];
+  const roots=[.18,.39,.62,.83];
+  const midpoint=x+w*.5,top=y+95;
+  scenarios.forEach((word,i)=>{
+    const xx=x+w*roots[i],yb=y+189+Math.sin(t*.18+i)*6;
+    ctx.beginPath();ctx.moveTo(midpoint,top);ctx.quadraticCurveTo(xx,top+40,xx,yb);
+    ctx.strokeStyle=i===Math.floor(t*.35)%4?accent:"#8DABB358";
+    ctx.lineWidth=i===Math.floor(t*.35)%4?3:1.5;ctx.stroke();
+    ctx.beginPath();ctx.arc(xx,yb,6,0,Math.PI*2);
+    ctx.fillStyle=accent;ctx.fill();
+    label(ctx,word,xx-20,yb+15,12,"#D8E3E9",700);
+  });
+  label(ctx,"Model assumptions, not guaranteed outcomes.",x+25,y+269,15,"#B7C8D1",500);
+}
 /**
  * Decorative vector illustrations, not real customer analytics, licensed footage
  * or product screenshots. Every pseudo-dashboard is labeled ILLUSTRATIVE.
@@ -133,5 +182,8 @@ export function drawProductComposition(ctx:CanvasRenderingContext2D,project:Moti
   else if(project.brand==="meqena")vehicle(ctx,x,y,w,accent,t);
   else if(project.brand==="veto_private")privacy(ctx,x,y,w,accent,t);
   else if(project.brand==="armat")armat(ctx,x,y,w,accent,t);
+  else if(project.brand==="tun")tun(ctx,x,y,w,accent,t);
+  else if(project.brand==="hay_engine")hay(ctx,x,y,w,accent,t);
+  else if(project.brand==="reality_engine")reality(ctx,x,y,w,accent,t);
   ctx.restore();
 }
