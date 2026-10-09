@@ -2,16 +2,18 @@
 
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import {
-  BRAND_INFO, FORMAT_SIZE, drawMotionFrame, durationOf, makeMotionPreset,
+  BRAND_INFO, FORMAT_SIZE, durationOf, makeMotionPreset,
   sanitizeMotionProject, sceneAt,
   type MotionBrand, type MotionFormat, type MotionProject, type MotionScene
 } from "@/lib/motion/studio";
+import { drawMotionFrame } from "@/lib/motion/render-engine";
+import { createKeylessStoryboard, getLocalDirectorExamples, type MotionLanguage, type MotionStyle } from "@/lib/motion/director";
 import styles from "./motion.module.css";
 
 const STORAGE_KEY = "margaryan-motion-studio-v1";
 const BRANDS: MotionBrand[] = ["veto", "promptence", "raios", "labs"];
 const FORMATS: MotionFormat[] = ["portrait", "square", "landscape"];
-const defaultBrief = "Create a cinematic, premium product reveal. Start with an uncomfortable question, reveal the underlying problem, show how the intelligence system thinks, and finish with an unforgettable line. Confident, minimal, no unrealistic promises.";
+const defaultBrief = "Создай кинематографический проморолик VETO Intelligence: сильная типографика, визуализация сигналов, глубокий тёмный фон, эффектные переходы и мощный финал. Без обещаний прибыли.";
 function timeLabel(seconds: number) {
   return Math.floor(seconds / 60).toString().padStart(2, "0") + ":" + Math.floor(seconds % 60).toString().padStart(2, "0");
 }
@@ -27,13 +29,15 @@ export default function MotionStudioPage() {
   const [project, setProject] = useState<MotionProject>(() => makeMotionPreset());
   const [hydrated, setHydrated] = useState(false);
   const [brief, setBrief] = useState(defaultBrief);
+  const [style, setStyle] = useState<MotionStyle>("cinematic");
+  const [language, setLanguage] = useState<MotionLanguage>("auto");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [playhead, setPlayhead] = useState(0);
   const [generating, setGenerating] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
-  const [notice, setNotice] = useState("Choose a brand template or describe a new motion story. No publishing occurs here.");
+  const [notice, setNotice] = useState("Собственный локальный движок: генерация сцен, графика и экспорт без API-ключей, кредитов и сервера рендеринга.");
   const previewRef = useRef<HTMLCanvasElement>(null);
   const timeRef = useRef(0);
   const total = durationOf(project);
@@ -106,7 +110,7 @@ export default function MotionStudioPage() {
   function loadBrand(brand: MotionBrand) {
     setPlaying(false); jump(0); setSelectedIndex(0);
     setProject(makeMotionPreset(brand, project.format));
-    setNotice("Loaded " + BRAND_INFO[brand].name + " template. Edit any scene or ask AI for a new storyboard.");
+    setNotice("Loaded " + BRAND_INFO[brand].name + " template. Create a new keyless storyboard or edit any scene.");
   }
   function addScene() {
     if (project.scenes.length >= 8) return;
@@ -119,19 +123,15 @@ export default function MotionStudioPage() {
     updateProject({ ...project, scenes: project.scenes.filter((_, i) => i !== selectedIndex) });
     setSelectedIndex(0); jump(0); setPlaying(false);
   }
-  async function generate() {
+  function generate() {
     if (generating || exporting) return;
-    setGenerating(true); setNotice("Generating a structured storyboard. No video credits spent on rendering.");
+    setGenerating(true);
     try {
-      const response = await fetch("/api/motion/storyboard", {
-        method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ prompt: brief, brand: project.brand, format: project.format })
-      });
-      const payload = await response.json() as { project?: unknown; error?: string };
-      if (!response.ok || !payload.project) throw new Error(payload.error || "Generation failed");
+      // No network access, API credentials or hosted models are needed.
+      const next = createKeylessStoryboard({ prompt: brief, brand: project.brand, format: project.format, language, style });
       setPlaying(false); jump(0); setSelectedIndex(0);
-      setProject(sanitizeMotionProject(payload.project));
-      setNotice("AI storyboard ready. Preview, edit, and explicitly export when satisfied.");
+      setProject(next);
+      setNotice("Создано " + next.scenes.length + " сцен полностью в браузере. Можно редактировать и экспортировать видео.");
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Could not generate storyboard");
     } finally { setGenerating(false); }
@@ -216,10 +216,10 @@ export default function MotionStudioPage() {
       <div>
         <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / V0.1</p>
         <h1>Motion <em>Studio.</em></h1>
-        <p className={styles.deck}>From a single idea to a deterministic, editable motion story. Built for the Margaryan portfolio.</p>
+        <p className={styles.deck}>Your own programmable motion engine. Storyboard, preview and export in the browser — zero API keys, zero AI credits.</p>
       </div>
       <div className={styles.headerRight}>
-        <span className={styles.liveDot}/> LOCAL RENDER ENGINE
+        <span className={styles.liveDot}/> KEYLESS / LOCAL ENGINE
         <a href="/smm">Marketing Command ↗</a>
       </div>
     </header>
@@ -228,7 +228,7 @@ export default function MotionStudioPage() {
 
     <div className={styles.workspace}>
       <section className={styles.sidebar} aria-label="Creative director controls">
-        <div className={styles.sectionHeader}><span>01 / CREATIVE BRIEF</span><strong>AI DIRECTOR</strong></div>
+        <div className={styles.sectionHeader}><span>01 / CREATIVE BRIEF</span><strong>LOCAL DIRECTOR</strong></div>
         <label className={styles.field}><span>PRODUCT / BRAND</span>
           <select value={project.brand} onChange={event => loadBrand(event.target.value as MotionBrand)}>
             {BRANDS.map(brand => <option key={brand} value={brand}>{BRAND_INFO[brand].name}</option>)}
@@ -237,10 +237,30 @@ export default function MotionStudioPage() {
         <label className={styles.field}><span>DESCRIBE THE FILM</span>
           <textarea value={brief} maxLength={2000} onChange={event => setBrief(event.target.value)} rows={6}/>
         </label>
-        <button className={styles.heroButton} onClick={() => void generate()} disabled={generating || exporting || brief.trim().length < 12}>
-          {generating ? "DIRECTING…" : "GENERATE AI STORYBOARD ↗"}
+        <div className={styles.creatorOptions}>
+          <label className={styles.field}><span>MOTION LANGUAGE</span>
+            <select value={language} onChange={event => setLanguage(event.target.value as MotionLanguage)}>
+              <option value="auto">Detect from brief</option><option value="ru">Русский</option>
+              <option value="en">English</option><option value="hy">Հայերեն</option>
+            </select>
+          </label>
+          <label className={styles.field}><span>DIRECTOR STYLE</span>
+            <select value={style} onChange={event => setStyle(event.target.value as MotionStyle)}>
+              <option value="cinematic">Cinematic</option><option value="kinetic">Kinetic Type</option>
+              <option value="technical">Technical / Data</option>
+            </select>
+          </label>
+        </div>
+        <div className={styles.exampleRow}>
+          <span>QUICK START</span>
+          <button type="button" onClick={() => setBrief(getLocalDirectorExamples(project.brand)[0])}>EN</button>
+          <button type="button" onClick={() => setBrief(getLocalDirectorExamples(project.brand)[1])}>RU</button>
+          <button type="button" onClick={() => setBrief(getLocalDirectorExamples(project.brand)[2])}>HY</button>
+        </div>
+        <button className={styles.heroButton} onClick={generate} disabled={generating || exporting || brief.trim().length < 6}>
+          {generating ? "DIRECTING…" : "CREATE FILM / NO API KEY ↗"}
         </button>
-        <p className={styles.hint}>AI planning requires a server OpenAI key. Templates, editing and local recording work without one.</p>
+        <p className={styles.hint}>Own procedural motion director: language-aware storyboard + animated graphics. Runs locally. Not a generative neural video model.</p>
         <div className={styles.divider}/>
         <div className={styles.sectionHeader}><span>02 / FORMAT</span><strong>OUTPUT</strong></div>
         <div className={styles.segment}>
@@ -251,6 +271,7 @@ export default function MotionStudioPage() {
         <div className={styles.specs}><span>RESOLUTION</span><b>{formatSize.width} × {formatSize.height}</b></div>
         <div className={styles.specs}><span>RUN TIME</span><b>{timeLabel(total)} / {project.scenes.length} scenes</b></div>
         <div className={styles.specs}><span>RENDER</span><b>LOCAL · 30 FPS</b></div>
+        <div className={styles.specs}><span>GENERATION COST</span><b>0 CREDITS · NO KEYS</b></div>
         <div className={styles.divider}/>
         <div className={styles.sectionHeader}><span>03 / SCENE INSPECTOR</span><strong>{String(selectedIndex + 1).padStart(2, "0")}</strong></div>
         <label className={styles.field}><span>VISUAL COMPOSITION</span>
@@ -274,7 +295,7 @@ export default function MotionStudioPage() {
       </section>
 
       <section className={styles.stageSection} aria-label="Motion canvas and timeline">
-        <div className={styles.stageTop}><div><span>LIVE CANVAS</span><strong>{info.name}</strong></div><div><i/> PROGRAMMATIC MOTION</div></div>
+        <div className={styles.stageTop}><div><span>LIVE CANVAS</span><strong>{info.name}</strong></div><div><i/> KEYLESS PROCEDURAL ENGINE</div></div>
         <div className={styles.stageShell}>
           <canvas ref={previewRef} className={styles.canvas} width={previewWidth} height={previewHeight}
             style={{ aspectRatio: String(formatSize.width) + " / " + String(formatSize.height) }}
@@ -306,7 +327,7 @@ export default function MotionStudioPage() {
             </button>
           </div>
         </div>
-        <p className={styles.footnote}>Export uses browser MediaRecorder and records in real time (WebM where supported; MP4 only where natively supported). No synthetic voice, music, 3D geometry or one-click publishing in this version.</p>
+        <p className={styles.footnote}>Runs without API keys, OpenRouter, OpenAI or Supabase. Export uses your browser MediaRecorder in real time (typically WebM; MP4 only when natively supported). Procedural graphics are not neural image/video synthesis; no licensed music, synthetic voice or automatic social publishing.</p>
       </section>
     </div>
   </main>;
