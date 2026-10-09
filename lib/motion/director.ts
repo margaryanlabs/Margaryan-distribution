@@ -2,6 +2,7 @@ import {
   BRAND_INFO, makeMotionPreset, sanitizeMotionProject,
   type MotionBrand, type MotionFormat, type MotionProject, type MotionScene, type MotionSceneKind
 } from "./studio";
+import { specialCampaign } from "./special-campaigns";
 
 /**
  * Keyless Motion Director.
@@ -231,6 +232,8 @@ export function createKeylessStoryboard(input: DirectorBrief): MotionProject {
   const hash = seedFrom([prompt, brand, format, input.style || "cinematic", lang].join("|"));
   const style = input.style || (/(быстро|динамич|fast|energetic|kinetic)/i.test(prompt) ? "kinetic" :
     /(data|данн|цифр|аналити|terminal|технолог|code|dashboard)/i.test(prompt) ? "technical" : "cinematic");
+  const directed = specialCampaign(brand,lang,format,style,hash);
+  if (directed) return directed;
   if (brand === "promptence" && topic === "visibility") {
     return promptenceCampaign(lang, format, style, hash);
   }
