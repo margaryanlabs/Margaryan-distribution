@@ -56,9 +56,22 @@ const COPY: Record<Language, {
   }
 };
 const BRAND_CLOSE: Record<Language, Record<MotionBrand, string>> = {
-  ru: {veto:"РЕШЕНИЯ. НЕ ОБЕЩАНИЯ.",promptence:"БУДЬТЕ ВИДИМЫ В AI.",raios:"КОНТРОЛИРУЙТЕ МАРЖУ.",labs:"СОЗДАЁМ СЛЕДУЮЩЕЕ."},
-  en: {veto:"DECISIONS. NOT PROMISES.",promptence:"BE SEEN IN AI SEARCH.",raios:"MAKE MARGINS VISIBLE.",labs:"BUILD WHAT COMES NEXT."},
-  hy: {veto:"ՈՐՈՇՈՒՄՆԵՐ, ՈՉ ԽՈՍՏՈՒՄՆԵՐ։",promptence:"ԵՐԵՎԱՑԵՔ AI ՈՐՈՆՄԱՆ ՄԵՋ։",raios:"ՏԵՍԱՆԵԼԻ ԴԱՐՁՐՈՒ ՄԱՐԺԱՆ։",labs:"ԿԱՌՈՒՑՈՒՄ ԵՆՔ ԱՊԱԳԱՆ։"}
+  ru: {
+    veto:"РЕШЕНИЯ. НЕ ОБЕЩАНИЯ.",promptence:"БУДЬТЕ ВИДИМЫ В AI.",raios:"КОНТРОЛИРУЙТЕ МАРЖУ.",labs:"СОЗДАЁМ СЛЕДУЮЩЕЕ.",
+    ingu:"СТИЛЬ КАК ИСКУССТВО.",meqena:"НОВЫЙ ПУТЬ К АВТОМОБИЛЮ.",suren:"СТРАТЕГИЯ ПРЕЖДЕ ВЫБОРА.",
+    veto_private:"КОНТРОЛЬ НАД НАСТРОЙКАМИ.",veto_sport:"АНАЛИЗИРУЙ ЦЕНУ.",armat:"СДЕЛАНО В АРМЕНИИ."
+  },
+  en: {
+    veto:"DECISIONS. NOT PROMISES.",promptence:"BE SEEN IN AI SEARCH.",raios:"MAKE MARGINS VISIBLE.",labs:"BUILD WHAT COMES NEXT.",
+    ingu:"FASHION AS A POINT OF VIEW.",meqena:"DISCOVER THE DRIVE.",suren:"STRATEGY BEFORE THE VIEW.",
+    veto_private:"TOOLS FOR YOUR CONTROL.",veto_sport:"AUDIT THE PRICE.",armat:"MADE IN ARMENIA."
+  },
+  hy: {
+    veto:"ՈՐՈՇՈՒՄՆԵՐ, ՈՉ ԽՈՍՏՈՒՄՆԵՐ։",promptence:"ԵՐԵՎԱՑԵՔ AI ՈՐՈՆՄԱՆ ՄԵՋ։",raios:"ՏԵՍԱՆԵԼԻ ԴԱՐՁՐՈՒ ՄԱՐԺԱՆ։",labs:"ԿԱՌՈՒՑՈՒՄ ԵՆՔ ԱՊԱԳԱՆ։",
+    ingu:"ՆՈՐ ՏԵՍԱՆԿՅՈՒՆ ՆՈՐԱՁԵՎՈՒԹՅԱՆ ՄԱՍԻՆ։",meqena:"ԲԱՑԱՀԱՅՏԵՔ ՁԵՐ ՀԱՋՈՐԴ ՄԵՔԵՆԱՆ։",
+    suren:"ՌԱԶՄԱՎԱՐՈՒԹՅՈՒՆ՝ ԸՆՏՐՈՒԹՅՈՒՆԻՑ ԱՌԱՋ։",veto_private:"ՎԵՐԱՀՍԿԵՔ ՁԵՐ ԿԱՐԳԱՎՈՐՈՒՄՆԵՐԸ։",
+    veto_sport:"ՎԵՐԼՈՒԾԵՔ ԳԻՆԸ։",armat:"ԱՐՏԱԴՐՎԱԾ Է ՀԱՅԱՍՏԱՆՈՒՄ։"
+  }
 };
 const DESIGN_WORDS = /^(создай|сделай|нарисуй|построй|напиши|покажи|create|make|show|build|design|generate|please|хочу|нужно|ролик|видео|video|clip|advert|реклама|film|cinematic|кинематографич|стиль|эффект|фон|background|transition|переход|цвет|color|seconds|секунд|for|для|про|about|с|with|и|the|a|an)$/i;
 
@@ -197,7 +210,7 @@ export function createKeylessStoryboard(input: DirectorBrief): MotionProject {
   }));
   return sanitizeMotionProject({
     version: 1, title: BRAND_INFO[brand].name + " / " + TOPIC_LABEL[lang][topic],
-    brand, format, style, seed: hash, scenes
+    brand, format, style, seed: hash, language: lang, scenes
   });
 }
 
