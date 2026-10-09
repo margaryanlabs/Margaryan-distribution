@@ -213,7 +213,7 @@ function promptenceCampaign(lang: Language, format: MotionFormat, style: MotionS
   }));
   return sanitizeMotionProject({
     version: 1, brand: "promptence", format, style, seed,
-    title: "PROMPTENCE / DIRECTOR'S CUT / " + lang.toUpperCase(), scenes
+    title: "PROMPTENCE / DIRECTOR'S CUT / " + lang.toUpperCase(), language: lang, scenes
   });
 }
 
