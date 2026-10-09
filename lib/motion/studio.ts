@@ -33,7 +33,7 @@ export const BRAND_INFO: Record<MotionBrand, { name: string; accent: string; sof
   veto_sport: { name: "VETO SPORT", accent: "#ff2d2d", soft: "#ffd2d2", caption: "EVIDENCE BEFORE THE ODDS" },
   armat: { name: "ARMAT", accent: "#e7b89d", soft: "#f6ddd2", caption: "ARMENIAN PRODUCT EXPORT" },
   tun: { name: "TUN", accent: "#D8C5A2", soft: "#FFF8EB", caption: "REAL ESTATE DECISION INTELLIGENCE" },
-  hay_engine: { name: "HAY ENGINE", accent: "#F4F0E7", soft: "#FFD3A7", caption: "ARMENIAN-FIRST LANGUAGE & CREATOR OS" },
+  hay_engine: { name: "HAY ENGINE", accent: "#D9FF63", soft: "#F4F5F6", caption: "ARMENIAN-FIRST LANGUAGE & CREATOR OS" },
   reality_engine: { name: "REALITY ENGINE", accent: "#91A8BC", soft: "#DDE9F3", caption: "SCENARIO-BASED DECISION INTELLIGENCE" }
 };
 
