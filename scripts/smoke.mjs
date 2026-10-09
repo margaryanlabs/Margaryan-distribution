@@ -13,15 +13,41 @@ async function json(path, init) {
   return body;
 }
 
-// Motion Studio stays isolated from outbound automation and rejects malformed AI briefs.
+// Motion Studio must produce an editable, meaningful scene plan without any AI credentials.
 const motionPage = await fetch(baseUrl + "/motion");
 assert(motionPage.ok, "Motion Studio page did not render");
-const badStoryboard = await fetch(baseUrl + "/api/motion/storyboard", {
-  method: "POST",
-  headers: { "content-type": "application/json" },
-  body: JSON.stringify({ prompt: "too short", brand: "veto", format: "portrait" }),
+const invalid = await fetch(baseUrl + "/api/motion/storyboard", {
+  method: "POST", headers: { "content-type": "application/json" },
+  body: JSON.stringify({ prompt: "hi", brand: "veto", format: "portrait" }),
 });
-assert(badStoryboard.status === 400, "Motion AI endpoint did not reject an invalid brief");
+assert(invalid.status === 400, "Keyless director accepted a too-short brief");
+const story = await json("/api/motion/storyboard", {
+  method: "POST", headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    prompt: "Создай кинематографическую рекламу криптотрейдинга без обещаний доходности",
+    brand: "veto", format: "portrait", language: "ru", style: "cinematic",
+  }),
+});
+assert(story.engine === "keyless-procedural-v2", "Motion must use its own keyless engine");
+assert(story.requiresApiKey === false && story.creditsUsed === 0, "Motion cannot require paid models");
+assert(story.project?.scenes?.length >= 4, "Motion needs a multi-scene storyboard");
+assert(story.project.scenes.some((scene) => /[\u0400-\u04ff]/.test(scene.headline)), "Russian brief did not produce Cyrillic storytelling");
+const storyAgain = await json("/api/motion/storyboard", {
+  method: "POST", headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    prompt: "Создай кинематографическую рекламу криптотрейдинга без обещаний доходности",
+    brand: "veto", format: "portrait", language: "ru", style: "cinematic",
+  }),
+});
+assert(JSON.stringify(story.project) === JSON.stringify(storyAgain.project), "Local storyboarding should be deterministic");
+const storyOther = await json("/api/motion/storyboard", {
+  method: "POST", headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    prompt: "Show a restaurant technology that helps owners understand margins and operations",
+    brand: "raios", format: "landscape", language: "en", style: "technical",
+  }),
+});
+assert(storyOther.project.title !== story.project.title, "Different briefs should produce different motion stories");
 
 const health = await json("/api/health");
 assert(health.ok === true, "health endpoint is not healthy");

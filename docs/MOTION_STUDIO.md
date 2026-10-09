@@ -1,46 +1,49 @@
-# Margaryan Motion Studio — v0.1
+# Margaryan Motion Studio — v0.2 Keyless Engine
 
-A self-contained programmatic motion-graphics creator inside the existing Margaryan Distribution product at /motion. Marketing Command links to the studio.
+**Live route:** /motion inside the existing Margaryan Distribution project.
 
-## Implemented
+## What changed
 
-- Brand templates for VETO, Promptence, RAIOS, and Margaryan Labs.
-- Aspect ratios 9:16 (1080×1920), 1:1 (1080×1080), and 16:9 (1920×1080).
-- Editable structured timeline: opener, statement, animated abstract network, closer.
-- Scene copy, effect type, durations (2–8 seconds per scene), adding/removing scenes, scrub/play/pause.
-- Deterministic code-drawn canvas graphics; no external images or misleading simulated trading figures.
-- AI director: POST /api/motion/storyboard converts plain-language brief into constrained JSON via OpenAI Responses API; the API key never enters the browser. Public deployment must have operator authentication and rate/cost controls.
-- Local 30 FPS capture with CanvasCaptureMediaStream + MediaRecorder. Preferred output WebM; MP4 if the browser offers it natively. No paid render service.
-- Save/load a portable JSON project; autosave active project to browser localStorage.
-- Existing CRM, Supabase, outbound approval gates, cron and autopilot are untouched.
+Motion Studio no longer requires OpenAI, Claude, OpenRouter, Supabase, generated API keys or paid credits to create a storyboard or render a motion video. It is not marketed as a local LLM: this is a **procedural motion-graphics engine plus deterministic, language-aware rule-based story director**.
 
-## How to use
+### Architecture
 
-1. Open Marketing → Motion Studio, or /motion.
-2. Pick a brand and aspect ratio. Templates work without a paid AI key.
-3. Enter a brief and click GENERATE AI STORYBOARD. Requires server OPENAI_API_KEY and optionally OPENAI_MOTION_MODEL. An unconfigured key returns an explicit error; no fake AI output.
-4. Edit scenes, preview and choose EXPORT VIDEO. Keep the tab visible; this version records in real time, so an 18-second film takes approximately 18 seconds plus overhead.
-5. Use Save project for portability. Video files are not automatically sent to Instagram, LinkedIn, X, CRM or remote storage.
+- lib/motion/director.ts — multilingual briefing grammar, Russian/English/Armenian copy library, quote extraction, topic matching, creative pacing, seeded variations, structural safety.
+- lib/motion/studio.ts — canonical scene schema, parser, saved-project compatibility, presets, formats and timeline.
+- lib/motion/render-engine.ts — deterministic Canvas2D animation: perspective lattice, orbital signal nodes, kinetic tracks, animated network lines, glowing procedural particles, title easing and scene transitions.
+- lib/motion/sound-engine.ts — optional original WebAudio synthesis recorded as an audio track along with the video, without API requests, licensed audio files or paid credits.
+- app/motion/page.tsx — entirely browser-based prompt-to-storyboard, preview, editing, project import/export and local recording. **No fetch call is made to construct a film.**
+- app/api/motion/storyboard/route.ts — optional stateless API for other trusted workflows. This uses exactly the same keyless director and no external model or database. JSON body is bounded.
+- proxy.ts — only /motion and /api/motion/storyboard are exempted from operator auth, because they are stateless and contain no secrets or CRM access. Other Distribution routes retain existing protection.
 
-## Run and security
+### User workflow
 
-Use the existing Next.js app and environment. No new npm dependencies, Supabase migrations or provider accounts.
+1. Open /motion. The page must work with no credentials.
+2. Select VETO, Promptence, RAIOS or Margaryan Labs and 9:16, 1:1 or 16:9 format.
+3. Describe the video in Russian, English or Armenian. Select a specific language and visual style if needed.
+4. Press **CREATE FILM / NO API KEY**. The storyboard is assembled locally, including a 5-shot composition and brand-specific text, in milliseconds.
+5. Scrub/play the canvas. Edit timing, scene type, headline, eyebrow and support text; add/remove shots.
+6. Optionally enable ORIGINAL SYNTH SOUNDTRACK. Press EXPORT VIDEO. Recording happens in real time using CanvasCaptureMediaStream + MediaRecorder, typically saving WebM in Chrome, and native MP4 only in browsers with that MIME type. Sound is mixed locally and is not played during preview.
+7. Save/restore a JSON project. Browser autosave is localStorage, not cloud persistence.
 
-- Existing proxy.ts operator basic auth applies where configured; require operator auth for production.
-- JSON storyboards are bounded by a schema; saved/imported JSON is normalized and rendered as text, never executed as code.
-- Distribution external sending is not activated by the studio.
-- Desktop Chrome/Edge recommended for video recording. Some mobile browsers do not support canvas.captureStream or the selected codec and will show an error.
-- Browser/device controls actual recorded frame delivery; 30 FPS is a request, not a frame-perfect delivery guarantee.
+### Verification
 
-## Intentionally not included in v0.1
+- Running npm run typecheck and npm run build should succeed.
+- scripts/smoke.mjs asserts /motion loads, the API rejects malformed prompts, storyboards differ by theme and brand, identical briefs produce identical projects, and Cyrillic copy is preserved.
+- Verify a real export in desktop Chrome/Edge and on an Android device; browser recording is NOT guaranteed on iOS or background tabs.
 
-This is a real editable motion typography and geometric signal animation tool, but not a full Remotion, After Effects, Sora or Claude replacement.
+### Honest limitations
 
-- No audio/music, beat sync, synthetic speech, uploads, asset library, real 3D geometry, cloud render jobs, team projects or cloud persistence.
-- No guaranteed frame-perfect H.264 MP4 or publishing to social platforms.
-- Brand labels are stylized typography; original proprietary logos and font assets have not been imported.
-- No invented performance measurements, ad attribution or ROI claims.
+- This is **not** neural text-to-video, pretrained AI model or a clone of Claude. It can direct and render motion typography/geometric diagrams without inference costs.
+- It cannot yet generate photorealistic people, licensed footage, voiceover, commercial/licensed music, original 3D objects, proprietary logos or full Remotion-level complex timelines. Optional WebAudio provides original ambient synthetic sound, not a commercial composition.
+- 30 FPS is requested, not guaranteed, on each device. Export is **real time**, and MP4/H.264 is not universal through MediaRecorder.
+- Procedural data visuals are abstract illustration, never live financial market data.
+- The public keyless endpoint uses no paid inference; it must still obey normal hosting abuse/traffic controls.
+- No marketing automation, messages, external posts, repository secrets or database state are touched.
 
-## Next production milestones
+### Next technical direction
 
-Add a Remotion + FFmpeg worker for deterministically rendered MP4/H.264/AAC, keyframes and timeline, licensed music/voice, official brand packs, durable render history, then explicit human-approved publishing integration.
+- Optional local FFmpeg/Remotion render worker for consistent H.264 MP4 exports and sound; CPU/cloud compute still has a cost, but no AI credits required.
+- True multi-track timeline with explicit keyframes and reusable animation presets.
+- Licensed media assets and local sound synthesis; proper brand packs supplied by the team.
+- If wanted in future: **optional** locally hosted open-weight language/video model, with real infrastructure and licensing requirements. It must not be conflated with this deterministic keyless engine.

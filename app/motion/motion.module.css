@@ -100,3 +100,23 @@
   .timeline button { transition: none; }
   .timeline button:hover { transform: none; }
 }
+
+/* V0.2 standalone director controls: grouped, touch-friendly and independent of paid AI. */
+.creatorOptions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
+.creatorOptions .field { min-width: 0; }
+.creatorOptions .field select { width: 100%; min-width: 0; font-size: 11px; }
+.exampleRow { display: flex; align-items: center; gap: 6px; margin: 0 0 14px; flex-wrap: wrap; }
+.exampleRow span { font-size: 9px; letter-spacing: .13em; font-weight: 800; color: #7e8997; margin-right: auto; }
+.exampleRow button { border: 1px solid #333d48; color: #bac4cf; background: #182029; padding: 8px 11px; border-radius: 7px; font-size: 10px; font-weight: 900; cursor: pointer; transition: border-color .2s; }
+.exampleRow button:hover { border-color: var(--brand-accent); }
+.root button:focus-visible, .root input:focus-visible, .root textarea:focus-visible, .root select:focus-visible, .root a:focus-visible { outline: 2px solid var(--brand-accent); outline-offset: 3px; }
+@media (max-width:420px) {
+  .creatorOptions { grid-template-columns: 1fr; gap: 0; }
+  .stageTop > div:last-child { display: none; }
+  .timeline { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .header h1 { font-size: clamp(38px,12vw,52px); }
+}
+
+.audioToggle { margin: 16px 0 9px; display: flex; gap: 10px; align-items: center; padding: 13px 12px; background: linear-gradient(100deg,#161c25,#0c1016); border: 1px solid #323a45; border-radius: 10px; color: #abb5c1; font-size: 10px; font-weight: 800; letter-spacing: .04em; cursor: pointer; }
+.audioToggle input { accent-color: var(--brand-accent); width: 17px; height: 17px; flex: none; cursor: pointer; }
+.audioToggle strong { margin-left: auto; color: var(--brand-accent); font-size: 10px; }
