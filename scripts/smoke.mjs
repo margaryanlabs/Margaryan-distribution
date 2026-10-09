@@ -100,6 +100,21 @@ const timedFilm=await json("/api/motion/storyboard",{
 });
 const timedTotal=timedFilm.project.scenes.reduce((n,scene)=>n+scene.seconds,0);
 assert(Math.abs(timedTotal-22)<0.05,"Natural-language 22-second brief was not honored");
+const captionBundle=await json("/api/motion/captions",{
+  method:"POST",headers:{"content-type":"application/json"},
+  body:JSON.stringify({project:armenianFilm.project})
+});
+assert(captionBundle.alignedToVoice===false,"Editorial shot cues must never pretend to align speech");
+assert(captionBundle.cues.length===armenianFilm.project.scenes.length,"Subtitles lost scene timing");
+assert(captionBundle.srt.includes("-->") && captionBundle.srt.includes("Հայ") ,"Armenian SRT missing timecodes/glyphs");
+assert(captionBundle.vtt.startsWith("WEBVTT"),"WebVTT format invalid");
+assert(captionBundle.voiceScript.includes("NOT word-level"),"Voice script missing narration safety note");
+const malformedCaptions=await fetch(baseUrl+"/api/motion/captions",{
+  method:"POST",headers:{"content-type":"application/json"},
+  body:JSON.stringify({project:{scenes:[]}})
+});
+assert(malformedCaptions.status===400,"Caption API accepted malformed project");
+
 const health = await json("/api/health");
 assert(health.ok === true, "health endpoint is not healthy");
 assert(health.execution === "dry-run", "CI smoke test must never run with live execution");
