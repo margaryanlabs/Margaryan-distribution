@@ -22,7 +22,7 @@ export interface MotionProject {
 
 export const BRAND_INFO: Record<MotionBrand, { name: string; accent: string; soft: string; caption: string }> = {
   veto: { name: "VETO INTELLIGENCE", accent: "#ed434a", soft: "#ffa7a6", caption: "DECISION INTELLIGENCE" },
-  promptence: { name: "PROMPTENCE", accent: "#c9f187", soft: "#e6ffc1", caption: "AI VISIBILITY INTELLIGENCE" },
+  promptence: { name: "PROMPTENCE", accent: "#4EE6A1", soft: "#C8F7DC", caption: "AI SEARCH INTELLIGENCE" },
   raios: { name: "RAIOS", accent: "#90b9f7", soft: "#d4e4ff", caption: "RESTAURANT INTELLIGENCE" },
   labs: { name: "MARGARYAN LABS", accent: "#f2f2ec", soft: "#c6c8cf", caption: "INDEPENDENT AI SYSTEMS" }
 };
@@ -44,12 +44,15 @@ const STARTERS: Record<MotionBrand, { title: string; scenes: Omit<MotionScene, "
     ]
   },
   promptence: {
-    title: "PROMPTENCE / BE FOUND",
+    title: "PROMPTENCE / BE VISIBLE IN THE ANSWER",
     scenes: [
-      { kind: "opener", eyebrow: "DISCOVERY HAS CHANGED", headline: "CAN AI FIND YOU?", support: "Your next customer may ask a model first.", seconds: 4 },
-      { kind: "network", eyebrow: "VISIBILITY IS MEASURABLE", headline: "MEASURE THE ANSWER.", support: "Find gaps across AI discovery.", seconds: 5 },
-      { kind: "statement", eyebrow: "FROM INSIGHT TO ACTION", headline: "FIX WHAT MATTERS.", support: "Verify progress with evidence.", seconds: 5 },
-      { kind: "closer", eyebrow: "OWN YOUR VISIBILITY", headline: "PROMPTENCE", support: "AI Search Intelligence.", seconds: 4 }
+      { kind: "kinetic", eyebrow: "DISCOVERY HAS CHANGED", headline: "SEARCH IS CHANGING.", support: "The answer is the new front page.", seconds: 3.8 },
+      { kind: "opener", eyebrow: "THE CUSTOMER JOURNEY", headline: "YOUR CUSTOMER ASKS AI.", support: "What appears in the answer?", seconds: 4.6 },
+      { kind: "network", eyebrow: "VISIBILITY PROBLEM", headline: "WHAT IF YOU'RE NOT THERE?", support: "Illustrative AI visibility signal.", seconds: 4.3 },
+      { kind: "orbit", eyebrow: "THE REVEAL", headline: "MAKE THE INVISIBLE VISIBLE.", support: "PROMPTENCE / AI Search Intelligence.", seconds: 4.5 },
+      { kind: "statement", eyebrow: "THE INTELLIGENCE LOOP", headline: "DISCOVER. MEASURE. DIAGNOSE.", support: "Prioritize actions. Verify what changed.", seconds: 4.3 },
+      { kind: "network", eyebrow: "PROVE THE CHANGE", headline: "FROM EVIDENCE TO ACTION.", support: "See what matters instead of guessing.", seconds: 3.6 },
+      { kind: "closer", eyebrow: "OWN YOUR AI VISIBILITY", headline: "BE VISIBLE IN THE ANSWER.", support: "promptence.tech", seconds: 4.9 }
     ]
   },
   raios: {
