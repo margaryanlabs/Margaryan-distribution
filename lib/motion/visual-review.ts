@@ -21,6 +21,7 @@ export interface VisualReview {
  */
 export async function reviewMotionVisuals(project: MotionProject): Promise<VisualReview> {
   await preloadMotionLogo(project.brand);
+  await Promise.race([document.fonts.ready,new Promise(resolve=>setTimeout(resolve,5000))]);
   const size = FORMAT_SIZE[project.format];
   const samples: Array<{time:number;name:string}> = [];
   let cursor = 0;
@@ -88,7 +89,7 @@ export async function reviewMotionVisuals(project: MotionProject): Promise<Visua
   }
   const blob=await new Promise<Blob>((resolve,reject)=>board.toBlob(b=>b?resolve(b):reject(new Error("Contact sheet export failed")),"image/png"));
   return {
-    pass:!warnings.some(w=>/blank|unavailable|transparency|low dynamic range|overlap cinematic safe area|too many lines|exceeds available height|below minimum mobile readability/i.test(w)),
+    pass:!warnings.some(w=>/\/ TEXT:|blank|unavailable|transparency|low dynamic range|below minimum mobile readability/i.test(w)),
     warnings,sceneCoverage:project.scenes.length,
     frames:samples.length,sheet:blob
   };
