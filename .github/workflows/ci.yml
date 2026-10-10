@@ -19,6 +19,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Motion soundtrack contract (no API or FFmpeg dependency)
         run: npm run motion:test-score
+      - name: Motion reference codec and evidence contract
+        run: npm run motion:test-reference
       - name: Typecheck
         run: npm run typecheck
       - name: Production build
