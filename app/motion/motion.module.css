@@ -201,3 +201,20 @@
 .referenceStats span{color:#93ada5;font-size:9px;font-weight:700;letter-spacing:.08em}
 .referenceStats b{color:#f0f6f3;font-size:18px;font-weight:750}
 .referenceStats p{grid-column:1/-1;margin:4px 2px!important}
+
+/* A flagship creative campaign should read like a commission, not a template. */
+.signatureShowcase{background:radial-gradient(ellipse at 70% 20%,#254b38 0%,#10241d 42%,#0a1412 100%);
+  border:1px solid #42755c;border-radius:13px;padding:19px 16px;margin-top:17px;
+  box-shadow:inset 0 1px #94e8bb1a,0 15px 48px #030d0850;overflow:hidden;}
+.signatureShowcase>div{display:flex;flex-direction:column;gap:6px;margin-bottom:15px}
+.signatureShowcase b{font-size:10px;color:#6AF6B4;font-weight:900;letter-spacing:.11em}
+.signatureShowcase>div span{font-size:9px;color:#A9C7B8;letter-spacing:.06em}
+.signatureShowcase>strong{display:block;font-size:clamp(22px,3.1vw,30px);color:#F3FFF8;
+  line-height:1.08;letter-spacing:-.05em;font-weight:900}
+.signatureShowcase p{font-size:11px;line-height:1.65;color:#AECABC;margin:15px 0}
+.signatureShowcase button{width:100%;padding:15px 12px;background:#4EE6A1;color:#07150F;
+  font-size:11px;font-weight:900;border-radius:8px;border:0;cursor:pointer;
+  letter-spacing:.055em;transition:filter .2s ease,transform .2s ease}
+.signatureShowcase button:hover:not(:disabled){filter:brightness(1.09);transform:translateY(-1px)}
+.signatureShowcase button:disabled{opacity:.45;cursor:not-allowed}
+.signatureShowcase small{display:block;color:#7EAC97;font-size:10px;line-height:1.55;margin-top:12px}
