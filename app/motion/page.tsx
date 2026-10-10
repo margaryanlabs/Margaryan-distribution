@@ -454,7 +454,7 @@ export default function MotionStudioPage() {
             <option value="opener">Cinematic opener</option>
             <option value="statement">Strong statement</option>
             <option value="network">Signal network</option>
-            <option value="screen">Real product screen / verified image</option>
+            <option value="screen">Product screenshot / owner review required</option>
             <option value="kinetic">Kinetic typography</option>
             <option value="orbit">Orbit / parallax</option>
             <option value="closer">Closing frame</option>
