@@ -21,6 +21,8 @@ export interface MotionProject {
   seed?: number;
   scenes: MotionScene[];
   language?: "en" | "ru" | "hy";
+  /** Authored cinema route. Explicit project metadata, not inferred from title. */
+  signatureFilm?: "promptence-answer";
 }
 
 export const BRAND_INFO: Record<MotionBrand, { name: string; accent: string; soft: string; caption: string }> = {
@@ -204,7 +206,8 @@ export function sanitizeMotionProject(input: unknown): MotionProject {
   const style = ["cinematic", "kinetic", "technical"].includes(String(obj.style)) ? obj.style as MotionProject["style"] : "cinematic";
   const seed = typeof obj.seed === "number" && Number.isFinite(obj.seed) ? Math.floor(obj.seed) >>> 0 : 41;
   const language = ["en", "ru", "hy"].includes(String(obj.language)) ? obj.language as MotionProject["language"] : undefined;
-  return { version: 1, title: clean(obj.title, 100) || "UNTITLED MOTION", brand, format, style, seed, scenes, language };
+  const signatureFilm = brand === "promptence" && obj.signatureFilm === "promptence-answer" ? "promptence-answer" as const : undefined;
+  return { version: 1, title: clean(obj.title, 100) || "UNTITLED MOTION", brand, format, style, seed, scenes, language, signatureFilm };
 }
 
 export function durationOf(project: MotionProject) {
