@@ -83,3 +83,12 @@
 .disclaimer{font-size:11px;color:#93a2b0;line-height:1.77}
 @media(max-width:950px){.columns{grid-template-columns:1fr}.stage{padding:15px}.panel{padding:16px}.canvasWell{min-height:280px}}
 @media(max-width:450px){.canvasWell canvas{max-height:620px}.stageHead{flex-direction:column;align-items:flex-start}.transport span{font-size:9px}}
+
+.externalTool{border:1px solid #3a4e59;background:linear-gradient(145deg,#121c25,#14151d);
+  padding:15px;margin:15px 0 22px;border-radius:11px;display:grid;gap:10px}
+.externalTool>b{font-size:10px;letter-spacing:.09em;color:#e2ecf3}
+.externalTool>span{font-size:10px;line-height:1.67;color:#a9b5c4}
+.externalTool>div{display:flex;flex-wrap:wrap;gap:9px}
+.externalTool>div a,.externalTool>div button{border:1px solid #54687a;color:#e3eef7;background:#1a2834;
+  font-size:10px;font-weight:800;padding:11px 12px;border-radius:8px;text-decoration:none;cursor:pointer}
+.externalTool>div a:hover,.externalTool>div button:hover{border-color:var(--quick-accent)}
