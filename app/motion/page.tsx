@@ -81,11 +81,28 @@ export default function MotionStudioPage() {
     type FrameHost = Window & {
       __motionFrame?: (input: FrameArgs) => Promise<string>;
       __motionInstallScreen?: (input: {brand:MotionBrand;mime:string;base64:string}) => Promise<void>;
+      __motionReview?: (input: {project:unknown}) => Promise<{
+        project:MotionProject;report:ReturnType<typeof serializeRepair>;contactSheetBase64:string;
+      }>;
     };
     const host = window as FrameHost;
     const renderCanvas = document.createElement("canvas");
     let renderContext: CanvasRenderingContext2D | null = null;
     host.__motionInstallScreen = async (input) => { await installOfflineScreen(input.brand,input.mime,input.base64); };
+    host.__motionReview = async input=>{
+      const validated=sanitizeMotionProject(input.project);
+      const result=await repairMotionProject(validated);
+      const source=await new Promise<string>((resolve,reject)=>{
+        const reader=new FileReader();
+        reader.onload=()=>resolve(String(reader.result||""));
+        reader.onerror=()=>reject(new Error("Contact sheet read failed"));
+        reader.readAsDataURL(result.visual.sheet);
+      });
+      return {
+        project:result.project,report:serializeRepair(result),
+        contactSheetBase64:source.slice(source.indexOf(",")+1)
+      };
+    };
     host.__motionFrame = async (input: FrameArgs) => {
       const shot = sanitizeMotionProject(input.project);
       const dims = FORMAT_SIZE[shot.format];
@@ -101,7 +118,7 @@ export default function MotionStudioPage() {
       drawMotionFrame(renderContext, shot, t, dims.width, dims.height);
       return renderCanvas.toDataURL("image/png").slice("data:image/png;base64,".length);
     };
-    return () => { delete host.__motionFrame; delete host.__motionInstallScreen; };
+    return () => { delete host.__motionFrame; delete host.__motionInstallScreen; delete host.__motionReview; };
   }, []);
 
 
@@ -232,7 +249,7 @@ export default function MotionStudioPage() {
   }
 
   async function exportVideo() {
-    if (exporting || generating) return;
+    if (exporting || generating || directorRepairing) return;
     const captureSupported = typeof HTMLCanvasElement !== "undefined" && "captureStream" in HTMLCanvasElement.prototype;
     if (!captureSupported || typeof MediaRecorder === "undefined") {
       setNotice("Your browser does not support canvas recording. Use current desktop Chrome or Edge for export.");
