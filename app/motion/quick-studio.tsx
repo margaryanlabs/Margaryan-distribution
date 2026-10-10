@@ -334,6 +334,26 @@ export default function QuickStudio() {
       setExporting(false);
     }
   }
+  async function copyExternalBrief(){
+    const p=project;
+    const brief=[
+      "MARGARYAN MOTION OS / QUICK / OPTIONAL EXTERNAL SOURCE GENERATION",
+      "Brand: "+BRAND_INFO[p.brand].name,
+      "Format: "+(p.format==="portrait"?"9:16":p.format==="square"?"1:1":"16:9"),
+      "Language: "+p.language.toUpperCase(),
+      "Create original CINEMATIC B-ROLL ONLY (no burned-in text).",
+      "Use physically coherent realistic lighting, premium art direction, restrained smooth camera, no random artificial effects.",
+      "Do not invent logos, app screens, customer testimonials, brand rankings, profits, prices or fake marketplace listings.",
+      "Actual brand UI screenshots are supplied separately in Motion OS.",
+      "Scene beats:",
+      ...p.shots.map((shot,i)=>String(i+1)+". "+shot.title+" — "+shot.subtitle+" ("+shot.seconds+" seconds)"),
+      "Deliver separate clean source clips, without on-screen labels or copyrighted third-party ads. Import each finished MP4 into Quick Studio.",
+      "Confirm all usage rights before distribution."
+    ].join("\n");
+    try{await navigator.clipboard.writeText(brief);
+      setNotice("External shot brief copied. You may create authorized footage in Higgsfield, then import exported MP4s here. No API link or credits were used.");
+    }catch{setNotice("Clipboard blocked by browser. Use a secure desktop session or manually copy the project script.");}
+  }
   function saveProject(){
     saveBlob(new Blob([JSON.stringify(project,null,2)],{type:"application/json"}),
       "motion-quick-"+project.brand+"-"+project.language+".json");
@@ -366,6 +386,14 @@ export default function QuickStudio() {
           <option value="hy">Հայերեն</option><option value="ru">Русский</option><option value="en">English</option>
         </select></label>
         <label className={styles.input}><span>PROJECT TITLE</span><input value={project.name} maxLength={100} disabled={exporting} onChange={e=>update({...project,name:e.target.value})}/></label>
+        <div className={styles.externalTool}>
+          <b>OPTIONAL / HIGGSFIELD FOOTAGE</b>
+          <span>Use your connected external video service to create source clips, then bring the finished MP4s back here. This Studio does not charge or contact Higgsfield.</span>
+          <div>
+            <a href="https://higgsfield.ai/" target="_blank" rel="noopener noreferrer">OPEN HIGGSFIELD ↗</a>
+            <button type="button" onClick={()=>{void copyExternalBrief();}}>COPY FILM BRIEF</button>
+          </div>
+        </div>
         <div className={styles.panelHead}><b>02 / FILM FORMAT</b><span>9:16 · 1:1 · 16:9</span></div>
         <div className={styles.format}>
           {(["portrait","square","landscape"] as MotionFormat[]).map(x=><button key={x} type="button"
