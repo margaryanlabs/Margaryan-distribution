@@ -174,3 +174,30 @@
 .directorUndo{width:100%;margin:8px 0 4px;background:#111c21;color:#c4d5dc;
   border:1px solid #3d4b50;border-radius:8px;padding:11px;font-size:10px;cursor:pointer}
 .directorUndo:hover:not(:disabled){border-color:#c6d7dc}
+
+/* Evidence-based visual reference comparison; no bogus aesthetic scoring. */
+.referenceLab {
+  border:1px solid #3a5a55;background:linear-gradient(140deg,#12221f,#101519);
+  padding:16px;border-radius:12px;margin:15px 0;
+}
+.referenceLabHead{display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:7px;margin-bottom:10px}
+.referenceLabHead strong{font-size:10px;letter-spacing:.12em;color:#e6f3ed}
+.referenceLabHead span{font-size:10px;color:#8bbaa9;letter-spacing:.065em}
+.referenceLab p{font-size:11px;line-height:1.65;color:#b5c7c0;margin:9px 0}
+.referenceLab p b{color:#e9f8ed;font-weight:700}
+.referenceLab label{display:flex;flex-direction:column;gap:7px;margin-top:11px}
+.referenceLab label span{font-size:10px;color:#97b4a9;letter-spacing:.06em}
+.referenceLab input[type=file]{max-width:100%;color:#dce6e4;font-size:11px}
+.referenceLab>small{display:block;overflow-wrap:anywhere;color:#97aaa5;font-size:10px;margin-top:9px;line-height:1.5}
+.referenceCompare{display:block;width:100%;min-height:44px;margin-top:12px;padding:10px;
+  background:linear-gradient(125deg,#253b34,#192c2e);border:1px solid #5b8976;
+  border-radius:9px;color:#e7f1e9;font-size:11px;letter-spacing:.05em;font-weight:800;cursor:pointer}
+.referenceCompare:hover:not(:disabled){border-color:var(--brand-accent);filter:brightness(1.11)}
+.referenceCompare:disabled{opacity:.5;cursor:not-allowed}
+.referenceStats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:12px}
+.referenceStats>div{padding:11px;background:#101b1e;border:1px solid #31433d;border-radius:7px;
+  display:flex;flex-direction:column;gap:6px}
+.referenceStats span{color:#93ada5;font-size:9px;font-weight:700;letter-spacing:.08em}
+.referenceStats b{color:#f0f6f3;font-size:18px;font-weight:750}
+.referenceStats p{grid-column:1/-1;margin:4px 2px!important}
