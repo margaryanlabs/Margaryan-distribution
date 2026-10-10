@@ -34,6 +34,7 @@ export function auditMotionProject(project: MotionProject): MotionQAReport {
   if (new Set(headlines).size !== headlines.length) issue("copy.duplicate","warn","Repeated headlines detected.");
   for (const [i,s] of project.scenes.entries()) {
     if(s.kind==="screen"&&!hasProductScreen(project.brand))issue("screen.missing."+i,"block","Source screenshot missing for scene "+(i+1)+". Upload a real product screenshot before export.");
+    if(s.kind==="screen"&&hasProductScreen(project.brand))issue("screen.review."+i,"warn","Product screenshot is user-provided; visually verify provenance, sensitive information and rights before publishing.");
     if (!s.headline.trim()) issue("copy.blank."+i,"block","Scene "+(i+1)+" has no headline.");
     if (s.headline.length>82) issue("copy.length."+i,"warn","Scene "+(i+1)+" headline is lengthy for mobile.");
     if (!Number.isFinite(s.seconds)||s.seconds<2||s.seconds>8) issue("scene.duration."+i,"block","Scene "+(i+1)+" has invalid timing.");
