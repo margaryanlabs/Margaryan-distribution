@@ -17,6 +17,8 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Motion soundtrack contract (no API or FFmpeg dependency)
+        run: npm run motion:test-score
       - name: Typecheck
         run: npm run typecheck
       - name: Production build
