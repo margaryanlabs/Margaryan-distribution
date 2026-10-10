@@ -15,7 +15,10 @@
     "motion:verify": "node scripts/motion/verify-render.mjs",
     "motion:master": "node scripts/motion/render-master.mjs",
     "motion:film": "node scripts/motion/create-film.mjs",
-    "motion:discover": "node scripts/motion/discover-portfolio.mjs"
+    "motion:discover": "node scripts/motion/discover-portfolio.mjs",
+    "motion:score": "node scripts/motion/score-film.mjs",
+    "motion:test-score": "node scripts/motion/test-score.mjs",
+    "motion:capture": "node scripts/motion/capture-public-ui.mjs"
   },
   "dependencies": {
     "next": "16.3.3",
