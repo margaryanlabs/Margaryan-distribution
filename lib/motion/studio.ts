@@ -31,7 +31,7 @@ export const BRAND_INFO: Record<MotionBrand, { name: string; accent: string; sof
   raios: { name: "RAIOS", accent: "#90b9f7", soft: "#d4e4ff", caption: "RESTAURANT INTELLIGENCE" },
   labs: { name: "MARGARYAN LABS", accent: "#f2f2ec", soft: "#c6c8cf", caption: "INDEPENDENT AI SYSTEMS" },
   ingu: { name: "INGU", accent: "#f5f0eb", soft: "#d7d1ce", caption: "THE FASHION ARCHIVE" },
-  meqena: { name: "MEQENA", accent: "#cbdce6", soft: "#e4ecf4", caption: "AUTOMOTIVE MARKETPLACE" },
+  meqena: { name: "MEQENA", accent: "#df2742", soft: "#f5b1bd", caption: "AUTOMOTIVE MARKETPLACE" },
   suren: { name: "SUREN PRIVATE", accent: "#e7e3df", soft: "#c6c0bb", caption: "DUBAI PRIVATE INTELLIGENCE" },
   veto_private: { name: "VETO PRIVATE", accent: "#ff553d", soft: "#ffc5ba", caption: "PRIVATE TELEGRAM EXPERIENCE" },
   veto_sport: { name: "VETO SPORT", accent: "#ff2d2d", soft: "#ffd2d2", caption: "EVIDENCE BEFORE THE ODDS" },
