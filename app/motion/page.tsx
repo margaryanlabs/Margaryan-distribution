@@ -8,6 +8,7 @@ import {
 } from "@/lib/motion/studio";
 import { drawMotionFrame } from "@/lib/motion/render-engine";
 import { preloadMotionLogo } from "@/lib/motion/brand-assets";
+import { setLocalProductScreen, installOfflineScreen, hasProductScreen } from "@/lib/motion/screen-media";
 import { PORTFOLIO, PORTFOLIO_BRANDS } from "@/lib/motion/portfolio";
 import { auditMotionProject, inspectFramePixels, autoPolishMotionProject } from "@/lib/motion/quality";
 import { reviewMotionVisuals } from "@/lib/motion/visual-review";
@@ -74,14 +75,19 @@ export default function MotionStudioPage() {
   // local to this browser; exporting to disk requires the separate operator CLI.
   useEffect(() => {
     type FrameArgs = { project: unknown; time: number; format?: MotionFormat };
-    type FrameHost = Window & { __motionFrame?: (input: FrameArgs) => Promise<string> };
+    type FrameHost = Window & {
+      __motionFrame?: (input: FrameArgs) => Promise<string>;
+      __motionInstallScreen?: (input: {brand:MotionBrand;mime:string;base64:string}) => Promise<void>;
+    };
     const host = window as FrameHost;
     const renderCanvas = document.createElement("canvas");
     let renderContext: CanvasRenderingContext2D | null = null;
+    host.__motionInstallScreen = async (input) => { await installOfflineScreen(input.brand,input.mime,input.base64); };
     host.__motionFrame = async (input: FrameArgs) => {
       const shot = sanitizeMotionProject(input.project);
       const dims = FORMAT_SIZE[shot.format];
       await preloadMotionLogo(shot.brand);
+      if(shot.scenes.some(scene=>scene.kind==="screen")&&!hasProductScreen(shot.brand))throw new Error("Source product screenshot is missing; add --screen in the offline master.");
       if (renderCanvas.width !== dims.width || renderCanvas.height !== dims.height) {
         renderCanvas.width = dims.width; renderCanvas.height = dims.height;
         renderContext = null;
@@ -92,7 +98,7 @@ export default function MotionStudioPage() {
       drawMotionFrame(renderContext, shot, t, dims.width, dims.height);
       return renderCanvas.toDataURL("image/png").slice("data:image/png;base64,".length);
     };
-    return () => { delete host.__motionFrame; };
+    return () => { delete host.__motionFrame; delete host.__motionInstallScreen; };
   }, []);
 
 
@@ -323,7 +329,7 @@ export default function MotionStudioPage() {
   return <main className={styles.root} style={{ "--brand-accent": info.accent } as CSSProperties}>
     <header className={styles.header}>
       <div>
-        <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / MOTION OS V0.7</p>
+        <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / MOTION OS V0.8</p>
         <h1>Motion <em>Studio.</em></h1>
         <p className={styles.deck}>Cinematic direction · real brand assets · EN / RU / HY · original voice mixing · automatic scene polish · offline H.264 master workflow.</p>
       </div>
@@ -448,10 +454,28 @@ export default function MotionStudioPage() {
             <option value="opener">Cinematic opener</option>
             <option value="statement">Strong statement</option>
             <option value="network">Signal network</option>
+            <option value="screen">Real product screen / verified image</option>
             <option value="kinetic">Kinetic typography</option>
             <option value="orbit">Orbit / parallax</option>
             <option value="closer">Closing frame</option>
           </select>
+        </label>
+        <label className={styles.screenUpload}>
+          <strong>REAL PRODUCT SCREEN / SOURCE FOOTAGE</strong>
+          <span>{hasProductScreen(project.brand)
+            ? "Source image loaded locally — select Real product screen to show it."
+            : "No screenshot loaded for this brand. Source images are never sent to a server."}</span>
+          <input type="file" accept="image/png,image/jpeg,image/webp"
+            disabled={exporting||generating}
+            onChange={event=>{
+              const file=event.currentTarget.files?.[0];
+              event.currentTarget.value="";
+              if(!file)return;
+              void setLocalProductScreen(project.brand,file)
+                .then(()=>{setAssetRevision(v=>v+1);setNotice("Real product screenshot loaded for "+BRAND_INFO[project.brand].name+". Select Real product screen composition; saved project JSON will not include the private image.");})
+                .catch(error=>setNotice(error instanceof Error?error.message:"Cannot open product screenshot"));
+            }}/>
+          <small>PNG / JPEG / WebP · max 12MB. A real capture only — not fabricated dashboard statistics. For reproducible offline MP4, add --screen screenshot.png.</small>
         </label>
         <label className={styles.field}><span>EYEBROW</span><input value={selected.eyebrow} maxLength={65} onChange={event => editScene("eyebrow", event.target.value)}/></label>
         <label className={styles.field}><span>HEADLINE</span><textarea rows={2} value={selected.headline} maxLength={105} onChange={event => editScene("headline", event.target.value)}/></label>
@@ -513,7 +537,7 @@ export default function MotionStudioPage() {
             </button>
           </div>
         </div>
-        <p className={styles.footnote}>Local cinema staging runs without paid video APIs. Source-verified marks are original SVGs; private GitHub sources are never exposed here. Browser EXPORT may produce WebM depending on support. For deterministic professional H.264/AAC MP4, use the offline <code>npm run motion:master</code> workflow in the repository; it needs a local computer with FFmpeg/Chromium. QA checks structure and sampled frames but cannot certify taste, factual claims or music licenses. Final creative review is still required.</p>
+        <p className={styles.footnote}>Local cinema staging and original MP4 soundtracks run without paid video APIs. Product screenshots are local-only and never stored in saved JSON. Source-verified marks are original SVGs; private GitHub sources are never exposed here. Browser EXPORT may produce WebM depending on support. For deterministic professional H.264/AAC MP4, use the offline <code>npm run motion:master</code> workflow in the repository; it needs a local computer with FFmpeg/Chromium. QA checks structure and sampled frames but cannot certify taste, factual claims or music licenses. Final creative review is still required.</p>
       </section>
     </div>
   </main>;
