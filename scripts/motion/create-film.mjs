@@ -19,7 +19,8 @@ function args(input){
     const value=input[i];
     if(!value.startsWith("--"))throw Error("Unexpected argument: "+value);
     const key=value.slice(2),next=input[++i];
-    if(!["brand","lang","brief","out","repo","format","style","voice","music","fps","url","chromium"].includes(key))throw Error("Unknown flag --"+key);
+    if(key==="silent"){opt.silent=true;continue;}
+    if(!["brand","lang","brief","out","repo","format","style","voice","music","fps","url","chromium","screen"].includes(key))throw Error("Unknown flag --"+key);
     if(!next||next.startsWith("--"))throw Error("Missing value for "+key);
     opt[key]=next;
   }
@@ -73,12 +74,14 @@ try{
   const childArgs=[projectFile,output,"--url",url.href];
   if(opt.voice)childArgs.push("--voice",opt.voice);
   if(opt.music)childArgs.push("--music",opt.music);
+  if(opt.silent)childArgs.push("--silent");
   if(opt.fps)childArgs.push("--fps",opt.fps);
   if(opt.chromium)childArgs.push("--chromium",opt.chromium);
+  if(opt.screen)childArgs.push("--screen",opt.screen);
   await script("scripts/motion/render-master.mjs",childArgs);
   // The media QA process validates the actual encoded file, not a pretend success signal.
   const verdict=spawnSync(process.execPath,["scripts/motion/verify-render.mjs",output,
-    ...(opt.voice?["--require-audio"]:[])],{stdio:"inherit",timeout:120_000});
+    ...(!opt.silent||opt.voice||opt.music?["--require-audio"]:[])],{stdio:"inherit",timeout:120_000});
   if(verdict.status!==0)throw Error("Encoded film failed media QA");
   process.stdout.write("FILM COMPLETE: "+output+"\n");
 }catch(error){
