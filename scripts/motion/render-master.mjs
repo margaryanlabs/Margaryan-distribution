@@ -20,7 +20,7 @@ function parse(argv) {
     if(argv[i].startsWith("--")){
       const key=argv[i].slice(2);
       if(key==="silent"){opts.silent=true;continue;}
-      if(!["url","fps","crf","voice","music","chromium"].includes(key))throw Error("Unknown option: "+key);
+      if(!["url","fps","crf","voice","music","chromium","screen"].includes(key))throw Error("Unknown option: "+key);
       const value=argv[++i];if(!value||value.startsWith("--"))throw Error("Missing value for --"+key);
       opts[key]=value;
     }else positional.push(argv[i]);
@@ -60,6 +60,16 @@ try {
   const dims=formats[project.format];
   if(!dims)throw Error("Invalid project format");
   const frames=Math.max(1,Math.round(duration*fps));
+  if(project.scenes.some(scene=>scene.kind==="screen")&&!opts.screen){
+    throw Error("Source screenshot scene requires --screen /path/to/approved-real-product-screenshot.png");
+  }
+  if(opts.screen){
+    const ext=extname(opts.screen).toLowerCase();
+    if(![".png",".jpg",".jpeg",".webp"].includes(ext))throw Error("Product screen must be PNG, JPG or WebP");
+    const source=await stat(resolve(opts.screen));
+    if(!source.isFile()||source.size>12_000_000||source.size<100)throw Error("Invalid product screenshot size");
+  }
+
   for(const file of [opts.voice,opts.music].filter(Boolean)){
     const f=await stat(resolve(file));
     if(!f.isFile()||f.size>250_000_000)throw Error("Oversized/invalid audio: "+file);
@@ -103,6 +113,16 @@ try {
     process.stderr.write("WARNING: Armenian-specific font did not load. Inspect final Armenian glyphs in contact sheet.\n");
   }
   await page.evaluate(()=>document.fonts.ready);
+  if(opts.screen){
+    const extension=extname(opts.screen).toLowerCase();
+    const mime=extension===".png"?"image/png":extension===".webp"?"image/webp":"image/jpeg";
+    const base64=(await readFile(resolve(opts.screen))).toString("base64");
+    await page.waitForFunction(()=>typeof window.__motionInstallScreen==="function",{timeout:10000});
+    await page.evaluate(async input=>window.__motionInstallScreen(input),
+      {brand:project.brand,mime,base64});
+    process.stdout.write("Approved source screenshot loaded into local film session; nothing uploaded.\n");
+  }
+
   if(errors.length)throw Error("Studio runtime error: "+errors.slice(0,3).join("; "));
 
   // A complete film includes its own soundtrack by default, no uploaded music
