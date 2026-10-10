@@ -7,6 +7,7 @@ import { drawCinematicSet } from "./cinematic-craft";
 import { getLoadedMotionLogo } from "./brand-assets";
 import { FILM_FONT, fitShotCopy } from "./typography";
 import { drawWorldRig, withSceneCamera } from "./camera-rig";
+import { drawProductScreen } from "./screen-media";
 
 const TAU = Math.PI * 2;
 const clamp = (x: number, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -251,6 +252,7 @@ function drawShot(ctx: CanvasRenderingContext2D, project: MotionProject, index: 
     if (scene.kind === "network") {
       drawProductComposition(ctx, project, scene, absoluteTime, W, H, accent);
     }
+    if (scene.kind === "screen") drawProductScreen(ctx,project.brand,W,H,absoluteTime,progress,accent);
   });
   // Text is outside the camera transform: never sacrifice glyph readability.
   renderText(ctx, scene, W, H, progress, accent, absoluteTime, project.style, project.language);
