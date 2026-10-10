@@ -160,3 +160,17 @@
 .screenUpload span {font-size:11px;color:#c5d6d1;line-height:1.5;}
 .screenUpload input {font-size:11px;color:#d2e2dc;max-width:100%;}
 .screenUpload small {font-size:10px;line-height:1.5;color:#8fa59b;}
+
+
+/* The director's measurable repair loop has a separate action, not a
+   misleading artistic quality "100% certified" badge. */
+.directorButton {display:block;width:100%;min-height:48px;margin-top:12px;padding:12px 14px;
+  background:linear-gradient(125deg,#224638,#152e2b);
+  color:#f2fff6;border:1px solid var(--brand-accent);border-radius:9px;
+  font-weight:800;letter-spacing:.065em;font-size:11px;line-height:1.4;cursor:pointer;
+  box-shadow:0 9px 32px rgba(0,0,0,.2);}
+.directorButton:hover:not(:disabled){filter:brightness(1.14);box-shadow:0 8px 32px #4ee6a132}
+.directorButton:disabled{opacity:.55;cursor:not-allowed}
+.directorUndo{width:100%;margin:8px 0 4px;background:#111c21;color:#c4d5dc;
+  border:1px solid #3d4b50;border-radius:8px;padding:11px;font-size:10px;cursor:pointer}
+.directorUndo:hover:not(:disabled){border-color:#c6d7dc}
