@@ -162,6 +162,9 @@ export async function compareFilmWithReference(project:MotionProject,file:File):
     art.fillStyle="#071012";art.fillRect(0,0,board.width,board.height);
     const frames:ReferenceSample[]=[];
     const notes:string[]=[];
+    if(Math.abs(Math.log(refAspect/aspect))>0.10){
+      notes.push("The reference and output aspect ratios differ. Frames are shown with their original aspect, and color/temporal metrics should not be treated as equivalent framing.");
+    }
     let lastO:ImageData|null=null,lastR:ImageData|null=null;
     for(const [index,percent] of SAMPLE_PERCENT.entries()){
       const tO=Math.min(filmSeconds-.04,filmSeconds*percent);
