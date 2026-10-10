@@ -12,6 +12,7 @@ import { setLocalProductScreen, installOfflineScreen, hasProductScreen } from "@
 import { PORTFOLIO, PORTFOLIO_BRANDS } from "@/lib/motion/portfolio";
 import { auditMotionProject, inspectFramePixels, autoPolishMotionProject } from "@/lib/motion/quality";
 import { reviewMotionVisuals } from "@/lib/motion/visual-review";
+import { repairMotionProject, serializeRepair } from "@/lib/motion/auto-director";
 import { createCaptionBundle } from "@/lib/motion/captions";
 import { rescaleProjectToSeconds } from "@/lib/motion/timing";
 import { createProceduralSoundtrack, type ProceduralAudioSession } from "@/lib/motion/sound-engine";
@@ -49,6 +50,8 @@ export default function MotionStudioPage() {
   const [generating, setGenerating] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [visualReviewing, setVisualReviewing] = useState(false);
+  const [directorRepairing, setDirectorRepairing] = useState(false);
+  const previousDirectorProject = useRef<MotionProject | null>(null);
   const [exportProgress, setExportProgress] = useState(0);
   const [notice, setNotice] = useState("Собственный локальный движок: генерация сцен, графика и экспорт без API-ключей, кредитов и сервера рендеринга.");
   const previewRef = useRef<HTMLCanvasElement>(null);
@@ -78,11 +81,28 @@ export default function MotionStudioPage() {
     type FrameHost = Window & {
       __motionFrame?: (input: FrameArgs) => Promise<string>;
       __motionInstallScreen?: (input: {brand:MotionBrand;mime:string;base64:string}) => Promise<void>;
+      __motionReview?: (input: {project:unknown}) => Promise<{
+        project:MotionProject;report:ReturnType<typeof serializeRepair>;contactSheetBase64:string;
+      }>;
     };
     const host = window as FrameHost;
     const renderCanvas = document.createElement("canvas");
     let renderContext: CanvasRenderingContext2D | null = null;
     host.__motionInstallScreen = async (input) => { await installOfflineScreen(input.brand,input.mime,input.base64); };
+    host.__motionReview = async input=>{
+      const validated=sanitizeMotionProject(input.project);
+      const result=await repairMotionProject(validated);
+      const source=await new Promise<string>((resolve,reject)=>{
+        const reader=new FileReader();
+        reader.onload=()=>resolve(String(reader.result||""));
+        reader.onerror=()=>reject(new Error("Contact sheet read failed"));
+        reader.readAsDataURL(result.visual.sheet);
+      });
+      return {
+        project:result.project,report:serializeRepair(result),
+        contactSheetBase64:source.slice(source.indexOf(",")+1)
+      };
+    };
     host.__motionFrame = async (input: FrameArgs) => {
       const shot = sanitizeMotionProject(input.project);
       const dims = FORMAT_SIZE[shot.format];
@@ -98,7 +118,7 @@ export default function MotionStudioPage() {
       drawMotionFrame(renderContext, shot, t, dims.width, dims.height);
       return renderCanvas.toDataURL("image/png").slice("data:image/png;base64,".length);
     };
-    return () => { delete host.__motionFrame; delete host.__motionInstallScreen; };
+    return () => { delete host.__motionFrame; delete host.__motionInstallScreen; delete host.__motionReview; };
   }, []);
 
 
@@ -203,8 +223,33 @@ export default function MotionStudioPage() {
     } finally { setGenerating(false); }
   }
 
+  async function runAutoDirector():Promise<void> {
+    if(directorRepairing||visualReviewing||exporting||generating)return;
+    setDirectorRepairing(true);
+    setPlaying(false);
+    setNotice("DIRECTOR AUTOFIX: inspect shots, preserve multilingual copy, repair safe-area typography and composition, then verify again.");
+    try {
+      const previous=sanitizeMotionProject(project);
+      const result=await repairMotionProject(previous);
+      if(result.changes.length){
+        previousDirectorProject.current=previous;
+        updateProject(result.project);
+        jump(0);
+      }
+      downloadFile("motion-"+project.brand+"-repair-audit.json",
+        new Blob([JSON.stringify(serializeRepair(result),null,2)],{type:"application/json"}));
+      downloadFile("motion-"+project.brand+"-verified-contact-sheet.png",result.visual.sheet);
+      setNotice("DIRECTOR / "+result.status+": "+result.changes.length+
+        " safe repairs in "+result.iterations.length+" verified passes. "+
+        (result.remaining.length?result.remaining.slice(0,3).join(" · "):"No measured defects; creative and legal review still required.")+
+        " Audit and final contact sheet downloaded.");
+    }catch(error){
+      setNotice("DIRECTOR AUTOFIX FAILED: "+(error instanceof Error?error.message:String(error)));
+    }finally{setDirectorRepairing(false);}
+  }
+
   async function exportVideo() {
-    if (exporting || generating) return;
+    if (exporting || generating || directorRepairing) return;
     const captureSupported = typeof HTMLCanvasElement !== "undefined" && "captureStream" in HTMLCanvasElement.prototype;
     if (!captureSupported || typeof MediaRecorder === "undefined") {
       setNotice("Your browser does not support canvas recording. Use current desktop Chrome or Edge for export.");
@@ -226,6 +271,18 @@ export default function MotionStudioPage() {
     try{
       const checked=await reviewMotionVisuals(project);
       if(!checked.pass){
+        const revised=await repairMotionProject(project);
+        if(revised.changes.length){
+          previousDirectorProject.current=sanitizeMotionProject(project);
+          updateProject(revised.project);
+          downloadFile("motion-"+project.brand+"-auto-repair-audit.json",
+            new Blob([JSON.stringify(serializeRepair(revised),null,2)],{type:"application/json"}));
+          downloadFile("motion-"+project.brand+"-repaired-review.png",revised.visual.sheet);
+          setNotice("DIRECTOR repaired "+revised.changes.length+
+            " measurable defects and verified again. Review the revised film, then press EXPORT again. "+
+            (revised.remaining.length?revised.remaining.slice(0,2).join(" · "):""));
+          return;
+        }
         downloadFile("motion-"+project.brand+"-qa-review.png",checked.sheet);
         setNotice("FILM QA: Correct these issues before export: "+checked.warnings.join(" / "));
         return;
@@ -265,13 +322,9 @@ export default function MotionStudioPage() {
       }
       stream = canvas.captureStream(30);
       if (soundEnabled || voiceover) {
-        try {
-          audioSession = await createProceduralSoundtrack(project, { voiceover, synth: soundEnabled });
-          stream.addTrack(audioSession.track);
-        } catch (audioError) {
-          setNotice("Synth soundtrack unavailable — exporting the video without sound. " +
-            (audioError instanceof Error ? audioError.message : ""));
-        }
+        // Never silently deliver a silent marketing clip when narration was requested.
+        audioSession = await createProceduralSoundtrack(project, { voiceover, synth: soundEnabled });
+        stream.addTrack(audioSession.track);
       }
       drawMotionFrame(ctx, project, 0, width, height);
       recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8_000_000 });
@@ -329,7 +382,7 @@ export default function MotionStudioPage() {
   return <main className={styles.root} style={{ "--brand-accent": info.accent } as CSSProperties}>
     <header className={styles.header}>
       <div>
-        <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / MOTION OS V0.8</p>
+        <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / MOTION OS V0.9</p>
         <h1>Motion <em>Studio.</em></h1>
         <p className={styles.deck}>Cinematic direction · real brand assets · EN / RU / HY · original voice mixing · automatic scene polish · offline H.264 master workflow.</p>
       </div>
@@ -433,6 +486,20 @@ export default function MotionStudioPage() {
                 ? "AUTO POLISH: "+result.changes.join(" · ")
                 : "AUTO POLISH: All safe structural and copy fixes already applied.");
             }}>✦ AUTO POLISH SCENES</button>
+          <button type="button" className={styles.directorButton}
+            disabled={exporting||generating||directorRepairing||visualReviewing}
+            onClick={()=>{void runAutoDirector();}}>
+            {directorRepairing?"RENDER → INSPECT → REPAIR…":"✦ SMART DIRECTOR / REPAIR & RECHECK"}
+          </button>
+          {previousDirectorProject.current && <button type="button"
+            className={styles.directorUndo} disabled={exporting||directorRepairing}
+            onClick={()=>{
+              const restore=previousDirectorProject.current;
+              if(!restore)return;
+              updateProject(restore);previousDirectorProject.current=null;
+              setNotice("Director repairs undone; original editable film restored.");
+            }}>↶ UNDO AUTOMATIC REPAIRS</button>}
+
           <button type="button" className={styles.polishButton} disabled={exporting||generating||visualReviewing}
             onClick={async()=>{
               if(visualReviewing)return;

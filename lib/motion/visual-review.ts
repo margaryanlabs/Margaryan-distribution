@@ -53,7 +53,7 @@ export async function reviewMotionVisuals(project: MotionProject): Promise<Visua
   }
   const virtualW=1080,virtualH=virtualW*size.height/size.width;
   for(const [i,scene] of project.scenes.entries()){
-    const geometry=fitShotCopy(ctx,scene.headline.toLocaleUpperCase(project.language||"en"),scene.support,virtualW,virtualH);
+    const geometry=fitShotCopy(ctx,scene.headline.toLocaleUpperCase(project.language||"en"),scene.support,virtualW,virtualH,scene.typographyScale);
     for(const reason of geometry.reasons)warnings.push("SHOT "+String(i+1).padStart(2,"0")+" / TEXT: "+reason);
     if(geometry.title.fontSize<32)warnings.push("SHOT "+String(i+1).padStart(2,"0")+" / TEXT: headline is below minimum mobile readability.");
   }

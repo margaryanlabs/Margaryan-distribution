@@ -52,7 +52,7 @@ try {
   const crf=opts.crf?Number(opts.crf):18;
   if(!Number.isInteger(crf)||crf<14||crf>28)throw Error("CRF must be 14–28");
 
-  const project=JSON.parse(await readFile(projectPath,"utf8"));
+  let project=JSON.parse(await readFile(projectPath,"utf8"));
   if(!project||!Array.isArray(project.scenes)||project.scenes.length<1||project.scenes.length>8)throw Error("Invalid project scenes");
   const duration=project.scenes.reduce((s,x)=>s+Math.max(2,Math.min(8,Number(x.seconds)||4)),0);
   if(duration>64)throw Error("Film exceeds 64-second limit");
@@ -123,6 +123,31 @@ try {
     process.stdout.write("Approved source screenshot loaded into local film session; nothing uploaded.\n");
   }
 
+
+  // Use precisely the same bounded, deterministic repairs as Studio before
+  // rendering every frame. It never fabricates source images or changes copy.
+  await page.waitForFunction(()=>typeof window.__motionReview==="function",{timeout:10000});
+  const automatic=await page.evaluate(input=>window.__motionReview({project:input}),project);
+  if(!automatic?.project||!automatic?.report||!automatic?.contactSheetBase64){
+    throw Error("Director did not return a validated project and inspection evidence");
+  }
+  const reviewedPath=outputPath.replace(/\.mp4$/i,"")+".director.motion.json";
+  const repairReportPath=outputPath.replace(/\.mp4$/i,"")+".director-audit.json";
+  const inspectPath=outputPath.replace(/\.mp4$/i,"")+".director-contact-sheet.png";
+  await mkdir(dirname(outputPath),{recursive:true});
+  project=automatic.project;
+  await Promise.all([
+    writeFile(reviewedPath,JSON.stringify(project,null,2)+"\n"),
+    writeFile(repairReportPath,JSON.stringify(automatic.report,null,2)+"\n"),
+    writeFile(inspectPath,Buffer.from(automatic.contactSheetBase64,"base64"))
+  ]);
+  if(!automatic.report.measuredFramePass || automatic.report.after?.blockers>0){
+    throw Error("Director cannot clear measured defects. Examine "+repairReportPath+" and repair shots before MP4 export.");
+  }
+  process.stdout.write("Director inspection: "+automatic.report.iterations.length+
+    " measured repair passes; "+automatic.report.changes.length+
+    " adjustments. Contact sheet saved: "+inspectPath+"\n");
+
   if(errors.length)throw Error("Studio runtime error: "+errors.slice(0,3).join("; "));
 
   // A complete film includes its own soundtrack by default, no uploaded music
@@ -131,7 +156,7 @@ try {
   let scorePath=null;
   if(!opts.music&&!opts.silent){
     scorePath=outputPath.replace(/\.mp4$/i,"")+".score.wav";
-    const generated=run(process.execPath,["scripts/motion/score-film.mjs",projectPath,scorePath],{timeout:120_000});
+    const generated=run(process.execPath,["scripts/motion/score-film.mjs",reviewedPath,scorePath],{timeout:120_000});
     if(generated.status!==0)throw Error("Cannot build original film score: "+(generated.stderr||"unknown").slice(-900));
     process.stdout.write("Soundtrack ready: "+scorePath+"\n");
   }
@@ -208,6 +233,8 @@ try {
     originalScoreGenerated:!!scorePath,originalScoreFile:scorePath,
     contactSheet:sheet,captionFiles:[".srt",".vtt","-narration-guide.txt"],
     voiceTimingVerified:Boolean(opts.voice),
+    directorAudit:repairReportPath,directorContactSheet:inspectPath,
+    directorRepairs:automatic.report.changes.length,unresolvedDirectorReviews:automatic.report.remaining,
     note:"Technical checks cannot independently certify aesthetics, truth of claims, or music/voice licensing."
   };
   await writeFile(outputPath.replace(/\.mp4$/i,"")+".render-report.json",JSON.stringify(report,null,2)+"\n");

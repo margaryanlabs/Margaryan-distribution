@@ -9,6 +9,8 @@ export interface MotionScene {
   headline: string;
   support: string;
   seconds: number;
+  /** Measured font-size multiplier, 0.72–1, never removes words. */
+  typographyScale?: number;
 }
 export interface MotionProject {
   version: 1;
@@ -195,7 +197,8 @@ export function sanitizeMotionProject(input: unknown): MotionProject {
       eyebrow: clean(s.eyebrow, 65),
       headline: clean(s.headline, 105) || "YOUR NEXT IDEA",
       support: clean(s.support, 180),
-      seconds: Math.max(2, Math.min(8, Number.isFinite(seconds) ? seconds : 4))
+      seconds: Math.max(2, Math.min(8, Number.isFinite(seconds) ? seconds : 4)),
+      typographyScale: Math.max(.72, Math.min(1, Number.isFinite(Number(s.typographyScale)) && s.typographyScale !== undefined ? Number(s.typographyScale) : 1))
     };
   });
   const style = ["cinematic", "kinetic", "technical"].includes(String(obj.style)) ? obj.style as MotionProject["style"] : "cinematic";

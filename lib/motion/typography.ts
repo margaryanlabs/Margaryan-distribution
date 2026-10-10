@@ -90,8 +90,10 @@ export function shotTextGeometry(W:number,H:number):ShotGeometry {
   };
 }
 
-export function fitShotCopy(ctx:CanvasRenderingContext2D,headline:string,support:string,W:number,H:number){
-  const g=shotTextGeometry(W,H);
+export function fitShotCopy(ctx:CanvasRenderingContext2D,headline:string,support:string,W:number,H:number,scale=1){
+  const raw=shotTextGeometry(W,H);
+  const safeScale=Math.max(.72,Math.min(1,Number.isFinite(scale)?scale:1));
+  const g={...raw,titleSize:Math.round(raw.titleSize*safeScale),supportSize:Math.round(raw.supportSize*safeScale),supportGap:Math.round(raw.supportGap*safeScale)};
   const title=fitCanvasTitle(ctx,headline,g.width,g.headlineMaxHeight,g.maxLines,g.titleSize,26);
   ctx.save();
   ctx.font='400 '+g.supportSize+'px '+FILM_FONT;
