@@ -17,6 +17,8 @@ export interface RepairIteration {
   afterWarnings: number;
   pass: boolean;
   changes: RepairChange[];
+  accepted: boolean;
+  reason: string;
 }
 export interface DirectorRepairResult {
   project: MotionProject;
@@ -46,6 +48,21 @@ const VARIANT:MotionSceneKind[]=["kinetic","opener","network","statement","orbit
 const SCALE_STEPS=[1,.96,.92,.88,.84,.80,.76,.72];
 const MAX_PASSES=3;
 const LIMIT=200; // UI can always be cancelled by closing the tab; no external work.
+/**
+ * Repair attempts must be accepted only when they reduce actual measurable debt.
+ * A change in visual style alone is not evidence of higher creative quality.
+ */
+export function measuredRepairDebt(warnings:string[],pass:boolean):number {
+  let debt=pass?0:600;
+  for(const warning of warnings) {
+    if(/\/ TEXT:|blank|low dynamic range|transparency|below minimum mobile readability/i.test(warning))debt+=100;
+    else if(/visually similar/i.test(warning))debt+=18;
+    else if(/ARMENIAN FONT REVIEW/i.test(warning))debt+=5;
+    else debt+=3;
+  }
+  return debt;
+}
+
 function bestVariety(kind:MotionSceneKind,previous:MotionSceneKind,following:MotionSceneKind,shot:number):MotionSceneKind {
   if(kind==="screen"||kind==="closer")return kind;
   const choices=VARIANT.filter(candidate=>candidate!==kind&&candidate!==previous&&candidate!==following);
@@ -123,11 +140,18 @@ export async function repairMotionProject(original:MotionProject):Promise<Direct
     if(signature===previousSignature)break;
     previousSignature=signature;
     const updated=await reviewMotionVisuals(next);
+    const beforeDebt=measuredRepairDebt(visual.warnings,visual.pass);
+    const afterDebt=measuredRepairDebt(updated.warnings,updated.pass);
+    const accepted=afterDebt<beforeDebt;
     history.push({
       iteration,beforeWarnings:visual.warnings.length,
       afterWarnings:updated.warnings.length,pass:updated.pass,
-      changes:batch
+      changes:batch,accepted,
+      reason:accepted
+        ? "Measured layout/repetition debt decreased: "+beforeDebt+" → "+afterDebt
+        : "Reverted trial: no objective improvement ("+beforeDebt+" → "+afterDebt+")."
     });
+    if(!accepted)break;
     changes.push(...batch);
     current=next;
     visual=updated;
