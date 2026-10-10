@@ -7,6 +7,7 @@ import { drawCinematicSet } from "./cinematic-craft";
 import { getLoadedMotionLogo } from "./brand-assets";
 import { FILM_FONT, fitShotCopy } from "./typography";
 import { drawWorldRig, withSceneCamera } from "./camera-rig";
+import { drawPromptenceSignatureArt } from "./signature-art";
 import { drawProductScreen } from "./screen-media";
 
 const TAU = Math.PI * 2;
@@ -248,11 +249,19 @@ function drawShot(ctx: CanvasRenderingContext2D, project: MotionProject, index: 
       drawWorldRig(ctx,W,H,absoluteTime,accent,index,
         scene.kind==="opener"?"floor":scene.kind==="orbit"?"portal":"signal");
     }
-    drawCinematicSet(ctx, project, scene, index, absoluteTime, progress, W, H);
-    if (scene.kind === "network") {
-      drawProductComposition(ctx, project, scene, absoluteTime, W, H, accent);
+    if(project.signatureFilm==="promptence-answer"&&project.brand==="promptence"){
+      // Flagship is deliberately a separate authored visual grammar. Do not
+      // overlay a generic orbit/dashboard slideshow atop the bespoke shots.
+      drawPromptenceSignatureArt(ctx,project,index,absoluteTime,progress,W,H);
+      // Owner-supplied real UI remains available if explicitly selected.
+      if(scene.kind==="screen")drawProductScreen(ctx,project.brand,W,H,absoluteTime,progress,accent);
+    }else{
+      drawCinematicSet(ctx, project, scene, index, absoluteTime, progress, W, H);
+      if (scene.kind === "network") {
+        drawProductComposition(ctx, project, scene, absoluteTime, W, H, accent);
+      }
+      if (scene.kind === "screen") drawProductScreen(ctx,project.brand,W,H,absoluteTime,progress,accent);
     }
-    if (scene.kind === "screen") drawProductScreen(ctx,project.brand,W,H,absoluteTime,progress,accent);
   });
   // Text is outside the camera transform: never sacrifice glyph readability.
   renderText(ctx, scene, W, H, progress, accent, absoluteTime, project.style, project.language);

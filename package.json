@@ -20,7 +20,8 @@
     "motion:test-score": "node scripts/motion/test-score.mjs",
     "motion:capture": "node scripts/motion/capture-public-ui.mjs",
     "motion:compare": "node scripts/motion/compare-reference.mjs",
-    "motion:test-reference": "node scripts/motion/test-reference.mjs"
+    "motion:test-reference": "node scripts/motion/test-reference.mjs",
+    "motion:signature": "node scripts/motion/create-signature.mjs"
   },
   "dependencies": {
     "next": "16.3.3",

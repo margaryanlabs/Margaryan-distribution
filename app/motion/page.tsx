@@ -13,6 +13,7 @@ import { PORTFOLIO, PORTFOLIO_BRANDS } from "@/lib/motion/portfolio";
 import { auditMotionProject, inspectFramePixels, autoPolishMotionProject } from "@/lib/motion/quality";
 import { reviewMotionVisuals } from "@/lib/motion/visual-review";
 import { repairMotionProject, serializeRepair } from "@/lib/motion/auto-director";
+import { createPromptenceSignature } from "@/lib/motion/signature-promptence";
 import { compareFilmWithReference, summarizeReferenceComparison, type ReferenceComparison } from "@/lib/motion/reference-lab";
 import { createCaptionBundle } from "@/lib/motion/captions";
 import { rescaleProjectToSeconds } from "@/lib/motion/timing";
@@ -256,6 +257,19 @@ export default function MotionStudioPage() {
     }finally{setReferenceComparing(false);}
   }
 
+  function loadPromptenceSignature():void {
+    if(generating||exporting||directorRepairing)return;
+    const lang=language==="auto"
+      ?(/\p{Script=Armenian}/u.test(brief)?"hy":/\p{Script=Cyrillic}/u.test(brief)?"ru":"en")
+      :language;
+    const signature=createPromptenceSignature(lang,project.format);
+    setPlaying(false);jump(0);setSelectedIndex(0);
+    setProject(signature);
+    setBrief("PROMPTENCE / SIGNATURE CAMPAIGN — THE ANSWER IS THE NEW FRONT PAGE");
+    setNotice("SIGNATURE FILM LOADED: 8 individually directed shots / "+durationOf(signature).toFixed(1)+
+      " seconds / "+lang.toUpperCase()+". This is a conceptual film. No fabricated AI provider answers or brand performance data.");
+  }
+
   async function runAutoDirector():Promise<void> {
     if(directorRepairing||visualReviewing||referenceComparing||exporting||generating)return;
     setDirectorRepairing(true);
@@ -415,7 +429,7 @@ export default function MotionStudioPage() {
   return <main className={styles.root} style={{ "--brand-accent": info.accent } as CSSProperties}>
     <header className={styles.header}>
       <div>
-        <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / MOTION OS V1.0</p>
+        <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / MOTION OS 2.0 / SIGNATURE FILMS</p>
         <h1>Motion <em>Studio.</em></h1>
         <p className={styles.deck}>Cinematic direction · real brand assets · EN / RU / HY · original voice mixing · automatic scene polish · offline H.264 master workflow.</p>
       </div>
@@ -467,6 +481,15 @@ export default function MotionStudioPage() {
           {generating ? "DIRECTING…" : "CREATE FILM / NO API KEY ↗"}
         </button>
         <p className={styles.hint}>Own procedural motion director: language-aware storyboard + animated graphics. Runs locally. Not a generative neural video model.</p>
+        <div className={styles.signatureShowcase}>
+          <div><b>DIRECTOR'S EDITION / PROMPTENCE</b><span>SIGNATURE CAMPAIGN · 8 AUTHORED SHOTS · EN/RU/HY</span></div>
+          <strong>THE ANSWER IS<br/>THE NEW FRONT PAGE.</strong>
+          <p>One deliberate narrative: buyer question → the missing brand → observable evidence → prioritized action → remeasurement.</p>
+          <button type="button" disabled={generating||exporting||directorRepairing}
+            onClick={loadPromptenceSignature}>▶ LOAD SIGNATURE FILM / 33.8 SEC</button>
+          <small>Original film grammar and approved Promptence SVG. Illustrative data motifs are never real provider results.</small>
+        </div>
+
         <div className={styles.divider}/>
         <div className={styles.sectionHeader}><span>02 / FORMAT</span><strong>OUTPUT</strong></div>
         <div className={styles.segment}>
