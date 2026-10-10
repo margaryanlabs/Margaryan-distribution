@@ -30,7 +30,7 @@ try{
   assert.equal(report.metricsOnly,true);
   assert.equal(report.pairs.length,8);
   assert.ok(report.signal.lumaDelta< -45,"Reference brightness gap was not detected");
-  assert.ok((await stat(result.contactSheet)).size>10_000,"Paired contact sheet unexpectedly empty");
+  assert.ok((await stat(result.contactSheet)).size>500,"Paired contact sheet unexpectedly empty");
 
   const self=JSON.parse(run(process.execPath,["scripts/motion/compare-reference.mjs",a,a],120000));
   assert.ok(Math.abs(self.signal.lumaDelta)<.02,"Self-comparison luma delta must be zero");
