@@ -190,7 +190,7 @@ function renderText(
   progress:number,accent:string,t:number,style:MotionProject["style"],language:MotionProject["language"]
 ){
   const headline=scene.headline.toLocaleUpperCase(language||"en");
-  const g=fitShotCopy(ctx,headline,scene.support,W,H);
+  const g=fitShotCopy(ctx,headline,scene.support,W,H,scene.typographyScale);
   const fadeIn=cubic(progress*5.8);
   const fadeOut=smooth((1-progress)*10);
   const opacity=fadeIn*fadeOut;
