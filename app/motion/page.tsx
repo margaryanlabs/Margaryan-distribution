@@ -19,6 +19,7 @@ import { createCaptionBundle } from "@/lib/motion/captions";
 import { rescaleProjectToSeconds } from "@/lib/motion/timing";
 import { createProceduralSoundtrack, type ProceduralAudioSession } from "@/lib/motion/sound-engine";
 import { createKeylessStoryboard, getLocalDirectorExamples, type MotionLanguage, type MotionStyle } from "@/lib/motion/director";
+import QuickStudio from "./quick-studio";
 import styles from "./motion.module.css";
 
 const STORAGE_KEY = "margaryan-motion-studio-v1";
@@ -37,6 +38,7 @@ function downloadFile(name: string, blob: Blob) {
 }
 
 export default function MotionStudioPage() {
+  const [mode,setMode] = useState<"cinematic"|"quick">("cinematic");
   const [project, setProject] = useState<MotionProject>(() => makeMotionPreset());
   const [hydrated, setHydrated] = useState(false);
   const [brief, setBrief] = useState(defaultBrief);
@@ -62,6 +64,18 @@ export default function MotionStudioPage() {
   const previewRef = useRef<HTMLCanvasElement>(null);
   const latestProjectRef = useRef<MotionProject>(project);
   const timeRef = useRef(0);
+  useEffect(()=>{
+    const fromUrl=()=>setMode(new URLSearchParams(window.location.search).get("mode")==="quick"?"quick":"cinematic");
+    fromUrl();
+    window.addEventListener("popstate",fromUrl);
+    return()=>window.removeEventListener("popstate",fromUrl);
+  },[]);
+  function switchMode(next:"cinematic"|"quick"){
+    if(exporting)return;
+    setPlaying(false);
+    window.history.pushState({}, "", "/motion?mode="+next);
+    setMode(next);
+  }
   const total = durationOf(project);
   const selected = project.scenes[Math.min(selectedIndex, project.scenes.length - 1)] || project.scenes[0];
   const info = BRAND_INFO[project.brand];
@@ -426,12 +440,36 @@ export default function MotionStudioPage() {
   const previewHeight = Math.round(previewWidth * formatSize.height / formatSize.width);
   const activeIndex = sceneAt(project, playhead).index;
 
+  const modePicker=<nav className={styles.productionModes} aria-label="Production pipeline">
+    <button type="button" data-selected={mode==="cinematic"} aria-pressed={mode==="cinematic"}
+      onClick={()=>switchMode("cinematic")} disabled={exporting}>
+      <strong>01 / CINEMATIC STUDIO</strong>
+      <span>Original Motion renderer · scenes · references · offline H.264 master</span>
+    </button>
+    <button type="button" data-selected={mode==="quick"} aria-pressed={mode==="quick"}
+      onClick={()=>switchMode("quick")} disabled={exporting}>
+      <strong>02 / QUICK STUDIO</strong>
+      <span>Real video / photo imports · Armenian-first titles · local video export</span>
+    </button>
+  </nav>;
+  if(mode==="quick")return <main className={styles.root} style={{"--brand-accent":info.accent} as CSSProperties}>
+    <header className={styles.header}>
+      <div>
+        <p className={styles.kicker}>MARGARYAN LABS / CREATIVE PRODUCTION / TWO VERIFIED WORKFLOWS</p>
+        <h1>Motion <em>OS.</em></h1>
+        <p className={styles.deck}>One brand library. Two independent film-production pipelines. No hidden switch to external rendering.</p>
+      </div>
+      <div className={styles.headerRight}><span className={styles.liveDot}/> QUICK / LOCAL MEDIA</div>
+    </header>
+    {modePicker}
+    <QuickStudio/>
+  </main>;
   return <main className={styles.root} style={{ "--brand-accent": info.accent } as CSSProperties}>
     <header className={styles.header}>
       <div>
         <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / MOTION OS 2.0 / SIGNATURE FILMS</p>
-        <h1>Motion <em>Studio.</em></h1>
-        <p className={styles.deck}>Cinematic direction · real brand assets · EN / RU / HY · original voice mixing · automatic scene polish · offline H.264 master workflow.</p>
+        <h1>Motion <em>OS.</em></h1>
+        <p className={styles.deck}>CINEMATIC STUDIO · original procedural compositions · real brand assets · EN / RU / HY · frame review · offline H.264 workflow.</p>
       </div>
       <div className={styles.headerRight}>
         <span className={styles.liveDot}/> KEYLESS / LOCAL ENGINE
@@ -439,6 +477,7 @@ export default function MotionStudioPage() {
       </div>
     </header>
 
+    {modePicker}
     <div className={styles.notice} role="status">{notice}</div>
 
     <div className={styles.workspace}>

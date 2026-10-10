@@ -61,9 +61,9 @@ export const PORTFOLIO: Record<MotionBrand, PortfolioSource> = {
   },
   meqena: {
     repository: null,
-    assetPath: null,
-    localLogo: null,
-    logoStatus: "pending-source",
+    assetPath: "public/brand/meqena-source.svg",
+    localLogo: "/motion/brands/meqena.svg",
+    logoStatus: "source-verified",
     product: "automotive marketplace and dealer discovery",
     directorMotif: "road, travel, object detail, automotive motion"
   },
