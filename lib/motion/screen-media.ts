@@ -52,9 +52,10 @@ export function drawProductScreen(
   if(!img)return;
   const landscape=H<810;
   const width=landscape?W*.46:W*.84;
-  const height=landscape?H*.70:H*.25;
+  const square=H>=810&&H<1250;
+  const height=landscape?H*.57:square?H*.21:H*.25;
   const cx=landscape?W*.74:W*.50;
-  const cy=landscape?H*.57:H*.775;
+  const cy=landscape?H*.55:square?H*.72:H*.775;
   ctx.save();
   ctx.translate(cx,cy);
   ctx.rotate((landscape?-.024:-.021)+Math.sin(time*.13)*.009);
