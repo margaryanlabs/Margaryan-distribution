@@ -6,6 +6,7 @@ import { drawProductComposition } from "./product-compositions";
 import { drawCinematicSet } from "./cinematic-craft";
 import { getLoadedMotionLogo } from "./brand-assets";
 import { FILM_FONT, fitShotCopy } from "./typography";
+import { drawWorldRig, withSceneCamera } from "./camera-rig";
 
 const TAU = Math.PI * 2;
 const clamp = (x: number, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -241,10 +242,17 @@ function drawShot(ctx: CanvasRenderingContext2D, project: MotionProject, index: 
   // A shot has its own optical staging, hero moment and tempo.
   // Product interfaces are deliberately selective rather than repeated behind
   // every headline, which made the previous film resemble a slide carousel.
-  drawCinematicSet(ctx, project, scene, index, absoluteTime, progress, W, H);
-  if (scene.kind === "network") {
-    drawProductComposition(ctx, project, scene, absoluteTime, W, H, accent);
-  }
+  withSceneCamera(ctx,W,H,progress,index,()=>{
+    if(scene.kind==="opener"||scene.kind==="network"||scene.kind==="orbit"){
+      drawWorldRig(ctx,W,H,absoluteTime,accent,index,
+        scene.kind==="opener"?"floor":scene.kind==="orbit"?"portal":"signal");
+    }
+    drawCinematicSet(ctx, project, scene, index, absoluteTime, progress, W, H);
+    if (scene.kind === "network") {
+      drawProductComposition(ctx, project, scene, absoluteTime, W, H, accent);
+    }
+  });
+  // Text is outside the camera transform: never sacrifice glyph readability.
   renderText(ctx, scene, W, H, progress, accent, absoluteTime, project.style, project.language);
   ctx.restore();
 }
