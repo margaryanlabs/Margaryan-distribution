@@ -13,6 +13,23 @@ async function json(path, init) {
   return body;
 }
 
+// The source-of-truth signature campaign is a deliberately authored film,
+// not the ordinary template engine and not invented third-party AI results.
+const signatureResponse=await json("/api/motion/signature?lang=en&format=portrait");
+assert(signatureResponse.requiresApiKey===false && signatureResponse.creditsUsed===0,"Signature film must be keyless");
+assert(signatureResponse.project.signatureFilm==="promptence-answer","Signature identity must survive project serialization");
+assert(signatureResponse.project.brand==="promptence","Signature incorrectly assigns the product");
+assert(signatureResponse.project.scenes.length===8,"Signature requires eight distinct authored beats");
+const filmSeconds=signatureResponse.project.scenes.reduce((s,c)=>s+c.seconds,0);
+assert(filmSeconds>32 && filmSeconds<36,"Signature runtime should be about 34 seconds");
+assert(signatureResponse.project.scenes[7].kind==="closer","Signature must hold verified brand outro");
+const invalidSignature=await fetch(baseUrl+"/api/motion/signature?lang=invalid&format=portrait");
+assert(invalidSignature.status===400,"Unknown signature locale must be rejected");
+for(const language of ["ru","hy"]){
+ const data=await json("/api/motion/signature?lang="+language+"&format=portrait");
+ const script=language==="hy"?/[\u0531-\u058f]/u:/[\u0400-\u04ff]/u;
+ assert(data.project.scenes.some(s=>script.test(s.headline)),"Signature language missing: "+language);
+}
 // Motion Studio must produce an editable, meaningful scene plan without any AI credentials.
 const motionPage = await fetch(baseUrl + "/motion");
 assert(motionPage.ok, "Motion Studio page did not render");
