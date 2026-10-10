@@ -20,12 +20,12 @@ function parse(argv) {
     if(argv[i].startsWith("--")){
       const key=argv[i].slice(2);
       if(key==="silent"){opts.silent=true;continue;}
-      if(!["url","fps","crf","voice","music","chromium","screen"].includes(key))throw Error("Unknown option: "+key);
+      if(!["url","fps","crf","voice","music","chromium","screen","reference"].includes(key))throw Error("Unknown option: "+key);
       const value=argv[++i];if(!value||value.startsWith("--"))throw Error("Missing value for --"+key);
       opts[key]=value;
     }else positional.push(argv[i]);
   }
-  if(positional.length!==2)throw Error("Usage: npm run motion:master -- project.json final.mp4 [--url http://127.0.0.1:3000/motion] [--fps 30] [--crf 18] [--voice audio.wav] [--music music.mp3] [--silent]");
+  if(positional.length!==2)throw Error("Usage: npm run motion:master -- project.json final.mp4 [--url http://127.0.0.1:3000/motion] [--fps 30] [--crf 18] [--voice audio.wav] [--music music.mp3] [--silent] [--reference source.mp4]");
   return {projectPath:resolve(positional[0]),outputPath:resolve(positional[1]),opts};
 }
 const run=(cmd,args,options={})=>spawnSync(cmd,args,{encoding:"utf8",timeout:80_000,maxBuffer:2_000_000,...options});
@@ -224,6 +224,20 @@ try {
     writeFile(prefix+".vtt",captions.vtt),
     writeFile(prefix+"-narration-guide.txt",captions.voiceScript)
   ]);
+  let referenceComparison=null;
+  if(opts.reference){
+    const inspect=run(process.execPath,["scripts/motion/compare-reference.mjs",outputPath,resolve(opts.reference)],{
+      timeout:210_000,maxBuffer:2_000_000
+    });
+    if(inspect.status!==0)throw Error("Reference comparison failed after video export: "+String(inspect.stderr||"unknown").slice(-900));
+    const parsed=JSON.parse(inspect.stdout);
+    referenceComparison={
+      report:parsed.report,
+      contactSheet:parsed.contactSheet,
+      signal:parsed.signal,
+      humanReviewRequired:true
+    };
+  }
   const sheet=await makeSheet(outputPath,duration);
   const report={
     engine:"MARGARYAN MOTION OS / OFFLINE MASTER",frames,expectedFps:fps,
@@ -232,6 +246,7 @@ try {
     audioIncluded:!!track,voiceRequested:!!opts.voice,musicRequested:!!opts.music,
     originalScoreGenerated:!!scorePath,originalScoreFile:scorePath,
     contactSheet:sheet,captionFiles:[".srt",".vtt","-narration-guide.txt"],
+    referenceComparison,
     voiceTimingVerified:Boolean(opts.voice),
     directorAudit:repairReportPath,directorContactSheet:inspectPath,
     directorRepairs:automatic.report.changes.length,unresolvedDirectorReviews:automatic.report.remaining,
