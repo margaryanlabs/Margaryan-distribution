@@ -20,7 +20,7 @@ function args(input){
     if(!value.startsWith("--"))throw Error("Unexpected argument: "+value);
     const key=value.slice(2),next=input[++i];
     if(key==="silent"){opt.silent=true;continue;}
-    if(!["brand","lang","brief","out","repo","format","style","voice","music","fps","url","chromium"].includes(key))throw Error("Unknown flag --"+key);
+    if(!["brand","lang","brief","out","repo","format","style","voice","music","fps","url","chromium","screen"].includes(key))throw Error("Unknown flag --"+key);
     if(!next||next.startsWith("--"))throw Error("Missing value for "+key);
     opt[key]=next;
   }
@@ -77,6 +77,7 @@ try{
   if(opt.silent)childArgs.push("--silent");
   if(opt.fps)childArgs.push("--fps",opt.fps);
   if(opt.chromium)childArgs.push("--chromium",opt.chromium);
+  if(opt.screen)childArgs.push("--screen",opt.screen);
   await script("scripts/motion/render-master.mjs",childArgs);
   // The media QA process validates the actual encoded file, not a pretend success signal.
   const verdict=spawnSync(process.execPath,["scripts/motion/verify-render.mjs",output,
