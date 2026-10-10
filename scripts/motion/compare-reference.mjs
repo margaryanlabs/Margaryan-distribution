@@ -83,7 +83,6 @@ try{
         ourMotion+=Math.abs(ours[j]-lastA[j])+Math.abs(ours[j+1]-lastA[j+1])+Math.abs(ours[j+2]-lastA[j+2]);
         refMotion+=Math.abs(reference[j]-lastB[j])+Math.abs(reference[j+1]-lastB[j+1])+Math.abs(reference[j+2]-lastB[j+2]);
       }
-      temporalDifference:+(Math.abs(ourMotion-refMotion)/FRAME).toFixed(2);
       temporalDifference=+(Math.abs(ourMotion-refMotion)/FRAME).toFixed(2);
     }
     pairs.push({position:portion,ourTime:+ta.toFixed(2),referenceTime:+tb.toFixed(2),
