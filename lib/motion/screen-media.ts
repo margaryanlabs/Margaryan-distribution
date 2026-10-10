@@ -85,6 +85,6 @@ export function drawProductScreen(
   // A verified screenshot is visibly labeled, not passed off as a synthetic UI.
   ctx.font='700 '+(landscape?10:14)+'px Arial,sans-serif';
   ctx.fillStyle=accent;ctx.textAlign="left";ctx.textBaseline="middle";
-  ctx.fillText("PRODUCT SCREEN / SOURCE IMAGE",left+8,top-14);
+  ctx.fillText("SOURCE IMAGE / REVIEW REQUIRED",left+8,top-14);
   ctx.restore();
 }
