@@ -1,5 +1,6 @@
 import { BRAND_INFO, durationOf, sanitizeMotionProject, type MotionProject } from "./studio";
 import { PORTFOLIO } from "./portfolio";
+import { hasProductScreen } from "./screen-media";
 export type MotionSeverity = "block" | "warn" | "info";
 export interface MotionQAItem { id: string; severity: MotionSeverity; message: string }
 export interface MotionQAReport {
@@ -32,6 +33,7 @@ export function auditMotionProject(project: MotionProject): MotionQAReport {
   const headlines = project.scenes.map(s=>s.headline.trim().toLocaleLowerCase());
   if (new Set(headlines).size !== headlines.length) issue("copy.duplicate","warn","Repeated headlines detected.");
   for (const [i,s] of project.scenes.entries()) {
+    if(s.kind==="screen"&&!hasProductScreen(project.brand))issue("screen.missing."+i,"block","Source screenshot missing for scene "+(i+1)+". Upload a real product screenshot before export.");
     if (!s.headline.trim()) issue("copy.blank."+i,"block","Scene "+(i+1)+" has no headline.");
     if (s.headline.length>82) issue("copy.length."+i,"warn","Scene "+(i+1)+" headline is lengthy for mobile.");
     if (!Number.isFinite(s.seconds)||s.seconds<2||s.seconds>8) issue("scene.duration."+i,"block","Scene "+(i+1)+" has invalid timing.");
