@@ -57,7 +57,7 @@ function cleanMedia(media:QuickMediaAsset){
   }
   URL.revokeObjectURL(media.url);
 }
-function formatTime(t:number){return Math.floor(t).toString().padStart(2,"0")+":"+(Math.round((t%1)*10)*100).toString().padStart(3,"0");}
+function formatTime(t:number){const m=Math.floor(t/60);const sec=Math.floor(t%60);return String(m).padStart(2,"0")+":"+String(sec).padStart(2,"0");}
 const MAX_AUDIO=30_000_000;
 export default function QuickStudio() {
   const [project,setProject]=useState<QuickProject>(()=>createQuickProject());
