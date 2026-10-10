@@ -13,6 +13,9 @@ This public editorial archive contains research perspectives and technical essay
 2. **[Financial AI Needs a Falsification Engine, Not Another Trading Signal](./2026-10-10-financial-ai-falsification-engine.md)**  
    Transparent financial hypothesis testing, point-in-time integrity, falsification, and research ethics.
 
+3. **[The AI Founder’s Credibility Gap: How to Prove Something Real Before You Have Customers](./2026-10-10-ai-founder-credibility-gap.md)**  
+   A practical framework for distinguishing demos, reproducible system behavior, independent user evidence and verified commercial outcomes.
+
 ## Projects mentioned
 
 - [Promptence](https://promptence.tech/) — AI recommendation intelligence and visibility.
