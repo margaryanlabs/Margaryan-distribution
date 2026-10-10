@@ -218,3 +218,16 @@
 .signatureShowcase button:hover:not(:disabled){filter:brightness(1.09);transform:translateY(-1px)}
 .signatureShowcase button:disabled{opacity:.45;cursor:not-allowed}
 .signatureShowcase small{display:block;color:#7EAC97;font-size:10px;line-height:1.55;margin-top:12px}
+
+
+/* This is a genuine pipeline selector. Quick is not a disguised service handoff. */
+.productionModes{max-width:1580px;margin:0 auto 20px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.productionModes button{border-radius:13px;border:1px solid #34404e;background:#111822;padding:18px 20px;
+ color:#dbe6eb;display:grid;gap:8px;text-align:left;cursor:pointer;min-width:0}
+.productionModes button strong{letter-spacing:.11em;font-size:12px}
+.productionModes button span{font-size:11px;line-height:1.55;color:#a3b1be}
+.productionModes button[data-selected="true"]{border-color:var(--brand-accent);box-shadow:inset 0 2px var(--brand-accent),0 15px 35px #0006;background:linear-gradient(125deg,#1b252e,#111820)}
+.productionModes button[data-selected="true"] strong{color:#fff}
+.productionModes button:not([data-selected="true"]):hover{border-color:#8a98aa}
+.productionModes button:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:650px){.productionModes{grid-template-columns:1fr}.productionModes button{padding:15px}.productionModes button strong{font-size:11px}}
