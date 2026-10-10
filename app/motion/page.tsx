@@ -13,6 +13,7 @@ import { PORTFOLIO, PORTFOLIO_BRANDS } from "@/lib/motion/portfolio";
 import { auditMotionProject, inspectFramePixels, autoPolishMotionProject } from "@/lib/motion/quality";
 import { reviewMotionVisuals } from "@/lib/motion/visual-review";
 import { repairMotionProject, serializeRepair } from "@/lib/motion/auto-director";
+import { compareFilmWithReference, summarizeReferenceComparison, type ReferenceComparison } from "@/lib/motion/reference-lab";
 import { createCaptionBundle } from "@/lib/motion/captions";
 import { rescaleProjectToSeconds } from "@/lib/motion/timing";
 import { createProceduralSoundtrack, type ProceduralAudioSession } from "@/lib/motion/sound-engine";
@@ -51,6 +52,9 @@ export default function MotionStudioPage() {
   const [exporting, setExporting] = useState(false);
   const [visualReviewing, setVisualReviewing] = useState(false);
   const [directorRepairing, setDirectorRepairing] = useState(false);
+  const [referenceFile, setReferenceFile] = useState<File | null>(null);
+  const [referenceComparing, setReferenceComparing] = useState(false);
+  const [referenceComparison, setReferenceComparison] = useState<ReferenceComparison | null>(null);
   const previousDirectorProject = useRef<MotionProject | null>(null);
   const [exportProgress, setExportProgress] = useState(0);
   const [notice, setNotice] = useState("Собственный локальный движок: генерация сцен, графика и экспорт без API-ключей, кредитов и сервера рендеринга.");
@@ -61,6 +65,10 @@ export default function MotionStudioPage() {
   const info = BRAND_INFO[project.brand];
   const provenance = PORTFOLIO[project.brand];
   const qa = auditMotionProject(project);
+  // Comparison statistics are always tied to the exact scene edit; they cannot
+  // silently be treated as valid after changing a title, pacing or shot type.
+  useEffect(()=>{setReferenceComparison(null);},[project]);
+
   useEffect(() => {
     if(!voiceover){setNarrationSeconds(null);return;}
     let active=true;
@@ -223,8 +231,27 @@ export default function MotionStudioPage() {
     } finally { setGenerating(false); }
   }
 
+  async function compareReference():Promise<void> {
+    if(!referenceFile||referenceComparing||exporting||directorRepairing||generating)return;
+    setReferenceComparing(true);setPlaying(false);
+    setNotice("REFERENCE LAB: locally decoding the reference and measuring eight paired moments. No file upload.");
+    try{
+      const output=await compareFilmWithReference(project,referenceFile);
+      setReferenceComparison(output);
+      const report=summarizeReferenceComparison(output);
+      downloadFile("motion-"+project.brand+"-vs-reference.png",output.contactSheet);
+      downloadFile("motion-"+project.brand+"-reference-signals.json",
+        new Blob([JSON.stringify(report,null,2)],{type:"application/json"}));
+      setNotice("REFERENCE LAB / "+output.frames.length+" paired frames analysed. "+
+        output.notes.slice(0,2).join(" · ")+" The reference is never copied into the film.");
+    }catch(error){
+      setReferenceComparison(null);
+      setNotice("REFERENCE LAB: "+(error instanceof Error?error.message:"Cannot decode reference. Use browser-supported H.264 MP4."));
+    }finally{setReferenceComparing(false);}
+  }
+
   async function runAutoDirector():Promise<void> {
-    if(directorRepairing||visualReviewing||exporting||generating)return;
+    if(directorRepairing||visualReviewing||referenceComparing||exporting||generating)return;
     setDirectorRepairing(true);
     setPlaying(false);
     setNotice("DIRECTOR AUTOFIX: inspect shots, preserve multilingual copy, repair safe-area typography and composition, then verify again.");
@@ -249,7 +276,7 @@ export default function MotionStudioPage() {
   }
 
   async function exportVideo() {
-    if (exporting || generating || directorRepairing) return;
+    if (exporting || generating || directorRepairing || referenceComparing) return;
     const captureSupported = typeof HTMLCanvasElement !== "undefined" && "captureStream" in HTMLCanvasElement.prototype;
     if (!captureSupported || typeof MediaRecorder === "undefined") {
       setNotice("Your browser does not support canvas recording. Use current desktop Chrome or Edge for export.");
@@ -382,7 +409,7 @@ export default function MotionStudioPage() {
   return <main className={styles.root} style={{ "--brand-accent": info.accent } as CSSProperties}>
     <header className={styles.header}>
       <div>
-        <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / MOTION OS V0.9</p>
+        <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / MOTION OS V1.0</p>
         <h1>Motion <em>Studio.</em></h1>
         <p className={styles.deck}>Cinematic direction · real brand assets · EN / RU / HY · original voice mixing · automatic scene polish · offline H.264 master workflow.</p>
       </div>
@@ -476,6 +503,38 @@ export default function MotionStudioPage() {
               }catch(error){setNotice(error instanceof Error?error.message:"Voice timing cannot fit these scenes.");}
             }}>◷ FIT FILM TO NARRATION</button>}
         </>}
+        <section className={styles.referenceLab} aria-label="Reference film comparison">
+          <div className={styles.referenceLabHead}>
+            <strong>REFERENCE LAB / REAL FILM SIGNALS</strong>
+            <span>LOCAL · NO UPLOAD</span>
+          </div>
+          <p>Compare a sample advertising film to the current project at eight relative timeline points. Results show measurable lighting, color and temporal differences — <b>not an invented quality score.</b></p>
+          <label>
+            <span>REFERENCE VIDEO / MP4, WEBM, MOV · MAX 150MB</span>
+            <input type="file" accept="video/mp4,video/webm,video/quicktime,video/x-m4v,.mp4,.mov,.webm,.m4v"
+              disabled={referenceComparing||exporting}
+              onChange={event=>{
+                const file=event.target.files?.[0]||null;
+                event.target.value="";
+                setReferenceComparison(null);
+                if(file&&file.size>150_000_000){setReferenceFile(null);setNotice("Reference maximum size is 150 MB.");}
+                else{setReferenceFile(file);if(file)setNotice("Reference loaded locally: "+file.name+". Click COMPARE to generate paired frames.");}
+              }}/>
+          </label>
+          <button type="button" className={styles.referenceCompare}
+            disabled={!referenceFile||referenceComparing||exporting||directorRepairing||generating}
+            onClick={()=>void compareReference()}>
+            {referenceComparing?"DECODING & COMPARING…":"◈ COMPARE FILM & REFERENCE"}
+          </button>
+          {referenceFile&&<small>Reference: {referenceFile.name} · {(referenceFile.size/1_000_000).toFixed(1)} MB. Kept only in browser memory.</small>}
+          {referenceComparison&&<div className={styles.referenceStats}>
+            <div><span>REF DARK PIXELS</span><b>{referenceComparison.signals.referenceDarkPercent.toFixed(0)}%</b></div>
+            <div><span>OUR DARK PIXELS</span><b>{referenceComparison.signals.filmDarkPercent.toFixed(0)}%</b></div>
+            <div><span>LUMA DIFFERENCE</span><b>{referenceComparison.signals.meanLumaDifference>0?"+":""}{referenceComparison.signals.meanLumaDifference.toFixed(1)}</b></div>
+            <div><span>SATURATION Δ</span><b>{referenceComparison.signals.meanSaturationDifference>0?"+":""}{referenceComparison.signals.meanSaturationDifference.toFixed(1)}</b></div>
+            {referenceComparison.notes.map((note,i)=><p key={i}>{note}</p>)}
+          </div>}
+        </section>
         <div className={styles.qaPanel}>
           <div><strong>PRODUCTION PREFLIGHT</strong><b data-grade={qa.grade}>{qa.grade}</b></div>
           <button type="button" className={styles.polishButton} disabled={exporting}
