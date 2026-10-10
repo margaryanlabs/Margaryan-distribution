@@ -59,6 +59,7 @@ export default function MotionStudioPage() {
   const [exportProgress, setExportProgress] = useState(0);
   const [notice, setNotice] = useState("Собственный локальный движок: генерация сцен, графика и экспорт без API-ключей, кредитов и сервера рендеринга.");
   const previewRef = useRef<HTMLCanvasElement>(null);
+  const latestProjectRef = useRef<MotionProject>(project);
   const timeRef = useRef(0);
   const total = durationOf(project);
   const selected = project.scenes[Math.min(selectedIndex, project.scenes.length - 1)] || project.scenes[0];
@@ -67,7 +68,7 @@ export default function MotionStudioPage() {
   const qa = auditMotionProject(project);
   // Comparison statistics are always tied to the exact scene edit; they cannot
   // silently be treated as valid after changing a title, pacing or shot type.
-  useEffect(()=>{setReferenceComparison(null);},[project]);
+  useEffect(()=>{latestProjectRef.current=project;setReferenceComparison(null);},[project]);
 
   useEffect(() => {
     if(!voiceover){setNarrationSeconds(null);return;}
@@ -236,7 +237,12 @@ export default function MotionStudioPage() {
     setReferenceComparing(true);setPlaying(false);
     setNotice("REFERENCE LAB: locally decoding the reference and measuring eight paired moments. No file upload.");
     try{
+      const originalSnapshot=JSON.stringify(project);
       const output=await compareFilmWithReference(project,referenceFile);
+      if(JSON.stringify(latestProjectRef.current)!==originalSnapshot){
+        setNotice("REFERENCE LAB: Project changed while frames were compared. Re-run comparison for the latest edit.");
+        return;
+      }
       setReferenceComparison(output);
       const report=summarizeReferenceComparison(output);
       downloadFile("motion-"+project.brand+"-vs-reference.png",output.contactSheet);
