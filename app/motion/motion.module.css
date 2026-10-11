@@ -728,3 +728,60 @@
  .timeline{grid-template-columns:none}
  .timeline button{min-width:117px;min-height:99px}
 }
+
+
+/* Cinema Focus & production keyboard workspace. The inspector remains a
+ * one-click workspace choice; focus never changes the underlying film. */
+.editorProjectBar{position:relative}
+.shortcutSheet{position:absolute;z-index:20;right:12px;top:calc(100% + 7px);
+ width:min(440px,calc(100vw - 32px));padding:18px;background:#111e20;
+ border:1px solid #6a937f;border-radius:12px;
+ box-shadow:0 28px 70px #000c;color:#e5f5eb}
+.shortcutSheet>div{display:flex;justify-content:space-between;align-items:center;
+ gap:12px;border-bottom:1px solid #365547;padding-bottom:12px}
+.shortcutSheet>div strong{font-size:11px;letter-spacing:.07em}
+.shortcutSheet>div button{font-size:19px;padding:3px 9px;min-height:32px}
+.shortcutSheet dl{display:grid;grid-template-columns:minmax(95px,.6fr) minmax(0,1.4fr);
+ gap:1px 10px;margin:14px 0;background:#1e352b;border-radius:8px;overflow:hidden}
+.shortcutSheet dt,.shortcutSheet dd{padding:10px 11px;margin:0;background:#152720}
+.shortcutSheet dt{font-size:9px;color:#bdedd0;font-weight:900;white-space:nowrap}
+.shortcutSheet dd{font-size:10px;color:#c0d6c9;line-height:1.35}
+.shortcutSheet>small{display:block;font-size:9px;line-height:1.55;color:#95b09f}
+.stageTopTools button{white-space:nowrap}
+.stageTopTools button.focusActive{background:#b2ead0;color:#102619;
+ border:1px solid #c3f4dc}
+.stageTopTools button:not(.focusActive){border:1px solid #537263;
+ background:#1e3b32;color:#cfe8d9}
+.stageTopTools button:last-child{background:#c6eed9;color:#113022;
+ border-color:#c6eed9}
+.workspace[data-focus="true"]{grid-template-columns:72px minmax(0,1fr);max-width:1760px}
+.workspace[data-focus="true"] .sidebar{display:none}
+.workspace[data-focus="true"] .stageSection{grid-column:2;
+ height:calc(100dvh - 195px);overflow-y:auto;min-height:550px}
+.workspace[data-focus="true"] .stageShell{height:clamp(390px,64dvh,900px)}
+.workspace[data-focus="true"] .canvas{max-height:100%;max-width:100%}
+.workspace[data-focus="true"] .timeline button{min-height:94px}
+.workspace[data-focus="true"] .advancedTimeline{max-width:100%}
+#motion-review-notes{scroll-margin-top:15px}
+@media(max-width:1210px){
+ .workspace[data-focus="true"]{grid-template-columns:62px minmax(0,1fr)}
+ .stageTopTools button{font-size:8px;padding:8px 6px}
+}
+@media(max-width:850px){
+ .workspace[data-focus="true"]{display:flex;flex-direction:column}
+ .workspace[data-focus="true"] .stageSection{width:100%;height:auto;
+ max-height:none;overflow:visible;min-height:0}
+ .workspace[data-focus="true"] .stageShell{height:clamp(300px,64dvh,650px)}
+ .shortcutSheet{left:4px;right:4px;width:auto;padding:13px}
+ .stageTopTools{gap:5px}
+ .stageTopTools button{min-height:34px;letter-spacing:0}
+}
+@media(max-width:520px){
+ .stageTopTools button{min-height:31px;padding:7px 6px;font-size:7px}
+ .stageTopTools .frameBadge{display:none}
+ .stageTopTools button:last-child{display:inline-flex}
+ .workspace[data-focus="true"] .stageShell{height:clamp(270px,53dvh,470px)}
+}
+@media(prefers-reduced-motion:reduce){
+ .shortcutSheet *{animation:none!important;transition:none!important}
+}
