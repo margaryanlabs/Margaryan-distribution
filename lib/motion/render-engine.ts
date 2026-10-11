@@ -300,13 +300,13 @@ function drawShot(ctx: CanvasRenderingContext2D, project: MotionProject, index: 
       // overlay a generic orbit/dashboard slideshow atop the bespoke shots.
       drawPromptenceSignatureArt(ctx,project,index,artTime,progress,W,H);
       // Owner-supplied real UI remains available if explicitly selected.
-      if(scene.kind==="screen")drawProductScreen(ctx,project.brand,W,H,artTime,progress,accent);
+      if(scene.kind==="screen")drawProductScreen(ctx,project.brand,W,H,artTime,progress,accent,scene.mediaId);
     }else{
       drawCinematicSet(ctx, project, scene, index, artTime, progress, W, H);
       if (scene.kind === "network") {
         drawProductComposition(ctx, project, scene, artTime, W, H, accent);
       }
-      if (scene.kind === "screen") drawProductScreen(ctx,project.brand,W,H,artTime,progress,accent);
+      if (scene.kind === "screen") drawProductScreen(ctx,project.brand,W,H,artTime,progress,accent,scene.mediaId);
     }
   };
   if(scene.camera==="locked"||grade.motion===0)renderScenery();
