@@ -92,8 +92,7 @@ export function validateFilmSequence(value){
   };
 }
 export function escapeConcatFilePath(filename) {
-  if(typeof filename!=="string"||filename.includes("\n")||filename.includes("\r"))
-    throw Error("Unsafe FFmpeg concat path");
-  // ffconcat quoting escapes a single quote as: 'foo'\\''bar'
-  return "file '"+filename.replaceAll("'","'\\''")+"'";
+  if(typeof filename!=="string"||/[\\r\\n']/.test(filename))
+    throw Error("Unsafe FFmpeg concat path (quotes and newlines are unsupported)");
+  return "file '"+filename+"'";
 }
