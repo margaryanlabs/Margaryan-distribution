@@ -46,3 +46,8 @@
 .edlActions{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
 .edlActions button{background:#1b3a29;border:1px solid #468159;border-radius:8px;color:#d6f4df;padding:10px 11px;font-size:11px;font-weight:700;cursor:pointer}
 .edlActions button:disabled{opacity:.4;cursor:not-allowed}
+
+.edlImport{border:1px solid #4D9165;border-radius:8px;background:#0e2a1d;color:#c3f1d7;position:relative;display:inline-block;padding:10px 11px;font-size:11px;font-weight:700;cursor:pointer}
+.edlImport input{display:block;max-width:150px;margin-top:5px;font-size:11px}
+.edlPass,.edlBlock{padding:12px 15px;margin:12px 0;border-left:3px solid #42DB88;background:#143023;color:#BFF9CF;font-size:11px;line-height:1.6}
+.edlBlock{border-color:#EAA48E;background:#3A211D;color:#FFE2DB}
