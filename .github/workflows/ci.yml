@@ -27,6 +27,10 @@ jobs:
         run: npm run motion:test-chat-channel
       - name: Motion local source video / frame-timing and no-freeze preflight
         run: npm run motion:test-real-source
+      - name: ChatGPT Content Studio / direct 120s chapter tools and MCP contract
+        run: npm run motion:test-plugin
+      - name: Motion PRO / scene sequence validation and local dry-run
+        run: npm run motion:test-sequence
       - name: Motion Chat Operator / create, patch and visual-asset safety
         run: npm run motion:test-chat
       - name: Motion editorial story / RU EN HY / cinematic transitions
