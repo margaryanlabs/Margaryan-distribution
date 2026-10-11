@@ -19,7 +19,9 @@ function load(path, dependencies={}) {
 }
 
 const timing=load("lib/motion/timeline-edit.ts");
-const studio=load("lib/motion/studio.ts",{"./timeline-edit":timing});
+const motionFraming=load("lib/motion/source-composition.ts");
+const motionOverlay=load("lib/motion/image-overlay.ts");
+const studio=load("lib/motion/studio.ts",{"./timeline-edit":timing,"./source-composition":motionFraming,"./image-overlay":motionOverlay});
 const pack=load("lib/motion/production-pack.ts",{"./studio":studio,"./timeline-edit":timing});
 const raw=studio.makeMotionPreset("promptence","portrait");
 raw.scenes[0].camera="push";

@@ -222,3 +222,44 @@ npm run dev
 External side effects are disabled by default with `EXECUTION_ENABLED=false`.
 
 Realtime voice runs separately in `voice-gateway` because Twilio Media Streams use a long-lived WebSocket connection.
+
+## Motion Pro + ChatGPT Content Studio (integration beta)
+
+The Motion Studio includes the editable feature-film Sequence Studio and a ChatGPT MCP server at `/api/mcp`: three storyboard/edit/120s feature-film tools and an optional first-party Canvas widget. The storyboard works without an OpenAI API key; real user footage and narration remain consented locally. Long H.264 mastering requires local Chromium and FFmpeg; cloud MP4 and a public approved ChatGPT Directory listing are NOT yet available.
+
+Full release/security gates: [Motion × ChatGPT combined release](docs/MOTION_CHATGPT_UNIFIED_RELEASE.md). Developer contracts: `npm run motion:test-plugin`, `npm run motion:test-sequence`. In Cinematic Studio, try the provided 120s Promptence film and inspect every chapter before exporting.
+
+**New:** browser-generated full-film visual workprints from Sequence Studio (up to 192s, silent Canvas only) with explicit licensed-media exclusions. Live preview and proper FFmpeg mastery are independent workflows.
+
+## Real local voice & licensed music in browser export
+
+The Film Sequence **PLAY WHOLE FILM** and **EXPORT VISUAL FILM** tools
+now have explicit opt-in local narration and music inputs, using the
+existing recording hardware and the Web Audio API. These are
+**user-supplied, human-recorded or rightfully licensed files**, not
+AI-generated voice, scraped music or a free TTS model. Supported local
+audio is bounded to 40MB per WAV/MP3/M4A/OGG/WebM/FLAC file; media rights
+must be checked before preview/export is permitted. Nothing is uploaded.
+
+When both tracks are present, the music is lowered to 19% while the
+original narrator remains at normal playback volume. Music may loop to
+cover the feature runtime; narration does not loop. The audio capture bus
+is attached to the Canvas recording stream, monitors through the user's
+speakers and is closed (including tracks/decoders) when stopped. Since
+not all browsers can MediaRecord the same audio/video pair, the output
+is MP4 or WebM according to supported codecs, never misnamed, and
+should be reviewed with sound before publishing. This remains a
+**browser workprint up to 192 seconds**, not cloud GPU generation.
+
+Validation: `npm run motion:test-soundtrack` checks local-only file
+constraints, explicit consent, durations, consent rejection, decoded
+audio mix track, music-loop vs narration-once and cleanup; tests were
+executed in a fresh Vercel Sandbox, alongside `motion:test-film-browser`,
+`motion:test-sequence`, `motion:test-plugin`, and TypeScript typecheck.
+These pass but do not constitute an end-to-end browser-decoded media test.
+
+A real Playwright headless chromium test was attempted on the Vercel
+sandbox. Even after installing OS shared libraries, the browser closed
+while navigating the Next.js page; a downloaded final 120s sound-film
+has **not yet been personally audited**. Gate production acceptance on
+playback of a real exported MP4/WebM in a browser and on a phone.

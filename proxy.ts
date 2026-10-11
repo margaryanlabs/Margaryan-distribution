@@ -33,9 +33,11 @@ export function proxy(request:NextRequest){
  if(machineAuthorized(request))return NextResponse.next();
 
  const path=request.nextUrl.pathname;
+ // ONLY stateless MCP and bounded client Canvas; never CRM/account/private files.
+ if(path==="/api/mcp")return NextResponse.next();
  // This exact public surface contains no CRM data, tokens, server AI calls or external effects.
  // Do not open other /api, /motion/* or Distribution routes without operator authentication.
- if((path==="/motion"||path==="/motion/proof")||(path==="/api/motion/storyboard"||path==="/api/motion/captions"||path==="/api/motion/signature")||/^\/motion\/brands\/(?:promptence|meqena|ingu|veto-sport|veto-private|hay-engine|tun-component-preview)\.svg$/.test(path))return NextResponse.next();
+ if((path==="/motion"||path==="/motion/proof"||path==="/motion/chat-preview")||(path==="/api/motion/storyboard"||path==="/api/motion/captions"||path==="/api/motion/signature")||/^\/motion\/brands\/(?:promptence|meqena|ingu|veto-sport|veto-private|hay-engine|tun-component-preview)\.svg$/.test(path))return NextResponse.next();
  const expectedUser=process.env.DISTRIBUTION_BASIC_USER;
  const expectedPassword=process.env.DISTRIBUTION_BASIC_PASSWORD;
  const operatorAuthConfigured=Boolean(expectedUser&&expectedPassword);

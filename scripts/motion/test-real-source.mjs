@@ -17,7 +17,9 @@ function load(path,deps={}){
  return module.exports;
 }
 const audio=load("lib/motion/timeline-edit.ts");
-const studio=load("lib/motion/studio.ts",{"./timeline-edit":audio});
+const motionFraming=load("lib/motion/source-composition.ts");
+const motionOverlay=load("lib/motion/image-overlay.ts");
+const studio=load("lib/motion/studio.ts",{"./timeline-edit":audio,"./source-composition":motionFraming,"./image-overlay":motionOverlay});
 const chat=load("lib/motion/chat-operator.ts",{"./studio":studio});
 const transitions=load("lib/motion/editorial-transitions.ts");
 const src=load("lib/motion/scene-source.ts",{"./editorial-transitions":transitions});

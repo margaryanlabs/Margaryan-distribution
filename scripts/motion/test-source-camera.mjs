@@ -18,8 +18,10 @@ function load(path,deps={}){
 }
 const framing=load("lib/motion/source-composition.ts");
 const timeline=load("lib/motion/timeline-edit.ts");
+const motionFraming=load("lib/motion/source-composition.ts");
+const motionOverlay=load("lib/motion/image-overlay.ts");
 const studio=load("lib/motion/studio.ts",{
- "./timeline-edit":timeline,"./source-composition":framing});
+ "./timeline-edit":timeline,"./source-composition":framing,"./image-overlay":motionOverlay});
 const chat=load("lib/motion/chat-operator.ts",{"./studio":studio});
 assert.deepEqual(framing.sanitizeSourceDirection(null),framing.DEFAULT_SOURCE_DIRECTION);
 assert.deepEqual(framing.sanitizeSourceDirection({sourceLayout:"fullscreen",sourceFocusX:99,

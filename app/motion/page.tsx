@@ -28,6 +28,7 @@ import MultitrackEditor from "./multitrack-editor";
 import PrecisionCutDesk from "./precision-cut-desk";
 import VoiceBooth from "./voice-booth";
 import OperatorDesk from "./operator-desk";
+import FilmSequenceDesk from "./film-sequence-desk";
 import { getLocalMedia, mediaAsFile } from "@/lib/motion/local-media";
 import {
   getMotionSceneSource, registerMotionSceneSource, motionSourceIssues,
@@ -765,6 +766,13 @@ export default function MotionStudioPage() {
           onOpenQuick={assetId=>{
             window.localStorage.setItem("motion-quick-pending-asset-v1",assetId);
             switchMode("quick");
+          }}
+        />
+        <FilmSequenceDesk project={project}
+          busy={exporting||generating||directorRepairing||visualReviewing}
+          onLoadProject={(next,reason)=>{
+            setPlaying(false);updateProject(next);setSelectedIndex(0);jump(0);
+            setNotice(reason+". Genuine source media stays local; inspect attachments before export.");
           }}
         />
         <div className={styles.sectionHeader}><span>01 / CREATIVE BRIEF</span><strong>LOCAL DIRECTOR</strong></div>

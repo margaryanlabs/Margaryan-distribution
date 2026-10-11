@@ -31,6 +31,14 @@ jobs:
         run: npm run motion:test-chat-channel
       - name: Motion local source video / frame-timing and no-freeze preflight
         run: npm run motion:test-real-source
+      - name: Content Studio MCP / 3 tools, feature films and inline UI contract
+        run: npm run motion:test-plugin
+      - name: Motion approved local narration and music safety
+        run: npm run motion:test-soundtrack
+      - name: Motion full-feature browser export / source honesty and timing
+        run: npm run motion:test-film-browser
+      - name: Motion Sequence / real 120s demo and long-film dry run
+        run: npm run motion:test-sequence
       - name: Motion Chat Operator / create, patch and visual-asset safety
         run: npm run motion:test-chat
       - name: Motion editorial story / RU EN HY / cinematic transitions

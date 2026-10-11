@@ -15,7 +15,9 @@ function load(path,deps={}){
  return mod.exports;
 }
 const timeline=load("lib/motion/timeline-edit.ts");
-const studio=load("lib/motion/studio.ts",{"./timeline-edit":timeline});
+const motionFraming=load("lib/motion/source-composition.ts");
+const motionOverlay=load("lib/motion/image-overlay.ts");
+const studio=load("lib/motion/studio.ts",{"./timeline-edit":timeline,"./source-composition":motionFraming,"./image-overlay":motionOverlay});
 const chat=load("lib/motion/chat-operator.ts",{"./studio":studio});
 const json=readFileSync(new URL("../../public/motion/chat-ops/latest-public.json",import.meta.url),"utf8");
 assert.ok(json.length<100_000);

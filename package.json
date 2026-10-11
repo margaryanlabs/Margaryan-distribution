@@ -39,6 +39,11 @@
     "motion:test-bundle": "node scripts/motion/test-portable-bundle.mjs",
     "prebuild": "npm run motion:test-precision && npm run motion:test-overlays && npm run motion:test-bundle",
     "motion:test-overlays": "node scripts/motion/test-image-overlay.mjs",
+    "motion:test-plugin": "node scripts/motion/test-content-studio-plugin.mjs",
+    "motion:test-sequence": "node scripts/motion/test-film-sequence.mjs",
+    "motion:sequence": "node scripts/motion/render-sequence.mjs",
+    "motion:test-film-browser": "node --experimental-strip-types scripts/motion/test-film-browser-plan.mjs",
+    "motion:test-soundtrack": "node --experimental-strip-types scripts/motion/test-film-audio-mix.mjs",
     "motion:test-precision": "node scripts/motion/test-precision-edit.mjs"
   },
   "dependencies": {
@@ -54,7 +59,7 @@
     "@types/node": "24.7.2",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
-    "typescript": "7.0.2",
+    "typescript": "5.9.3",
     "@types/pg": "8.11.10",
     "@types/three": "0.186.0"
   }

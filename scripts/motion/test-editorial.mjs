@@ -16,7 +16,9 @@ function load(path,dependencies={}){
   return module.exports;
 }
 const timeline=load("lib/motion/timeline-edit.ts");
-const studio=load("lib/motion/studio.ts",{"./timeline-edit":timeline});
+const motionFraming=load("lib/motion/source-composition.ts");
+const motionOverlay=load("lib/motion/image-overlay.ts");
+const studio=load("lib/motion/studio.ts",{"./timeline-edit":timeline,"./source-composition":motionFraming,"./image-overlay":motionOverlay});
 const beats=load("lib/motion/promptence-beats.ts",{"./studio":studio});
 const transitions=load("lib/motion/editorial-transitions.ts");
 assert.equal(studio.PROMPTENCE_BEATS.length,10);
