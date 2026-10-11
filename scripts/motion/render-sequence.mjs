@@ -173,6 +173,10 @@ async function main(){
     throw Error("Final duration mismatch: expected "+film.durationSeconds+" got "+duration);
   if(!options.silent&&!audio)throw Error("Film soundtrack missing");
   if(options.silent&&audio)throw Error("Silent film unexpectedly has an audio track");
+  // Verify the actual concatenated full-length MP4 before promoting the temp file.
+  // The standard short-film QA remains 65s by default; feature mode opts in.
+  run(process.execPath,["scripts/motion/verify-render.mjs",temp,"--max-duration","515",
+    ...(!options.silent?["--require-audio"]:[])],180_000);
   await rename(temp,outfile);
   const stem=outfile.slice(0,-4);
   const report={...outputPlan,file:outfile,actualDurationSeconds:duration,
