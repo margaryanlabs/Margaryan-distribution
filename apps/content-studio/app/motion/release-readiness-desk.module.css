@@ -1,0 +1,64 @@
+.desk{
+  display:grid;gap:18px;color:#e5f2eb;padding:16px 0 7px
+}
+.overline{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px;
+ font-size:8px;line-height:1.4;letter-spacing:.1em;color:#8eaa9e;font-weight:900}
+.hero{display:grid;gap:14px}
+.hero h3{font-size:clamp(24px,2.2vw,32px);line-height:1.03;letter-spacing:-.066em;
+ color:#f3fbf4;font-weight:800;margin:0 0 10px}
+.hero h3 em{font-style:normal;color:#93d6af;font-weight:480}
+.hero p{color:#acc1b6;font-size:11px;line-height:1.72;margin:0}
+.state{font-size:9px;font-weight:900;letter-spacing:.08em;display:inline-flex;align-items:center;gap:8px;
+ border:1px solid #64816d;border-radius:7px;padding:10px 12px;max-width:max-content;
+ color:#c3dfcb;background:#163223}
+.state[data-state=block]{border-color:#8f6057;background:#372421;color:#f1c7b6}
+.state i{display:block;height:7px;width:7px;border-radius:50%;background:currentColor}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.stats>div{display:grid;gap:9px;padding:14px 11px;
+ background:#14241f;border:1px solid #395548;border-radius:10px}
+.stats strong{font-variant-numeric:tabular-nums;font-size:23px;letter-spacing:-.06em;color:#e6f5e9}
+.stats strong span{font-size:15px;color:#8aa99a}
+.stats small{color:#92b6a3;font-size:8px;line-height:1.5;font-weight:800;letter-spacing:.08em}
+.sectionTitle{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;
+ border-bottom:1px solid #425747;padding-bottom:10px}
+.sectionTitle strong{font-size:9px;color:#b8dfc6;letter-spacing:.075em}
+.sectionTitle>span{font-size:8px;color:#839b8d}
+.sectionTitle button{background:#1a3729;color:#d7f4df;border:1px solid #52775b;
+ padding:10px;border-radius:7px;font-size:9px;cursor:pointer;font-weight:800}
+.shotMap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.shot{display:flex;flex-direction:column;align-items:stretch;min-width:0;text-align:left;gap:9px;
+ color:#e4f3e8;background:#142522;border:1px solid #436052;border-radius:9px;
+ padding:13px 11px;min-height:139px;cursor:pointer;transition:border-color .15s,background .15s}
+.shot:hover,.shot:focus-visible{border-color:#9bd1b2;background:#1b3529}
+.shot[data-state=block]{background:#33211f;border-color:#845449}
+.shot[data-state=block]:hover{border-color:#edb19c}
+.shotTop{display:flex;align-items:center;justify-content:space-between;
+ font-variant-numeric:tabular-nums;font-size:10px;color:#92b8a6}
+.shotTop b{font-size:15px;color:#e7f7ec}
+.shot strong{font-size:10px;line-height:1.3;overflow-wrap:anywhere}
+.shot>small{font-size:8px;color:#99c4ac;letter-spacing:.06em;font-weight:800}
+.shotFoot{font-size:9px;font-weight:850;color:#d4f3e0;margin-top:auto}
+.checks{display:grid;gap:7px}
+.check{display:grid;grid-template-columns:22px minmax(0,1fr);gap:9px;padding:12px;
+ background:#17261f;border:1px solid #385242;border-radius:9px;align-items:start}
+.check[data-state=block]{background:#302320;border-color:#8a5b4b}
+.check[data-state=pass]{background:#163124;border-color:#527b5c}
+.checkIcon{width:21px;height:21px;border:1px solid #799e81;border-radius:50%;
+ color:#d3f8df;display:grid;place-items:center;font-size:11px;font-weight:800}
+.check[data-state=block] .checkIcon{color:#ffd6be;border-color:#c38470}
+.checkBody{min-width:0}
+.checkBody>div{display:flex;justify-content:space-between;align-items:center;gap:7px;
+ flex-wrap:wrap}
+.checkBody b{font-size:11px;color:#e3f1e8}
+.checkBody small{font-size:8px;color:#8ebaa1;white-space:nowrap;letter-spacing:.04em}
+.checkBody p{font-size:10px;line-height:1.65;color:#afc9b9;margin:7px 0 0;overflow-wrap:anywhere}
+.check>button{grid-column:2;justify-self:start;min-height:33px;
+ background:#284333;color:#e6ffef;border:1px solid #567b60;
+ padding:8px 11px;border-radius:6px;font-size:8.5px;font-weight:850;cursor:pointer}
+.check>button span{margin-left:8px}
+.disclosure{padding:14px;border:1px solid #4e6353;background:#20291f;border-radius:9px}
+.disclosure span{font-size:9px;color:#b1c59d;font-weight:850;letter-spacing:.09em}
+.disclosure p{color:#b8c8b6;font-size:10px;line-height:1.65;margin:9px 0 0}
+.disclosure b{color:#eeefdd}
+@media(max-width:450px){.shotMap{grid-template-columns:1fr}.shot{min-height:115px}}
+@media(prefers-reduced-motion:reduce){.shot{transition:none}}

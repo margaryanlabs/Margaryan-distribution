@@ -27,6 +27,8 @@ import { createKeylessStoryboard, getLocalDirectorExamples, type MotionLanguage,
 import QuickStudio from "./quick-studio";
 import MultitrackEditor from "./multitrack-editor";
 import PrecisionCutDesk from "./precision-cut-desk";
+import ReleaseReadinessDesk from "./release-readiness-desk";
+import type { ReadinessPanel } from "@/lib/motion/release-readiness";
 import FilmSequenceDesk from "./film-sequence-desk";
 import VoiceBooth from "./voice-booth";
 import OperatorDesk from "./operator-desk";
@@ -71,10 +73,8 @@ export default function MotionStudioPage() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editorPanel,setEditorPanel]=useState<"create"|"media"|"scene"|"sound"|"look"|"review"|"deliver">("scene");
   const [featureOpen,setFeatureOpen]=useState(false);
-  // In Editor V2 the chapter desk is lazy. ChatGPT's #motion-sequence-v1
-  // review link must mount it immediately or the approved draft is invisible.
   useEffect(()=>{
-    if(window.location.hash.startsWith("#motion-sequence-v1=") ||
+    if(window.location.hash.startsWith("#motion-sequence-v1=")||
        window.location.hash==="#film-sequence")setFeatureOpen(true);
   },[]);
 
@@ -731,7 +731,7 @@ export default function MotionStudioPage() {
       </div>
       <div className={styles.headerRight}>
         <span className={styles.liveDot}/> KEYLESS / LOCAL ENGINE
-        <a href="/connect">CONTENT STUDIO / CONNECT ↗</a>
+        <a href="/connect">CHATGPT CONTENT STUDIO ↗</a>
         <a href="/quality-lab">VIDEO QUALITY LAB ↗</a>
       </div>
     </header>
@@ -748,26 +748,19 @@ export default function MotionStudioPage() {
         <button type="button" className={featureOpen?styles.barActive:""}
           onClick={()=>{setPlaying(false);setFeatureOpen(v=>!v);}}
           aria-pressed={featureOpen}>◫ FEATURE FILM</button>
-        <a href="/connect">CHATGPT FILM TOOLS ↗</a>
+        <a href="/connect">CONNECT CHATGPT ↗</a>
       </div>
     </div>
     <div className={styles.notice} role="status">{notice}</div>
-    <LocalFilmVaultPanel
-      project={project}
+    <LocalFilmVaultPanel project={project}
       busy={exporting||generating||directorRepairing||visualReviewing}
       onRestore={saved=>{
-        setPlaying(false);
-        setVoiceover(null);
-        setLicensedMusic(null);
-        updateProject(saved);
-        setSelectedIndex(0);
-        timeRef.current=0;
-        setPlayhead(0);
-        setFeatureOpen(false);
-        setEditorPanel("scene");
-        setNotice("LOCAL FILM RESTORED: "+saved.title+". Verify locally linked media before export.");
-      }}
-    />
+        setPlaying(false);setVoiceover(null);setLicensedMusic(null);
+        updateProject(saved);setSelectedIndex(0);
+        timeRef.current=0;setPlayhead(0);
+        setFeatureOpen(false);setEditorPanel("scene");
+        setNotice("LOCAL FILM RESTORED: "+saved.title+". Verify client media and audio before delivery.");
+      }} />
 
     {featureOpen&&<div id="film-sequence" className={styles.featureWorkspace}>
       <div className={styles.featureBack}>
@@ -835,7 +828,7 @@ export default function MotionStudioPage() {
           <button type="button" className={styles.deliverSecondary}
             onClick={saveJson}>↓ SAVE EDITABLE PROJECT</button>
           <button type="button" className={styles.deliverSecondary}
-            onClick={()=>setEditorPanel("review")}>◈ OPEN FRAME & EVIDENCE REVIEW</button>
+            onClick={()=>setEditorPanel("review")}>◈ OPEN SOURCE & RELEASE REVIEW</button>
         </div>}
         <div className={styles.panelSection} hidden={editorPanel!=="media"}>
         <OperatorDesk project={project} selectedIndex={selectedIndex}
@@ -1073,6 +1066,23 @@ export default function MotionStudioPage() {
             {referenceComparison.notes.map((note,i)=><p key={i}>{note}</p>)}
           </div>}
         </section>
+        <ReleaseReadinessDesk project={project} qa={qa}
+          voiceAttached={voiceover!==null}
+          voiceSeconds={narrationSeconds}
+          voiceReady={narrationWindow.ready}
+          voiceOverflowSeconds={narrationWindow.overflowSeconds}
+          musicAttached={licensedMusic!==null}
+          onNavigate={(panel:ReadinessPanel,shotIndex?:number)=>{
+            setPlaying(false);
+            if(shotIndex!==undefined&&shotIndex>=0&&shotIndex<project.scenes.length)
+              selectScene(shotIndex);
+            setEditorPanel(panel);
+            const holder=document.getElementById("motion-inspector-scroll");
+            if(holder)holder.scrollTo({top:0,behavior:"smooth"});
+            if(window.matchMedia("(max-width: 850px)").matches)
+              requestAnimationFrame(()=>document.getElementById("motion-inspector")?.scrollIntoView({block:"start",behavior:"smooth"}));
+          }}
+        />
         <div className={styles.qaPanel}>
           <div><strong>PRODUCTION PREFLIGHT</strong><b data-grade={qa.grade}>{qa.grade}</b></div>
           <button type="button" className={styles.polishButton} disabled={exporting}
@@ -1332,15 +1342,39 @@ export default function MotionStudioPage() {
           <input type="range" min="0" max={total} step=".05" value={playhead} aria-label="Scrub animation timeline" onChange={event => { setPlaying(false); jump(Number(event.target.value)); }}/>
           <span>{timeLabel(total)}</span>
         </div>
-        <div className={styles.sectionHeader}><span>04 / FRAME SEQUENCE</span><strong>{project.scenes.length} SHOTS</strong></div>
-        <div className={styles.timeline}>
-          {project.scenes.map((scene, index) => <button key={scene.id} type="button"
-            className={(index === selectedIndex ? styles.selectedShot + " " : "") + (index === activeIndex ? styles.currentShot : "")}
-            onClick={() => {selectScene(index);setEditorPanel("scene");}}>
-            <span className={styles.shotNumber}>SHOT {String(index + 1).padStart(2, "0")} <i>{scene.seconds}s</i></span>
-            <strong>{scene.headline}</strong>
-            <small>{scene.kind}</small>
-          </button>)}
+        <div className={styles.sectionHeader}><span>04 / EDIT TIMELINE</span>
+          <strong>{project.scenes.length} SHOTS · {timeLabel(total)}</strong></div>
+        <div className={styles.filmstripGuide}>
+          <span>PICTURE / SELECT TO EDIT</span>
+          <small>Horizontal timeline · scroll for later scenes</small>
+        </div>
+        <div className={styles.timeline} role="group" aria-label="Time-scaled editable film timeline">
+          {project.scenes.map((scene,index)=>{
+            const start=project.scenes.slice(0,index).reduce((sum,shot)=>sum+shot.seconds,0);
+            const source=scene.mediaId&&scene.kind==="screen"
+              ?getMotionSceneSource(scene.mediaId):undefined;
+            const type=scene.kind!=="screen"?"MOTION":source?.type==="video"?"REAL VIDEO":
+              source?.type==="image"?"REAL IMAGE":"SOURCE CHECK";
+            const pct=index===activeIndex?
+              Math.max(0,Math.min(100,(playhead-start)/scene.seconds*100)):0;
+            return <button key={scene.id} type="button"
+              style={{flexBasis:Math.max(122,scene.seconds*29)+"px"}}
+              aria-label={"Edit shot "+(index+1)+" from "+timeLabel(start)+
+                " to "+timeLabel(start+scene.seconds)+": "+scene.headline}
+              aria-pressed={index===selectedIndex}
+              className={(index===selectedIndex?styles.selectedShot+" ":"")+
+                (index===activeIndex?styles.currentShot:"")}
+              onClick={()=>{selectScene(index);setEditorPanel("scene");}}>
+              <span className={styles.shotNumber}>
+                <b>{String(index+1).padStart(2,"0")} / {timeLabel(start)}</b>
+                <i>{scene.seconds.toFixed(1)}s</i>
+              </span>
+              <strong>{scene.headline}</strong>
+              <small>{type}</small>
+              {index===activeIndex&&<span aria-hidden="true"
+                className={styles.shotProgress} style={{width:pct+"%"}}/>}
+            </button>;
+          })}
         </div>
         <details className={styles.advancedTimeline}>
           <summary><span>◫ MULTITRACK & PRECISION CUT</span>
