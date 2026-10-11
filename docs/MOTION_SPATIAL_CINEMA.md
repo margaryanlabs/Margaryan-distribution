@@ -15,7 +15,7 @@ Add **real** WebGL geometry to Cinematic Studio in place, as a selectively appli
 
 The existing scene inspector contains a **Real 3D / Three.js spatial hero** composition. Only that scene dynamically loads the large Three.js/GSAP bundle, and only in the browser.
 
-The renderer makes *actual* 3D objects with depth tests, perspective camera, multiple lights, faceted metallic core, orbital torus geometry, 3D signal fragments and depth-positioned stars. The camera and movement are functions of `time`, `progress`, brand accent, and shot index; GSAP's `power3.inOut` easing is used with a caller-supplied timestamp, **not** an independent animation loop. That makes output reproducible during scrubbing, export and offline MP4 encoding.
+The renderer makes *actual* 3D objects with depth tests, perspective camera, and multiple lights. Brand-aware compositions avoid showing every company the same orbit animation: VETO and general intelligence brands use a metallic signal core and field shards; Promptence uses a helix of abstract visibility/evidence tiles; SUREN/TUN/Reality Engine use abstract architectural massing. Decorative objects never contain fabricated product metrics or fake customer results. The camera and movement are functions of `time`, `progress`, brand accent, and shot index; GSAP's `power3.inOut` easing is used with a caller-supplied timestamp, **not** an independent animation loop. That makes output reproducible during scrubbing, export and offline MP4 encoding.
 
 No stock video is fetched. Geometry is abstract and does not pretend to show actual customer results, a functional UI, or a neural video result.
 
@@ -31,7 +31,7 @@ No stock video is fetched. Geometry is abstract and does not pretend to show act
 ## User flow
 
 1. Open `/motion?mode=cinematic` and select a brand.
-2. In *03 / Scene Inspector → Visual Composition*, select `Real 3D / Three.js spatial hero` on one selected shot.
+2. Click **LOAD 3D / SPATIAL BRAND FILM** for a ready-to-edit branded demonstration; or write **3D / WebGL** into a creative brief to have the local storyboard director include a spatial shot. Alternatively, in *03 / Scene Inspector → Visual Composition*, choose `Real 3D / Three.js spatial hero` on any shot.
 3. Wait for the engine READY badge, then choose camera motion/intensity, duration, transition and narration.
 4. Scrub preview, review shots, import the approved voice/music, then export. Browser video may be WebM; the operator FFmpeg workflow masters H.264/AAC.
 
