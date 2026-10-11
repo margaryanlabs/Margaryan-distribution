@@ -715,6 +715,7 @@ export default function MotionStudioPage() {
     <div className={styles.workspace}>
       <section className={styles.sidebar} aria-label="Creative director controls">
         <OperatorDesk project={project} selectedIndex={selectedIndex}
+          voiceFile={voiceover} musicFile={licensedMusic}
           busy={exporting||generating||directorRepairing||visualReviewing}
           onApplyProject={(next,reason)=>{
             setPlaying(false);updateProject(next);setSelectedIndex(0);jump(0);
