@@ -1,4 +1,5 @@
-import { CONTENT_STUDIO_TOOLS, CONTENT_STUDIO_VERSION, runContentStudioTool } from "@/lib/motion/plugin-bridge";
+import { CONTENT_STUDIO_TOOLS, CONTENT_STUDIO_VERSION, CONTENT_STUDIO_WIDGET_URI, runContentStudioTool } from "@/lib/motion/plugin-bridge";
+import { motionStudioWidgetHtml } from "@/lib/motion/content-studio-widget";
 
 /**
  * Public, stateless MCP adapter for the keyless Motion concept-film tools.
@@ -56,12 +57,50 @@ export async function POST(request: Request) {
     const negotiated = params.protocolVersion === "2025-03-26" ? "2025-03-26" : MCP_PROTOCOL;
     return rpc(payload.id, {
       protocolVersion: negotiated,
-      capabilities: { tools: { listChanged: false } },
+      capabilities: { tools: { listChanged: false }, resources: { listChanged: false } },
       serverInfo: { name: "margaryan-content-studio", version: CONTENT_STUDIO_VERSION, description: "Keyless procedural Motion Studio storyboard bridge" }
     });
   }
   if (payload.method === "ping") return rpc(payload.id, {});
   if (payload.method === "tools/list") return rpc(payload.id, { tools: CONTENT_STUDIO_TOOLS });
+  if (payload.method === "resources/list") return rpc(payload.id, {
+    resources: [{
+      name: "Margaryan Content Studio film player",
+      uri: CONTENT_STUDIO_WIDGET_URI,
+      description: "Playable procedural film canvas, shot list and local browser export inside ChatGPT",
+      mimeType: "text/html;profile=mcp-app"
+    }]
+  });
+  if (payload.method === "resources/read") {
+    const params = isRecord(payload.params) ? payload.params : {};
+    if (params.uri !== CONTENT_STUDIO_WIDGET_URI)
+      return error(payload.id, -32002, "Unknown UI resource");
+    // Use the hosting origin so the UI frame and Canvas renderer are first-party.
+    // Public release requires a dedicated owned origin, not Vercel preview hosts.
+    const studioOrigin = process.env.CONTENT_STUDIO_PUBLIC_URL || new URL(request.url).origin;
+    let html: string;
+    try {html = motionStudioWidgetHtml(studioOrigin);}
+    catch {return error(payload.id, -32603, "Invalid studio origin configuration");}
+    return rpc(payload.id, {
+      contents: [{
+        uri: CONTENT_STUDIO_WIDGET_URI,
+        mimeType: "text/html;profile=mcp-app",
+        text: html,
+        _meta: {
+          ui: {
+            prefersBorder: false,
+            csp: {
+              connectDomains: [],
+              resourceDomains: [],
+              frameDomains: [new URL(studioOrigin).origin]
+            }
+          },
+          "openai/ui": {availableDisplayModes: ["inline", "fullscreen"]},
+          "openai/widgetDescription": "Live playback and browser-based render of a ChatGPT-authored motion graphics draft."
+        }
+      }]
+    });
+  }
   if (payload.method !== "tools/call") return error(payload.id, -32601, "Unknown MCP method");
   const params = isRecord(payload.params) ? payload.params : {};
   const name = typeof params.name === "string" ? params.name : "";
