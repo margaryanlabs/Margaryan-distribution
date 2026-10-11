@@ -25,6 +25,8 @@ jobs:
         run: npm run motion:test-real-source
       - name: Motion Chat Operator / create, patch and visual-asset safety
         run: npm run motion:test-chat
+      - name: ChatGPT Content Studio MCP / stateless keyless film handoff
+        run: npm run motion:test-plugin
       - name: Motion editorial story / RU EN HY / cinematic transitions
         run: npm run motion:test-editorial
       - name: Motion Production Desk schema and cue contract
