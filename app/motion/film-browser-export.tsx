@@ -64,6 +64,12 @@ export default function FilmBrowserExport({chapters,busy,dirty}:{
   }
   const haltRef=useRef(halt);
   haltRef.current=halt;
+  const previousChapters=useRef(chapters);
+  useEffect(()=>{
+    if(previousChapters.current!==chapters&&raf.current!==null)
+      haltRef.current("Saved chapters changed. Recording cancelled; start a fresh export after reviewing edits.");
+    previousChapters.current=chapters;
+  },[chapters]);
   useEffect(()=>()=>{
     haltRef.current();
   },[]);
