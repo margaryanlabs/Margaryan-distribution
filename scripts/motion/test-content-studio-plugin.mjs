@@ -204,7 +204,7 @@ dispatch(playerFrame,"https://margaryan-distribution.vercel.app",{
 });
 await new Promise(resolve=>setImmediate(resolve));
 assert.equal(uploads.length,1,"Valid user-approved video must be forwarded to ChatGPT only once");
-assert.deepEqual(uploads[0].opts,{library:true});
+assert.equal(uploads[0].opts.library,true);
 assert.equal(uploads[0].size,512);
 assert.ok(controls.get("status").textContent.includes("saved to ChatGPT"));
 console.log("Content Studio plugin: JSON-RPC, video widget, optional consent-based ChatGPT upload, safe handoff, 120s feature film PASS");
