@@ -193,6 +193,10 @@ export default function OperatorDesk({
       </div>
       <div className={styles.actionGrid}>
         <button type="button" disabled={busy} onClick={onCreateBlank}>◈ BUILD WITHOUT MATERIALS</button>
+        <button type="button" onClick={()=>{
+          const endpoint=new URL("/api/motion/mcp",window.location.origin).toString();
+          void copy(endpoint).then(()=>setNotice("MCP endpoint copied. Register as a custom app if your ChatGPT plan supports it; connection is not automatic.")).catch(e=>setNotice(String(e)));
+        }}>↗ COPY CHATGPT MCP URL</button>
         <button type="button" onClick={()=>{void copy(JSON.stringify(createChatMotionPack(project),null,2))
           .then(()=>setNotice("Full Motion Chat Pack copied. Paste it into our ChatGPT conversation so I can edit your existing project."))
           .catch(e=>setNotice(String(e)));}}>COPY FULL PROJECT ↗</button>
@@ -202,7 +206,7 @@ export default function OperatorDesk({
         }),null,2)).then(()=>setNotice("Scene-specific patch template copied. Ask ChatGPT to modify its set fields."))
           .catch(e=>setNotice(String(e)));}}>COPY SHOT PATCH TEMPLATE</button>
       </div>
-      <p className={styles.hint}>For private edits, paste the current Chat Pack in ChatGPT with your instructions. I return either a complete <code>create</code> film or a targeted <code>patch</code>. No API calls or agent. Paste the result below. Media files cannot travel inside JSON.</p>
+      <p className={styles.hint}>For one-click ChatGPT handoff, connect the MCP URL above using the ChatGPT custom app flow (if available on your plan). For manual edits, paste the current Chat Pack in ChatGPT with your instructions. I return either a complete <code>create</code> film or a targeted <code>patch</code>. No API calls or agent. Paste the result below. Media files cannot travel inside JSON.</p>
       <label className={styles.label}>PASTE MOTION CHAT PACK / JSON
         <textarea spellCheck={false} rows={7} value={source}
           onChange={e=>{setSource(e.target.value);setPreview(null);}}
