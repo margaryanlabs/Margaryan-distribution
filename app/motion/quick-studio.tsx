@@ -60,8 +60,15 @@ function cleanMedia(media:QuickMediaAsset){
 }
 function formatTime(t:number){const m=Math.floor(t/60);const sec=Math.floor(t%60);return String(m).padStart(2,"0")+":"+String(sec).padStart(2,"0");}
 const MAX_AUDIO=30_000_000;
-export default function QuickStudio() {
-  const [project,setProject]=useState<QuickProject>(()=>createQuickProject());
+/** Explicit user launch settings, never an invisible overwrite of an existing cut. */
+export interface QuickStudioStart {
+  brand:MotionBrand;
+  format:MotionFormat;
+  language:QuickLanguage;
+}
+export default function QuickStudio({start}: {start?:QuickStudioStart|null}) {
+  const [project,setProject]=useState<QuickProject>(()=>
+    start?createQuickProject(start.brand,start.language,start.format):createQuickProject());
   const [loaded,setLoaded]=useState(false);
   const [selected,setSelected]=useState(0);
   const [assetsRevision,setAssetsRevision]=useState(0);
@@ -88,11 +95,20 @@ export default function QuickStudio() {
   const status=quickSourceStatus(project,assets.current);
 
   useEffect(()=>{
-    try{
-      const stored=window.localStorage.getItem(KEY);
-      if(stored)setProject(sanitizeQuickProject(JSON.parse(stored)));
-    }catch{ /* Reject stale or malformed local storyboards. */ }
+    // A new cut selected in the Film Launcher must use its chosen brand /
+    // format / language. Ordinary Quick Studio visits recover previous work.
+    if(!start){
+      try{
+        const stored=window.localStorage.getItem(KEY);
+        if(stored)setProject(sanitizeQuickProject(JSON.parse(stored)));
+      }catch{ /* Reject stale or malformed local storyboards. */ }
+    }else{
+      setNotice("NEW REEL / Your "+start.format+
+        " storyboard is ready. Upload genuine footage for each shot.");
+    }
     setLoaded(true);
+  // The explicit launch settings are frozen when the Quick workspace mounts.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
   useEffect(()=>{
     projectRef.current=project;
