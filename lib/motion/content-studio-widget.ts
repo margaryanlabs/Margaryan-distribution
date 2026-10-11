@@ -96,7 +96,7 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
     const bytes = packet && packet.bytes;
     if (!(bytes instanceof ArrayBuffer) || bytes.byteLength < 100 || bytes.byteLength > 25_000_000 ||
         !/^[a-z0-9-]{1,80}\.(mp4|webm)$/i.test(packet.fileName || "") ||
-        !["video/mp4","video/webm","video/webm;codecs=vp8","video/webm;codecs=vp9"].includes(packet.mimeType)) {
+        !["video/mp4","video/webm"].includes(packet.mimeType)) {
       reply("ChatGPT upload rejected: unsupported file or larger than 25 MB.");
       return;
     }
