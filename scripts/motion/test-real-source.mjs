@@ -59,6 +59,15 @@ const registered=await src.registerMotionSceneSource(validId,fakeFile);
 assert.equal(registered.duration,8);
 assert.equal(registered.type,"video");
 assert.deepEqual(src.motionSourceIssues(film),[]);
+const overlap=studio.sanitizeMotionProject({...film,scenes:[
+  {...film.scenes[0],transition:"dissolve"},
+  {...film.scenes[1],kind:"screen",mediaId:validId,mediaStart:0,seconds:4}
+]});
+assert.match(src.motionSourceIssues(overlap).join(" "),/overlapping transition/);
+const hardCut=studio.sanitizeMotionProject({...overlap,scenes:[
+  {...overlap.scenes[0],transition:"cut"},overlap.scenes[1]
+]});
+assert.deepEqual(src.motionSourceIssues(hardCut),[]);
 await src.prepareMotionSourceFrame(film,2);
 assert.ok(Math.abs(registered.element.currentTime-3.2)<.02,
  "2s film time + 1.2s source inpoint must seek to 3.2s");
