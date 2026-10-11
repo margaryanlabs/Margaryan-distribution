@@ -1,11 +1,18 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
-import {mkdtemp,writeFile,rm} from "node:fs/promises";
+import {mkdtemp,writeFile,rm,readFile} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
 import {spawnSync} from "node:child_process";
 import {validateFilmSequence,escapeConcatFilePath} from "./film-sequence-core.mjs";
 
+const demo=JSON.parse(await readFile(new URL("../../public/motion/film-templates/promptence-120s.json",import.meta.url),"utf8"));
+const checkedDemo=validateFilmSequence(demo);
+assert.equal(checkedDemo.durationSeconds,120);
+assert.equal(checkedDemo.shots,16);
+assert.equal(checkedDemo.chapters.length,2);
+assert.equal(checkedDemo.chapters[0].project.brand,"promptence");
+assert.ok(checkedDemo.chapters.every(c=>c.project.scenes.every(s=>!s.mediaId)));
 const chapter=(i,count=8)=>({
   id:"chapter-"+i,title:"Act "+i,
   project:{version:1,brand:"promptence",format:"portrait",language:"ru",
@@ -68,4 +75,4 @@ try{
   assert.equal(dry.plan.cloudRender,false);
   assert.equal(dry.plan.shots,24);
 }finally{await rm(dir,{recursive:true,force:true});}
-console.log("MOTION SEQUENCE PASS: three acts/24 scenes/192s, local dry-run, source/timing/schema/concat safety");
+console.log("MOTION SEQUENCE PASS: 120s Russian demo, three acts/24 scenes/192s, dry-run, source/timing/schema/concat safety");
