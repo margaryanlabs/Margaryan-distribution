@@ -6,7 +6,7 @@
  * No user's media, provider keys, uploads or licensed-source assumptions.
  */
 import assert from "node:assert/strict";
-import {execFileSync} from "node:child_process";
+import {execFileSync,spawnSync} from "node:child_process";
 import {mkdtemp,rm,stat} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
@@ -62,7 +62,7 @@ try{
   const musicInput=page.locator('label').filter({hasText:"MUSIC / LICENSED TRACK"}).locator('input[type=file]');
   await voiceInput.setInputFiles(voice);
   await musicInput.setInputFiles(music);
-  await page.getByRole("checkbox").filter({visible:true}).last().check();
+  await page.locator('section[aria-label="Entire feature film browser preview and recording"]').getByRole("checkbox").check();
   await button.waitFor({state:"visible"});
   assert.equal(await button.isEnabled(),true);
   const received=page.waitForEvent("download",{timeout:60_000});
@@ -93,19 +93,19 @@ try{
   assert.ok(times.length>=20);
   assert.ok(Math.max(...times)>=9,"the full five-act timeline must run all ten seconds");
   if(Number.isFinite(seconds))assert.ok(seconds>=9&&seconds<15);
-  // Confirm audio is non-silent, not only a nominal empty audio stream.
-  const volume=execFileSync("ffmpeg",["-hide_banner","-i",output,
-    "-vn","-af","volumedetect","-f","null","-"],
-    {encoding:"utf8",timeout:30_000,stdio:["ignore","pipe","pipe"]});
-  assert.ok(volume!==undefined);
-  const volumeProbe=execFileSync("ffmpeg",[
-    "-v","info","-i",output,"-vn","-af","volumedetect","-f","null","-"
-  ],{encoding:"utf8",timeout:30_000,stdio:["ignore","pipe","pipe"]});
-  // FFmpeg's measured volume appears on STDERR; decode checks above ensure
-  // the soundtrack stream exists. Gain correctness has separate unit tests.
+  // Confirm audio has actual energy, not merely an empty audio stream.
+  const volume=spawnSync("ffmpeg",["-hide_banner","-v","info",
+    "-i",output,"-vn","-af","volumedetect","-f","null","-"],
+    {encoding:"utf8",timeout:30_000,maxBuffer:500_000});
+  assert.equal(volume.status,0,"mixed audio must decode successfully");
+  const measured=volume.stderr.match(/mean_volume:\s*(-?[0-9.]+)\s*dB/);
+  assert.ok(measured,"FFmpeg must detect real soundtrack signal energy");
+  assert.ok(Number(measured[1])>-55 && Number(measured[1])<-2,
+    "audio level must be audible and not overloaded: "+measured[1]+" dB");
   assert.deepEqual(issues,[]);
   console.log("MOTION AUDIO E2E PASS",JSON.stringify({
     chapters:5,seconds:seconds||Math.max(...times),
+    audioMeanDb:Number(measured[1]),
     videoCodec:video.codec_name,audioCodec:audio.codec_name,
     bytes:(await stat(output)).size,format:filename.split(".").at(-1),
     videoWidth:video.width,videoHeight:video.height
