@@ -1,0 +1,196 @@
+{
+  "version": 1,
+  "title": "PROMPTENCE / LONG-FORM FEATURE FILM / 2 MIN 48 SEC",
+  "brand": "promptence",
+  "format": "portrait",
+  "language": "en",
+  "durationSeconds": 168,
+  "purpose": "Full-length Instagram Reel under three minutes; concept film showcasing observable product workflow",
+  "evidencePolicy": "All scenario answers, charts and interface representations are concepts; do not present them as real customer scans.",
+  "chapters": [
+    {
+      "id": "chapter-1",
+      "eyebrow": "THE SHIFT",
+      "headline": "YOUR NEXT CUSTOMER",
+      "support": "MAY NEVER VISIT YOUR SITE.",
+      "seconds": 6,
+      "kind": "kinetic"
+    },
+    {
+      "id": "chapter-2",
+      "eyebrow": "THE BUYER",
+      "headline": "THE QUESTION COMES",
+      "support": "BEFORE THE CLICK.",
+      "seconds": 7,
+      "kind": "opener"
+    },
+    {
+      "id": "chapter-3",
+      "eyebrow": "THE ANSWER",
+      "headline": "AI BUILDS THE",
+      "support": "SHORTLIST.",
+      "seconds": 7,
+      "kind": "network"
+    },
+    {
+      "id": "chapter-4",
+      "eyebrow": "THE COST",
+      "headline": "WHAT IF YOUR BRAND",
+      "support": "ISN'T THERE?",
+      "seconds": 7,
+      "kind": "orbit"
+    },
+    {
+      "id": "chapter-5",
+      "eyebrow": "THE PROBLEM",
+      "headline": "YOU CANNOT IMPROVE",
+      "support": "WHAT YOU CANNOT SEE.",
+      "seconds": 7,
+      "kind": "statement"
+    },
+    {
+      "id": "chapter-6",
+      "eyebrow": "THE REVEAL",
+      "headline": "MEET PROMPTENCE.",
+      "support": "AI RECOMMENDATION INTELLIGENCE.",
+      "seconds": 8,
+      "kind": "closer"
+    },
+    {
+      "id": "chapter-7",
+      "eyebrow": "STEP 01 / START",
+      "headline": "ONE BUSINESS.",
+      "support": "ONE BUYING DECISION.",
+      "seconds": 7,
+      "kind": "screen"
+    },
+    {
+      "id": "chapter-8",
+      "eyebrow": "STEP 02 / OBSERVE",
+      "headline": "ASK MULTIPLE",
+      "support": "AI SYSTEMS.",
+      "seconds": 8,
+      "kind": "network"
+    },
+    {
+      "id": "chapter-9",
+      "eyebrow": "THE METHOD",
+      "headline": "START WITH",
+      "support": "REAL BUYER INTENT.",
+      "seconds": 8,
+      "kind": "opener"
+    },
+    {
+      "id": "chapter-10",
+      "eyebrow": "THE EVIDENCE",
+      "headline": "CAPTURE THE ANSWER.",
+      "support": "PRESERVE THE CONTEXT.",
+      "seconds": 8,
+      "kind": "screen"
+    },
+    {
+      "id": "chapter-11",
+      "eyebrow": "THE EVIDENCE",
+      "headline": "FOLLOW THE",
+      "support": "SOURCE SIGNAL.",
+      "seconds": 8,
+      "kind": "network"
+    },
+    {
+      "id": "chapter-12",
+      "eyebrow": "COMPETITIVE INTELLIGENCE",
+      "headline": "WHO GETS",
+      "support": "RECOMMENDED INSTEAD?",
+      "seconds": 8,
+      "kind": "orbit"
+    },
+    {
+      "id": "chapter-13",
+      "eyebrow": "DIAGNOSIS",
+      "headline": "FIND THE GAP.",
+      "support": "NOT JUST A SCORE.",
+      "seconds": 8,
+      "kind": "statement"
+    },
+    {
+      "id": "chapter-14",
+      "eyebrow": "ACTION ENGINE",
+      "headline": "TURN EVIDENCE",
+      "support": "INTO A PRIORITY.",
+      "seconds": 8,
+      "kind": "network"
+    },
+    {
+      "id": "chapter-15",
+      "eyebrow": "CONTROL",
+      "headline": "APPROVE BEFORE",
+      "support": "ANYTHING CHANGES.",
+      "seconds": 7,
+      "kind": "statement"
+    },
+    {
+      "id": "chapter-16",
+      "eyebrow": "IMPLEMENT",
+      "headline": "CHANGE THE SIGNALS",
+      "support": "YOU CONTROL.",
+      "seconds": 8,
+      "kind": "network"
+    },
+    {
+      "id": "chapter-17",
+      "eyebrow": "VERIFICATION",
+      "headline": "DID THE CHANGE",
+      "support": "ACTUALLY SHIP?",
+      "seconds": 7,
+      "kind": "statement"
+    },
+    {
+      "id": "chapter-18",
+      "eyebrow": "REMEASUREMENT",
+      "headline": "RUN THE SAME",
+      "support": "QUESTION AGAIN.",
+      "seconds": 8,
+      "kind": "orbit"
+    },
+    {
+      "id": "chapter-19",
+      "eyebrow": "LOCAL AI",
+      "headline": "LOCATION CHANGES",
+      "support": "THE ANSWER.",
+      "seconds": 8,
+      "kind": "network"
+    },
+    {
+      "id": "chapter-20",
+      "eyebrow": "FOR DECISION MAKERS",
+      "headline": "FROM LOCAL BRANDS",
+      "support": "TO B2B COMPANIES.",
+      "seconds": 7,
+      "kind": "opener"
+    },
+    {
+      "id": "chapter-21",
+      "eyebrow": "OUR PRINCIPLE",
+      "headline": "PROOF, NOT",
+      "support": "GUARANTEES.",
+      "seconds": 7,
+      "kind": "statement"
+    },
+    {
+      "id": "chapter-22",
+      "eyebrow": "YOUR NEXT MOVE",
+      "headline": "BE PRESENT",
+      "support": "IN THE ANSWER.",
+      "seconds": 6,
+      "kind": "closer"
+    },
+    {
+      "id": "chapter-23",
+      "eyebrow": "PROMPTENCE.TECH",
+      "headline": "START FREE",
+      "support": "AI VISIBILITY CHECK.",
+      "seconds": 5,
+      "kind": "closer"
+    }
+  ]
+}
