@@ -1,12 +1,12 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "margaryan-content-studio",
-  "version": "0.3.0",
-  "description": "Create and revise editable motion-graphics film storyboards from ChatGPT without an OpenAI API key; preview and render with Margaryan Motion Studio.",
+  "version": "0.5.0",
+  "description": "ChatGPT-native tools for editable 1–192-second motion-graphics film storyboards, browser-rendered video, and keyless customer film production. An independent Motion Studio plugin.",
   "author": {
     "name": "Margaryan Labs"
   },
-  "homepage": "https://studio.promptence.tech/motion",
+  "homepage": "https://studio.promptence.tech/",
   "repository": "https://github.com/margaryanlabs/Margaryan-distribution",
   "keywords": [
     "video",
@@ -18,19 +18,22 @@
     "com.openai": {
       "interface": {
         "displayName": "Margaryan Content Studio",
-        "shortDescription": "Make editable motion videos from a ChatGPT conversation",
-        "longDescription": "ChatGPT directs the storyboard and edits, while the existing browser-based Motion Studio previews and exports procedurally rendered video. No OpenAI API key required for these tools.",
+        "shortDescription": "Plan and revise real animated films with ChatGPT and Motion Studio",
+        "longDescription": "Create 1–64-second motion storyboards, revise scenes and plan multi-chapter films up to 192 seconds from ChatGPT. Preview and export genuine procedural video in Motion Studio with no separate OpenAI API key. Device browser codecs and rendering performance apply.",
         "developerName": "Margaryan Labs",
         "category": "Productivity",
         "capabilities": [
           "Read",
           "Write"
         ],
-        "websiteURL": "https://studio.promptence.tech/motion",
+        "websiteURL": "https://studio.promptence.tech",
         "defaultPrompt": [
-          "Create a 30-second vertical motion-graphics video for my business.",
-          "Revise the second shot in my existing Motion Studio video."
-        ]
+          "Create a premium 30-second portrait motion-graphics film for my brand. Use only truthful claims.",
+          "Make a 120-second two-act animated film storyboard for my product, with a clear opening and closing.",
+          "Revise scene two in my existing Motion Studio film and change the headline."
+        ],
+        "privacyPolicyURL": "https://studio.promptence.tech/privacy",
+        "termsOfServiceURL": "https://studio.promptence.tech/terms"
       }
     }
   }
