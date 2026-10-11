@@ -37,8 +37,9 @@
     "motion:test-source-camera": "node scripts/motion/test-source-camera.mjs",
     "motion:test-voice-booth": "node scripts/motion/test-voice-booth.mjs",
     "motion:test-bundle": "node scripts/motion/test-portable-bundle.mjs",
-    "prebuild": "npm run motion:test-overlays && npm run motion:test-bundle",
-    "motion:test-overlays": "node scripts/motion/test-image-overlay.mjs"
+    "prebuild": "npm run motion:test-precision && npm run motion:test-overlays && npm run motion:test-bundle",
+    "motion:test-overlays": "node scripts/motion/test-image-overlay.mjs",
+    "motion:test-precision": "node scripts/motion/test-precision-edit.mjs"
   },
   "dependencies": {
     "next": "16.3.3",
