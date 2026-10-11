@@ -30,7 +30,7 @@ import { getLocalMedia, mediaAsFile } from "@/lib/motion/local-media";
 import {
   getMotionSceneSource, registerMotionSceneSource, motionSourceIssues,
   prepareMotionSourceFrame, pauseMotionSourceVideos, syncMotionSourcePlayback,
-  motionProjectHasRealVideo
+  resetMotionPlaybackError, motionPlaybackError
 } from "@/lib/motion/scene-source";
 import styles from "./motion.module.css";
 
@@ -323,6 +323,7 @@ export default function MotionStudioPage() {
       }
     }
     syncPreviewAudio(timeRef.current);
+    resetMotionPlaybackError();
     syncMotionSourcePlayback(project,timeRef.current,true);
     function frame(now: number) {
       const step = Math.min(.1, (now - previous) / 1000);
@@ -579,6 +580,7 @@ export default function MotionStudioPage() {
     let audioSession: ProceduralAudioSession | null = null;
     let raf = 0;
     let recorder: MediaRecorder | null = null;
+    resetMotionPlaybackError();
     try {
       await preloadMotionLogo(project.brand);
       if(needsSpatial)await ensureSpatialRenderer();
@@ -624,6 +626,7 @@ export default function MotionStudioPage() {
           if (currentRecorder.state !== "recording") return;
           const seconds = Math.min(total, (now - began) / 1000);
           syncMotionSourcePlayback(project,seconds,true);
+          if(motionPlaybackError()){currentRecorder.stop();return;}
           if (ctx) drawMotionFrame(ctx, project, seconds, width, height);
           setExportProgress(Math.min(100, Math.round(seconds / total * 100)));
           if (seconds >= total) currentRecorder.stop();
@@ -631,6 +634,7 @@ export default function MotionStudioPage() {
         }
         raf = requestAnimationFrame(render);
       });
+      if(motionPlaybackError())throw Error("Real-source video export blocked: "+motionPlaybackError());
       if (!chunks.length) throw new Error("Recorder returned an empty video. Try a different browser.");
       const ext = mimeType.includes("mp4") ? "mp4" : "webm";
       const blob = new Blob(chunks, { type: mimeType });
