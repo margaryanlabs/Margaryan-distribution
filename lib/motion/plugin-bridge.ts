@@ -13,12 +13,52 @@ import {
  */
 export const CONTENT_STUDIO_VERSION = "0.3.0";
 export const CONTENT_STUDIO_WIDGET_URI = "ui://margaryan-content-studio/film-v3.html";
+
+export const CONTENT_STUDIO_MODEL_INSTRUCTIONS = [
+  "Margaryan Content Studio produces editable procedural motion-graphics STORYBOARDS, not model-rendered photoreal video.",
+  "Use create_motion_film for 1–8 shots / at most 64 seconds, revise_motion_film for edits to an existing MotionProject, and create_motion_feature_film for 9–24 shots / 65–192 seconds.",
+  "When creating a third-party client film, choose brand=labs and use the user's permitted brand name/tagline/accent if provided. Never invent the client's logo or claim rights to third-party material.",
+  "The tools do not synthesize spoken human speech, generate musical compositions with third-party AI, attach local videos or produce a downloadable MP4 server-side.",
+  "For short film, an MCP Apps widget may preview and export browser-rendered animation. For longer films, share the returned review link to the full Sequence Studio for explicit import approval and local rendering.",
+  "Never state that rendering, narration, upload or payment succeeded until separately verified by the actual host or client. Users have their own ChatGPT plan limits. Do not suggest that ChatGPT subscription inference is resold through a standalone website."
+].join(" ");
+const SHORT_FILM_OUTPUT_SCHEMA = {
+  type:"object",additionalProperties:true,
+  properties:{
+    protocol:{type:"string",enum:["motion-chat-v1"]},
+    action:{type:"string",enum:["create","patch"]},
+    title:{type:"string"},
+    scenes:{type:"integer"},durationSeconds:{type:"number"},
+    editorUrl:{type:"string"},chatPack:{type:"object"},
+    previewProject:{type:"object"},videoFileCreated:{type:"boolean"},
+    voiceFileCreated:{type:"boolean"},requiresUserApproval:{type:"boolean"},
+    nextStep:{type:"string"}
+  },
+  required:["protocol","action","title","scenes","durationSeconds",
+    "editorUrl","chatPack","previewProject","videoFileCreated","requiresUserApproval","nextStep"]
+} as const;
+const FEATURE_FILM_OUTPUT_SCHEMA = {
+  type:"object",additionalProperties:true,
+  properties:{
+    protocol:{type:"string",enum:["motion-sequence-v1"]},
+    action:{type:"string",enum:["review-feature-film"]},
+    title:{type:"string"},scenes:{type:"integer"},
+    chapters:{type:"integer"},durationSeconds:{type:"number"},
+    editorUrl:{type:"string"},videoFileCreated:{type:"boolean"},
+    voiceFileCreated:{type:"boolean"},requiresUserApproval:{type:"boolean"},
+    nextStep:{type:"string"}
+  },
+  required:["protocol","action","title","scenes","chapters","durationSeconds",
+    "editorUrl","videoFileCreated","requiresUserApproval","nextStep"]
+} as const;
+
 export const CONTENT_STUDIO_TOOLS = [
   {
     name: "create_motion_film",
     description: "Create an editable 1–8 shot motion-graphics video storyboard from scenes authored in ChatGPT. Returns a one-click Motion Studio draft link. The video is rendered/exported in the editor, NOT by this tool. Do not claim photorealistic AI video, generated voice, or completed MP4.",
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     _meta: { ui: { resourceUri: CONTENT_STUDIO_WIDGET_URI }, "openai/outputTemplate": CONTENT_STUDIO_WIDGET_URI },
+    outputSchema: SHORT_FILM_OUTPUT_SCHEMA,
     inputSchema: {
       type: "object",
       additionalProperties: false,
@@ -58,6 +98,7 @@ export const CONTENT_STUDIO_TOOLS = [
     description: "Prepare a safe, reviewed patch to an existing Motion Studio film, including editable scene copy and generic labs clientBrand name, caption and accent. Use the exact current project; never auto-publish, attach local media or silently replace another film.",
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     _meta: { ui: { resourceUri: CONTENT_STUDIO_WIDGET_URI }, "openai/outputTemplate": CONTENT_STUDIO_WIDGET_URI },
+    outputSchema: SHORT_FILM_OUTPUT_SCHEMA,
     inputSchema: {
       type: "object",
       additionalProperties: false,
@@ -83,6 +124,7 @@ export const CONTENT_STUDIO_TOOLS = [
     name: "create_motion_feature_film",
     description: "Create a 65–192 second long-form editorial motion film from 9–24 original scenes authored by ChatGPT. Auto-groups shots into 2–3 independently editable chapters. Returns a private-fragment Sequence Studio link, NOT a finished MP4. No OpenAI API, cloud video generation, voice or media uploads.",
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    outputSchema: FEATURE_FILM_OUTPUT_SCHEMA,
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {
