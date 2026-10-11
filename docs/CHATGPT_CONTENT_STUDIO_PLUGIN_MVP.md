@@ -183,3 +183,20 @@ Long-form test inputs use preapproved synthetic brand text, not private customer
 - **Production evidence**: Vercel READY commit `271085830854e32cd69cf7a3cf81652aea0a070e`; public pages `/motion` show Local Film Vault, `/privacy` and `/terms` load, `/diagnostics` reports 8/8 real HTTP MCP checks. Production Vercel runtime-log query for last 30 minutes showed no matching logs (not a substitute for tracing physical device video exports).
 
 Still required before taking PR #55 out of draft: a real ChatGPT account must install custom MCP plugin and verify that iframe and file library work on mobile/desktop. Verify actual downloaded video has decoded pixels, correct audio sync, browser codec and expected duration. No payment, cloud accounts, OAuth or feature-gate billing was added.
+
+
+## Video Quality Lab — real 6-second encoded local proof (2026-10-11)
+
+The actual public app now includes **https://studio.promptence.tech/quality-lab**. It is a device-side audiovisual acceptance gate, not a server health screenshot or simulated preview. A single user click triggers:
+
+- The existing `drawMotionFrame` engine composes two original scenes at 720 × 1280 (portrait). A sampled pixel comparison checks nonblank pixels and visible temporal differences.
+- A real `canvas.captureStream(24)` + supported `MediaRecorder` codec records six seconds in real time on the *user's own browser*, without an OpenAI API or video generation service. Optionally mix an original procedural soundtrack through existing `createProceduralSoundtrack`.
+- After recording, verifies video Blob size, local browser `loadedmetadata` support, encoded dimensions, and approximate decoded duration (WebM duration may be indefinite in some browsers; shown as a warning). Presents the actual encoded file in a playback player with a direct download button.
+- Gives the user a *COPY QUALITY REPORT FOR CHATGPT* action containing only check statuses, codec and byte sizes — no original media, images, customer data, browser fingerprints or network credentials. This is the preferred route for debugging quality from Android/desktop without a separate plugin account.
+- The QA page explicitly distinguishes pixel/codec and decoder verification from professional editorial quality, audio synchronization of *customer files*, ChatGPT-installed widget compatibility and other device models. It does not assert these have passed.
+
+The production build compiles this page, but **a real-device QA report is still required**. Do not mark 720p/1080p or codec delivery as verified from Vercel READY alone.
+
+### Main branch reconciliation
+
+When the main project added the public Motion Commission landing/brief flow on commit `4545e7a6d89ae634e6aaa2ba616bc5f7abf42559`, the Content Studio draft became conflict-prone. Current Content Studio draft has been explicitly merged forward and now preserves **both** the Commission banner, brief route, protected machine/CRM endpoints and the ChatGPT-native `/api/mcp`, `/motion/chat-preview`, and Local Film Vault UI. The root package prebuild retains commission tests and adds the content-studio plugin tests. The PR remains DRAFT; do not merge into main without installing the plugin in ChatGPT and obtaining real browser video QA evidence.
