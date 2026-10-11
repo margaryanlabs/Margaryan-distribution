@@ -440,3 +440,229 @@
 .commercialBanner>a:hover{background:#e0f9e8}
 @media(max-width:720px){.commercialBanner{flex-direction:column;align-items:stretch;padding:15px}
  .commercialBanner>a{width:100%}}
+
+
+/* MOTION EDITOR V2 — the live film is the centre of the application.
+ * Rail / canvas / inspector are three independent focus regions.
+ */
+.root{padding:16px clamp(12px,1.7vw,29px) 28px;background:#080e13;color:#e6edf2}
+.header{max-width:1760px;margin-bottom:12px;align-items:center;gap:13px}
+.header h1{font-size:clamp(32px,3.2vw,48px);letter-spacing:-.072em}
+.header h1 em{color:#8ba0ac}
+.kicker{font-size:8px;letter-spacing:.14em;margin-bottom:5px;color:#8196a4}
+.deck{max-width:820px;line-height:1.35;font-size:10px;margin-top:8px;color:#91a4b1}
+.headerRight{font-size:9px}
+.headerRight a{margin-left:6px;padding:9px 11px;border-radius:7px;color:#bdccd2}
+.productionModes{max-width:1760px;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:10px}
+.productionModes button,.productionModes a{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ padding:11px 13px;min-height:51px;text-align:left;border-radius:8px;
+ background:#101923;border:1px solid #283844;
+}
+.productionModes button strong,.productionModes a strong{font-size:9px;letter-spacing:.08em;color:#c8d6dc;white-space:nowrap}
+.productionModes button span,.productionModes a span{font-size:9px;line-height:1.25;color:#8299a6}
+.productionModes button[data-selected=true]{background:#182d2a;border-color:#587a6c;box-shadow:inset 0 2px #83bb9d}
+.productionModes button[data-selected=true] strong{color:#d4f0de}
+.editorProjectBar{
+ display:flex;justify-content:space-between;align-items:center;gap:20px;
+ max-width:1760px;margin:0 auto 9px;background:#111a22;
+ border:1px solid #293c47;border-radius:12px;padding:12px 17px;
+ box-shadow:0 8px 23px #0003;
+}
+.editorProjectTitle{display:flex;flex-direction:column;gap:4px;min-width:0}
+.barStudioTag{font-size:9px;letter-spacing:.16em;color:#9cc8ae;font-weight:900}
+.editorProjectTitle strong{font-size:clamp(12px,1.1vw,16px);letter-spacing:-.015em;color:#eef4f5;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:580px}
+.editorProjectTitle small{color:#95aab3;font-size:10px;letter-spacing:.04em}
+.editorProjectTitle i{font-style:normal;color:#4e6973}
+.barUtilities{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.barUtilities button,.barUtilities a{
+ display:inline-flex;align-items:center;min-height:37px;text-decoration:none;
+ padding:9px 11px;border:1px solid #344953;background:#1a2a33;
+ color:#c2d8d4;border-radius:7px;cursor:pointer;font-size:9px;font-weight:850;
+ letter-spacing:.03em;
+}
+.barUtilities .barActive{background:#2b513b;border-color:#7bb69c;color:#e4ffef}
+.privacyChip{font-size:9px;color:#a2c5ab;white-space:nowrap}
+.notice{max-width:1760px;padding:10px 14px;margin-bottom:9px;border-color:#33424c;
+ border-radius:9px;font-size:10px;line-height:1.4;max-height:68px;overflow-y:auto;
+ background:#111c23;color:#b0c3cb}
+.featureWorkspace{max-width:1760px}
+.featureBack{display:flex;justify-content:space-between;align-items:center;gap:16px;
+ padding:11px 15px;margin-bottom:10px;background:#12231e;
+ border:1px solid #38594a;border-radius:10px}
+.featureBack span{font-size:10px;font-weight:800;letter-spacing:.09em;color:#c4e6d3}
+.featureBack button{min-height:38px;border:1px solid #628b77;border-radius:7px;
+ background:#274936;color:#e5f9ec;font-size:10px;font-weight:850;padding:10px 13px;cursor:pointer}
+
+.workspace{max-width:1760px;grid-template-columns:72px minmax(0,1fr) 344px;
+ grid-template-rows:minmax(0,1fr);gap:10px;align-items:start;min-width:0}
+.editorRail{
+ grid-column:1;grid-row:1;display:flex;flex-direction:column;align-items:stretch;
+ border:1px solid #293b45;background:#0e1920;border-radius:12px;padding:7px 5px;
+ gap:4px;position:sticky;top:12px;z-index:3;box-shadow:0 18px 32px #0005;
+}
+.editorRail button{
+ min-width:0;min-height:65px;display:flex;flex-direction:column;gap:5px;
+ align-items:center;justify-content:center;background:transparent;color:#899fa9;
+ border:1px solid transparent;border-radius:8px;cursor:pointer;
+ transition:background .16s,border-color .16s;
+}
+.editorRail button:hover{background:#1a2c34;color:#e5f0ef}
+.editorRail button.railCurrent{
+ background:linear-gradient(145deg,#294b3b,#1b302e);border-color:#699581;
+ color:#e6ffec;box-shadow:inset 3px 0 #a8e8be;
+}
+.railIcon{font-size:19px;line-height:1.1}
+.railLabel{font-size:8px;letter-spacing:.06em;font-weight:850}
+.railFoot{margin-top:10px;padding:11px 0 5px;border-top:1px solid #2e444c;
+ font-size:8px;font-weight:850;letter-spacing:.07em;line-height:1.55;
+ color:#789a8d;text-align:center}
+
+.sidebar,.stageSection{
+ background:#0e171e;border:1px solid #2d3c47;
+ border-radius:12px;box-shadow:0 18px 37px #0004;
+}
+.sidebar{
+ grid-column:3;grid-row:1;padding:0;display:flex;flex-direction:column;
+ min-width:0;height:calc(100dvh - 195px);min-height:540px;overflow:hidden;
+}
+.inspectorHeader{
+ background:linear-gradient(155deg,#1c2e34,#101b23);border-bottom:1px solid #314650;
+ padding:18px 16px;display:flex;justify-content:space-between;align-items:start;
+ gap:12px;flex:none;
+}
+.inspectorHeader>div{min-width:0;display:grid;gap:5px}
+.inspectorHeader span{font-size:9px;letter-spacing:.12em;color:#8ba9aa;font-weight:850}
+.inspectorHeader strong{font-size:19px;letter-spacing:-.045em;color:#eaf4ef}
+.inspectorHeader>small{color:#9bbca9;font-size:9px;letter-spacing:.07em;border:1px solid #44624f;
+ border-radius:6px;white-space:nowrap;padding:5px 7px}
+.inspectorScroll{overflow:auto;flex:1;min-height:0;scrollbar-color:#436052 transparent;
+ scrollbar-width:thin}
+.panelSection{padding:16px}
+.panelSection[hidden]{display:none!important}
+.panelSection> .sectionHeader:first-child{margin:1px 0 19px}
+.panelSection .field>span,.panelSection .fader{color:#9fb8ba}
+.panelSection .field :is(input,select,textarea){font-size:12px}
+.quickSceneEdit{padding:15px 13px 5px;border:1px solid #426451;border-radius:11px;
+ background:linear-gradient(160deg,#19382b,#132821);margin-bottom:17px}
+.quickSceneEdit .field{margin-bottom:13px}
+.quickSceneEdit .field textarea{background:#0c2118}
+.editorTip{font-size:10px;line-height:1.6;color:#879ca7}
+.deliverIntro{margin:15px;border:1px solid #4e7863;padding:14px;border-radius:11px;
+ background:#153125;display:grid;gap:8px}
+.deliverIntro strong{font-size:16px;letter-spacing:-.035em;color:#d5f9e2}
+.deliverIntro p{font-size:11px;line-height:1.6;color:#a7c6b3;margin:0}
+.deliverIntro>div{display:grid;gap:7px;margin-top:6px}
+.deliverIntro span{font-size:10px;color:#b2e2c0;font-weight:800}
+
+.stageSection{
+ grid-column:2;grid-row:1;padding:12px 14px;min-width:0;
+ height:calc(100dvh - 195px);min-height:540px;overflow-y:auto;
+ scrollbar-color:#365560 transparent;scrollbar-width:thin;
+}
+.stageTop{padding:1px 1px 13px;margin-bottom:9px;border-color:#2b424b;
+ display:flex;align-items:center;justify-content:space-between}
+.stageTop>div:first-child{display:grid;gap:4px}
+.stageTop>div:first-child span{font-size:9px;color:#a5c8b4}
+.stageTop>div:first-child strong{font-size:12px;color:#e3edef;letter-spacing:.03em}
+.stageTopTools{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:5px}
+.stageTop .frameBadge{font-size:8px;font-weight:850;color:#99b1b9;letter-spacing:.07em;
+ border:1px solid #34464d;background:#15242c;border-radius:5px;padding:7px 8px}
+.stageTopTools button{background:#d0f1dc;color:#123025;padding:9px 11px;border:0;
+ border-radius:6px;font-weight:900;font-size:9px;cursor:pointer}
+.stageShell{min-height:0;height:clamp(280px,48dvh,570px);padding:14px;
+ display:flex;align-items:center;justify-content:center;border-radius:10px;
+ background:radial-gradient(ellipse at center,#20313b 0%,#111922 50%,#0a1016 85%);
+ border:1px solid #2d4651;position:relative}
+.stageShell:before{content:"";position:absolute;inset:8px;border:1px solid #ffffff09;
+ border-radius:8px;pointer-events:none}
+.canvas{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;
+ box-shadow:0 18px 51px #000b,0 0 0 1px #6b808055}
+.transport{background:#131f27;border:1px solid #2d424b;border-radius:8px;
+ margin:8px 0 14px;padding:8px 10px;gap:10px}
+.transport button{width:35px;height:35px;border-radius:7px;color:#0c271a;
+ background:#b8e9ce;border-color:#b8e9ce;font-size:12px}
+.transport input{accent-color:#98d5b3}
+.stageSection>.sectionHeader{margin-top:5px}
+.timeline{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-bottom:9px}
+.timeline button{min-height:105px;padding:11px;background:#15232b;
+ border:1px solid #38505b;border-radius:7px;transition:border-color .14s,background .14s}
+.timeline button.selectedShot{background:#173c30;border-color:#91c6a6;
+ box-shadow:inset 0 2px #a5ecc2}
+.timeline button.currentShot:before{background:#9ce5b5}
+.timeline strong{font-size:10px;line-height:1.35}
+.timeline .shotNumber{margin-bottom:13px;font-size:9px}
+.timeline small{bottom:9px;left:10px;font-size:8px}
+.advancedTimeline{border:1px solid #334854;border-radius:9px;background:#111e27;
+ margin:12px 0 16px;padding:0 12px}
+.advancedTimeline>summary{display:flex;justify-content:space-between;align-items:center;
+ flex-wrap:wrap;gap:8px;list-style:none;min-height:43px;cursor:pointer}
+.advancedTimeline>summary::-webkit-details-marker{display:none}
+.advancedTimeline>summary span{font-size:10px;font-weight:900;letter-spacing:.07em;color:#c4dee1}
+.advancedTimeline>summary small{font-size:9px;color:#8299a4}
+.advancedTimeline[open]>summary{border-bottom:1px solid #344c55;margin-bottom:15px}
+.bottom[hidden],.footnote[hidden]{display:none!important}
+.bottom{display:flex;flex-direction:column;align-items:stretch;gap:12px;margin-top:8px;
+ padding:15px;border:1px solid #456e55;border-radius:10px;background:#11281e}
+.bottom b{font-size:11px;color:#dbf7e1}
+.bottom p{font-size:10px;color:#99b6a6}
+.exportActions{justify-content:stretch}
+.exportActions button,.exportActions label{flex:1 0 auto;min-height:38px}
+.exportActions .exportButton{background:#b8efd0;color:#0a2515;flex:1 0 100%;font-size:11px}
+.footnote{color:#8ca3ad;line-height:1.65}
+
+@media(max-width:1210px){
+ .workspace{grid-template-columns:62px minmax(0,1fr) 315px;gap:7px}
+ .editorRail button{min-height:59px}
+ .inspectorHeader{padding:13px 12px}
+ .stageSection{padding:10px}
+ .stageShell{height:clamp(260px,42dvh,500px)}
+ .timeline{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:850px){
+ .root{padding:10px 11px 65px}
+ .header h1{font-size:37px}
+ .deck{font-size:10px}
+ .productionModes{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+ .productionModes button,.productionModes a{padding:9px;flex-direction:column;align-items:flex-start;
+ min-height:49px;gap:5px}
+ .productionModes button strong,.productionModes a strong{font-size:8px;white-space:normal}
+ .productionModes button span,.productionModes a span{display:none}
+ .editorProjectBar{padding:10px;gap:9px}
+ .editorProjectTitle strong{font-size:12px;max-width:45vw}
+ .barUtilities{gap:5px}.privacyChip{display:none}
+ .barUtilities button,.barUtilities a{padding:9px 8px;font-size:8px;min-height:35px}
+ .workspace{display:flex;flex-direction:column;gap:8px}
+ .editorRail{position:sticky;top:0;flex-direction:row;width:100%;order:0;
+ overflow-x:auto;padding:4px;gap:3px;border-radius:9px;scrollbar-width:thin}
+ .editorRail button{min-height:55px;flex:1 0 63px;padding:5px 4px;gap:4px}
+ .editorRail button.railCurrent{box-shadow:inset 0 -3px #a8e8be}
+ .railIcon{font-size:17px}.railLabel{font-size:8px}
+ .railFoot{display:none}
+ .stageSection{order:1;height:auto;max-height:none;overflow:visible;min-height:0;width:100%;
+ border-radius:11px;padding:9px}
+ .stageShell{height:clamp(245px,47dvh,480px);min-height:0;padding:10px}
+ .sidebar{order:2;height:auto;max-height:none;min-height:0;overflow:visible;width:100%}
+ .inspectorScroll{overflow:visible;max-height:none}
+ .panelSection{padding:14px}
+ .timeline{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:540px){
+ .header{padding-bottom:7px}.header h1{font-size:32px}.headerRight{display:none}
+ .editorProjectBar{flex-wrap:wrap}
+ .editorProjectTitle{width:100%}
+ .editorProjectTitle strong{max-width:100%}
+ .barUtilities{justify-content:flex-start;width:100%}
+ .stageTop .frameBadge{font-size:7px;padding:5px}
+ .stageTopTools button{font-size:8px;padding:8px}
+ .stageShell{height:clamp(235px,43dvh,420px)}
+ .timeline{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .timeline button{min-height:88px}
+ .timeline strong{font-size:9px}
+ .advancedTimeline>summary small{font-size:8px}
+ .footer{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+ .editorRail button{transition:none}
+}
