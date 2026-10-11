@@ -6,7 +6,7 @@ import {createKeylessStoryboard,type MotionLanguage} from "./director";
 import {autoPolishMotionProject} from "./quality";
 import {createPromptenceCampaign} from "./signature-promptence";
 
-export type StudioFilmKind="reel"|"campaign"|"product"|"feature"|"proof";
+export type StudioFilmKind="reel"|"campaign"|"product"|"feature"|"proof"|"interaction";
 export interface StudioFilmChoice {
   kind:StudioFilmKind;
   brand:MotionBrand;
@@ -31,6 +31,10 @@ export const STUDIO_FILM_CHOICES=[
    category:"ИСТОРИЯ",format:"16:9",source:"Монтаж по главам",badge:"FEATURE FILM",
    desc:"Большая история бренда, объяснение технологии или презентация для партнёров. Несколько глав и единый фильм.",
    outcome:"Длинный фильм по главам",step:"Перейдите к сборке глав: сохраняйте каждую часть, просматривайте фильм и проверяйте мастер."},
+  {kind:"interaction",id:"06",title:"Кликающее демо",length:"32–34 сек",
+   category:"НОВАЯ ТЕХНОЛОГИЯ",format:"9:16",source:"Настоящие клики и ввод",badge:"REAL CLICKS",
+   desc:"Настоящий курсор нажимает кнопки Promptence, вводит данные и открывает разделы. Запись — через локальный Interaction Cinema, монтаж — в нашей студии.",
+   outcome:"Демонстрация реальных действий",step:"Создаём редактируемый проект с местом для оригинального кликающего видео. Для записи запустите локальный motion:interaction; готовый MP4 и .motion.json импортируйте в студию. Облачной записи без оператора пока нет."},
   {kind:"proof",id:"05",title:"Реальный продукт",length:"10 сек / тест",
    category:"ПРОВЕРИТЬ",format:"16:9",source:"Настоящий Promptence",badge:"SOURCE PROOF",
    desc:"Сначала проверим исходные кадры Promptence на реальном экране. Для короткого проверочного ролика.",
@@ -70,6 +74,21 @@ export function prepareStudioFilm(choice:StudioFilmChoice):MotionProject{
     const polished=autoPolishMotionProject(project).project;
     return sanitizeMotionProject({...polished,format:input.format,filmChrome:"clean",
       title:BRAND_INFO[input.brand].name+" / КИНО-РЕКЛАМА"});
+  }
+  if(input.kind==="interaction"){
+    if(input.brand!=="promptence")throw Error("Режим записи реальных кликов пока работает только с публичным Promptence.");
+    const scenes=Array.from({length:8},(_,i)=>({
+      id:"scene-"+(i+1),kind:"screen" as const,eyebrow:["НАЧАЛО","FREE CHECK","ДОМЕН","КОМПАНИЯ","РЫНОК","КАТЕГОРИЯ","LOCAL AI","ДОКАЗАТЕЛЬСТВА"][i],
+      headline:["ПРОДУКТ В ДЕЙСТВИИ.","ОТКРОЕМ ПРОВЕРКУ.","ВВЕДЁМ САЙТ.","НАЗОВЁМ КОМПАНИЮ.",
+        "ВЫБЕРЕМ РЫНОК.","ДОБАВИМ КАТЕГОРИЮ.","ПЕРЕКЛЮЧИМ РЕЖИМ.","ИЗУЧИМ ИСТОЧНИКИ."][i],
+      support:"Реальные клики и прокрутка: прикрепите проверенную запись Interaction Cinema.",
+      seconds:4,mediaStart:i*4,sourceLayout:"theater" as const,
+      camera:"locked" as const,transition:"cut" as const,titleTreatment:"minimal" as const
+    }));
+    return sanitizeMotionProject({...makeMotionPreset("promptence","portrait"),
+      format:"portrait",language:input.language,qualityMode:"signature",filmChrome:"clean",
+      title:"PROMPTENCE / INTERACTION CINEMA / ORIGINAL CLICK RECORDING",
+      scenes});
   }
   const initial=makeMotionPreset(input.brand,input.format);
   if(input.kind==="feature"){
