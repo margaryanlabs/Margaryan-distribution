@@ -75,7 +75,7 @@ try{
  if(!Number.isFinite(Number(report.format.duration))||Number(report.format.duration)<9.6)throw Error("Export too short");
  const measurement=spawnSync("ffmpeg",["-hide_banner","-v","info","-i",media,
   "-vn","-af","volumedetect","-f","null","-"],{encoding:"utf8",timeout:40000,maxBuffer:400000});
- const dbMatch=measurement.stderr?.match(/mean_volume:\\s*(-?[0-9.]+) dB/);
+ const dbMatch=measurement.stderr?.match(/mean_volume:\s*(-?[0-9.]+) dB/);
  const meanDb=dbMatch?Number(dbMatch[1]):null;
  if(meanDb!==null&&meanDb< -55)throw Error("Export audio is effectively silent");
  const summary={
