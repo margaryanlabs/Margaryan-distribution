@@ -711,11 +711,19 @@ export default function MotionStudioPage() {
       </div>
       <div className={styles.headerRight}>
         <span className={styles.liveDot}/> KEYLESS / LOCAL ENGINE
+        <a href="/motion/commission">Sell a film / client brief ↗</a>
         <a href="/smm">Marketing Command ↗</a>
       </div>
     </header>
 
     {modePicker}
+    <aside className={styles.commercialBanner}>
+      <div><span>MADE IN MARGARYAN LABS / AVAILABLE FOR COMMISSIONS</span>
+        <strong>We design product films — from concept to the original final cut.</strong>
+        <small>Separate client brief · agreed scope and licensing · no invented case-study results</small>
+      </div>
+      <a href="/motion/commission">BUILD A CLIENT BRIEF ↗</a>
+    </aside>
     <nav className={styles.productionNav} aria-label="Motion Studio production stages">
       <a href="#film-sequence" className={styles.productionNavFeatured}>
         <span>01 / FEATURE FILM</span><strong>2–5 MINUTES</strong>

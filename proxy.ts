@@ -33,10 +33,15 @@ export function proxy(request:NextRequest){
  if(machineAuthorized(request))return NextResponse.next();
 
  const path=request.nextUrl.pathname;
- // This exact public surface contains no CRM data, tokens, server AI calls or external effects.
+ // This standalone stateless MCP route only accepts storyboard input. No CRM or billing rights.
+ if(path==="/api/mcp")return NextResponse.next();
+ // Public Motion commission endpoint is also explicitly allowed; its POST is
+ // separately protected with same-origin checks, mandatory Turnstile and
+ // fail-closed verified mail delivery. This exception must NEVER cover /api/leads.
+ // These public routes do not expose CRM data or provider credentials.
  // Do not open other /api, /motion/* or Distribution routes without operator authentication.
- if(path==="/api/mcp")return NextResponse.next(); // Stateless public tool, no private Distribution data or side effects.
- if((path==="/motion"||path==="/motion/proof"||path==="/motion/chat-preview")||(path==="/api/motion/storyboard"||path==="/api/motion/captions"||path==="/api/motion/signature")||/^\/motion\/brands\/(?:promptence|meqena|ingu|veto-sport|veto-private|hay-engine|tun-component-preview)\.svg$/.test(path))return NextResponse.next();
+ if((path==="/motion"||path==="/motion/proof"||path==="/motion/commission"||path==="/motion/chat-preview")||
+   (path==="/api/motion/storyboard"||path==="/api/motion/captions"||path==="/api/motion/signature"||path==="/api/motion/commission")||/^\/motion\/brands\/(?:promptence|meqena|ingu|veto-sport|veto-private|hay-engine|tun-component-preview)\.svg$/.test(path))return NextResponse.next();
  const expectedUser=process.env.DISTRIBUTION_BASIC_USER;
  const expectedPassword=process.env.DISTRIBUTION_BASIC_PASSWORD;
  const operatorAuthConfigured=Boolean(expectedUser&&expectedPassword);
