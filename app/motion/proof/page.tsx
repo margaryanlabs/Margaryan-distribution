@@ -3,6 +3,7 @@
 import {useCallback,useEffect,useRef,useState} from "react";
 import {drawProofFrame,PROOF_SECONDS,type ProofMedia} from "@/lib/motion/proof-film";
 import {getLoadedMotionLogo,preloadMotionLogo} from "@/lib/motion/brand-assets";
+import {createProofAudioSession,inspectProofAudio} from "@/lib/motion/proof-audio";
 import styles from "./proof.module.css";
 
 type ProofBridge = Window & {
@@ -16,8 +17,8 @@ const VIDEO_TYPES=new Set(["video/mp4","video/webm"]);
 /** Seek the actual browser-decoded video frame for its exact film time.
  * Called before deterministic offline frame export and during timeline scrubbing.
  * Browser preview during playback uses direct video.play for smooth decode. */
-async function seekSourceFrame(media:ProofMedia,seconds:number):Promise<void>{
-  if(!(media instanceof HTMLVideoElement)||seconds>=7.55)return;
+async function seekSourceFrame(media:ProofMedia,seconds:number,force=false):Promise<void>{
+  if(!(media instanceof HTMLVideoElement)||(seconds>=7.55&&!force))return;
   const end=Math.max(.01,media.duration-.11);
   const target=Math.min(Math.max(0,seconds),end);
   if(media.readyState>=2&&Math.abs(media.currentTime-target)<.006)return;
@@ -44,9 +45,18 @@ const makeCanvas=(width:number,height:number)=>{
 export default function ProofDirectorPage(){
   const [source,setSource]=useState<ProofMedia|null>(null);
   const [sourceName,setSourceName]=useState("");
+  const [voiceFile,setVoiceFile]=useState<File|null>(null);
+  const [musicFile,setMusicFile]=useState<File|null>(null);
+  const [voiceUrl,setVoiceUrl]=useState("");
+  const [musicUrl,setMusicUrl]=useState("");
+  const [voiceInfo,setVoiceInfo]=useState("");
+  const [musicInfo,setMusicInfo]=useState("");
+  const voiceElement=useRef<HTMLAudioElement>(null);
+  const musicElement=useRef<HTMLAudioElement>(null);
   const [logo,setLogo]=useState<HTMLImageElement|null>(null);
   const [seconds,setSeconds]=useState(0);
   const [playing,setPlaying]=useState(false);
+  const [showRaw,setShowRaw]=useState(false);
   const [exporting,setExporting]=useState(false);
   const [notice,setNotice]=useState("Upload a real, approved Promptence screenshot. Only actual screenshot pixels will enter the movie.");
   const canvas=useRef<HTMLCanvasElement>(null);
@@ -59,6 +69,32 @@ export default function ProofDirectorPage(){
   const logoRef=useRef<HTMLImageElement|null>(null);
   const latestSeconds=useRef(0);
   const exportingRef=useRef(false);
+  useEffect(()=>{
+    const url=voiceFile?URL.createObjectURL(voiceFile):"";
+    setVoiceUrl(url);
+    return()=>{if(url)URL.revokeObjectURL(url);};
+  },[voiceFile]);
+  useEffect(()=>{
+    const url=musicFile?URL.createObjectURL(musicFile):"";
+    setMusicUrl(url);
+    return()=>{if(url)URL.revokeObjectURL(url);};
+  },[musicFile]);
+  // Preview audio is audible only during explicit user playback. Playback
+  // uses original audio files without the speed-ups of earlier bad films.
+  useEffect(()=>{
+    const elements=[voiceElement.current,musicElement.current];
+    if(!playing||exporting){
+      for(const el of elements)el?.pause();
+      return;
+    }
+    for(const [i,el] of elements.entries()){
+      if(!el||!el.src)continue;
+      el.volume=i===0?.95:voiceFile?.12:.35;
+      try{el.currentTime=Math.max(0,Math.min(latestSeconds.current,el.duration||10));}catch{}
+      void el.play().catch(()=>setNotice("Audio preview blocked by device autoplay; tap Play again."));
+    }
+    return()=>{for(const el of elements)el?.pause();};
+  },[playing,exporting,voiceUrl,musicUrl,voiceFile]);
 
   useEffect(()=>{
     void preloadMotionLogo("promptence").then(()=>{
@@ -70,8 +106,17 @@ export default function ProofDirectorPage(){
     const target=canvas.current,src=sourceRef.current;
     if(!target||!src)return;
     const ctx=target.getContext("2d",{alpha:false});
-    if(ctx)drawProofFrame(ctx,src,logoRef.current,at,target.width,target.height);
-  },[]);
+    if(ctx){
+      if(showRaw){
+        ctx.fillStyle="#07110D";ctx.fillRect(0,0,target.width,target.height);
+        const sw=src instanceof HTMLVideoElement?src.videoWidth:src.naturalWidth;
+        const sh=src instanceof HTMLVideoElement?src.videoHeight:src.naturalHeight;
+        const scale=Math.min(target.width/sw,target.height/sh);
+        const w=sw*scale,h=sh*scale;
+        if(w>0&&h>0)ctx.drawImage(src,(target.width-w)/2,(target.height-h)/2,w,h);
+      } else drawProofFrame(ctx,src,logoRef.current,at,target.width,target.height);
+    }
+  },[showRaw]);
   useEffect(()=>{
     sourceRef.current=source;
     paint(latestSeconds.current);
@@ -161,18 +206,65 @@ export default function ProofDirectorPage(){
   function seek(t:number){
     setPlaying(false);latestSeconds.current=t;setSeconds(t);
     const src=sourceRef.current;
-    if(src)void seekSourceFrame(src,t).then(()=>paint(t)).catch(err=>setNotice(String(err)));
+    if(src)void seekSourceFrame(src,t,showRaw).then(()=>paint(t)).catch(err=>setNotice(String(err)));
+  }
+  async function exportContactSheet(){
+    const source=sourceRef.current;
+    if(!source||exportingRef.current)return;
+    setPlaying(false);setExporting(true);exportingRef.current=true;
+    try{
+      // 3x3 preview demonstrates movement over time, not mere MP4 metadata.
+      const shots=[.38,1.3,2.13,2.71,3.62,4.94,6.24,7.82,9.25];
+      const tile=makeCanvas(270,480);
+      const ctx=tile.getContext("2d",{alpha:false});
+      if(!ctx)throw Error("Cannot compose review contact sheet");
+      const sheet=makeCanvas(3*270,3*520);
+      const board=sheet.getContext("2d",{alpha:false});
+      if(!board)throw Error("Cannot create review grid");
+      board.fillStyle="#09130F";board.fillRect(0,0,sheet.width,sheet.height);
+      for(const [i,time] of shots.entries()){
+        await seekSourceFrame(source,time);
+        drawProofFrame(ctx,source,logoRef.current,time,270,480);
+        const x=(i%3)*270,y=Math.floor(i/3)*520;
+        board.drawImage(tile,x,y);
+        board.fillStyle="#0C2018";board.fillRect(x,y+480,270,40);
+        board.fillStyle="#C8EADA";board.font="700 17px Arial,sans-serif";
+        board.fillText("FRAME  "+String(i+1).padStart(2,"0")+" / "+time.toFixed(2)+"s",x+16,y+507);
+      }
+      const blob=await new Promise<Blob>((ok,bad)=>sheet.toBlob(v=>v?ok(v):bad(Error("Sheet export failed")),"image/png"));
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");a.href=url;a.download="promptence-10s-director-review-9-frames.png";
+      document.body.appendChild(a);a.click();a.remove();
+      window.setTimeout(()=>URL.revokeObjectURL(url),30000);
+      setNotice("Nine-frame review sheet created. Compare early, mid and closing frames critically. This is not an automated aesthetic certification.");
+    }catch(err){setNotice("Review sheet failed: "+(err instanceof Error?err.message:String(err)));}
+    finally{exportingRef.current=false;setExporting(false);}
+  }
+  async function attachAudio(event:React.ChangeEvent<HTMLInputElement>,kind:"voice"|"music"){
+    const file=event.target.files?.[0];
+    if(!file)return;
+    try{
+      const info=await inspectProofAudio(file,kind);
+      if(kind==="voice"){setVoiceFile(file);setVoiceInfo(file.name+" · "+info.seconds.toFixed(1)+"s");}
+      else{setMusicFile(file);setMusicInfo(file.name+" · "+info.seconds.toFixed(1)+"s");}
+      setNotice(kind==="voice"?"Recording loaded locally for review. Human voice quality approval remains required.":"Licensed soundtrack loaded. Confirm rights before distribution.");
+    }catch(e){setNotice("Audio rejected: "+(e instanceof Error?e.message:String(e)));}
   }
   async function exportPreview(){
     if(!sourceRef.current||exportingRef.current)return;
     const temp=makeCanvas(540,960);
     const ctx=temp.getContext("2d",{alpha:false});
     if(!ctx){setNotice("Review canvas unavailable");return;}
-    const type=["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"].find(m=>MediaRecorder.isTypeSupported(m));
+    const type=[(voiceFile||musicFile)?"video/webm;codecs=vp9,opus":"video/webm;codecs=vp9",(voiceFile||musicFile)?"video/webm;codecs=vp8,opus":"video/webm;codecs=vp8","video/webm"].find(m=>MediaRecorder.isTypeSupported(m));
     if(!type){setNotice("This browser cannot export a WebM review. Use Chromium + the offline MP4 master.");return;}
     setPlaying(false);exportingRef.current=true;setExporting(true);
+    let mixedAudio:Awaited<ReturnType<typeof createProofAudioSession>>=null;
     try{
-      const stream=temp.captureStream(30);
+      mixedAudio=await createProofAudioSession(voiceFile,musicFile);
+      const videoStream=temp.captureStream(30);
+      const stream=mixedAudio
+        ? new MediaStream([...videoStream.getVideoTracks(),mixedAudio.track])
+        : videoStream;
       const chunks:BlobPart[]=[];
       const recorder=new MediaRecorder(stream,{mimeType:type,videoBitsPerSecond:6_000_000});
       recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
@@ -194,6 +286,9 @@ export default function ProofDirectorPage(){
         await sourceRef.current.play();
       }
       recorder.start(250);
+      // Start audio only after the source video is ready and the recorder
+      // actually starts. Creating it earlier caused unwanted leading silence.
+      mixedAudio?.start();
       raf=requestAnimationFrame(frame);
       await finished.finally(()=>cancelAnimationFrame(raf));
       if(sourceRef.current instanceof HTMLVideoElement)sourceRef.current.pause();
@@ -201,14 +296,20 @@ export default function ProofDirectorPage(){
       if(blob.size<10000)throw Error("Review export was empty");
       const href=URL.createObjectURL(blob);
       const a=document.createElement("a");a.href=href;
-      a.download="promptence-proof-10s-review-SILENT.webm";document.body.appendChild(a);a.click();a.remove();
+      a.download="promptence-proof-10s-review"+(mixedAudio?"-recorded-audio":"-silent")+".webm";document.body.appendChild(a);a.click();a.remove();
       window.setTimeout(()=>URL.revokeObjectURL(href),60_000);
-      setNotice("Review-only WebM exported. Silent by design: no robot voice, no disguised upscale. Use offline FFmpeg mastering for H.264 + owner-approved narration.");
+      setNotice(mixedAudio?"Review WebM exported with user-supplied voice/music. Listen for natural pacing and mix before publishing.":"Silent review WebM exported. No robotic or generated voice was added.");
     }catch(e){setNotice("Export failed: "+(e instanceof Error?e.message:String(e)));}
-    finally{if(sourceRef.current instanceof HTMLVideoElement)sourceRef.current.pause();exportingRef.current=false;setExporting(false);}
+    finally{
+      if(sourceRef.current instanceof HTMLVideoElement)sourceRef.current.pause();
+      if(mixedAudio)await mixedAudio.stop().catch(()=>{});
+      exportingRef.current=false;setExporting(false);
+    }
   }
 
   return <main className={styles.shell}>
+    <audio ref={voiceElement} src={voiceUrl} preload="auto" aria-hidden="true"/>
+    <audio ref={musicElement} src={musicUrl} preload="auto" aria-hidden="true"/>
     <header className={styles.header}>
       <div><a className={styles.back} href="/motion?mode=cinematic">← MOTION OS</a>
         <p className={styles.kicker}>MARGARYAN LABS / SOURCE-FIRST FILM PRODUCTION</p>
@@ -225,6 +326,10 @@ export default function ProofDirectorPage(){
             <strong>NO FABRICATED SCREENS.</strong>
             <span>Add authentic product footage or a screenshot to preview the film.</span>
           </div>}
+        </div>
+        <div className={styles.compare} role="group" aria-label="Compare genuine source footage with directed composition">
+          <button type="button" aria-pressed={!showRaw} onClick={()=>setShowRaw(false)} disabled={!source||exporting}>DIRECTED CUT</button>
+          <button type="button" aria-pressed={showRaw} onClick={()=>setShowRaw(true)} disabled={!source||exporting}>RAW SOURCE / BEFORE</button>
         </div>
         <div className={styles.transport}>
           <button type="button" disabled={!source||exporting}
@@ -259,9 +364,24 @@ export default function ProofDirectorPage(){
           <p>Every preview frame is drawn for its exact time. No pre-rendered PNG slideshow, random green HUD elements, fictitious rankings or client results.</p>
         </div>
         <div className={styles.section}>
-          <span className={styles.overline}>03 / FILM GATE</span>
+          <span className={styles.overline}>03 / RECORDING & MUSIC</span>
+          <h2>No more robotic voices.</h2>
+          <p>Add a real voice recording or a licensed, owner-approved AI voice file (natural timing; max 9.8s). You can also add a licensed music file. Both remain in this browser tab, synchronized with the shot preview and mixed into the WebM review export.</p>
+          <label className={styles.upload}><span>VOICEOVER / WAV · MP3 · M4A</span>
+            <input type="file" data-testid="proof-voice-input" accept="audio/*" disabled={exporting} onChange={e=>void attachAudio(e,"voice")}/>
+          </label>
+          {voiceFile&&<div className={styles.source}>VOICE / {voiceInfo} <button className={styles.clear} type="button" onClick={()=>{setVoiceFile(null);setVoiceInfo("");}}>Remove</button></div>}
+          <label className={styles.upload}><span>LICENSED MUSIC / OPTIONAL</span>
+            <input type="file" data-testid="proof-music-input" accept="audio/*" disabled={exporting} onChange={e=>void attachAudio(e,"music")}/>
+          </label>
+          {musicFile&&<div className={styles.source}>SCORE / {musicInfo} <button className={styles.clear} type="button" onClick={()=>{setMusicFile(null);setMusicInfo("");}}>Remove</button></div>}
+          <p className={styles.hint}>Sound source remains entirely local. No voice cloning, robot TTS or automatic speech acceleration. Listen on headphones before approving.</p>
+        </div>
+        <div className={styles.section}>
+          <span className={styles.overline}>04 / FILM GATE</span>
           <h2>Export a review — not an ad.</h2>
-          <p>This browser proof exports a 540×960 WebM with no synthesized voice. If video is supplied, its decoded frames replace still images. A final 1080×1920 MP4 is produced on a workstation with an approved recording and FFmpeg.</p>
+          <p>The 540×960 WebM review now includes your voice/music when supplied. If you imported footage, its actual decoded frames are used. A native 1080×1920 H.264/AAC master still requires the workstation exporter.</p>
+          <button className={styles.sheetButton} disabled={!source||exporting} onClick={()=>void exportContactSheet()}>REVIEW 9 KEY FRAMES ↗</button>
           <button className={styles.export} disabled={!source||exporting} onClick={exportPreview}>
             {exporting?"ENCODING…":"EXPORT 10s SILENT REVIEW ↗"}
           </button>
