@@ -84,7 +84,7 @@ async function run():Promise<Check[]> {
       seconds:7.5
     }));
     const r=await call("tools/call",{name:"create_motion_feature_film",arguments:{
-      title:"CONTENT STUDIO / 120-SECOND FILM",brand:"labs",format:"portrait",
+      title:"CONTENT STUDIO / 120-SECOND FILM",brand:"labs",client_brand_name:"NORTH STAR",client_brand_caption:"BRAND FILMS THAT MOVE",client_brand_accent:"#B7C5E9",format:"portrait",
       language:"en",style:"cinematic",chapter_titles:["THE IDEA","THE RESPONSE"],
       scenes:demoScenes
     }},27);
@@ -95,7 +95,13 @@ async function run():Promise<Check[]> {
       !film.editorUrl.startsWith("https://studio.promptence.tech/motion?")||
       !film.editorUrl.includes("#motion-sequence-v1="))
       throw Error("Long-form film did not return a safe 120s review link");
-    checks.push(card("120S MULTI-CHAPTER FILM",true,"16 shots / 2 acts / 120s / private editor review link",r.milliseconds));
+    const serialized=film.editorUrl.split("#motion-sequence-v1=")[1];
+    const manifest=JSON.parse(Buffer.from(serialized,"base64url").toString("utf8")) as {
+      chapters?: Array<{project?:{clientBrand?:{name?:string}}}>
+    };
+    if(manifest.chapters?.length!==2||!manifest.chapters.every(ch=>ch.project?.clientBrand?.name==="NORTH STAR"))
+      throw Error("Client name not preserved in every film chapter");
+    checks.push(card("120S MULTI-CHAPTER FILM",true,"16 shots / 2 acts / NORTH STAR customer identity / private review link",r.milliseconds));
   }catch(e){checks.push(card("120S MULTI-CHAPTER FILM",false,String(e),0));}
   try {
     const before=Date.now();
