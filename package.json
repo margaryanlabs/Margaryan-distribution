@@ -38,7 +38,10 @@
     "motion:test-voice-booth": "node scripts/motion/test-voice-booth.mjs",
     "motion:test-bundle": "node scripts/motion/test-portable-bundle.mjs",
     "prebuild": "npm run motion:test-overlays && npm run motion:test-bundle",
-    "motion:test-overlays": "node scripts/motion/test-image-overlay.mjs"
+    "motion:test-overlays": "node scripts/motion/test-image-overlay.mjs",
+    "motion:test-plugin": "node scripts/motion/test-content-studio-plugin.mjs",
+    "motion:test-sequence": "node scripts/motion/test-film-sequence.mjs",
+    "motion:sequence": "node scripts/motion/render-sequence.mjs"
   },
   "dependencies": {
     "next": "16.3.3",
