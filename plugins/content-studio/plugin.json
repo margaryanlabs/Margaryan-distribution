@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "margaryan-content-studio",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Create and revise editable motion-graphics film storyboards from ChatGPT without an OpenAI API key; preview and render with Margaryan Motion Studio.",
   "author": {
     "name": "Margaryan Labs"
