@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BRAND_INFO, DEFAULT_VISUAL, sanitizeVisual,
   type MotionBrand, type MotionProject, type MotionVisualControls
@@ -19,6 +19,7 @@ type Props={
   project:MotionProject;
   selectedIndex:number;
   busy:boolean;
+  ready:boolean;
   onApplyProject:(next:MotionProject,reason:string)=>void;
   onScreenshot:(file:File)=>Promise<void>;
   onSceneMedia:(mediaId:string,file:File)=>Promise<void>;
@@ -40,13 +41,14 @@ async function copy(value:string){
   await navigator.clipboard.writeText(value);
 }
 export default function OperatorDesk({
-  project,selectedIndex,busy,onApplyProject,onScreenshot,onSceneMedia,onVoice,onMusic,onCreateBlank,onOpenQuick
+  project,selectedIndex,busy,ready,onApplyProject,onScreenshot,onSceneMedia,onVoice,onMusic,onCreateBlank,onOpenQuick
 }:Props){
   const [tab,setTab]=useState<"chat"|"media"|"grade">("chat");
   const [source,setSource]=useState("");
   const [inboxLoading,setInboxLoading]=useState(false);
   const [preview,setPreview]=useState<ChatOperatorPreview|null>(null);
-  const [notice,setNotice]=useState("No API key or autonomous agent. Paste a Motion Chat Pack generated in ChatGPT and approve it.");
+  const previousProject=useRef(project);
+  const [notice,setNotice]=useState("Keyless Motion Operator: connected projects open as a reviewed draft; manual Chat Packs remain supported.");
   const [undo,setUndo]=useState<MotionProject|null>(null);
   const [media,setMedia]=useState<LocalMediaRecord[]>([]);
   const [role,setRole]=useState<MediaRole>("screenshot");
@@ -69,7 +71,30 @@ export default function OperatorDesk({
     setAssetURL(url);
     return()=>URL.revokeObjectURL(url);
   },[selected]);
-  useEffect(()=>{setPreview(null);},[source,project]);
+  useEffect(()=>{
+    if(previousProject.current!==project){previousProject.current=project;setPreview(null);}
+  },[project]);
+  // URL-fragment film payload stays client-side. Never writes without approval.
+  useEffect(()=>{
+    if(!ready||!window.location.hash.startsWith("#motion-chat="))return;
+    const encoded=window.location.hash.slice("#motion-chat=".length);
+    window.history.replaceState(window.history.state,"",window.location.pathname+window.location.search);
+    try{
+      if(encoded.length<16||encoded.length>18_000||!/^[A-Za-z0-9_-]+$/.test(encoded))
+        throw Error("Invalid or oversized ChatGPT project link");
+      const b64=encoded.replace(/-/g,"+").replace(/_/g,"/")+"=".repeat((4-encoded.length%4)%4);
+      const bytes=Uint8Array.from(atob(b64),char=>char.charCodeAt(0));
+      if(bytes.byteLength>12_000)throw Error("ChatGPT storyboard exceeds 12KB limit");
+      const json=new TextDecoder("utf-8",{fatal:true}).decode(bytes);
+      const staged=previewChatMotionPack(JSON.parse(json),project);
+      setSource(json);setPreview(staged);setTab("chat");
+      setNotice("CHATGPT → MOTION: "+staged.changes.join(" · ")+
+        ". Review below and click APPLY APPROVED CHANGES. Nothing was applied automatically.");
+    }catch(error){
+      setTab("chat");setPreview(null);
+      setNotice("CHATGPT LINK REJECTED: "+(error instanceof Error?error.message:"Invalid project"));
+    }
+  },[ready,project]);
   async function loadPublicChatCut(){
     if(busy||inboxLoading)return;
     setInboxLoading(true);setPreview(null);
@@ -151,7 +176,7 @@ export default function OperatorDesk({
   return <section className={styles.shell} aria-label="Chat operator and local media workspace">
     <div className={styles.head}><span>00 / PRODUCTION WORKSPACE</span><strong>CHAT → FILM</strong></div>
     <h2>Motion Operator.</h2>
-    <p className={styles.dek}>Create without media, bring approved source files, or direct the existing film from ChatGPT. Everything is explicit, editable and keyless.</p>
+    <p className={styles.dek}>Create without media, import approved files, or open a ChatGPT-directed film in one click. Preview and approve all changes.</p>
     <div className={styles.tabRow} role="tablist" aria-label="Operator tools">
       {(["chat","media","grade"] as const).map(name=><button type="button"
         role="tab" aria-selected={tab===name} key={name}
@@ -168,6 +193,10 @@ export default function OperatorDesk({
       </div>
       <div className={styles.actionGrid}>
         <button type="button" disabled={busy} onClick={onCreateBlank}>◈ BUILD WITHOUT MATERIALS</button>
+        <button type="button" onClick={()=>{
+          const endpoint=new URL("/api/motion/mcp",window.location.origin).toString();
+          void copy(endpoint).then(()=>setNotice("MCP endpoint copied. Register as a custom app if your ChatGPT plan supports it; connection is not automatic.")).catch(e=>setNotice(String(e)));
+        }}>↗ COPY CHATGPT MCP URL</button>
         <button type="button" onClick={()=>{void copy(JSON.stringify(createChatMotionPack(project),null,2))
           .then(()=>setNotice("Full Motion Chat Pack copied. Paste it into our ChatGPT conversation so I can edit your existing project."))
           .catch(e=>setNotice(String(e)));}}>COPY FULL PROJECT ↗</button>
@@ -177,10 +206,10 @@ export default function OperatorDesk({
         }),null,2)).then(()=>setNotice("Scene-specific patch template copied. Ask ChatGPT to modify its set fields."))
           .catch(e=>setNotice(String(e)));}}>COPY SHOT PATCH TEMPLATE</button>
       </div>
-      <p className={styles.hint}>For private edits, paste the current Chat Pack in ChatGPT with your instructions. I return either a complete <code>create</code> film or a targeted <code>patch</code>. No API calls or agent. Paste the result below. Media files cannot travel inside JSON.</p>
+      <p className={styles.hint}>For one-click ChatGPT handoff, connect the MCP URL above using the ChatGPT custom app flow (if available on your plan). For manual edits, paste the current Chat Pack in ChatGPT with your instructions. I return either a complete <code>create</code> film or a targeted <code>patch</code>. No API calls or agent. Paste the result below. Media files cannot travel inside JSON.</p>
       <label className={styles.label}>PASTE MOTION CHAT PACK / JSON
         <textarea spellCheck={false} rows={7} value={source}
-          onChange={e=>setSource(e.target.value)}
+          onChange={e=>{setSource(e.target.value);setPreview(null);}}
           placeholder={'{\n  "protocol": "motion-chat-v1",\n  "action": "patch",\n  "expectedBrand": "promptence",\n  "expectedTitle": "EXACT PROJECT TITLE",\n  "changes": [{ "target": "scene", "index": 1, "set": { "headline": "A NEW MESSAGE." } }]\n}'}/>
       </label>
       <label className={styles.import}>IMPORT PACK FROM FILE
@@ -188,7 +217,7 @@ export default function OperatorDesk({
           onChange={e=>{const f=e.currentTarget.files?.[0];e.currentTarget.value="";
             if(!f)return;
             if(f.size>100_000){setNotice("JSON over 100KB rejected.");return;}
-            void f.text().then(text=>{setSource(text);setNotice("Pack loaded from file. Click PREVIEW to validate.");})
+            void f.text().then(text=>{setSource(text);setPreview(null);setNotice("Pack loaded from file. Click PREVIEW to validate.");})
               .catch(e=>setNotice(String(e)));
           }}/>
       </label>

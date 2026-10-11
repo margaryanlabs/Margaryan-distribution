@@ -222,3 +222,18 @@ npm run dev
 External side effects are disabled by default with `EXECUTION_ENABLED=false`.
 
 Realtime voice runs separately in `voice-gateway` because Twilio Media Streams use a long-lived WebSocket connection.
+
+## Motion ↔ ChatGPT (MCP handoff)
+
+The existing Motion OS exposes four bounded, stateless, read-only tools at
+`POST /api/motion/mcp`. They create editable portfolio-brand storyboards,
+validate ChatGPT-authored projects and preview scoped edits **without an OpenAI
+API key**. Tool results contain a one-click link opening Cinematic Studio with
+an explicit human review / apply / undo gate; no JSON paste is necessary.
+
+This is NOT a public plugin listing or cloud text-to-video render: media stays
+locally approved, MP4 export still uses the browser/workstation, and custom
+multi-tenant user accounts and render workers are future work. Details,
+security boundaries and test procedure: [Motion ChatGPT MCP handoff](docs/MOTION_CHATGPT_MCP_HANDOFF.md).
+
+Run `npm run motion:test-mcp` to exercise the bridge contract.
