@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import {assertReadableFrame,meanPixelDifference,verifyNovelShot,
   PROMPTENCE_SECTIONS} from "./source-capture-gates.mjs";
 import {criticalDirectorNotes,assertDirectorRelease,
-  assertApprovedSourceManifest,assertSourceFraming,visibleSourceFraction} from "./release-quality-gates.mjs";
+  assertApprovedSourceManifest,assertApprovedInteractionManifest,assertSourceFraming,visibleSourceFraction} from "./release-quality-gates.mjs";
 
 assert.equal(PROMPTENCE_SECTIONS.length,6);
 assert.equal(new Set(PROMPTENCE_SECTIONS.map(x=>x.assetId)).size,6);
@@ -38,4 +38,24 @@ assert.throws(()=>assertApprovedSourceManifest({...manifest,approval:{...manifes
 assert.throws(()=>assertApprovedSourceManifest(manifest,[id],{[id]:"b".repeat(64)},"promptence"),/bytes changed/);
 assert.throws(()=>assertApprovedSourceManifest({...manifest,shots:[{...manifest.shots[0],visualDifference:0.2}]},[id],{[id]:hash},"promptence"),/did not pass/);
 assert.throws(()=>assertApprovedSourceManifest(manifest,["unknown-source"],{}, "promptence"),/source/);
+const realId="promptence-interaction-take-01";
+const realHash="e".repeat(64);
+const browserEvidence={
+ schema:"motion-interaction-cinema/v1",brand:"promptence",
+ sourceUrl:"https://promptence.tech/",capturedFromRealBrowser:true,
+ providerAPIsUsed:false,readOnly:true,submitPrevented:true,
+ mediaId:realId,originalVideo:{sha256:realHash},
+ duration:34.167,frames:820,
+ events:["focus","click","type","click"].map((kind,i)=>({
+  kind,action:"safe-"+i,timestampSeconds:i*6+1,source:"live-browser",
+  publicReadOnly:true,submitted:false
+ })),
+ approval:{status:"APPROVED",sourceRights:true,privacyReviewed:true,
+ copyAndProductTruthReviewed:true,voiceReviewed:true,musicReviewed:true}
+};
+assert.equal(assertApprovedInteractionManifest(browserEvidence,[realId],{[realId]:realHash},"promptence").realUiEvents,4);
+assert.throws(()=>assertApprovedInteractionManifest({...browserEvidence,approval:{...browserEvidence.approval,status:"PENDING_HUMAN_REVIEW"}},[realId],{[realId]:realHash},"promptence"),/human review/);
+assert.throws(()=>assertApprovedInteractionManifest(browserEvidence,[realId],{[realId]:"b".repeat(64)},"promptence"),/original bytes/);
+assert.throws(()=>assertApprovedInteractionManifest({...browserEvidence,events:[{...browserEvidence.events[0],submitted:true},...browserEvidence.events.slice(1)]},[realId],{[realId]:realHash},"promptence"),/unsafe/);
+assert.throws(()=>assertApprovedInteractionManifest({...browserEvidence,providerAPIsUsed:true},[realId],{[realId]:realHash},"promptence"),/unsafe/);
 console.log("Motion first-visit source, visual novelty, fail-closed release and human approval contracts PASS");
