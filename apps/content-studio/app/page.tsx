@@ -9,8 +9,20 @@ export default function Home(){return <main style={{minHeight:"100vh",maxWidth:1
 <div style={{display:"flex",gap:12,flexWrap:"wrap",marginTop:30}}>
 <Link href="/connect" style={{background:"#d7e5f8",color:"#101b2a",padding:"13px 18px",borderRadius:6,textDecoration:"none",fontWeight:800}}>CONNECT TO CHATGPT ↗</Link>
 <Link href="/motion" style={{background:"#e0e7f0",color:"#11151e",padding:"13px 18px",borderRadius:6,textDecoration:"none",fontWeight:700}}>OPEN MOTION STUDIO ↗</Link>
-<Link href="/motion/chat-preview" style={{border:"1px solid #536078",padding:"13px 18px",borderRadius:6,textDecoration:"none"}}>PREVIEW ENGINE ↗</Link></div>
+<Link href="/motion/chat-preview" style={{border:"1px solid #536078",padding:"13px 18px",borderRadius:6,textDecoration:"none"}}>PREVIEW ENGINE ↗</Link>
+<Link href="/motion#film-sequence" style={{border:"1px solid #536078",padding:"13px 18px",borderRadius:6,textDecoration:"none"}}>FEATURE FILM STUDIO / 120–300S ↗</Link></div>
 <section style={{marginTop:95,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:20}}>
 {facts.map(([head,copy])=><article key={head} style={{borderTop:"1px solid #354050",paddingTop:20}}><b style={{fontSize:12,letterSpacing:".06em"}}>{head}</b><p style={{color:"#a6b1c0",lineHeight:1.7}}>{copy}</p></article>)}</section>
+<section style={{borderTop:"1px solid #334052",marginTop:60,paddingTop:27}}>
+<div style={{fontSize:11,letterSpacing:".15em",fontWeight:800,color:"#879fbf"}}>NEW / MULTI-CHAPTER FILM ENGINE</div>
+<h2 style={{fontSize:"clamp(28px,4vw,45px)",letterSpacing:"-.05em",lineHeight:1.14,margin:"16px 0"}}>One idea. A whole film.</h2>
+<p style={{color:"#9eacbd",lineHeight:1.75,maxWidth:685}}>
+ChatGPT can plan up to 192 seconds of original animated chapters. The full browser
+Sequence Studio supports operator-edited films up to 300 seconds, with an explicit
+approval step before locally rendering the movie. Procedural graphics, not AI-shot live-action footage.
+</p>
+<Link href="/motion#film-sequence" style={{display:"inline-flex",textDecoration:"none",border:"1px solid #8099b9",padding:"12px 18px",borderRadius:7,fontWeight:800,fontSize:12}}>
+OPEN FEATURE FILM WORKSPACE ↗</Link>
+</section>
 <footer style={{borderTop:"1px solid #28303a",marginTop:90,paddingTop:20,color:"#7f90a8",fontSize:12}}>Margaryan Content Studio · Keyless motion graphics · No private Distribution or CRM integration on this public server.</footer>
 </main>}
