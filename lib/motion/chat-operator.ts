@@ -116,7 +116,8 @@ export function previewChatMotionPack(input:unknown,current:MotionProject):ChatO
        input.project.scenes.length>8)throw Error("Create pack requires 1–8 shots");
     const p=sanitizeMotionProject(input.project);
     if(p.scenes.length!==input.project.scenes.length)throw Error("Shot count was changed during sanitization");
-    if(p.scenes.some((s,i)=>s.headline!==input.project?.scenes?.[i]?.headline))
+    const rawScenes=input.project.scenes as Array<Record<string,unknown>>;
+    if(p.scenes.some((s,i)=>s.headline!==rawScenes[i]?.headline))
       throw Error("Invalid headline in create pack");
     return {action:"create",next:p,changes:[
       "Replace entire current film with "+p.scenes.length+" scenes",
