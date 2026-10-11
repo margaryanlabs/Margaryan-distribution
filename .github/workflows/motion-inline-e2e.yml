@@ -1,0 +1,72 @@
+name: Motion ChatGPT Real Video QA
+
+on:
+  workflow_dispatch:
+    inputs:
+      runtime_seconds:
+        description: "Film duration to encode and inspect: 10s smoke, 120s, or 300s"
+        required: true
+        default: "10"
+        type: choice
+        options:
+          - "10"
+          - "120"
+          - "300"
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/motion/chat-preview/**"
+      - "lib/motion/content-studio-widget.ts"
+      - "lib/motion/plugin-bridge.ts"
+      - "lib/motion/render-engine.ts"
+      - "scripts/motion/e2e-inline-video.mjs"
+      - ".github/workflows/motion-inline-e2e.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  real-browser-video:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      EXECUTION_ENABLED: "false"
+      MOTION_E2E_BASE_URL: "http://127.0.0.1:3000"
+      MOTION_E2E_SECONDS: ${{ inputs.runtime_seconds || '10' }}
+    steps:
+      - name: Checkout reviewed commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Motion dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install pinned browser test runtime
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.0
+      - name: Install Chromium and Linux playback prerequisites
+        run: npx playwright install --with-deps chromium
+      - name: Install FFprobe independent decoder
+        run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
+      - name: Validate Next and Motion QA contracts
+        run: |
+          npm run motion:test-plugin
+          npm run motion:test-film-browser
+          npm run typecheck
+          npm run build
+      - name: Record and decode five real browser acts
+        run: |
+          set -euo pipefail
+          npm run start -- -H 127.0.0.1 -p 3000 >/tmp/motion-real-video-next.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for attempt in {1..40}; do
+            if curl --silent --fail http://127.0.0.1:3000/motion/chat-preview >/dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 40 ]; then cat /tmp/motion-real-video-next.log; exit 1; fi
+            sleep 1
+          done
+          node scripts/motion/e2e-inline-video.mjs
