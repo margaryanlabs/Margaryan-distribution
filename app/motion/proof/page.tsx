@@ -3,6 +3,7 @@
 import {useCallback,useEffect,useRef,useState} from "react";
 import {drawProofFrame,PROOF_SECONDS,type ProofMedia} from "@/lib/motion/proof-film";
 import {getLoadedMotionLogo,preloadMotionLogo} from "@/lib/motion/brand-assets";
+import {createProofAudioSession,inspectProofAudio} from "@/lib/motion/proof-audio";
 import styles from "./proof.module.css";
 
 type ProofBridge = Window & {
@@ -44,6 +45,14 @@ const makeCanvas=(width:number,height:number)=>{
 export default function ProofDirectorPage(){
   const [source,setSource]=useState<ProofMedia|null>(null);
   const [sourceName,setSourceName]=useState("");
+  const [voiceFile,setVoiceFile]=useState<File|null>(null);
+  const [musicFile,setMusicFile]=useState<File|null>(null);
+  const [voiceUrl,setVoiceUrl]=useState("");
+  const [musicUrl,setMusicUrl]=useState("");
+  const [voiceInfo,setVoiceInfo]=useState("");
+  const [musicInfo,setMusicInfo]=useState("");
+  const voiceElement=useRef<HTMLAudioElement>(null);
+  const musicElement=useRef<HTMLAudioElement>(null);
   const [logo,setLogo]=useState<HTMLImageElement|null>(null);
   const [seconds,setSeconds]=useState(0);
   const [playing,setPlaying]=useState(false);
@@ -59,6 +68,32 @@ export default function ProofDirectorPage(){
   const logoRef=useRef<HTMLImageElement|null>(null);
   const latestSeconds=useRef(0);
   const exportingRef=useRef(false);
+  useEffect(()=>{
+    const url=voiceFile?URL.createObjectURL(voiceFile):"";
+    setVoiceUrl(url);
+    return()=>{if(url)URL.revokeObjectURL(url);};
+  },[voiceFile]);
+  useEffect(()=>{
+    const url=musicFile?URL.createObjectURL(musicFile):"";
+    setMusicUrl(url);
+    return()=>{if(url)URL.revokeObjectURL(url);};
+  },[musicFile]);
+  // Preview audio is audible only during explicit user playback. Playback
+  // uses original audio files without the speed-ups of earlier bad films.
+  useEffect(()=>{
+    const elements=[voiceElement.current,musicElement.current];
+    if(!playing||exporting){
+      for(const el of elements)el?.pause();
+      return;
+    }
+    for(const [i,el] of elements.entries()){
+      if(!el||!el.src)continue;
+      el.volume=i===0?.95:voiceFile?.12:.35;
+      try{el.currentTime=Math.max(0,Math.min(latestSeconds.current,el.duration||10));}catch{}
+      void el.play().catch(()=>setNotice("Audio preview blocked by device autoplay; tap Play again."));
+    }
+    return()=>{for(const el of elements)el?.pause();};
+  },[playing,exporting,voiceUrl,musicUrl,voiceFile]);
 
   useEffect(()=>{
     void preloadMotionLogo("promptence").then(()=>{
@@ -163,6 +198,16 @@ export default function ProofDirectorPage(){
     const src=sourceRef.current;
     if(src)void seekSourceFrame(src,t).then(()=>paint(t)).catch(err=>setNotice(String(err)));
   }
+  async function attachAudio(event:React.ChangeEvent<HTMLInputElement>,kind:"voice"|"music"){
+    const file=event.target.files?.[0];
+    if(!file)return;
+    try{
+      const info=await inspectProofAudio(file,kind);
+      if(kind==="voice"){setVoiceFile(file);setVoiceInfo(file.name+" · "+info.seconds.toFixed(1)+"s");}
+      else{setMusicFile(file);setMusicInfo(file.name+" · "+info.seconds.toFixed(1)+"s");}
+      setNotice(kind==="voice"?"Recording loaded locally for review. Human voice quality approval remains required.":"Licensed soundtrack loaded. Confirm rights before distribution.");
+    }catch(e){setNotice("Audio rejected: "+(e instanceof Error?e.message:String(e)));}
+  }
   async function exportPreview(){
     if(!sourceRef.current||exportingRef.current)return;
     const temp=makeCanvas(540,960);
@@ -171,8 +216,13 @@ export default function ProofDirectorPage(){
     const type=["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"].find(m=>MediaRecorder.isTypeSupported(m));
     if(!type){setNotice("This browser cannot export a WebM review. Use Chromium + the offline MP4 master.");return;}
     setPlaying(false);exportingRef.current=true;setExporting(true);
+    let mixedAudio:Awaited<ReturnType<typeof createProofAudioSession>>=null;
     try{
-      const stream=temp.captureStream(30);
+      mixedAudio=await createProofAudioSession(voiceFile,musicFile);
+      const videoStream=temp.captureStream(30);
+      const stream=mixedAudio
+        ? new MediaStream([...videoStream.getVideoTracks(),mixedAudio.track])
+        : videoStream;
       const chunks:BlobPart[]=[];
       const recorder=new MediaRecorder(stream,{mimeType:type,videoBitsPerSecond:6_000_000});
       recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
@@ -201,14 +251,20 @@ export default function ProofDirectorPage(){
       if(blob.size<10000)throw Error("Review export was empty");
       const href=URL.createObjectURL(blob);
       const a=document.createElement("a");a.href=href;
-      a.download="promptence-proof-10s-review-SILENT.webm";document.body.appendChild(a);a.click();a.remove();
+      a.download="promptence-proof-10s-review"+(mixedAudio?"-recorded-audio":"-silent")+".webm";document.body.appendChild(a);a.click();a.remove();
       window.setTimeout(()=>URL.revokeObjectURL(href),60_000);
-      setNotice("Review-only WebM exported. Silent by design: no robot voice, no disguised upscale. Use offline FFmpeg mastering for H.264 + owner-approved narration.");
+      setNotice(mixedAudio?"Review WebM exported with user-supplied voice/music. Listen for natural pacing and mix before publishing.":"Silent review WebM exported. No robotic or generated voice was added.");
     }catch(e){setNotice("Export failed: "+(e instanceof Error?e.message:String(e)));}
-    finally{if(sourceRef.current instanceof HTMLVideoElement)sourceRef.current.pause();exportingRef.current=false;setExporting(false);}
+    finally{
+      if(sourceRef.current instanceof HTMLVideoElement)sourceRef.current.pause();
+      if(mixedAudio)await mixedAudio.stop().catch(()=>{});
+      exportingRef.current=false;setExporting(false);
+    }
   }
 
   return <main className={styles.shell}>
+    <audio ref={voiceElement} src={voiceUrl} preload="auto" aria-hidden="true"/>
+    <audio ref={musicElement} src={musicUrl} preload="auto" aria-hidden="true"/>
     <header className={styles.header}>
       <div><a className={styles.back} href="/motion?mode=cinematic">← MOTION OS</a>
         <p className={styles.kicker}>MARGARYAN LABS / SOURCE-FIRST FILM PRODUCTION</p>
