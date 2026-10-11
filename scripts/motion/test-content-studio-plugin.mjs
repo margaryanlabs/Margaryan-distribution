@@ -209,8 +209,18 @@ async function send(payload, origin) {
 }
 const init = await send({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18" } });
 assert.equal(init.json.result.serverInfo.name, "margaryan-content-studio");
+assert.ok(init.json.result.instructions.includes("at most 64 seconds"));
+assert.ok(init.json.result.instructions.includes("65–192 seconds"));
+assert.ok(init.json.result.instructions.includes("not model-rendered photoreal video"));
 const listed = await send({ jsonrpc: "2.0", id: "tools", method: "tools/list" });
 assert.equal(listed.json.result.tools.length, 3);
+for(const tool of listed.json.result.tools){
+  assert.equal(tool.outputSchema.type,"object","Each MCP tool must declare inspectable structured output");
+  assert.ok(tool.outputSchema.required.includes("videoFileCreated"));
+  assert.ok(tool.outputSchema.properties.editorUrl);
+}
+const featureListing=listed.json.result.tools.find(tool=>tool.name==="create_motion_feature_film");
+assert.equal(featureListing.outputSchema.properties.protocol.enum[0],"motion-sequence-v1");
 const studioTool=listed.json.result.tools.find(t=>t.name==="create_motion_film");
 assert.equal(studioTool._meta.ui.resourceUri,bridge.CONTENT_STUDIO_WIDGET_URI);
 const resources=await send({jsonrpc:"2.0",id:"res-list",method:"resources/list"});
