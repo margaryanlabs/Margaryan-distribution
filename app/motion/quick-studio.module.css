@@ -92,3 +92,29 @@
 .externalTool>div a,.externalTool>div button{border:1px solid #54687a;color:#e3eef7;background:#1a2834;
   font-size:10px;font-weight:800;padding:11px 12px;border-radius:8px;text-decoration:none;cursor:pointer}
 .externalTool>div a:hover,.externalTool>div button:hover{border-color:var(--quick-accent)}
+
+
+/* Quick Studio / visual, action-first path. Keeps existing source-safe
+ * preview, media approval and real browser export engine unchanged. */
+.quickGuide{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 18px}
+.quickGuide>div{background:linear-gradient(150deg,#1b3130,#111d24);
+ border:1px solid #40605b;border-radius:13px;padding:17px 15px;
+ display:flex;flex-direction:column;min-width:0;gap:8px}
+.quickGuide>div[data-complete=true]:first-child{border-color:#80c3a1;background:#1e3a2c}
+.quickGuide span{font-size:9px;font-weight:900;letter-spacing:.12em;color:#9bc8b7}
+.quickGuide strong{font-size:clamp(13px,1.6vw,20px);letter-spacing:-.05em;color:#e8f6ef;line-height:1.18}
+.quickGuide small{font-size:10px;color:#9cb6b3;line-height:1.4}
+.quickGuide button{align-self:stretch;margin-top:auto;min-height:42px;
+ padding:10px 11px;background:#b9edce;color:#10291c;border:1px solid #b9edce;
+ font-size:10px;font-weight:850;border-radius:7px;cursor:pointer;text-align:left}
+.quickGuide button:disabled{opacity:.62;cursor:not-allowed}
+#quick-upload,#quick-edit,#quick-export{scroll-margin-top:90px}
+@media(max-width:760px){.quickGuide{grid-template-columns:1fr;gap:7px}
+ .quickGuide>div{padding:13px 14px;display:grid;grid-template-columns:1fr auto;
+ align-items:center;column-gap:10px}
+ .quickGuide span{grid-column:1;font-size:8px}
+ .quickGuide strong{grid-column:1;font-size:15px}
+ .quickGuide small{grid-column:1;font-size:9px}
+ .quickGuide button{grid-column:2;grid-row:1/4;align-self:center;margin:0;max-width:148px;
+ font-size:9px;text-align:center}}
+@media(max-width:420px){.quickGuide button{max-width:120px;font-size:8px;padding:8px}}
