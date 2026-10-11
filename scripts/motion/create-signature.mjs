@@ -12,14 +12,15 @@ const argv=process.argv.slice(2),opts={};
 for(let i=0;i<argv.length;i++){
  const flag=argv[i];
  if(flag==="--silent"){opts.silent=true;continue;}
- if(!["--lang","--format","--out","--voice","--reference","--screen","--chromium","--url","--fps"].includes(flag)){
+ if(!["--lang","--format","--cut","--out","--voice","--reference","--screen","--chromium","--url","--fps"].includes(flag)){
    throw new Error("Unknown flag "+flag);
  }
  const value=argv[++i];if(!value||value.startsWith("--"))throw new Error("Value missing for "+flag);
  opts[flag.slice(2)]=value;
 }
-const lang=opts.lang||"en",format=opts.format||"portrait";
+const lang=opts.lang||"en",format=opts.format||"portrait",cut=opts.cut||"original";
 if(!["en","ru","hy"].includes(lang)||!["portrait","square","landscape"].includes(format))throw new Error("Invalid film locale or format");
+if(!["original","campaign"].includes(cut))throw new Error("cut must be original or campaign");
 const url=new URL(opts.url||"http://127.0.0.1:3000/motion");
 if(url.protocol!=="http:"||!["localhost","127.0.0.1","[::1]"].includes(url.hostname)||url.pathname!=="/motion")throw new Error("--url must be local Studio at /motion");
 const target=resolve(opts.out||"out/promptence-signature-"+lang+"-"+format+".mp4");
@@ -27,7 +28,7 @@ if(!target.toLowerCase().endsWith(".mp4"))throw new Error("Output must be .mp4")
 await mkdir(dirname(target),{recursive:true});
 const prefix=target.slice(0,-4);
 try{
- const endpoint=new URL("/api/motion/signature?lang="+lang+"&format="+format,url);
+ const endpoint=new URL("/api/motion/signature?lang="+lang+"&format="+format+"&cut="+cut,url);
  const response=await fetch(endpoint,{signal:AbortSignal.timeout(12000)});
  if(!response.ok)throw new Error("Local signature director HTTP "+response.status);
  const data=await response.json();
