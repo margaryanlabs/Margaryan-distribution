@@ -16,6 +16,9 @@ on:
     branches: [main]
     paths:
       - "app/motion/chat-preview/**"
+      - "app/motion/film-browser-export.tsx"
+      - "lib/motion/film-audio-mix.ts"
+      - "scripts/motion/e2e-browser-soundtrack.mjs"
       - "lib/motion/content-studio-widget.ts"
       - "lib/motion/plugin-bridge.ts"
       - "lib/motion/render-engine.ts"
@@ -70,3 +73,4 @@ jobs:
             sleep 1
           done
           node scripts/motion/e2e-inline-video.mjs
+          MOTION_E2E_SECONDS=10 node scripts/motion/e2e-browser-soundtrack.mjs
