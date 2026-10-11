@@ -3,7 +3,7 @@
   "mcpServers": {
     "margaryan-content-studio": {
       "type": "streamable-http",
-      "url": "https://margaryan-distribution.vercel.app/api/mcp",
+      "url": "https://studio.promptence.tech/api/mcp",
       "extensions": {
         "com.openai": {
           "auth": {
