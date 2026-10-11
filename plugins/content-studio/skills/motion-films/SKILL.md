@@ -21,7 +21,7 @@ Use the connected Margaryan Content Studio MCP tools for user requests to produc
 3. When MCP Apps UI is supported, show the interactive first-party live Canvas preview in ChatGPT: PLAY, scrub shots and use EXPORT VIDEO on a supported browser. Download codecs vary (MP4 or WebM) and the preview is motion graphics without generated music/voice.
 4. Offer the private fragment-only full editor link for full scene/asset controls. In Motion Studio click INSPECT and then APPROVE. Do not claim an MP4 exists before the user actually exports a file.
 5. On revisions, ask for or reuse the exact current MotionProject pack; call revise_motion_film with scoped changes. Do not edit mediaId or claim to access local media.
-6. User reviews the preview and exports inside the existing Motion Studio. Original video, music and voice files require user-approved local media and appropriate rights.
+6. The native player can record directly in the browser (720p default, optional Full HD/1080p, optional original procedural soundtrack). It offers SAVE TO CHATGPT after recording, using the host's optional uploadFile({library:true}); success is NEVER guaranteed, and files over 25MB remain local only. Do not claim upload until ChatGPT confirms it. The full Motion Studio remains available for advanced editing. Natural speech, real footage and licensed music require user-approved source assets and rights.
 7. Never claim unbounded free generation: ChatGPT plan usage limits, browser performance, storage and optional hosting still apply.
 
 ## Product boundaries
