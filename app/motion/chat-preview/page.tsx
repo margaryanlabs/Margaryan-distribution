@@ -35,6 +35,7 @@ export default function ChatMotionPreviewPage() {
   const [chapters, setChapters] = useState<MotionProject[]>(() => [makeMotionPreset("labs")]);
   const project = chapters[0];
   const [received, setReceived] = useState(false);
+  const [hydrated,setHydrated]=useState(false);
   const [playing, setPlaying] = useState(false);
   const [recording, setRecording] = useState(false);
   const [exportReady, setExportReady] = useState(false);
@@ -130,6 +131,7 @@ export default function ChatMotionPreviewPage() {
     };
     window.addEventListener("message", uploadReply);
     window.addEventListener("message", listener);
+    setHydrated(true);
     window.addEventListener("message", seekFromParent);
     // Handshake ensures the parent MCP widget cannot miss a draft while
     // Next.js hydrates the child React app after the iframe load event.
@@ -288,7 +290,7 @@ export default function ChatMotionPreviewPage() {
     }
   }
 
-  return <main style={outer}>
+  return <main style={outer} data-motion-preview-hydrated={hydrated?"true":"false"}>
     <div style={{display:"flex",justifyContent:"space-between",gap:8,fontSize:10,letterSpacing:".1em",color:"#b4c1d8"}}>
       <span>◈ {BRAND_INFO[project.brand].name} / LIVE CANVAS</span>
       <span>{project.format.toUpperCase()} · {chapters.length} ACT{chapters.length>1?"S":""} · {total.toFixed(1)}S</span>
