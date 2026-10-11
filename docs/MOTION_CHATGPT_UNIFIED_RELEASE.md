@@ -25,8 +25,11 @@ authentication already deployed in main.
   `#motion-sequence-v1` links, both requiring manual approval before edits;
   no automatic server write, media upload or rendering.
 - **Sequence Studio:** eight editable chapters, film timeline, 120-second
-  Promptence source-honest demonstration, import/export JSON and local
-  Chromium/FFmpeg chapter compositor for a real H.264 MP4 up to 512 seconds.
+  Promptence source-honest demonstration and import/export JSON. A new
+  user-triggered **PLAY WHOLE FILM / EXPORT VISUAL FILM** records all saved
+  Canvas chapters as one local 720p/24fps silent WebM/MP4 workprint up to
+  192 seconds without an API key; the operator-local Chromium/FFmpeg
+  compositor remains the audio/source-aware H.264 Master up to 512 seconds.
 - **Existing private portable ZIP:** unchanged. Source video, music,
   human microphone takes, rights and licensing stay under user control.
 
@@ -44,6 +47,7 @@ may incur separate costs. No photorealistic text-to-video model is included.
 npm install
 npm run motion:test-plugin
 npm run motion:test-sequence
+npm run motion:test-film-browser
 npm run motion:test-chat
 npm run motion:test-bundle
 npm run motion:test-voice-booth
@@ -98,8 +102,41 @@ agent or production subscriber billing is claimed by this branch.
 
 1. Isolated public MCP domain and real ChatGPT installed-app integration
    test, along with server logs / basic abuse control.
-2. Real multi-chapter browser preview, not just chapter navigation;
-   source-complete local rendering with deterministic frames and audio QC.
+2. Upgrade the new *graphics-only* full-feature browser recorder with
+   author-approved real source assets, continuous audio, frame cadence QA,
+   and cross-platform MP4 acceptance. The user-controlled recorder exists
+   but is not a substitute for the workstation Master.
 3. Per-user private projects and OAuth, custom third-party brand kits,
    consented cloud MP4 render jobs and credit budgets.
 4. Paid plans after production QA and user retention evidence.
+
+## 11 October 2026 — independent quality verification
+
+After discovering that GitHub-hosted Actions jobs exited **without starting
+any steps**, the integrated branch was cloned into a fresh, no-secrets,
+short-lived Vercel Node 22 Sandbox at pinned commit. The project required
+pinning **TypeScript 5.9.3** because the previously selected TypeScript
+7.0.2 no longer exposes the legacy `transpileModule/ModuleKind` API used
+by this repository's motion regression harnesses. We also updated older
+harness dependency injection for the actual source-composition and
+independent image-overlay modules, fixed a deliberately short test fixture's
+expected duration and ensured serialized Chat Pack comparisons ignore
+undefined properties (not encodable in JSON).
+
+Sandbox test results: `motion:test-plugin`, `motion:test-sequence`,
+`motion:test-chat`, `motion:test-voice-booth`,
+`motion:test-source-camera`, `motion:test-production`,
+`motion:test-editorial`, `motion:test-real-source`,
+`motion:test-chat-channel`, `motion:test-bundle`,
+`motion:test-overlays`, `motion:test-film-browser`,
+`npm run typecheck` and `npm run build` **passed** on the respective
+integration commits. The final production preview must still be checked
+on the newest Git commit after changes.
+
+A real browser E2E encode was attempted with Playwright/Sparticuz Chromium,
+but that sandbox lacked the required shared Linux `libnspr4.so` and
+`libnss3.so`; therefore a fully played and decoded multi-chapter WebM or
+MP4 was **not** verified by this environment. Passing Canvas/source/schema
+contract tests is not equivalent to validating a video on an actual mobile
+browser. Keep this PR draft until the recorder is exercised with a video
+output and reviewed for frame pacing, exact runtime and mobile codecs.
