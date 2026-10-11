@@ -1,4 +1,4 @@
-import { CONTENT_STUDIO_TOOLS, CONTENT_STUDIO_VERSION, CONTENT_STUDIO_WIDGET_URI, runContentStudioTool } from "@/lib/motion/plugin-bridge";
+import { CONTENT_STUDIO_TOOLS, CONTENT_STUDIO_MODEL_INSTRUCTIONS, CONTENT_STUDIO_VERSION, CONTENT_STUDIO_WIDGET_URI, runContentStudioTool } from "@/lib/motion/plugin-bridge";
 import { motionStudioWidgetHtml } from "@/lib/motion/content-studio-widget";
 
 /**
@@ -58,7 +58,8 @@ export async function POST(request: Request) {
     return rpc(payload.id, {
       protocolVersion: negotiated,
       capabilities: { tools: { listChanged: false }, resources: { listChanged: false } },
-      serverInfo: { name: "margaryan-content-studio", version: CONTENT_STUDIO_VERSION, description: "Keyless procedural Motion Studio storyboard bridge" }
+      serverInfo: { name: "margaryan-content-studio", version: CONTENT_STUDIO_VERSION, description: "Keyless procedural Motion Studio storyboard bridge" },
+      instructions: CONTENT_STUDIO_MODEL_INSTRUCTIONS
     });
   }
   if (payload.method === "ping") return rpc(payload.id, {});
