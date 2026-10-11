@@ -6,6 +6,7 @@ import {
   sanitizeMotionProject, sceneAt,
   type MotionBrand, type MotionFormat, type MotionProject, type MotionScene
 } from "@/lib/motion/studio";
+import LocalFilmVaultPanel from "@/lib/motion/local-vault-panel";
 import { drawMotionFrame } from "@/lib/motion/render-engine";
 import { preloadMotionLogo } from "@/lib/motion/brand-assets";
 import { setLocalProductScreen, installOfflineScreen, hasProductScreen } from "@/lib/motion/screen-media";
