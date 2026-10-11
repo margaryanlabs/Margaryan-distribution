@@ -199,9 +199,26 @@ function createFeatureFilm(raw: Record<string,unknown>,requestOrigin?:string) {
   duration=Number(duration.toFixed(3));
   if(duration>300)throw Error("This ChatGPT feature-film draft exceeds 300 seconds; reduce shot timing.");
   if(duration<=64)throw Error("Feature-film timeline must exceed 64 seconds. Increase shot duration.");
+  // Keep browser handoff small and inspectable. Sanitized scene defaults
+  // (camera, source layout, color, sound controls) are regenerated locally.
+  // Never transfer raw footage, media IDs, URLs, credentials or file bytes.
+  const portableChapters=chapters.map(ch=>({
+    id:ch.id,title:ch.title,
+    project:{
+      version:1,title:ch.project.title,brand,format,language,style,
+      qualityMode:"signature" as const,
+      scenes:ch.project.scenes.map(shot=>({
+        id:shot.id,kind:shot.kind,eyebrow:shot.eyebrow,
+        headline:shot.headline,support:shot.support,seconds:shot.seconds,
+        ...(shot.transition?{transition:shot.transition}:{}),
+        ...(shot.titleTreatment?{titleTreatment:shot.titleTreatment}:{}),
+        ...(shot.voiceCue?{voiceCue:shot.voiceCue}:{})
+      }))
+    }
+  }));
   const sequence={
     version:1 as const,type:"motion-sequence-v1" as const,title,brand,format,
-    expectedDurationSeconds:duration,chapters
+    expectedDurationSeconds:duration,chapters:portableChapters
   };
   // Fragment is neither encryption nor a substitute for per-user private storage.
   // The user's browser strips the fragment before loading the proposal.
