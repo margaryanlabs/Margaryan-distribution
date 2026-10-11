@@ -1380,7 +1380,7 @@ export default function MotionStudioPage() {
               <select disabled={exporting} value={selected.sourceLayout||"card"}
                 onChange={event=>editScene("sourceLayout",event.target.value)}>
                 <option value="card">Floating product card</option>
-                <option value="theater">Product theater / larger screen</option>
+                <option value="theater">Product theater / larger screen</option>\n                <option value="showcase">Interaction Cinema / wide live-screen stage</option>
                 <option value="split">Split editorial / real interface</option>
                 <option value="immersive">Immersive real footage / title overlay</option>
               </select>
