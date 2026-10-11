@@ -681,6 +681,10 @@ export default function MotionStudioPage() {
           }}
           onVoice={file=>{setVoiceover(file);setNotice("Local recorded voice attached; review narration placement in Edit Suite.");}}
           onMusic={file=>{setLicensedMusic(file);setNotice("Local licensed music attached; review volume and fades.");}}
+          onOpenQuick={assetId=>{
+            window.localStorage.setItem("motion-quick-pending-asset-v1",assetId);
+            switchMode("quick");
+          }}
         />
         <div className={styles.sectionHeader}><span>01 / CREATIVE BRIEF</span><strong>LOCAL DIRECTOR</strong></div>
         <label className={styles.field}><span>PRODUCT / BRAND</span>
