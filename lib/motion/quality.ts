@@ -32,10 +32,20 @@ export function auditMotionProject(project: MotionProject): MotionQAReport {
   if (!project.scenes.some(s=>s.kind==="closer")) issue("story.cta","warn","No dedicated closing scene.");
   const headlines = project.scenes.map(s=>s.headline.trim().toLocaleLowerCase());
   if (new Set(headlines).size !== headlines.length) issue("copy.duplicate","warn","Repeated headlines detected.");
+  const productBeats=project.scenes.map(s=>s.productBeat).filter(Boolean);
+  if(productBeats.length && new Set(productBeats).size < productBeats.length)
+    issue("story.repetitive-product-art","warn","Duplicate product beat compositions: review shot variety before export.");
   for (const [i,s] of project.scenes.entries()) {
     if(s.kind==="screen"&&!hasProductScreen(project.brand))issue("screen.missing."+i,"block","Source screenshot missing for scene "+(i+1)+". Upload a real product screenshot before export.");
     if(s.kind==="screen"&&hasProductScreen(project.brand))issue("screen.review."+i,"warn","Product screenshot is user-provided; visually verify provenance, sensitive information and rights before publishing.");
     if (!s.headline.trim()) issue("copy.blank."+i,"block","Scene "+(i+1)+" has no headline.");
+    if(s.productBeat && project.brand!=="promptence")
+      issue("beat.brand."+i,"block","Product story art is only source-validated for Promptence.");
+    if(s.productBeat && s.kind==="screen")
+      issue("beat.screen."+i,"warn","Concept beat art is selected above your real screenshot. Clear PRODUCT STORY beat to display authentic source pixels.");
+    const wordCount=s.headline.trim().split(/\s+/u).filter(Boolean).length;
+    if(wordCount>9)
+      issue("copy.density."+i,"warn","Scene "+(i+1)+" headline is dense ("+wordCount+" words); consider a shorter editorial headline.");
     if (s.headline.length>82) issue("copy.length."+i,"warn","Scene "+(i+1)+" headline is lengthy for mobile.");
     if (!Number.isFinite(s.seconds)||s.seconds<2||s.seconds>8) issue("scene.duration."+i,"block","Scene "+(i+1)+" has invalid timing.");
     if (/\b(?:guaranteed profits?|100% results?|zero risk|guaranteed ranking|always #1)\b/i.test(s.headline+" "+s.support)) {

@@ -291,3 +291,16 @@
  font-size:10px;font-weight:800;letter-spacing:.1em;cursor:pointer}
 .spatialDemoButton:hover:not(:disabled){border-color:var(--brand-accent);background:#20343c}
 .spatialDemoButton:disabled{opacity:.4;cursor:not-allowed}
+
+/* Product-story editor: one decisive library, not another disconnected app. */
+.productStoryLaunch{margin:17px 0 12px;padding:17px 14px;border-radius:12px;
+ border:1px solid #476759;background:linear-gradient(137deg,#13291e,#0c1415 68%);
+ box-shadow:0 14px 35px #0003}
+.productStoryLaunch p{font-size:11px;line-height:1.65;color:#bdcec4;margin:12px 0}
+.productStoryLaunch button{width:100%;min-height:46px;cursor:pointer;border:1px solid #679e78;
+ background:#295b3f;color:#f5fff9;font-size:10px;font-weight:850;letter-spacing:.045em;
+ padding:11px 9px;border-radius:8px;transition:background .18s ease,border-color .18s ease}
+.productStoryLaunch button:hover:not(:disabled){background:#387451;border-color:#96d5a8}
+.productStoryLaunch button:disabled{opacity:.45;cursor:not-allowed}
+.productStoryLaunch small,.beatHint{display:block;color:#91a79b;font-size:10px;line-height:1.6;margin-top:10px}
+@media(prefers-reduced-motion:reduce){.productStoryLaunch button{transition:none}}
