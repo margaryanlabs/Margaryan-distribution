@@ -42,7 +42,7 @@ assert.equal(created.voiceFileCreated, false);
 assert.equal(created.durationSeconds, 13);
 assert.ok(created.editorUrl.startsWith("https://"));
 const fragment = created.editorUrl.split("#motion-chat-v1=")[1];
-assert.deepEqual(JSON.parse(Buffer.from(fragment, "base64url").toString("utf8")), created.chatPack);
+assert.deepEqual(JSON.parse(Buffer.from(fragment, "base64url").toString("utf8")), JSON.parse(JSON.stringify(created.chatPack)));
 assert.equal(chat.previewChatMotionPack(created.chatPack, studio.makeMotionPreset()).next.title, data.title);
 assert.ok(created.chatPack.project.scenes.every(s => !s.mediaId));
 assert.throws(() => bridge.runContentStudioTool("create_motion_film", { ...data, scenes: [{ ...data.scenes[0], seconds: 80 }] }), /2–8/);
