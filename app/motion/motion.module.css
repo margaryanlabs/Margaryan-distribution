@@ -423,3 +423,20 @@
   .productionNav a{transition:none}
   .productionNav a:hover{transform:none}
 }
+
+/* Conversion path is deliberate, not a fake checkout: service brief first. */
+.commercialBanner{max-width:1580px;margin:0 auto 13px;
+ display:flex;align-items:center;justify-content:space-between;gap:20px;
+ padding:18px 22px;border:1px solid #456658;border-radius:13px;
+ background:radial-gradient(ellipse at 0 0,#30554085,transparent 54%),linear-gradient(150deg,#1b2f29,#101c1c);
+ box-shadow:0 10px 30px #0003}
+.commercialBanner>div{display:grid;gap:6px}
+.commercialBanner span{font-size:9px;font-weight:900;letter-spacing:.13em;color:#a3cdb6}
+.commercialBanner strong{font-size:clamp(12px,1.2vw,16px);letter-spacing:-.024em;color:#e9faec}
+.commercialBanner small{font-size:10px;line-height:1.5;color:#96b4a3}
+.commercialBanner>a{flex:none;background:#c7eed7;border:1px solid #c7eed7;
+ padding:14px 17px;min-height:44px;border-radius:8px;color:#143021;text-decoration:none;
+ font-size:10px;font-weight:900;letter-spacing:.04em;text-align:center}
+.commercialBanner>a:hover{background:#e0f9e8}
+@media(max-width:720px){.commercialBanner{flex-direction:column;align-items:stretch;padding:15px}
+ .commercialBanner>a{width:100%}}
