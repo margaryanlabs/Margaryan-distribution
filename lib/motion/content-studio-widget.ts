@@ -146,7 +146,7 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
     });
   }
   rpc("ui/initialize", {
-    appInfo:{name:"margaryan-content-studio",version:"0.2.0"},
+    appInfo:{name:"margaryan-content-studio",version:"0.3.0"},
     appCapabilities:{},
     protocolVersion:"2026-01-26"
   }).then(()=>{
