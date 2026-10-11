@@ -76,6 +76,9 @@ export default function ChatMotionPreviewPage() {
       }
     };
     window.addEventListener("message", listener);
+    // Handshake ensures the parent MCP widget cannot miss a draft while
+    // Next.js hydrates the child React app after the iframe load event.
+    if (window.parent !== window) window.parent.postMessage({kind:"margaryan-motion-preview-ready-v1"}, "*");
     return () => window.removeEventListener("message", listener);
   }, []);
 
