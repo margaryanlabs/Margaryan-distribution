@@ -19,9 +19,11 @@ import { createCaptionBundle } from "@/lib/motion/captions";
 import { rescaleProjectToSeconds } from "@/lib/motion/timing";
 import { createProceduralSoundtrack, type ProceduralAudioSession } from "@/lib/motion/sound-engine";
 import { makeProductionPack } from "@/lib/motion/production-pack";
+import { sanitizeAudioEdit, voiceWindow } from "@/lib/motion/timeline-edit";
 import { ensureSpatialRenderer, spatialStatus, spatialError } from "@/lib/motion/spatial-bridge";
 import { createKeylessStoryboard, getLocalDirectorExamples, type MotionLanguage, type MotionStyle } from "@/lib/motion/director";
 import QuickStudio from "./quick-studio";
+import MultitrackEditor from "./multitrack-editor";
 import styles from "./motion.module.css";
 
 const STORAGE_KEY = "margaryan-motion-studio-v1";
@@ -52,6 +54,7 @@ export default function MotionStudioPage() {
   const [musicGain, setMusicGain] = useState(.5);
   const [narrationGain, setNarrationGain] = useState(.82);
   const [narrationSeconds, setNarrationSeconds] = useState<number | null>(null);
+  const [musicSeconds, setMusicSeconds] = useState<number | null>(null);
   const [assetRevision, setAssetRevision] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -67,6 +70,8 @@ export default function MotionStudioPage() {
   const [exportProgress, setExportProgress] = useState(0);
   const [notice, setNotice] = useState("Собственный локальный движок: генерация сцен, графика и экспорт без API-ключей, кредитов и сервера рендеринга.");
   const previewRef = useRef<HTMLCanvasElement>(null);
+  const voicePreviewRef = useRef<HTMLAudioElement|null>(null);
+  const musicPreviewRef = useRef<HTMLAudioElement|null>(null);
   const latestProjectRef = useRef<MotionProject>(project);
   const timeRef = useRef(0);
   useEffect(()=>{
@@ -82,6 +87,8 @@ export default function MotionStudioPage() {
     setMode(next);
   }
   const total = durationOf(project);
+  const audioEdit = sanitizeAudioEdit(project.audio);
+  const narrationWindow = voiceWindow(total,audioEdit,narrationSeconds);
   const selected = project.scenes[Math.min(selectedIndex, project.scenes.length - 1)] || project.scenes[0];
   const info = BRAND_INFO[project.brand];
   const provenance = PORTFOLIO[project.brand];
@@ -101,6 +108,45 @@ export default function MotionStudioPage() {
     probe.src=url;
     return()=>{active=false;probe.src="";URL.revokeObjectURL(url);};
   },[voiceover]);
+
+  useEffect(()=>{
+    if(!licensedMusic){setMusicSeconds(null);return;}
+    let active=true;
+    const url=URL.createObjectURL(licensedMusic);
+    const probe=new Audio();
+    probe.preload="metadata";
+    probe.onloadedmetadata=()=>{if(active&&Number.isFinite(probe.duration))setMusicSeconds(probe.duration);};
+    probe.onerror=()=>{if(active)setMusicSeconds(null);};
+    probe.src=url;
+    return()=>{active=false;probe.src="";URL.revokeObjectURL(url);};
+  },[licensedMusic]);
+
+  // No remote media: local <audio> elements play imported tracks alongside
+  // the canvas preview. This is a listening preview, not sample-accurate mastering.
+  useEffect(()=>{
+    if(!voiceover){voicePreviewRef.current=null;return;}
+    const url=URL.createObjectURL(voiceover);
+    const element=new Audio(url);
+    element.preload="auto";
+    voicePreviewRef.current=element;
+    return()=>{
+      element.pause();element.removeAttribute("src");element.load();
+      if(voicePreviewRef.current===element)voicePreviewRef.current=null;
+      URL.revokeObjectURL(url);
+    };
+  },[voiceover]);
+  useEffect(()=>{
+    if(!licensedMusic){musicPreviewRef.current=null;return;}
+    const url=URL.createObjectURL(licensedMusic);
+    const element=new Audio(url);
+    element.preload="auto";
+    musicPreviewRef.current=element;
+    return()=>{
+      element.pause();element.removeAttribute("src");element.load();
+      if(musicPreviewRef.current===element)musicPreviewRef.current=null;
+      URL.revokeObjectURL(url);
+    };
+  },[licensedMusic]);
 
   // Operator render bridge for deterministic offline masters (Playwright -> FFmpeg).
   // It does not read auth state, secrets, CRM data or arbitrary URLs. Canvas remains
@@ -193,13 +239,47 @@ export default function MotionStudioPage() {
   }, [project, playing, playhead, assetRevision]);
 
   useEffect(() => {
-    if (!playing) return;
+    if (!playing) {
+      voicePreviewRef.current?.pause();
+      musicPreviewRef.current?.pause();
+      return;
+    }
     const canvas = previewRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     let raf = 0;
     let previous = performance.now();
     let lastUi = 0;
+    function syncPreviewAudio(t:number){
+      const a=project.audio;
+      const edit=sanitizeAudioEdit(a);
+      const voice=voicePreviewRef.current;
+      if(voice&&voice.readyState>=HTMLMediaElement.HAVE_METADATA){
+        const duration=voice.duration-edit.voiceTrim;
+        const local=t-edit.voiceStart;
+        if(duration>.05&&local>=0&&local<duration-.08){
+          const sourceTime=edit.voiceTrim+local;
+          if(Math.abs(voice.currentTime-sourceTime)>.22)voice.currentTime=sourceTime;
+          const fadeIn=edit.voiceFadeIn>.01?Math.min(1,local/edit.voiceFadeIn):1;
+          const fadeOut=edit.voiceFadeOut>.01?Math.min(1,(duration-local)/edit.voiceFadeOut):1;
+          voice.volume=Math.max(0,Math.min(1,narrationGain*Math.min(fadeIn,fadeOut)));
+          if(voice.paused)void voice.play().catch(()=>undefined);
+        } else voice.pause();
+      }
+      const music=musicPreviewRef.current;
+      if(music&&music.readyState>=HTMLMediaElement.HAVE_METADATA){
+        const sourceLength=music.duration-edit.musicTrim;
+        if(sourceLength>.1&&t<total){
+          const sourceTime=edit.musicTrim+(t%sourceLength);
+          if(Math.abs(music.currentTime-sourceTime)>.3)music.currentTime=sourceTime;
+          const fadeIn=edit.musicFadeIn>.01?Math.min(1,t/edit.musicFadeIn):1;
+          const fadeOut=edit.musicFadeOut>.01?Math.min(1,(total-t)/edit.musicFadeOut):1;
+          music.volume=Math.max(0,Math.min(1,musicGain*(voiceover?.11:.32)*Math.min(fadeIn,fadeOut)));
+          if(music.paused)void music.play().catch(()=>undefined);
+        }else music.pause();
+      }
+    }
+    syncPreviewAudio(timeRef.current);
     function frame(now: number) {
       const step = Math.min(.1, (now - previous) / 1000);
       previous = now;
@@ -210,12 +290,17 @@ export default function MotionStudioPage() {
       if (canvas && ctx) drawMotionFrame(ctx, project, timeRef.current, canvas.width, canvas.height);
       if (now - lastUi > 120) {
         lastUi = now; setPlayhead(timeRef.current);
+        syncPreviewAudio(timeRef.current);
       }
       raf = requestAnimationFrame(frame);
     }
     raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
-  }, [project, playing, total]);
+    return () => {
+      cancelAnimationFrame(raf);
+      voicePreviewRef.current?.pause();
+      musicPreviewRef.current?.pause();
+    };
+  }, [project, playing, total, narrationGain, musicGain, voiceover, licensedMusic]);
 
   function updateProject(next: MotionProject) {
     setProject(sanitizeMotionProject(next));
@@ -394,8 +479,12 @@ export default function MotionStudioPage() {
       setNotice("QUALITY GATE BLOCKED: " + qa.checks.filter(c=>c.severity==="block").map(c=>c.message).join("; "));
       return;
     }
-    if(narrationSeconds !== null && narrationSeconds > total - 0.3){
-      setNotice("NARRATION TIMING: Voice is longer than safe film time. Press FIT FILM TO NARRATION or edit the recorded track.");
+    if(voiceover && narrationSeconds!==null && !narrationWindow.ready){
+      setNotice("NARRATION TIMING: voice does not fit the current timeline. Review VOICE track controls in the Multi-track editor.");
+      return;
+    }
+    if(licensedMusic && musicSeconds!==null && audioEdit.musicTrim>musicSeconds-.12){
+      setNotice("MUSIC TIMING: trim removes the entire soundtrack. Move the source trim back.");
       return;
     }
     try{
@@ -634,18 +723,18 @@ export default function MotionStudioPage() {
         </label>
         {voiceover && <>
           <div className={styles.audioTiming}>
-            <strong>VOICE / {narrationSeconds===null?"ANALYSING LENGTH":narrationSeconds.toFixed(1)+"s"}</strong>
+            <strong>VOICE / {narrationSeconds===null?"ANALYSING LENGTH":narrationWindow.usableSeconds.toFixed(1)+"s"}</strong>
             <span>FILM / {total.toFixed(1)}s</span>
             <small>{narrationSeconds===null?"Audio metadata pending; check recording manually."
-              : narrationSeconds>total-.3?"Voice runs past the final scene. Adjust timeline before export."
-              : narrationSeconds<total*.62?"Voice ends early. Review pauses and ending."
-              :"Voice duration fits; spoken-word sync still needs listening."}</small>
+              : !narrationWindow.ready?"Voice does not fit. Open MULTI-TRACK TIMELINE and adjust START or TRIM."
+              : narrationWindow.end<total*.64?"Voice ends early. Review pauses and ending."
+              :"Voice placement fits; spoken-word sync still needs listening."}</small>
           </div>
           <button type="button" className={styles.clearVoice} onClick={()=>setVoiceover(null)}>Remove narration · {voiceover.name}</button>
           {narrationSeconds!==null && <button type="button" className={styles.polishButton} disabled={exporting}
             onClick={()=>{
               try{
-                const target=Math.min(64,Math.ceil((narrationSeconds+.8)*10)/10);
+                const target=Math.min(64,Math.ceil((audioEdit.voiceStart+Math.max(0,narrationSeconds-audioEdit.voiceTrim)+.8)*10)/10);
                 const next=rescaleProjectToSeconds(project,target);
                 setProject(next);setNotice("TIMING UPDATED: Film now "+durationOf(next).toFixed(1)+"s for "+narrationSeconds.toFixed(1)+"s narration. This is scene-level timing, not word-level lip sync.");
               }catch(error){setNotice(error instanceof Error?error.message:"Voice timing cannot fit these scenes.");}
@@ -842,6 +931,13 @@ export default function MotionStudioPage() {
           <input type="range" min="0" max={total} step=".05" value={playhead} aria-label="Scrub animation timeline" onChange={event => { setPlaying(false); jump(Number(event.target.value)); }}/>
           <span>{timeLabel(total)}</span>
         </div>
+        <MultitrackEditor project={project} playhead={playhead} selectedIndex={selectedIndex}
+          voice={voiceover} voiceSeconds={narrationSeconds}
+          music={licensedMusic} musicSeconds={musicSeconds} playing={playing}
+          onSeek={time=>{setPlaying(false);jump(time);}}
+          onSelect={selectScene}
+          onEdit={audio=>{setPlaying(false);updateProject({...project,audio});}}
+        />
         <div className={styles.sectionHeader}><span>04 / FRAME SEQUENCE</span><strong>{project.scenes.length} SHOTS</strong></div>
         <div className={styles.timeline}>
           {project.scenes.map((scene, index) => <button key={scene.id} type="button"

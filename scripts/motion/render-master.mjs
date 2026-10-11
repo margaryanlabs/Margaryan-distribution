@@ -13,6 +13,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
 import { dirname, resolve, extname } from "node:path";
 import process from "node:process";
+import { buildAudioMix } from "./audio-mix.mjs";
 
 function parse(argv) {
   const positional=[],opts={};
@@ -160,23 +161,11 @@ try {
     if(generated.status!==0)throw Error("Cannot build original film score: "+(generated.stderr||"unknown").slice(-900));
     process.stdout.write("Soundtrack ready: "+scorePath+"\n");
   }
-  const audio=[];
-  if(opts.voice)audio.push({path:resolve(opts.voice),vol:1});
-  if(opts.music||scorePath)audio.push({path:resolve(opts.music||scorePath),vol:opts.voice?.16:.75});
-
-  const args=["-y","-hide_banner","-loglevel","error","-f","image2pipe","-framerate",String(fps),"-vcodec","png","-i","pipe:0"];
-  for(const a of audio)args.push("-i",a.path);
-  let audioMap=[];
-  if(audio.length){
-    const parts=[];
-    for(let i=0;i<audio.length;i++){
-      parts.push("["+(i+1)+":a:0]volume="+audio[i].vol+",apad,atrim=0:"+duration.toFixed(3)+"[aud"+i+"]");
-    }
-    parts.push(audio.length>1?
-      "[aud0][aud1]amix=inputs=2:duration=first:dropout_transition=0[aout]":
-      "[aud0]anull[aout]");
-    audioMap=["-filter_complex",parts.join(";"),"-map","0:v:0","-map","[aout]","-c:a","aac","-b:a","192k"];
-  } else audioMap=["-an"];
+  const {audioInputArgs,audioMap,audioTracks,mixMetadata}=(()=>{
+    const built=buildAudioMix({project,opts,scorePath,duration});
+    return {...built,mixMetadata:built.metadata};
+  })();
+  const args=["-y","-hide_banner","-loglevel","error","-f","image2pipe","-framerate",String(fps),"-vcodec","png","-i","pipe:0",...audioInputArgs];
   args.push(...audioMap,"-c:v","libx264","-preset","medium","-crf",String(crf),
     "-pix_fmt","yuv420p","-profile:v","high","-r",String(fps),
     "-t",duration.toFixed(3),"-movflags","+faststart",outputPath);
@@ -208,7 +197,7 @@ try {
   if(!video||video.width!==dims[0]||video.height!==dims[1]||video.codec_name!=="h264"){
     throw Error("Encoded master format/dimensions incorrect");
   }
-  if(audio.length&&!track)throw Error("Audio requested but MP4 audio track missing");
+  if(audioTracks&&!track)throw Error("Audio requested but MP4 audio track missing");
   // Deliver platform-native sidecars as part of the video master bundle.
   const captionsURL=new URL("/api/motion/captions",url.href);
   const captionsResponse=await fetch(captionsURL,{
@@ -244,6 +233,7 @@ try {
     expectedDuration:duration,file:outputPath,codec:video.codec_name,
     width:video.width,height:video.height,audioCodec:track?.codec_name||null,
     audioIncluded:!!track,voiceRequested:!!opts.voice,musicRequested:!!opts.music,
+     timelineAudioEdit:mixMetadata,
     originalScoreGenerated:!!scorePath,originalScoreFile:scorePath,
     contactSheet:sheet,captionFiles:[".srt",".vtt","-narration-guide.txt"],
     referenceComparison,

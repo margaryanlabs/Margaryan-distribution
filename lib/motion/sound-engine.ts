@@ -1,4 +1,5 @@
 import { durationOf, sceneAt, type MotionProject } from "./studio";
+import { sanitizeAudioEdit, voiceWindow } from "./timeline-edit";
 
 /**
  * Original procedural synthesizer. No audio files, API keys, samples or 3rd-party IP.
@@ -29,39 +30,59 @@ export async function createProceduralSoundtrack(
 
     const start = context.currentTime + .4;
     const length = durationOf(project);
+    const edit = sanitizeAudioEdit(project.audio);
     const root = project.brand === "veto" ? 0 : project.brand === "promptence" ? 2 : project.brand === "raios" ? 3 : 4;
     if (options.voiceover) {
       if (options.voiceover.size > 15_000_000) throw new Error("Voiceover must be under 15 MB");
       if (!options.voiceover.type.startsWith("audio/")) throw new Error("Upload an MP3, WAV, M4A or other supported audio file");
       const decoded = await context.decodeAudioData(await options.voiceover.arrayBuffer());
-      if (decoded.duration > length + 2) throw new Error("Voiceover is longer than the film; edit timing or use shorter narration.");
-      const voice = context.createBufferSource();
-      voice.buffer = decoded;
-      const voiceGain = context.createGain();
-      voiceGain.gain.setValueAtTime(Math.max(0,Math.min(1.5,options.narrationGain ?? .82)), context.currentTime);
+      const window=voiceWindow(length,edit,decoded.duration);
+      if(!window.ready) {
+        throw new Error("NARRATION TIMELINE: voice "+window.usableSeconds.toFixed(2)+
+          "s starting at "+edit.voiceStart.toFixed(2)+"s cannot fit a "+length.toFixed(2)+
+          "s film. Move the voice track, trim its beginning or extend the film.");
+      }
+      const voice=context.createBufferSource();
+      voice.buffer=decoded;
+      const voiceGain=context.createGain();
+      const level=Math.max(0,Math.min(1.5,options.narrationGain ?? .82));
+      const cueStart=start+window.start;
+      const playable=window.usableSeconds;
+      const fadeIn=Math.min(playable/2,edit.voiceFadeIn);
+      const fadeOut=Math.min(playable/2,edit.voiceFadeOut);
+      voiceGain.gain.setValueAtTime(fadeIn>.001?0:level,cueStart);
+      if(fadeIn>.001)voiceGain.gain.linearRampToValueAtTime(level,cueStart+fadeIn);
+      voiceGain.gain.setValueAtTime(level,cueStart+Math.max(fadeIn,playable-fadeOut));
+      if(fadeOut>.001)voiceGain.gain.linearRampToValueAtTime(0,cueStart+playable);
       voice.connect(voiceGain); voiceGain.connect(compressor);
-      voice.start(start);
+      voice.start(cueStart,edit.voiceTrim);
+      voice.stop(cueStart+playable+.01);
     }
     if(options.music) {
       if(options.music.size>30_000_000)throw new Error("Licensed music must be under 30 MB");
       if(!options.music.type.startsWith("audio/"))throw new Error("Music file must be an audio recording");
       const recording=await context.decodeAudioData(await options.music.arrayBuffer());
-      if(recording.duration<.1)throw new Error("Music file has no usable sound.");
+      if(recording.duration<.1 || edit.musicTrim>=recording.duration-.1)
+        throw new Error("Music trim must leave at least 0.1s of audio.");
       const source=context.createBufferSource();
       source.buffer=recording;
-      source.loop=recording.duration<length;
+      source.loop=recording.duration-edit.musicTrim<length;
+      source.loopStart=edit.musicTrim;
+      source.loopEnd=recording.duration;
       const musicGain=context.createGain();
       // Conservative narration side-chain: music never competes with spoken words.
       const requested=Math.max(0,Math.min(1,options.musicGain ?? .5));
       const level=requested*(options.voiceover?.11:.32);
       musicGain.gain.setValueAtTime(0,context.currentTime);
       musicGain.gain.setValueAtTime(0,start);
-      musicGain.gain.linearRampToValueAtTime(level,start+.22);
-      musicGain.gain.setValueAtTime(level,Math.max(start+.22,start+length-.5));
+      const fadeIn=Math.min(length/2,edit.musicFadeIn);
+      const fadeOut=Math.min(length/2,edit.musicFadeOut);
+      musicGain.gain.linearRampToValueAtTime(level,start+Math.max(.001,fadeIn));
+      musicGain.gain.setValueAtTime(level,start+Math.max(fadeIn,length-fadeOut));
       musicGain.gain.linearRampToValueAtTime(0,start+length);
       source.connect(musicGain);
       musicGain.connect(compressor);
-      source.start(start);
+      source.start(start,edit.musicTrim);
       source.stop(start+length);
     }
     function oscillator(note: number, wave: OscillatorType, t: number, seconds: number, volume: number, slide = 0) {

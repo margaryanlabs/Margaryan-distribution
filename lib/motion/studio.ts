@@ -1,3 +1,5 @@
+import { sanitizeAudioEdit } from "./timeline-edit";
+
 export type MotionBrand = "veto" | "promptence" | "raios" | "labs" | "ingu" | "meqena" | "suren" | "veto_private" | "veto_sport" | "armat" | "tun" | "hay_engine" | "reality_engine";
 export type MotionFormat = "portrait" | "square" | "landscape";
 export type MotionSceneKind = "opener" | "statement" | "network" | "closer" | "kinetic" | "orbit" | "screen" | "spatial";
@@ -20,12 +22,23 @@ export interface MotionScene {
   /** Editorial narration cue, not automatically generated or spoken. */
   voiceCue?: string;
 }
+export interface MotionAudioEdit {
+  voiceStart: number;
+  voiceTrim: number;
+  voiceFadeIn: number;
+  voiceFadeOut: number;
+  musicTrim: number;
+  musicFadeIn: number;
+  musicFadeOut: number;
+}
 export interface MotionProject {
   version: 1;
   title: string;
   brand: MotionBrand;
   format: MotionFormat;
   style?: "cinematic" | "kinetic" | "technical";
+  /** Timecoded edit metadata only: voice/music files must be reattached after reload. */
+  audio?: MotionAudioEdit;
   seed?: number;
   scenes: MotionScene[];
   language?: "en" | "ru" | "hy";
@@ -219,7 +232,7 @@ export function sanitizeMotionProject(input: unknown): MotionProject {
   const seed = typeof obj.seed === "number" && Number.isFinite(obj.seed) ? Math.floor(obj.seed) >>> 0 : 41;
   const language = ["en", "ru", "hy"].includes(String(obj.language)) ? obj.language as MotionProject["language"] : undefined;
   const signatureFilm = brand === "promptence" && obj.signatureFilm === "promptence-answer" ? "promptence-answer" as const : undefined;
-  return { version: 1, title: clean(obj.title, 100) || "UNTITLED MOTION", brand, format, style, seed, scenes, language, signatureFilm };
+  return { version: 1, title: clean(obj.title, 100) || "UNTITLED MOTION", brand, format, style, seed, scenes, language, signatureFilm, audio: sanitizeAudioEdit(obj.audio) };
 }
 
 export function durationOf(project: MotionProject) {

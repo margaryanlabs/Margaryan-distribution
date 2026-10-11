@@ -19,6 +19,8 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Motion Production Desk schema and cue contract
         run: npm run motion:test-production
+      - name: Motion multitrack voice/music FFmpeg edit contract
+        run: npm run motion:test-audio
       - name: Motion soundtrack contract (no API or FFmpeg dependency)
         run: npm run motion:test-score
       - name: Motion reference codec and evidence contract
