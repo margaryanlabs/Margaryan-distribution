@@ -258,3 +258,34 @@
  color:#add6ba;font-size:10px;font-weight:850;letter-spacing:.015em;cursor:pointer}
 .backup:hover{background:#1d3b2c;border-color:#81b499}
 .backup:disabled{opacity:.45;cursor:not-allowed}
+
+
+/* Genuine browser-interaction demo, not a simulated scanner result. */
+.card[data-kind=interaction] .cardArt{
+ background:radial-gradient(circle at 63% 39%,#2d977858,transparent 58%),
+ linear-gradient(145deg,#0b2828,#10191c 75%)}
+.interactionArt{position:relative;width:100%;height:100%;display:grid;place-items:center}
+.interactionBrowser{width:71%;height:57%;border:1px solid #9ee9c1a0;border-radius:7px;
+ background:#101c1c;box-shadow:0 18px 35px #0009,0 0 42px #348a6950;transform:perspective(460px) rotateY(-10deg) rotateX(4deg);overflow:hidden}
+.interactionBrowserBar{display:flex;align-items:center;gap:4px;padding:6px 8px;
+ border-bottom:1px solid #89cbb52e;background:#1c3030}
+.interactionBrowserBar i{width:4px;height:4px;border-radius:50%;background:#83a99b}
+.interactionBrowserBar span{margin-left:7px;color:#95c8b5;font-size:8px;letter-spacing:.015em}
+.interactionUI{padding:12px 9px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.interactionInput{height:19px;border:1px solid #74978979;border-radius:3px;background:#243c36}
+.interactionClick{grid-column:1/-1;justify-self:stretch;text-align:center;background:#a6efd0;
+ border-radius:3px;padding:9px 3px;color:#08231b;font-size:7px;font-weight:900;letter-spacing:.04em}
+.interactionClick b{margin-left:7px}
+.interactionCursor{position:absolute;right:14%;bottom:24%;font-size:46px;color:#f4fff7;line-height:1;
+ transform:rotate(-24deg);text-shadow:0 3px 7px #031610,0 0 16px #65dfb9}
+.interactionRing{position:absolute;right:21%;bottom:38%;width:36px;height:36px;border-radius:50%;
+ border:2px solid #a6ffd9;box-shadow:0 0 0 12px #56c59417,0 0 25px #a6ffd985}
+@media(max-width:650px){
+ .interactionBrowser{width:90%;height:48%}
+ .interactionBrowserBar span{font-size:6px}
+ .interactionCursor{right:6%;bottom:21%;font-size:31px}
+ .interactionRing{right:16%;bottom:34%;width:23px;height:23px}
+ .interactionUI{padding:7px 6px;gap:4px}
+ .interactionInput{height:12px}
+ .interactionClick{font-size:5px;padding:6px 3px}
+}
