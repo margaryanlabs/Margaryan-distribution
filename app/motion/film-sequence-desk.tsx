@@ -316,7 +316,7 @@ export default function FilmSequenceDesk({
     <p className={styles.notice} role="status">{notice}</p>
     <div className={styles.deliveryNote}>
       <strong>KNOW YOUR EXPORT</strong>
-      <p><b>BROWSER WORKPRINT</b> — up to 192s of procedural graphics, optionally mixed with your own locally attached voice/music. Requires a visible tab and compatible browser.</p>
+      <p><b>BROWSER WORKPRINT</b> — up to 300s of procedural graphics, optionally mixed with your own locally attached voice/music. Requires a visible tab and compatible browser.</p>
       <p><b>LOCAL MASTER</b> — chapter-by-chapter H.264 MP4, up to 512s, including approved actual source footage and original overlay images when provided via the workstation's local media map. Requires installed Chromium and FFmpeg. Human playback review remains mandatory.</p>
       <small>We don't send private client footage to ChatGPT or fabricate AI-provider results.</small>
     </div>
