@@ -678,3 +678,13 @@
 .deliverIntro .deliverPrimary:disabled{cursor:not-allowed;opacity:.42}
 .deliverIntro .deliverSecondary{color:#bedccd;border:1px solid #4a7865;background:#204033}
 @media(prefers-reduced-motion:reduce){.editorRail button,.timeline button{transition:none}}
+
+
+/* On phones, rail selection intentionally moves to the inspector below the
+ * live monitor. Respect the fixed horizontal rail offset when scrolling. */
+#motion-inspector{scroll-margin-top:73px}
+@media(max-width:850px){
+ .editorRail{overscroll-behavior-x:contain}
+ .sidebar{scroll-margin-top:80px}
+ .inspectorHeader{position:relative;z-index:1}
+}
