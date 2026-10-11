@@ -105,6 +105,26 @@ export default function MotionStudioPage() {
   // silently be treated as valid after changing a title, pacing or shot type.
   useEffect(()=>{latestProjectRef.current=project;setReferenceComparison(null);},[project]);
 
+  // Browser persistence stores asset files privately. Rehydrate approved
+  // per-scene footage after opening an existing JSON/Chat Pack project.
+  useEffect(()=>{
+    if(!hydrated)return;
+    let cancelled=false;
+    const ids=[...new Set(project.scenes.filter(x=>x.kind==="screen"&&x.mediaId).map(x=>x.mediaId!))];
+    void (async()=>{
+      for(const id of ids){
+        if(cancelled||getMotionSceneSource(id))continue;
+        const record=await getLocalMedia(id);
+        if(!record||!record.approved)continue;
+        await registerMotionSceneSource(id,mediaAsFile(record));
+        if(!cancelled)setAssetRevision(n=>n+1);
+      }
+    })().catch(error=>{
+      if(!cancelled)setNotice("LOCAL SOURCE: "+(error instanceof Error?error.message:String(error)));
+    });
+    return()=>{cancelled=true;};
+  },[hydrated,project.scenes]);
+
   useEffect(() => {
     if(!voiceover){setNarrationSeconds(null);return;}
     let active=true;
@@ -254,7 +274,11 @@ export default function MotionStudioPage() {
     if (playing) return;
     const canvas = previewRef.current;
     const ctx = canvas?.getContext("2d");
-    if (canvas && ctx) drawMotionFrame(ctx, project, timeRef.current, canvas.width, canvas.height);
+    if (canvas && ctx){
+      void prepareMotionSourceFrame(project,timeRef.current)
+        .then(()=>{if(!playing)drawMotionFrame(ctx,project,timeRef.current,canvas.width,canvas.height);})
+        .catch(error=>setNotice("PREVIEW SOURCE: "+(error instanceof Error?error.message:String(error))));
+    }
   }, [project, playing, playhead, assetRevision]);
 
   useEffect(() => {
@@ -299,6 +323,7 @@ export default function MotionStudioPage() {
       }
     }
     syncPreviewAudio(timeRef.current);
+    syncMotionSourcePlayback(project,timeRef.current,true);
     function frame(now: number) {
       const step = Math.min(.1, (now - previous) / 1000);
       previous = now;
@@ -306,6 +331,7 @@ export default function MotionStudioPage() {
         timeRef.current = Math.min(total, timeRef.current + Math.max(0, step));
         if (timeRef.current >= total) setPlaying(false);
       }
+      syncMotionSourcePlayback(project,timeRef.current,true);
       if (canvas && ctx) drawMotionFrame(ctx, project, timeRef.current, canvas.width, canvas.height);
       if (now - lastUi > 120) {
         lastUi = now; setPlayhead(timeRef.current);
@@ -318,6 +344,7 @@ export default function MotionStudioPage() {
       cancelAnimationFrame(raf);
       voicePreviewRef.current?.pause();
       musicPreviewRef.current?.pause();
+      pauseMotionSourceVideos();
     };
   }, [project, playing, total, narrationGain, musicGain, voiceover, licensedMusic]);
 
