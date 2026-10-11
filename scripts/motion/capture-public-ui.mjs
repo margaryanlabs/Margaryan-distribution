@@ -13,6 +13,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { resolve, join } from "node:path";
 import process from "node:process";
+import {clearPublicOnboarding, inspectProductFrame, PROMPTENCE_SECTIONS} from "./source-capture-gates.mjs";
 
 const OFFICIAL_PUBLIC_SITES={
   promptence:"https://promptence.tech/",
@@ -55,7 +56,8 @@ try{
   const response=await page.goto(options.url,{waitUntil:"domcontentloaded",timeout:30000});
   if(!response?.ok())throw Error("Public site returned HTTP "+String(response?.status()));
   if(new URL(page.url()).hostname!==host)throw Error("Unexpected redirect: refusing cross-domain capture");
-  await page.waitForTimeout(950);
+  await clearPublicOnboarding(page,options.brand);
+  await page.waitForTimeout(300);
   await page.addStyleTag({content:"*,*::before,*::after{animation-duration:0s!important;transition-duration:0s!important;caret-color:transparent!important}"}).catch(()=>{});
   const screens=[
     {label:"desktop",width:1440,height:900},
@@ -67,6 +69,10 @@ try{
   for(const screen of screens){
     await page.setViewportSize({width:screen.width,height:screen.height});
     await page.waitForTimeout(350);
+    if(options.brand==="promptence"){
+      await clearPublicOnboarding(page,options.brand);
+      await inspectProductFrame(page,PROMPTENCE_SECTIONS[0].heading);
+    }
     const binary=await page.screenshot({type:"png",animations:"disabled",fullPage:false});
     const filename=options.brand+"-"+screen.label+".png";
     await writeFile(join(output,filename),binary,{mode:0o600});

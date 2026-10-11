@@ -1,0 +1,28 @@
+# Motion Studio / Production Quality Rebuild — 2026-10-11
+
+**Incident:** Promptence's first-visit onboarding overlay covered the public website during capture. The overlay narrowed the heading to ~114 px on a 540 px capture viewport, producing split, unreadable words. Several scene sources were visually near-identical. The native renderer correctly produced H.264/AAC but passed the technically valid project to delivery even while the director reported unresolved similar shots. This is a production failure, not an H.264 problem.
+
+## Implemented in the existing `Margaryan-distribution` / Motion Studio
+
+- **Onboarding-aware real-site capture.** `source-capture-gates.mjs` waits for asynchronously mounted Promptence first-visit overlay, dismisses it via its actual Skip button, refuses remaining overlay, verifies real visible headings and rejects excessively narrow text layout. Both existing public screenshot and 10-second source video capture tools use this guard. They do not hide elements through CSS, invent results, or read private workspaces.
+- **Six distinct public product visuals.** `npm run motion:capture-story -- --out out/motion/promptence-story` captures the real public landing, **actual Free Check form (without submitting)**, decision trail, published baseline section, implementation section, and measurement loop. The screencaps are captured as readable 1280×720 stage assets for portrait-film theater cards, and compared using actual downsampled pixels; near duplicates fail. Only public product content is captured. An owner must provide real private scan results via the approved Media Library if the ad needs to demonstrate them.
+- **Clean client picture.** Internal `REAL SOURCE IMAGE / REVIEW REQUIRED` frame labels remain visible in `EDITOR` debugging mode only, never in `CLEAN` or `BRAND` commercials. Provenance is kept in the private capture manifest.\n- **Capture evidence.** Every screenshot receives a source section, SHA-256, unique asset ID, pixel novelty measurement and layout/overlay checks. A JSON capture manifest and a local media map are written alongside the source images. Private bytes are not sent to GitHub/Vercel.
+- **Fail-closed commercial mastering.** Ordinary `motion:master` remains an **editable/reviewable draft**. A new opt-in `--release --capture-manifest ...` mode requires a genuine source manifest, reviewed rights/product-truth/privacy/audio flags, speech, a soundtrack, source checksums matching reviewed originals, and a director report without critical layout, repetition or blank-frame warnings, and checks that the film card's cover crop retains at least 65% of each original product source. Missing review or source changes stop before costly frame encoding. This is **not** an automated artistic/legal certification.
+- **Regression tests.** `npm run motion:test-film-quality` covers overlay detection, clipped text, duplicate pixels, source tampering, human approval requirements and unresolved director warnings, and runs in `prebuild`.
+
+## Correct production sequence
+
+1. `npm run motion:capture-story -- --out out/motion/promptence-story`. **Open the PNGs** and verify all six different, legible sections. The official current site may change; capture must fail visibly if required headings disappear.
+2. Write the approved film story using actual `mediaId` values from `motion-media-map.json` and verified Promptence product statements. A free-check *form* does **not** imply a verified Free Check result.
+3. Render a **draft** with `npm run motion:master -- storyboard.json out/review.mp4 --media-map out/motion/promptence-story/motion-media-map.json --voice approved.wav`. Review the exported frames, subtitles, audio and on-screen claims. Do **not** equate default draft MP4 with a cleared commercial.
+4. The owner listens to the source voice, checks music rights, views the evidence and approves the claims/source/privacy; update the local manifest `approval.status` to `APPROVED` and mark `sourceRights`, `privacyReviewed`, `productTruthReviewed`, `voiceReviewed`, `musicReviewed` true **only after actual review**.
+5. Attempt a commercial candidate with `npm run motion:master -- storyboard.json out/release-candidate.mp4 --media-map out/motion/promptence-story/motion-media-map.json --voice approved.wav --release --capture-manifest out/motion/promptence-story/promptence-source-manifest.json`. If any serious director warning remains, revise and retry.
+6. **Watch the final master again** on a phone and desktop with headphones before any publication. The exported report explicitly retains `finalMasterHumanReviewRequired:true`.
+
+## Boundaries
+
+- Never fabricate product measurements, scan responses, customer ROI, AI-provider endorsement or attribution. The source form and publicly visible product sections are demonstrations, not real paid-account audit evidence.
+- A review flag in editable JSON records operator intent; it is not a cryptographic signature, proof of rights, or an external legal validation.
+- The capture has no logged-in permissions and no access to genuine private workspace data. To demonstrate those, record authorized material separately and attach it locally.
+- The existing MCP/Chat Pack channel carries **storyboard text only**. It cannot upload private media or make a video's quality pass automatically. Source files must be attached for actual mastering.
+- The design of each scene and the naturalness of local open-weight voiceovers still need human listening and creative review. This change prevents a repeat of the concrete onboarding/duplicate-source incident; it does not solve all cinematic quality concerns.

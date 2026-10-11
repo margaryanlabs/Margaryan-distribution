@@ -5,6 +5,7 @@ import {mkdir} from "node:fs/promises";
 import {dirname,resolve} from "node:path";
 import {spawn,spawnSync} from "node:child_process";
 import {once} from "node:events";
+import {clearPublicOnboarding,inspectProductFrame,PROMPTENCE_SECTIONS} from "./source-capture-gates.mjs";
 const target=resolve(process.argv[2]||"out/motion/screens/promptence-actual.mp4");
 if(!target.endsWith(".mp4"))throw Error("Output must be MP4");
 if(spawnSync("ffmpeg",["-version"]).status!==0)throw Error("FFmpeg unavailable");
@@ -16,7 +17,9 @@ try{
  const page=await browser.newPage({viewport:{width:540,height:960},deviceScaleFactor:2,locale:"en-US"});
  const response=await page.goto("https://promptence.tech/",{waitUntil:"domcontentloaded",timeout:45000});
  if(!response?.ok()||new URL(page.url()).hostname!=="promptence.tech")throw Error("Official public page unavailable");
+ await clearPublicOnboarding(page,"promptence");
  await page.evaluate(()=>document.fonts.ready);
+ await inspectProductFrame(page,PROMPTENCE_SECTIONS[0].heading);
  const maxScroll=await page.evaluate(()=>document.documentElement.scrollHeight-window.innerHeight);
  encoder=spawn("ffmpeg",["-y","-hide_banner","-loglevel","error",
   "-f","image2pipe","-framerate","24","-vcodec","png","-i","pipe:0",
@@ -30,6 +33,8 @@ try{
   const start=stage/3*maxScroll,end=(stage+1)/3*maxScroll;
   const y=start+(end-start)*smooth;
   await page.evaluate(y=>window.scrollTo({top:y,behavior:"instant"}),y);
+  if(await page.locator(".promptence-tour-overlay").isVisible())
+    throw Error("SOURCE BLOCKED: onboarding reappeared during video capture.");
   const frame=await page.screenshot({type:"png",animations:"disabled"});
   if(encoder.exitCode!==null)throw Error("Encoder failed "+stderr);
   if(!encoder.stdin.write(frame))await once(encoder.stdin,"drain");

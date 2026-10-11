@@ -11,6 +11,9 @@
 import { readFile, writeFile, mkdir, stat } from "node:fs/promises";
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
+import {createReadStream} from "node:fs";
+import {createHash} from "node:crypto";
+import {assertApprovedSourceManifest,assertDirectorRelease,assertSourceFraming} from "./release-quality-gates.mjs";
 import { dirname, resolve, extname } from "node:path";
 import process from "node:process";
 import { buildAudioMix } from "./audio-mix.mjs";
@@ -21,13 +24,19 @@ function parse(argv) {
     if(argv[i].startsWith("--")){
       const key=argv[i].slice(2);
       if(key==="silent"){opts.silent=true;continue;}
-      if(!["url","fps","crf","voice","music","chromium","screen","reference","media-map"].includes(key))throw Error("Unknown option: "+key);
+      if(key==="release"){opts.release=true;continue;}
+      if(!["url","fps","crf","voice","music","chromium","screen","reference","media-map","capture-manifest"].includes(key))throw Error("Unknown option: "+key);
       const value=argv[++i];if(!value||value.startsWith("--"))throw Error("Missing value for --"+key);
       opts[key]=value;
     }else positional.push(argv[i]);
   }
-  if(positional.length!==2)throw Error("Usage: npm run motion:master -- project.json final.mp4 [--url http://127.0.0.1:3000/motion] [--fps 30] [--crf 18] [--voice audio.wav] [--music music.mp3] [--silent] [--reference source.mp4] [--media-map approved-asset-paths.json]");
+  if(positional.length!==2)throw Error("Usage: npm run motion:master -- project.json final.mp4 [--url http://127.0.0.1:3000/motion] [--fps 30] [--crf 18] [--voice audio.wav] [--music music.mp3] [--silent] [--reference source.mp4] [--media-map approved-asset-paths.json] [--release --capture-manifest reviewed-sources.json]");
   return {projectPath:resolve(positional[0]),outputPath:resolve(positional[1]),opts};
+}
+async function fileHash(path) {
+  const hash=createHash("sha256");
+  for await(const chunk of createReadStream(path))hash.update(chunk);
+  return hash.digest("hex");
 }
 const run=(cmd,args,options={})=>spawnSync(cmd,args,{encoding:"utf8",timeout:80_000,maxBuffer:2_000_000,...options});
 async function makeSheet(file,duration){
@@ -102,7 +111,39 @@ try {
       throw Error("Local media size invalid for "+id);
   }
 
-  for(const file of [opts.voice,opts.music].filter(Boolean)){
+  let releaseEvidence=null;
+  if(opts.release){
+    if(!opts["capture-manifest"]||!opts.voice||opts.silent)
+      throw Error("RELEASE BLOCKED: reviewed capture manifest, real narration and soundtrack are required.");
+    const manifestPath=resolve(opts["capture-manifest"]);
+    const manifestFile=await stat(manifestPath);
+    if(!manifestFile.isFile()||manifestFile.size>200000)
+      throw Error("RELEASE BLOCKED: invalid source capture manifest.");
+    const manifest=JSON.parse(await readFile(manifestPath,"utf8"));
+    const sourceChecksums={};
+    for(const id of sourceIDs)sourceChecksums[id]=await fileHash(resolve(sourceMap[id]));
+    releaseEvidence=assertApprovedSourceManifest(manifest,sourceIDs,sourceChecksums,project.brand);
+    if(project.scenes.some(s=>s.kind==="screen"&&!s.mediaId))
+      throw Error("RELEASE BLOCKED: all commercial product frames must have individual reviewed source IDs.");
+    const framing={};
+    for(const scene of project.scenes){
+      if(scene.kind!=="screen"||!scene.mediaId)continue;
+      const info=run("ffprobe",["-v","error","-select_streams","v:0",
+        "-show_entries","stream=width,height","-of","json",resolve(sourceMap[scene.mediaId])]);
+      if(info.status!==0)throw Error("RELEASE BLOCKED: cannot probe original source geometry.");
+      const actual=JSON.parse(info.stdout).streams?.[0];
+      const W=1080,H=1080*dims[1]/dims[0],layout=scene.sourceLayout||"card";
+      const landscape=H<810,square=H>=810&&H<1250;
+      let sw=W,sh=H;
+      if(layout==="theater"){sw=W*(landscape?.46:.82);sh=H*(landscape?.78:square?.31:.25);}
+      else if(layout==="split"){sw=W*(landscape?.46:.8);sh=H*(landscape?.73:square?.26:.25);}
+      else if(layout==="card"){sw=W*(landscape?.46:.84);sh=H*(landscape?.57:square?.21:.25);}
+      framing[scene.mediaId]=assertSourceFraming(actual?.width,actual?.height,sw,sh,scene.mediaId);
+    }
+    releaseEvidence={...releaseEvidence,framing};
+    process.stdout.write("Release source review verified: "+sourceIDs.length+" verified real assets.\n");
+  }
+    for(const file of [opts.voice,opts.music].filter(Boolean)){
     const f=await stat(resolve(file));
     if(!f.isFile()||f.size>250_000_000)throw Error("Oversized/invalid audio: "+file);
   }
@@ -188,6 +229,7 @@ try {
     writeFile(repairReportPath,JSON.stringify(automatic.report,null,2)+"\n"),
     writeFile(inspectPath,Buffer.from(automatic.contactSheetBase64,"base64"))
   ]);
+  if(opts.release)assertDirectorRelease(automatic.report);
   if(!automatic.report.measuredFramePass || automatic.report.after?.blockers>0){
     throw Error("Director cannot clear measured defects. Examine "+repairReportPath+" and repair shots before MP4 export.");
   }
@@ -276,6 +318,7 @@ try {
   const sheet=await makeSheet(outputPath,duration);
   const report={
     engine:"MARGARYAN MOTION OS / OFFLINE MASTER",frames,expectedFps:fps,
+    strictReleaseMode:!!opts.release,releaseEvidence,finalMasterHumanReviewRequired:true,
     expectedDuration:duration,file:outputPath,codec:video.codec_name,
     width:video.width,height:video.height,audioCodec:track?.codec_name||null,
     audioIncluded:!!track,voiceRequested:!!opts.voice,musicRequested:!!opts.music,

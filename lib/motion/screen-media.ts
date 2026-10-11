@@ -1,4 +1,4 @@
-import type { MotionBrand } from "./studio";
+import type { MotionBrand, MotionFilmChrome } from "./studio";
 import { getMotionSceneSource } from "./scene-source";
 import { sanitizeSourceDirection, sourceCrop, sourceStage, sourceZoom, type SourceDirection } from "./source-composition";
 /**
@@ -52,7 +52,8 @@ export function getProductScreen(brand:MotionBrand):HTMLImageElement|undefined{r
  */
 export function drawProductScreen(
   ctx:CanvasRenderingContext2D,brand:MotionBrand,W:number,H:number,time:number,
-  progress:number,accent:string,mediaId?:string,direction?:Partial<SourceDirection>
+  progress:number,accent:string,mediaId?:string,direction?:Partial<SourceDirection>,
+  filmChrome:MotionFilmChrome="brand"
 ) {
   const local=getMotionSceneSource(mediaId);
   const image=local?.element||loaded.get(brand);
@@ -103,11 +104,15 @@ export function drawProductScreen(
     ctx.lineWidth=1.5;ctx.strokeStyle=accent+"b0";
     ctx.beginPath();ctx.roundRect(left,top,st.w,st.h,Math.max(5,st.r-3));ctx.stroke();
   }
-  ctx.font='700 '+(H<810?10:14)+'px Arial,sans-serif';
-  ctx.fillStyle=immersive?"#e7f7eb":accent;
-  ctx.textAlign="left";ctx.textBaseline="middle";
-  ctx.fillText(local?.type==="video"?"REAL SOURCE VIDEO / REVIEW REQUIRED":
-    "REAL SOURCE IMAGE / REVIEW REQUIRED",left+(immersive?85:9),
-    immersive?top+st.h-54:top-13);
+  // Source provenance belongs in the reviewed manifest, NOT client footage.
+  // Preserve the diagnostic caption only for internal EDITOR-mode workprints.
+  if(filmChrome==="editor"){
+    ctx.font='700 '+(H<810?10:14)+'px Arial,sans-serif';
+    ctx.fillStyle=immersive?"#e7f7eb":accent;
+    ctx.textAlign="left";ctx.textBaseline="middle";
+    ctx.fillText(local?.type==="video"?"REAL SOURCE VIDEO / REVIEW REQUIRED":
+      "REAL SOURCE IMAGE / REVIEW REQUIRED",left+(immersive?85:9),
+      immersive?top+st.h-54:top-13);
+  }
   ctx.restore();
 }
