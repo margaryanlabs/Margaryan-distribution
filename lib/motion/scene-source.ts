@@ -18,6 +18,9 @@ export interface MotionSceneSource {
 }
 const registered=new Map<string,MotionSceneSource>();
 const urls=new Map<string,string>();
+let playbackError:string|null=null;
+export function resetMotionPlaybackError(){playbackError=null;}
+export function motionPlaybackError(){return playbackError;}
 const VIDEO_MIMES=new Set(["video/mp4","video/webm","video/quicktime"]);
 const IMAGE_MIMES=new Set(["image/jpeg","image/png","image/webp"]);
 const waitForVideo=(video:HTMLVideoElement):Promise<void>=>new Promise((resolve,reject)=>{
@@ -142,7 +145,11 @@ export function syncMotionSourcePlayback(project:MotionProject,filmTime:number,p
     const expected=clampVideoTime(source,time);
     if(Math.abs(video.currentTime-expected)>.23)video.currentTime=expected;
     if(playing){
-      if(video.paused)void video.play().catch(()=>undefined);
+      if(video.readyState<2)playbackError="Real source video decoder is not ready for "+source.filename;
+      if(video.paused)void video.play().catch(error=>{
+        playbackError="Could not play real source "+source.filename+": "+
+          (error instanceof Error?error.message:String(error));
+      });
     }else video.pause();
   }
 }
