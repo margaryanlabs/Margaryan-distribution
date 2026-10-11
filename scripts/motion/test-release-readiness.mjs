@@ -41,9 +41,9 @@ assert.ok(!safe.includes("media-image-1"),"Never include local source map IDs in
 const missing=inspectReleaseReadiness(base,qa,env({getSource:()=>undefined}));
 assert.equal(missing.renderable,false,"Missing input source must not count as a usable film");
 assert.equal(missing.shots[0].status,"block");
-const absent=inspectReleaseReadiness({...base,scenes:[shot("screen",undefined)]},qa,env());
+const absent=inspectReleaseReadiness({...base,scenes:[{...shot("screen"),mediaId:undefined}]},qa,env());
 assert.equal(absent.shots[0].source,"missing-source");
-const legacy=inspectReleaseReadiness({...base,scenes:[shot("screen",undefined)]},qa,
+const legacy=inspectReleaseReadiness({...base,scenes:[{...shot("screen"),mediaId:undefined}]},qa,
   env({legacyScreen:true}));
 assert.equal(legacy.shots[0].source,"legacy-image");
 assert.equal(legacy.boundSources,1);
