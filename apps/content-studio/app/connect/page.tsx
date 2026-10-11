@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import styles from "./connect.module.css";
 
@@ -36,6 +36,14 @@ export default function ConnectPage() {
   const [demo,setDemo] = useState<string | null>(null);
   const [revised,setRevised] = useState<string | null>(null);
   const [copied,setCopied] = useState(false);
+
+  // For remote acceptance tests: /connect?autotest=1 executes the same real
+  // browser-to-server protocol checks as the manual button, without any keys.
+  useEffect(()=>{
+    if(new URLSearchParams(window.location.search).get("autotest")==="1") void diagnose();
+    // Intentionally only on first browser mount; manual reruns remain possible.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[]);
 
   async function diagnose() {
     if (busy) return;
