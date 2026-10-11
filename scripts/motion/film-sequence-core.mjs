@@ -42,7 +42,7 @@ function checkProject(raw,index,brand,format){
     if(typeof shot.seconds!=="number"||!Number.isFinite(shot.seconds)||
       shot.seconds<2||shot.seconds>8)throw Error(label+" duration must be 2–8 seconds");
     if(shot.mediaId!==undefined && (typeof shot.mediaId!=="string" ||
-       !/^[\\w-]{6,100}$/.test(shot.mediaId) || shot.kind!=="screen"))
+       !/^[\w-]{6,100}$/.test(shot.mediaId) || shot.kind!=="screen"))
       throw Error(label+" invalid local media ID; approved media must be a screen scene");
     if(shot.mediaStart!==undefined && (typeof shot.mediaStart!=="number"||
        !Number.isFinite(shot.mediaStart)||shot.mediaStart<0||shot.mediaStart>3600))
@@ -92,8 +92,8 @@ export function validateFilmSequence(value){
   };
 }
 export function escapeConcatFilePath(filename) {
-  if(typeof filename!=="string"||filename.includes("\\n")||filename.includes("\\r"))
+  if(typeof filename!=="string"||filename.includes("\n")||filename.includes("\r"))
     throw Error("Unsafe FFmpeg concat path");
   // ffconcat quoting escapes a single quote as: 'foo'\\''bar'
-  return "file '"+filename.replaceAll("'","'\\\\''")+"'";
+  return "file '"+filename.replaceAll("'","'\\''")+"'";
 }
