@@ -13,7 +13,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
 import {createReadStream} from "node:fs";
 import {createHash} from "node:crypto";
-import {assertApprovedSourceManifest,assertDirectorRelease,assertSourceFraming} from "./release-quality-gates.mjs";
+import {assertApprovedSourceManifest,assertApprovedInteractionManifest,assertDirectorRelease,assertSourceFraming} from "./release-quality-gates.mjs";
 import { dirname, resolve, extname } from "node:path";
 import process from "node:process";
 import { buildAudioMix } from "./audio-mix.mjs";
@@ -122,7 +122,9 @@ try {
     const manifest=JSON.parse(await readFile(manifestPath,"utf8"));
     const sourceChecksums={};
     for(const id of sourceIDs)sourceChecksums[id]=await fileHash(resolve(sourceMap[id]));
-    releaseEvidence=assertApprovedSourceManifest(manifest,sourceIDs,sourceChecksums,project.brand);
+    releaseEvidence=manifest.schema==="motion-interaction-cinema/v1"
+      ?assertApprovedInteractionManifest(manifest,sourceIDs,sourceChecksums,project.brand)
+      :assertApprovedSourceManifest(manifest,sourceIDs,sourceChecksums,project.brand);
     if(project.scenes.some(s=>s.kind==="screen"&&!s.mediaId))
       throw Error("RELEASE BLOCKED: all commercial product frames must have individual reviewed source IDs.");
     const framing={};
