@@ -10,7 +10,9 @@ import styles from "./film-browser-export.module.css";
 
 type Phase="idle"|"playing"|"recording"|"finishing";
 const FPS=24;
-const bitRate=2_500_000;
+// A 300-second 720p film at 2.2Mbps stays below the 120MB safety cap on most
+// browser encoders; actual device encoder bitrate is not guaranteed.
+const bitRate=2_200_000;
 
 function clock(n:number){return Math.floor(n/60)+":"+String(Math.floor(n%60)).padStart(2,"0");}
 function mime(hasAudio:boolean){
@@ -234,7 +236,7 @@ export default function FilmBrowserExport({chapters,busy,dirty}:{
       {active&&<button type="button" className={styles.stop} onClick={()=>halt("Recording stopped; no partial file published.")}>■ STOP</button>}
     </div>
     <p className={styles.notice} role="status">{phase==="recording"?"● RECORDING / "+clock(position)+" / "+(exportType||"LOCAL"):message}</p>
-    <p className={styles.warning}>Browser export records the existing Canvas graphics across ALL chapters without an API key or cloud rendering. Optionally mix <b>your own licensed music and recorded human voice</b> locally using Web Audio. The music is reduced when narration is present; no generative TTS or library music is supplied. This is still a device-dependent <b>browser workprint</b>, not a broadcast-certified deliverable. Source footage/overlays and guaranteed H.264 frame accuracy require the workstation Master. Keep this tab visible during recording. Max 192s / 720p / 24fps.</p>
+    <p className={styles.warning}>Browser export records the existing Canvas graphics across ALL chapters without an API key or cloud rendering. Optionally mix <b>your own licensed music and recorded human voice</b> locally using Web Audio. The music is reduced when narration is present; no generative TTS or library music is supplied. This is still a device-dependent <b>browser workprint</b>, not a broadcast-certified deliverable. Source footage/overlays and guaranteed H.264 frame accuracy require the workstation Master. Keep this tab visible during recording. Max 300s / 720p / 24fps. Older devices may fail long real-time captures; prefer the local FFmpeg master for delivery.</p>
   </section>;
 }
 function videoRecorderIsRunning(r:MediaRecorder|null){return Boolean(r&&r.state==="recording");}
