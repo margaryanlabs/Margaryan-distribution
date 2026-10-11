@@ -1,6 +1,6 @@
 ---
 name: motion-films
-description: Create and revise short motion-graphics films using Margaryan Content Studio from a ChatGPT conversation.
+description: Create or revise motion graphics, and prepare editable 2–5 minute multi-chapter feature films from a ChatGPT conversation.
 ---
 
 # Motion films from ChatGPT
@@ -14,6 +14,14 @@ Use the connected Margaryan Content Studio MCP tools for user requests to produc
 - For an external customer's brand, use the current generic "labs" demo style and explain the current white-label limitation; never silently pretend the customer logo will appear.
 - Do not invent conversion rates, testimonials, AI provider quotes, screenshots, real product features or verified client results.
 - The tool does not create moving photographic footage, voices, music licenses or a finished video file. It creates a motion-chat-v1 draft and a launch link to Motion Studio where the Canvas engine previews/renders graphics.
+
+## Long-form feature films (65–300s)
+
+Use `create_motion_feature_film` for 9–40 original scenes of 2–8 seconds each, grouped into 2–5 editorial chapters. A 300-second script needs 40 × 7.5-second scenes. Supply concrete scenes, natural voice cues, honest evidence and optional chapter titles. Keep the story copy concise enough for an inspectable fragment link (26,000 characters maximum). If the script is too large for a link, ask for an exported local sequence manifest instead of silently dropping scenes.
+
+The tool only returns a **reviewable project proposal**, not an MP4. The user must press **APPROVE & SAVE FILM** in Motion Sequence Studio. In a compatible ChatGPT inline widget, switch between chapters for preview; an inline act export is NOT the full film. The Motion website supports browser recording up to 300 seconds as a device-dependent workprint, and local H.264 mastering through Chromium/FFmpeg when proper media and audio are supplied. Neither cloud text-to-video generation nor synthetic celebrity voice is provided.
+
+For generic customer projects choose the neutral `labs` style. Promptence is one example brand/story, **not** the host of Motion Studio or the source of all videos.
 
 ## Workflow
 1. Design a concrete storyboard from the user's prompt, following supplied references, typography and tone.
