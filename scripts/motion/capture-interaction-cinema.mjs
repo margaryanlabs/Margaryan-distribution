@@ -38,7 +38,7 @@ const ORIGINAL_URL="https://promptence.tech/";
 const allowedHosts=new Set([PUBLIC_HOST,"fonts.googleapis.com","fonts.gstatic.com"]);
 function targetLocator(page,spec){
  if(spec.mode==="heading")return page.getByRole("heading",{name:spec.value,exact:true}).first();
- if(spec.mode==="button")return page.getByRole("button",{name:new RegExp("^"+spec.value+"\\b")}).first();
+ if(spec.mode==="radio")return page.getByRole("radio",{name:new RegExp("^"+spec.value+"\\b")}).first();
  return page.locator(spec.value).first();
 }
 async function pointer(page,x,y,pulse=0){
@@ -122,7 +122,7 @@ try{
          throw Error("INTERACTION BLOCKED: external navigation");
        if(step.kind==="click"){
          const observed=await locator.evaluate(el=>({
-           tag:el.tagName,type:el instanceof HTMLButtonElement?el.type:"",
+           tag:el.tagName,type:el instanceof HTMLButtonElement?el.type:"",role:el.getAttribute("role"),
            href:el.getAttribute("href"),insideForm:!!el.closest("form"),
            visible:!!el.getClientRects().length,enabled:!el.hasAttribute("disabled")
          }));
