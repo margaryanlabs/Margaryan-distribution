@@ -25,6 +25,7 @@ import { ensureSpatialRenderer, spatialStatus, spatialError } from "@/lib/motion
 import { createKeylessStoryboard, getLocalDirectorExamples, type MotionLanguage, type MotionStyle } from "@/lib/motion/director";
 import QuickStudio from "./quick-studio";
 import MultitrackEditor from "./multitrack-editor";
+import PrecisionCutDesk from "./precision-cut-desk";
 import VoiceBooth from "./voice-booth";
 import OperatorDesk from "./operator-desk";
 import { getLocalMedia, mediaAsFile } from "@/lib/motion/local-media";
@@ -1191,6 +1192,18 @@ export default function MotionStudioPage() {
           onSeek={time=>{setPlaying(false);jump(time);}}
           onSelect={selectScene}
           onEdit={audio=>{setPlaying(false);updateProject({...project,audio});}}
+        />
+        <PrecisionCutDesk project={project} selectedIndex={selectedIndex}
+          playhead={playhead} busy={exporting||generating||directorRepairing||visualReviewing}
+          onApply={(next,index,description)=>{
+            setPlaying(false);
+            const restored=sanitizeMotionProject(next);
+            setProject(restored);
+            setSelectedIndex(index);
+            const time=restored.scenes.slice(0,index).reduce((n,shot)=>n+shot.seconds,0);
+            timeRef.current=time;setPlayhead(time);
+            setNotice(description+" Original video remains local. Check the next transition and export preflight.");
+          }}
         />
         <div className={styles.sectionHeader}><span>04 / FRAME SEQUENCE</span><strong>{project.scenes.length} SHOTS</strong></div>
         <div className={styles.timeline}>
