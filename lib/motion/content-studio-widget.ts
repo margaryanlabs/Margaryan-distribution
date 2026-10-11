@@ -82,9 +82,52 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
   }
   player.addEventListener("load", () => { ready = true; sendToPlayer(); });
   player.src = origin + "/motion/chat-preview";
+  // A user explicitly clicks SAVE TO CHATGPT in the nested film player.
+  // Only browser-rendered exports can reach this bridge, never arbitrary URLs.
+  let uploadBusy = false;
+  async function importBrowserVideo(packet) {
+    if (uploadBusy) return;
+    const reply = (message) => {
+      status.textContent = message;
+      if (player.contentWindow) player.contentWindow.postMessage({
+        kind:"margaryan-motion-upload-status-v1",message
+      },origin);
+    };
+    const bytes = packet && packet.bytes;
+    if (!(bytes instanceof ArrayBuffer) || bytes.byteLength < 100 || bytes.byteLength > 25_000_000 ||
+        !/^[a-z0-9-]{1,80}\.(mp4|webm)$/i.test(packet.fileName || "") ||
+        !["video/mp4","video/webm","video/webm;codecs=vp8","video/webm;codecs=vp9"].includes(packet.mimeType)) {
+      reply("ChatGPT upload rejected: unsupported file or larger than 25 MB.");
+      return;
+    }
+    if (!window.openai || typeof window.openai.uploadFile !== "function") {
+      reply("ChatGPT file storage unavailable in this host. Your local video download still works.");
+      return;
+    }
+    uploadBusy = true;
+    try {
+      reply("Uploading your exported video to ChatGPT…");
+      const file = new File([bytes],packet.fileName,{type:packet.mimeType});
+      const result = await window.openai.uploadFile(file,{library:true});
+      if (!result || typeof result.fileId !== "string" || !result.fileId) {
+        throw Error("No file confirmation was returned by ChatGPT");
+      }
+      reply("Video saved to ChatGPT. Check your files/library; keep your local copy.");
+    } catch(error) {
+      reply("Could not save to ChatGPT: " + String(error && error.message || error).slice(0,140) +
+        ". The local export is unaffected.");
+    } finally {
+      uploadBusy = false;
+    }
+  }
   window.addEventListener("message", event => {
-    if (event.source === player.contentWindow && event.origin === origin && event.data && event.data.kind === "margaryan-motion-preview-ready-v1") {
-      ready = true; sendToPlayer(); return;
+    if (event.source === player.contentWindow && event.origin === origin) {
+      if (event.data && event.data.kind === "margaryan-motion-preview-ready-v1") {
+        ready = true; sendToPlayer(); return;
+      }
+      if (event.data && event.data.kind === "margaryan-motion-export-file-v1") {
+        void importBrowserVideo(event.data); return;
+      }
     }
     if (event.source !== window.parent) return;
     const msg = event.data;
