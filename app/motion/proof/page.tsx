@@ -2,6 +2,7 @@
 
 import {useCallback,useEffect,useRef,useState} from "react";
 import {drawProofFrame,PROOF_SECONDS,type ProofMedia} from "@/lib/motion/proof-film";
+import {PROOF_DEFAULT_EDL,sanitizeProofEDL,proofSourceTime,type ProofEditDecision} from "@/lib/motion/proof-edl";
 import {getLoadedMotionLogo,preloadMotionLogo} from "@/lib/motion/brand-assets";
 import {createProofAudioSession,inspectProofAudio} from "@/lib/motion/proof-audio";
 import styles from "./proof.module.css";
@@ -10,6 +11,7 @@ type ProofBridge = Window & {
   __motionProofFrame?: (time:number)=>Promise<string>;
   __motionProofReady?: boolean;
   __motionProofSource?: "image" | "video";
+  __motionProofConfigure?: (changes:Partial<ProofEditDecision>)=>ProofEditDecision;
 };
 const IMAGE_TYPES=new Set(["image/png","image/jpeg","image/webp"]);
 const VIDEO_TYPES=new Set(["video/mp4","video/webm"]);
@@ -17,10 +19,10 @@ const VIDEO_TYPES=new Set(["video/mp4","video/webm"]);
 /** Seek the actual browser-decoded video frame for its exact film time.
  * Called before deterministic offline frame export and during timeline scrubbing.
  * Browser preview during playback uses direct video.play for smooth decode. */
-async function seekSourceFrame(media:ProofMedia,seconds:number,force=false):Promise<void>{
+async function seekSourceFrame(media:ProofMedia,seconds:number,force=false,edl:ProofEditDecision=PROOF_DEFAULT_EDL):Promise<void>{
   if(!(media instanceof HTMLVideoElement)||(seconds>=7.55&&!force))return;
   const end=Math.max(.01,media.duration-.11);
-  const target=Math.min(Math.max(0,seconds),end);
+  const target=Math.min(proofSourceTime(seconds,media.duration,edl),end);
   if(media.readyState>=2&&Math.abs(media.currentTime-target)<.006)return;
   await new Promise<void>((resolve,reject)=>{
     let finished=false;
@@ -57,6 +59,9 @@ export default function ProofDirectorPage(){
   const [seconds,setSeconds]=useState(0);
   const [playing,setPlaying]=useState(false);
   const [showRaw,setShowRaw]=useState(false);
+  const [edit,setEdit]=useState<ProofEditDecision>(PROOF_DEFAULT_EDL);
+  const editRef=useRef<ProofEditDecision>(PROOF_DEFAULT_EDL);
+  const [sourceDuration,setSourceDuration]=useState(8);
   const [exporting,setExporting]=useState(false);
   const [notice,setNotice]=useState("Upload a real, approved Promptence screenshot. Only actual screenshot pixels will enter the movie.");
   const canvas=useRef<HTMLCanvasElement>(null);
@@ -114,9 +119,17 @@ export default function ProofDirectorPage(){
         const scale=Math.min(target.width/sw,target.height/sh);
         const w=sw*scale,h=sh*scale;
         if(w>0&&h>0)ctx.drawImage(src,(target.width-w)/2,(target.height-h)/2,w,h);
-      } else drawProofFrame(ctx,src,logoRef.current,at,target.width,target.height);
+      } else drawProofFrame(ctx,src,logoRef.current,at,target.width,target.height,editRef.current);
     }
   },[showRaw]);
+  function changeEDL(changes:Partial<ProofEditDecision>){
+    const video=sourceRef.current;
+    const next=sanitizeProofEDL({...editRef.current,...changes},video instanceof HTMLVideoElement?video.duration:8);
+    editRef.current=next;setEdit(next);
+    if(video instanceof HTMLVideoElement)void seekSourceFrame(video,latestSeconds.current,showRaw,next).then(()=>paint(latestSeconds.current)).catch(err=>setNotice(String(err)));
+    else paint(latestSeconds.current);
+    return next;
+  }
   useEffect(()=>{
     sourceRef.current=source;
     paint(latestSeconds.current);
@@ -127,23 +140,24 @@ export default function ProofDirectorPage(){
     const host=window as ProofBridge;
     host.__motionProofReady=Boolean(source);
     host.__motionProofSource=source instanceof HTMLVideoElement?"video":"image";
+    host.__motionProofConfigure=(changes)=>changeEDL(changes);
     host.__motionProofFrame=async time=>{
       const src=sourceRef.current;
       if(!src)throw new Error("SOURCE GATE: approved screenshot missing");
       const frame=makeCanvas(1080,1920);
       const ctx=frame.getContext("2d",{alpha:false});
       if(!ctx)throw new Error("Canvas unavailable");
-      await seekSourceFrame(src,time);
-      drawProofFrame(ctx,src,logoRef.current,time,1080,1920);
+      await seekSourceFrame(src,time,false,editRef.current);
+      drawProofFrame(ctx,src,logoRef.current,time,1080,1920,editRef.current);
       return frame.toDataURL("image/png").split(",")[1];
     };
-    return()=>{delete host.__motionProofFrame;delete host.__motionProofReady;delete host.__motionProofSource;};
+    return()=>{delete host.__motionProofFrame;delete host.__motionProofReady;delete host.__motionProofSource;delete host.__motionProofConfigure;};
   },[source]);
   useEffect(()=>{
     if(!playing||!source)return;
     let active=true;
     if(source instanceof HTMLVideoElement){
-      source.currentTime=Math.min(latestSeconds.current,Math.max(0,source.duration-.11));
+      source.currentTime=proofSourceTime(latestSeconds.current,source.duration,editRef.current);
       void source.play().catch(()=>setNotice("Unable to play local clip; try pressing Play again."));
     }
     playingFrom.current=performance.now();
@@ -154,6 +168,10 @@ export default function ProofDirectorPage(){
       if(p>=PROOF_SECONDS){
         latestSeconds.current=PROOF_SECONDS;setSeconds(PROOF_SECONDS);
         paint(PROOF_SECONDS);setPlaying(false);return;
+      }
+      if(source instanceof HTMLVideoElement&&p<7.55){
+        const desired=proofSourceTime(p,source.duration,editRef.current);
+        if(Math.abs(source.currentTime-desired)>.35)source.currentTime=desired;
       }
       latestSeconds.current=p;setSeconds(p);paint(p);
       previewFrame.current=requestAnimationFrame(tick);
@@ -198,6 +216,10 @@ export default function ProofDirectorPage(){
       const old=localVideoUrl.current;localVideoUrl.current=keepUrl?url:null;
       if(old)URL.revokeObjectURL(old);
       sourceRef.current=decoded;setSource(decoded);setSourceName(file.name);
+      const length=decoded instanceof HTMLVideoElement?decoded.duration:8;
+      setSourceDuration(length);
+      const options=sanitizeProofEDL({...PROOF_DEFAULT_EDL,secondIn:Math.max(0,Math.min(length-2,Math.floor(length*.5)))},length);
+      editRef.current=options;setEdit(options);
       latestSeconds.current=0;setSeconds(0);
       setNotice(isVideo?"REAL VIDEO loaded locally. Timeline uses actual decoded frames; no synthetic UI or customer results.":"Real screenshot loaded. Verify provenance and remove sensitive information.");
     }catch(err){setNotice("Source rejected: "+(err instanceof Error?err.message:String(err)));}
@@ -206,7 +228,7 @@ export default function ProofDirectorPage(){
   function seek(t:number){
     setPlaying(false);latestSeconds.current=t;setSeconds(t);
     const src=sourceRef.current;
-    if(src)void seekSourceFrame(src,t,showRaw).then(()=>paint(t)).catch(err=>setNotice(String(err)));
+    if(src)void seekSourceFrame(src,t,showRaw,editRef.current).then(()=>paint(t)).catch(err=>setNotice(String(err)));
   }
   async function exportContactSheet(){
     const source=sourceRef.current;
@@ -223,8 +245,8 @@ export default function ProofDirectorPage(){
       if(!board)throw Error("Cannot create review grid");
       board.fillStyle="#09130F";board.fillRect(0,0,sheet.width,sheet.height);
       for(const [i,time] of shots.entries()){
-        await seekSourceFrame(source,time);
-        drawProofFrame(ctx,source,logoRef.current,time,270,480);
+        await seekSourceFrame(source,time,false,editRef.current);
+        drawProofFrame(ctx,source,logoRef.current,time,270,480,editRef.current);
         const x=(i%3)*270,y=Math.floor(i/3)*520;
         board.drawImage(tile,x,y);
         board.fillStyle="#0C2018";board.fillRect(x,y+480,270,40);
@@ -277,12 +299,17 @@ export default function ProofDirectorPage(){
         if(stopped)return;
         if(!start)start=now;
         const t=Math.min(PROOF_SECONDS,(now-start)/1000);
-        drawProofFrame(ctx,sourceRef.current!,logoRef.current,t,temp.width,temp.height);
+        const clip=sourceRef.current;
+        if(clip instanceof HTMLVideoElement&&t<7.55){
+          const wanted=proofSourceTime(t,clip.duration,editRef.current);
+          if(Math.abs(clip.currentTime-wanted)>.3)clip.currentTime=wanted;
+        }
+        drawProofFrame(ctx,sourceRef.current!,logoRef.current,t,temp.width,temp.height,editRef.current);
         if(t>=PROOF_SECONDS){stopped=true;recorder.stop();}
         else raf=requestAnimationFrame(frame);
       };
       if(sourceRef.current instanceof HTMLVideoElement){
-        sourceRef.current.currentTime=0;
+        sourceRef.current.currentTime=proofSourceTime(0,sourceRef.current.duration,editRef.current);
         await sourceRef.current.play();
       }
       recorder.start(250);
