@@ -242,7 +242,7 @@ export function runContentStudioTool(name: string, raw: unknown) {
       name:checkString(raw.client_brand_name,"client_brand_name",36),
       caption:checkString(raw.client_brand_caption,"client_brand_caption",65,true),
       accent:raw.client_brand_accent === undefined ? "#C4D9F4" :
-        oneOf(raw.client_brand_accent, [raw.client_brand_accent] as string[], "client_brand_accent")
+        checkString(raw.client_brand_accent, "client_brand_accent", 7)
     }:undefined;
     if(clientBrand && !/^#[0-9a-fA-F]{6}$/.test(clientBrand.accent))
       throw Error("client_brand_accent must be #RRGGBB");
