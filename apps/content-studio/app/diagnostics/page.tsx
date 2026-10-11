@@ -67,11 +67,12 @@ async function run():Promise<Check[]> {
   }catch(e){checks.push(card("CREATE EDITABLE FILM",false,String(e),0));}
   if(film)try {
     const r=await call("tools/call",{name:"revise_motion_film",arguments:{
-      current_project:film.previewProject,changes:[{target:"scene",index:1,set:{headline:"REAL MOTION. FULL CONTROL."}}]
+      current_project:film.previewProject,changes:[{target:"scene",index:1,set:{headline:"REAL MOTION. FULL CONTROL."}},
+        {target:"project",set:{clientBrand:{accent:"#D8C4F9"}}}]
     }},26);
     if(r.result.isError)throw Error("Tool returned isError");
     const updated=(r.result.structuredContent as {previewProject?:{scenes?:Array<{headline:string}>}}).previewProject;
-    if(updated?.scenes?.[1]?.headline!=="REAL MOTION. FULL CONTROL.")throw Error("Revision did not modify scene 02");
+    if(updated?.scenes?.[1]?.headline!=="REAL MOTION. FULL CONTROL." || (r.result.structuredContent as {previewProject?:{clientBrand?:{accent?:string}}}).previewProject?.clientBrand?.accent!=="#D8C4F9")throw Error("Revision did not change shot 02 and the customer accent");
     checks.push(card("REVISION ROUND-TRIP",true,"Updated shot 02",r.milliseconds));
   }catch(e){checks.push(card("REVISION ROUND-TRIP",false,String(e),0));}
   try {
