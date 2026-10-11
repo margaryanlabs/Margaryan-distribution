@@ -213,7 +213,7 @@ export default function ProofDirectorPage(){
     const temp=makeCanvas(540,960);
     const ctx=temp.getContext("2d",{alpha:false});
     if(!ctx){setNotice("Review canvas unavailable");return;}
-    const type=["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"].find(m=>MediaRecorder.isTypeSupported(m));
+    const type=[(voiceFile||musicFile)?"video/webm;codecs=vp9,opus":"video/webm;codecs=vp9",(voiceFile||musicFile)?"video/webm;codecs=vp8,opus":"video/webm;codecs=vp8","video/webm"].find(m=>MediaRecorder.isTypeSupported(m));
     if(!type){setNotice("This browser cannot export a WebM review. Use Chromium + the offline MP4 master.");return;}
     setPlaying(false);exportingRef.current=true;setExporting(true);
     let mixedAudio:Awaited<ReturnType<typeof createProofAudioSession>>=null;
@@ -315,9 +315,23 @@ export default function ProofDirectorPage(){
           <p>Every preview frame is drawn for its exact time. No pre-rendered PNG slideshow, random green HUD elements, fictitious rankings or client results.</p>
         </div>
         <div className={styles.section}>
-          <span className={styles.overline}>03 / FILM GATE</span>
+          <span className={styles.overline}>03 / RECORDING & MUSIC</span>
+          <h2>No more robotic voices.</h2>
+          <p>Add a real voice recording or a licensed, owner-approved AI voice file (natural timing; max 9.8s). You can also add a licensed music file. Both remain in this browser tab, synchronized with the shot preview and mixed into the WebM review export.</p>
+          <label className={styles.upload}><span>VOICEOVER / WAV · MP3 · M4A</span>
+            <input type="file" data-testid="proof-voice-input" accept="audio/*" disabled={exporting} onChange={e=>void attachAudio(e,"voice")}/>
+          </label>
+          {voiceFile&&<div className={styles.source}>VOICE / {voiceInfo} <button className={styles.clear} type="button" onClick={()=>{setVoiceFile(null);setVoiceInfo("");}}>Remove</button></div>}
+          <label className={styles.upload}><span>LICENSED MUSIC / OPTIONAL</span>
+            <input type="file" data-testid="proof-music-input" accept="audio/*" disabled={exporting} onChange={e=>void attachAudio(e,"music")}/>
+          </label>
+          {musicFile&&<div className={styles.source}>SCORE / {musicInfo} <button className={styles.clear} type="button" onClick={()=>{setMusicFile(null);setMusicInfo("");}}>Remove</button></div>}
+          <p className={styles.hint}>Sound source remains entirely local. No voice cloning, robot TTS or automatic speech acceleration. Listen on headphones before approving.</p>
+        </div>
+        <div className={styles.section}>
+          <span className={styles.overline}>04 / FILM GATE</span>
           <h2>Export a review — not an ad.</h2>
-          <p>This browser proof exports a 540×960 WebM with no synthesized voice. If video is supplied, its decoded frames replace still images. A final 1080×1920 MP4 is produced on a workstation with an approved recording and FFmpeg.</p>
+          <p>The 540×960 WebM review now includes your voice/music when supplied. If you imported footage, its actual decoded frames are used. A native 1080×1920 H.264/AAC master still requires the workstation exporter.</p>
           <button className={styles.export} disabled={!source||exporting} onClick={exportPreview}>
             {exporting?"ENCODING…":"EXPORT 10s SILENT REVIEW ↗"}
           </button>
