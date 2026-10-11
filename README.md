@@ -222,3 +222,9 @@ npm run dev
 External side effects are disabled by default with `EXECUTION_ENABLED=false`.
 
 Realtime voice runs separately in `voice-gateway` because Twilio Media Streams use a long-lived WebSocket connection.
+
+## Motion Pro × ChatGPT Content Studio
+
+The integrated beta combines an MCP plugin (three storyboard/edit tools plus a Canvas player inside compatible ChatGPT clients) and Motion PRO Film Sequence Studio (2–3 chapter ChatGPT-directed films; locally editable sequences up to eight chapters). The tool itself does not call an OpenAI API or generate photorealistic footage. Long MP4 mastering uses local Chromium and FFmpeg and requires source consent, tech QA and final human approval. Public MCP access, customer OAuth, commercial cloud rendering and ChatGPT directory approval are **not** included.
+
+Read [unified release gates and test plan](docs/MOTION_CHATGPT_UNIFIED_RELEASE.md). Test contracts: `npm run motion:test-plugin` and `npm run motion:test-sequence`. Open `/motion?mode=cinematic` for the 120-second source-honest Promptence demo.
