@@ -107,7 +107,7 @@ export async function POST(request: Request) {
   if (!CONTENT_STUDIO_TOOLS.some(tool => tool.name === name))
     return error(payload.id, -32602, "Unknown tool");
   try {
-    const result = runContentStudioTool(name, params.arguments);
+    const result = runContentStudioTool(name, params.arguments, new URL(request.url).origin);
     return rpc(payload.id, {
       content: [
         { type: "text", text: "Motion Studio draft created (NOT an exported video). Open this preview link: " + result.editorUrl },
