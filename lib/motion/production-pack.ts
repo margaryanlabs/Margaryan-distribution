@@ -1,4 +1,5 @@
 import { durationOf, type MotionProject } from "./studio";
+import { sanitizeAudioEdit } from "./timeline-edit";
 
 /**
  * Exportable production brief for an operator or a chat assistant.
@@ -52,13 +53,14 @@ export function makeProductionPack(project: MotionProject) {
     language: project.language || "manual-review",
     format: project.format,
     duration: durationOf(project),
+    audioEdit: sanitizeAudioEdit(project.audio),
     shots: cues,
     timelineWarnings: cues.filter(c=>c.requiresTimingReview).map(c=>
       "Shot "+c.shot+" estimated narration "+c.estimatedNarrationSeconds+
       "s vs "+(c.end-c.start).toFixed(1)+"s shot. Re-record, split or change timing."),
     caveats: [
       "Narration duration is estimated by word count. Spoken-word sync requires listening.",
-      "Imported audio and real product screenshots are browser-local, NOT included.",
+      "Imported audio and real product screenshots are browser-local, NOT included. Voice/music edit metadata is saved.",
       "Check factual claims, on-screen typography, licensing and source provenance before publishing.",
       "No generative video, TTS provider, Claude/ChatGPT API or cloud renderer was called."
     ]

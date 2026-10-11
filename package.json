@@ -27,6 +27,7 @@
     "motion:proof": "node scripts/motion/render-proof.mjs",
     "motion:test-proof": "node scripts/motion/test-proof.mjs",
     "motion:capture-video": "node scripts/motion/capture-promptence-video.mjs",
+    "motion:test-audio": "node scripts/motion/test-audio-mix.mjs",
     "motion:test-proof-audio": "node scripts/motion/test-proof-audio.mjs"
   },
   "dependencies": {
