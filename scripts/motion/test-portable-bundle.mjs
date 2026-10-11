@@ -2,12 +2,15 @@
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {File as NodeFile} from "node:buffer";
-import * as ts from "typescript";
+import {createRequire} from "node:module";
+const tsModule=createRequire(import.meta.url)("typescript");
+const ts=tsModule.transpileModule?tsModule:tsModule.default;
+if(!ts?.transpileModule)throw Error("TypeScript compiler is not available for portable bundle tests");
 if(typeof globalThis.File==="undefined")globalThis.File=NodeFile;
 const load=(path,deps={})=>{
   const src=readFileSync(new URL("../../"+path,import.meta.url),"utf8");
-  const js=ts.transpileModule(src,{compilerOptions:{module:ts.ModuleKind.CommonJS,
-    target:ts.ScriptTarget.ES2022}}).outputText;
+  const js=ts.transpileModule(src,{compilerOptions:{module:1,
+    target:9}}).outputText;
   const mod={exports:{}};
   new Function("module","exports","require",js)(mod,mod.exports,key=>{
     if(Object.hasOwn(deps,key))return deps[key];
