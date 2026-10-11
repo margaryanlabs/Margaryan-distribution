@@ -1,5 +1,5 @@
 import Link from "next/link";
-const facts=[["NO SEPARATE AI API","ChatGPT plans and directs the edit. The existing Motion Engine animates scenes."],["REAL MOTION ENGINE","1080p browser export when supported. Original source media stays in the browser."],["CHATGPT NATIVE","MCP tools + live Canvas preview. Public beta, not a photoreal video generator."]];
+const facts=[["NO SEPARATE AI API","ChatGPT plans and directs the edit. The existing Motion Engine animates scenes."],["REAL MOTION ENGINE","1080p browser export when supported. Original source media stays in the browser."],["CHATGPT NATIVE","MCP tools + live Canvas preview. Public beta, not a photoreal video generator."],["LOCAL FILM VAULT","Keep 18 named editable film snapshots in this browser without an account. Original customer media files are never bundled into local project snapshots."]];
 export default function Home(){return <main style={{minHeight:"100vh",maxWidth:1040,margin:"0 auto",padding:"clamp(28px,8vw,85px) 24px"}}>
 <header style={{fontSize:12,letterSpacing:".16em",color:"#91a5be",fontWeight:700}}>MARGARYAN LABS / CREATIVE ENGINE</header>
 <div style={{borderTop:"1px solid #28303a",margin:"25px 0 30px"}}/>
