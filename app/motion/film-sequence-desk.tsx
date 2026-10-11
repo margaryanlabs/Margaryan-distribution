@@ -195,18 +195,18 @@ export default function FilmSequenceDesk({
       setNotice("Imported "+parsed.chapters.length+" chapters; choose LOAD to edit an individual chapter.");
     }catch(e){setNotice(e instanceof Error?e.message:"Invalid film sequence");}
   }
-  async function openDemo(){
+  async function openDemo(minutes:2|5=2){
     if(busy)return;
     try{
-      const response=await fetch("/motion/film-templates/promptence-120s.json",{
+      const response=await fetch("/motion/film-templates/promptence-"+(minutes===5?"300":"120")+"s.json",{
         method:"GET",cache:"no-store",credentials:"same-origin"
       });
       if(!response.ok)throw Error("Film demo is unavailable (HTTP "+response.status+")");
       const text=await response.text();
-      if(text.length>20_000)throw Error("Film demo is unexpectedly large");
+      if(text.length>(minutes===5?40_000:20_000))throw Error("Film demo is unexpectedly large");
       const draft=decodeManifest(JSON.parse(text));
       setInbound(draft);
-      setNotice("Source-honest 120-second Promptence editorial demo staged. Review all chapters before approving.");
+      setNotice("Source-honest "+(minutes*60)+"-second Promptence editorial storyboard staged. Review all chapters before approving. A concept film is not yet a mastered MP4.");
     }catch(e){setNotice("FILM DEMO: "+(e instanceof Error?e.message:"Could not load demo"));}
   }
   function removeChapter(index:number){
@@ -240,7 +240,8 @@ export default function FilmSequenceDesk({
         <p>Start with the approved 120-second Promptence storyboard, or create an original first chapter in the Creative Brief editor below. Each chapter keeps its own scenes and can be revised before delivery.</p>
       </div>
       <div className={styles.starterActions}>
-        <button type="button" disabled={busy} onClick={()=>void openDemo()}>✦ OPEN 120s PROMPTENCE EXAMPLE</button>
+        <button type="button" disabled={busy} onClick={()=>void openDemo(2)}>✦ OPEN 120s EXAMPLE</button>
+        <button type="button" disabled={busy} onClick={()=>void openDemo(5)}>▶ OPEN 300s DIRECTOR'S CUT</button>
         <a href="#motion-storyboard">START WITH A BLANK CHAPTER ↘</a>
       </div>
       <small>Examples are original motion graphics only. They contain no fabricated AI results or customer data.</small>
@@ -308,7 +309,8 @@ export default function FilmSequenceDesk({
         <input type="file" accept=".json,application/json" disabled={busy}
           onChange={e=>{const f=e.target.files?.[0];e.target.value="";void importFilm(f);}}/>
       </label>
-      <button type="button" onClick={()=>{void openDemo()}} disabled={busy}>✦ TRY 120s DEMO</button>
+      <button type="button" onClick={()=>{void openDemo(2)}} disabled={busy}>✦ TRY 120s DEMO</button>
+      <button type="button" onClick={()=>{void openDemo(5)}} disabled={busy}>▶ TRY 300s FILM</button>
       <button type="button" onClick={resetFilm} disabled={busy||!chapters.length}>RESET SEQUENCE</button>
     </div>
     <p className={styles.notice} role="status">{notice}</p>
