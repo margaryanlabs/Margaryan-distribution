@@ -100,7 +100,7 @@ export const CONTENT_STUDIO_TOOLS = [
           items: {
             type: "object", additionalProperties: false,
             properties: {
-              kind: { type: "string", enum: ["opener", "statement", "network", "closer", "kinetic", "orbit", "spatial"] },
+              kind: { type: "string", enum: ["opener", "statement", "network", "closer", "kinetic", "orbit"], description:"Local 120–192s Browser Film exporter does not support spatial GPU scenes; use workstation mastering for those." },
               eyebrow: { type: "string", maxLength: 65 },
               headline: { type: "string", minLength: 1, maxLength: 105 },
               support: { type: "string", maxLength: 180 },
@@ -198,6 +198,8 @@ function createFeatureFilm(raw: Record<string,unknown>) {
   const style=raw.style===undefined?"cinematic":oneOf(raw.style,["cinematic","kinetic","technical"] as const,"style");
   if(!Array.isArray(raw.scenes)||raw.scenes.length<9||raw.scenes.length>24)
     throw Error("Feature films require 9–24 original scenes (2–3 chapters)");
+  if(raw.scenes.some((scene:unknown)=>record(scene)&&scene.kind==="spatial"))
+    throw Error("Spatial 3D scenes require workstation Master; long-form browser films support 2D motion shots only");
   const chunkCount=Math.ceil(raw.scenes.length/8);
   if(raw.chapter_titles!==undefined && (
     !Array.isArray(raw.chapter_titles)||raw.chapter_titles.length>chunkCount||
