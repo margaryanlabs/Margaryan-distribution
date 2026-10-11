@@ -53,6 +53,7 @@ export default function QualityLab(){
   const [results,setResults]=useState<Result[]>([]);
   const [progress,setProgress]=useState(0);
   const [error,setError]=useState("");
+  const [copied,setCopied]=useState(false);
   const [format,setFormat]=useState("");
   const [file,setFile]=useState<Blob|null>(null);
   const [fileName,setFileName]=useState("");
@@ -76,7 +77,7 @@ export default function QualityLab(){
   const test=useCallback(async()=>{
     if(running)return;
     abort.current=false;
-    setRunning(true);setError("");setProgress(0);setResults([]);
+    setRunning(true);setCopied(false);setError("");setProgress(0);setResults([]);
     setFile(null);setFormat("");setFileName("");
     if(liveURL.current)URL.revokeObjectURL(liveURL.current);
     liveURL.current=null;setPlayUrl("");
@@ -175,6 +176,19 @@ export default function QualityLab(){
     }
   },[running,withSound]);
 
+  async function copyReport(){
+    const rows=[
+      "MARGARYAN CONTENT STUDIO — BROWSER VIDEO QUALITY REPORT",
+      "Test: procedural Motion Engine / 6s / 720x1280 / 24fps requested",
+      "Audio requested: "+(withSound?"original procedural score":"no"),
+      "Encoded file: "+(file?format+" / "+sizeText(file.size):"none"),
+      "Result: "+(error||"encoding process finished without a fatal client error"),
+      ...results.map(x=>x.status.toUpperCase()+" | "+x.label+" | "+x.detail),
+      "These results are only from this browser; plugin installation and independent professional film QA were not assessed."
+    ];
+    try{await navigator.clipboard.writeText(rows.join("\n"));setCopied(true);}
+    catch{setCopied(false);setError("Clipboard unavailable in this browser. Please share a screenshot of the report instead.");}
+  }
   const passed=results.filter(x=>x.status==="pass").length;
   const failed=results.filter(x=>x.status==="fail").length;
   return <main className={styles.page}>
@@ -202,6 +216,7 @@ export default function QualityLab(){
             <b>{result.status==="pass"?"✓":result.status==="warn"?"!":"×"}</b>
             <div><strong>{result.label}</strong><p>{result.detail}</p></div>
           </div>)}</div>}
+          {results.length>0&&<button type="button" className={styles.copy} onClick={()=>void copyReport()}>{copied?"✓ QUALITY REPORT COPIED":"⧉ COPY QUALITY REPORT FOR CHATGPT"}</button>}
           {file&&playUrl&&<div className={styles.playback}>
             <div className={styles.label}><span>RECORDED FILE</span><span>{format} · {sizeText(file.size)}</span></div>
             <video controls playsInline preload="metadata" src={playUrl} aria-label="Play the encoded local proof video"/>
