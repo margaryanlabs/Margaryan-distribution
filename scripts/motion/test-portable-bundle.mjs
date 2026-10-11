@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {File as NodeFile} from "node:buffer";
-import ts from "typescript";
+import * as ts from "typescript";
 if(typeof globalThis.File==="undefined")globalThis.File=NodeFile;
 const load=(path,deps={})=>{
   const src=readFileSync(new URL("../../"+path,import.meta.url),"utf8");
