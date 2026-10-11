@@ -25,6 +25,15 @@
     "paths": {
       "@/*": [
         "../../*"
+      ],
+      "gsap": [
+        "./node_modules/gsap"
+      ],
+      "three": [
+        "./node_modules/three"
+      ],
+      "three/*": [
+        "./node_modules/three/*"
       ]
     }
   },
