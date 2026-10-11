@@ -34,7 +34,8 @@
     "motion:test-chat": "node scripts/motion/test-chat-operator.mjs",
     "motion:test-real-source": "node scripts/motion/test-real-source.mjs",
     "motion:test-chat-channel": "node scripts/motion/test-chat-channel.mjs",
-    "motion:test-source-camera": "node scripts/motion/test-source-camera.mjs"
+    "motion:test-source-camera": "node scripts/motion/test-source-camera.mjs",
+    "motion:test-plugin": "node scripts/motion/test-content-studio-plugin.mjs"
   },
   "dependencies": {
     "next": "16.3.3",
