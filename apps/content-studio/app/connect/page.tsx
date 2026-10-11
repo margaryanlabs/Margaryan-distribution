@@ -85,7 +85,7 @@ export default function ConnectPage() {
     if(!stopped) try {
       const output=await rpc("tools/call",{
         name:"create_motion_film",
-        arguments:{title:"MARGARYAN / MOTION DEMO",brand:"labs",format:"portrait",language:"en",qualityMode:"signature",scenes:TEST_SCENES}
+        arguments:{title:"MARGARYAN / MOTION DEMO",brand:"labs",client_brand_name:"STUDIO DEMO",client_brand_caption:"PRODUCED FROM CHATGPT",client_brand_accent:"#B7C5E9",format:"portrait",language:"en",qualityMode:"signature",scenes:TEST_SCENES}
       },105);
       if(output.isError)throw Error("Create tool returned isError");
       film=output.structuredContent as FilmResult;
