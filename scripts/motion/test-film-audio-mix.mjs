@@ -11,7 +11,7 @@ assert.throws(()=>validateSoundSource(fake("../escape.mp3"),"voice"),/approved l
 assert.throws(()=>validateSoundSource(fake("source.mp3","application/octet-stream"),"voice"),/supported audio container/);
 assert.throws(()=>validateSoundSource(fake("too-big.wav","audio/wav",MAX_AUDIO_SOURCE_BYTES+1),"voice"),/40MB/);
 assert.throws(()=>validateSoundSource(fake("empty.wav","audio/wav",0),"voice"),/40MB/);
-assert.throws(()=>soundtrackConfig(120,true,true,false),/rights/);
+assert.throws(()=>soundtrackConfig(120,true,true,false),/ownership\/licensing/);
 assert.deepEqual(soundtrackConfig(120,false,false,false),{
   seconds:120,hasVoice:false,hasMusic:false,voiceVolume:1,musicVolume:0.7,fadeIn:0.18,fadeOut:0.8,mode:"silent"
 });
