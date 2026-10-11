@@ -50,6 +50,18 @@ assert.equal(clientFilm.previewProject.clientBrand.name,"BLUE ROOM");
 assert.equal(clientFilm.previewProject.clientBrand.caption,"A NEW KIND OF NIGHT");
 assert.equal(studio.clientBrandInfo(clientFilm.previewProject).name,"BLUE ROOM");
 assert.equal(studio.clientBrandInfo(clientFilm.previewProject).accent,"#C0D9FA");
+const brandRestyle=bridge.runContentStudioTool("revise_motion_film",{
+  current_project:clientFilm.previewProject,
+  changes:[{target:"project",set:{clientBrand:{accent:"#D8C4F9"}}}]
+});
+assert.equal(brandRestyle.previewProject.clientBrand.name,"BLUE ROOM");
+assert.equal(brandRestyle.previewProject.clientBrand.accent,"#D8C4F9");
+assert.equal(brandRestyle.previewProject.clientBrand.caption,"A NEW KIND OF NIGHT");
+assert.throws(()=>bridge.runContentStudioTool("revise_motion_film",{
+  current_project:created.chatPack.project,
+  changes:[{target:"project",set:{clientBrand:{unexpected:"not allowed"}}}]
+}),/name, caption and accent only/);
+
 assert.ok(clientFilm.chatPack.project.clientBrand);
 assert.throws(()=>bridge.runContentStudioTool("create_motion_film", {
   ...data,brand:"veto",client_brand_name:"FAKE VETO"
