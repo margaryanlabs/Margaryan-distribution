@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { drawMotionFrame } from "@/lib/motion/render-engine";
 import { preloadMotionLogo } from "@/lib/motion/brand-assets";
+import { createProceduralSoundtrack, type ProceduralAudioSession } from "@/lib/motion/sound-engine";
 import {
   BRAND_INFO, FORMAT_SIZE, durationOf, makeMotionPreset, sanitizeMotionProject,
   type MotionProject
@@ -34,6 +35,9 @@ export default function ChatMotionPreviewPage() {
   const [received, setReceived] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [includeScore, setIncludeScore] = useState(false);
+  const [fullHD, setFullHD] = useState(false);
+  const audioRef = useRef<ProceduralAudioSession|null>(null);
   const [exportReady, setExportReady] = useState(false);
   const lastExportRef = useRef<{blob:Blob;filename:string}|null>(null);
   const [seek, setSeek] = useState(0);
@@ -46,7 +50,7 @@ export default function ChatMotionPreviewPage() {
   const fps = 24;
   const total = durationOf(project);
   const fmt = FORMAT_SIZE[project.format];
-  const exportW = project.format === "landscape" ? 1280 : project.format === "square" ? 720 : 720;
+  const exportW = project.format === "landscape" ? (fullHD ? 1920 : 1280) : (fullHD ? 1080 : 720);
   const exportH = Math.round(exportW * fmt.height / fmt.width);
   const render = useCallback((time: number) => {
     const canvas = canvasRef.current;
@@ -97,6 +101,7 @@ export default function ChatMotionPreviewPage() {
   }, []);
 
   useEffect(() => {void preloadMotionLogo(project.brand).then(()=>render(playbackRef.current));}, [project.brand,render]);
+  useEffect(() => {render(playbackRef.current);},[render,fullHD]);
 
   useEffect(() => {
     render(playbackRef.current);
@@ -134,40 +139,61 @@ export default function ChatMotionPreviewPage() {
     setPlaying(false);
     playbackRef.current = value; setSeek(value); render(value);
   }
-  function exportVideo() {
+  async function exportVideo() {
     const canvas = canvasRef.current;
     if (!received || !canvas || recording || !("MediaRecorder" in window) || !canvas.captureStream) {
       setNotice("Video export unavailable in this browser or no film was received");
       return;
     }
-    const type = ["video/mp4;codecs=avc1.42E01E", "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"]
-      .find(x => MediaRecorder.isTypeSupported(x));
+    const codecs = includeScore
+      ? ["video/mp4;codecs=avc1.42E01E,mp4a.40.2","video/webm;codecs=vp9,opus",
+          "video/webm;codecs=vp8,opus","video/webm"]
+      : ["video/mp4;codecs=avc1.42E01E","video/webm;codecs=vp9",
+          "video/webm;codecs=vp8","video/webm"];
+    const type = codecs.find(x => MediaRecorder.isTypeSupported(x));
     if (!type) {setNotice("Browser has no supported video recorder codec");return;}
     let stream: MediaStream | null = null;
+    let audioSession: ProceduralAudioSession | null = null;
+    let recorderFailed = false;
     try {
       setPlaying(false);
       playbackRef.current = 0;
       setSeek(0);
       render(0);
       stream = canvas.captureStream(fps);
-      const recorder = new MediaRecorder(stream, {mimeType:type,videoBitsPerSecond:4_000_000});
+      if(includeScore) {
+        // Reuse the SAME keyless soundtrack engine as the full Motion Studio.
+        // No voice clone, external provider, paid model, or music license.
+        audioSession = await createProceduralSoundtrack(project,{synth:true});
+        audioRef.current = audioSession;
+        stream.addTrack(audioSession.track);
+      }
+      const recorder = new MediaRecorder(stream, {mimeType:type,videoBitsPerSecond:fullHD?7_000_000:4_000_000});
       chunksRef.current = [];
       lastExportRef.current = null; setExportReady(false);
       recorder.ondataavailable = event => {
         if (event.data.size > 0) chunksRef.current.push(event.data);
       };
-      recorder.onerror = () => setNotice("Recorder failed; try full Motion Studio export");
+      recorder.onerror = () => {
+        recorderFailed=true;
+        setNotice("Video encoding failed. Export was cancelled rather than delivering a corrupt video.");
+        try{if(recorder.state==="recording")recorder.stop();}catch{ /* browser already stopped */ }
+      };
       recorder.onstop = () => {
         recordingRef.current = false;
         stream?.getTracks().forEach(t => t.stop());
+        const audio = audioRef.current;
+        audioRef.current = null;
+        void audio?.close();
         const ext = type.startsWith("video/mp4") ? "mp4" : "webm";
         const blob = new Blob(chunksRef.current,{type});
-        if (blob.size > 0) {
+        if (!recorderFailed && blob.size > 0) {
           const fileName="margaryan-content-studio-"+project.brand+"."+ext;
           lastExportRef.current={blob,filename:fileName};
           setExportReady(true);
           download(blob,fileName);
-          setNotice(ext.toUpperCase() + " downloaded. No audio was generated; inspect playback on device.");
+          setNotice(ext.toUpperCase() + " downloaded ("+(fullHD?"1080p":"720p")+"). " +
+            (includeScore?"Original synthesized soundtrack included.":"Silent film.")+" Inspect playback on device.");
         } else setNotice("Recording was empty — try the full editor");
         chunksRef.current = [];
         mediaRef.current = null;
@@ -177,11 +203,16 @@ export default function ChatMotionPreviewPage() {
       mediaRef.current = recorder;
       recordingRef.current = true;
       recorder.start(1000);
-      setNotice("Recording in real time on device — " + (type.startsWith("video/mp4")?"MP4":"WebM") + " / no audio");
+      audioSession?.start();
+      setNotice("Recording in real time on device — " + (type.startsWith("video/mp4")?"MP4":"WebM") +
+        " / "+(fullHD?"1080p":"720p")+" / "+(includeScore?"original score":"silent"));
       setRecording(true);
     } catch(e) {
       recordingRef.current = false;
       stream?.getTracks().forEach(t=>t.stop());
+      const audio = audioRef.current;
+      audioRef.current = null;
+      void audio?.close();
       mediaRef.current=null;
       setRecording(false);
       setNotice("Export failed: "+(e instanceof Error?e.message:String(e)));
@@ -230,12 +261,22 @@ export default function ChatMotionPreviewPage() {
         value={seek} onChange={e=>scrub(Number(e.target.value))} style={{flex:1,minWidth:60}}/>
       <span style={{fontSize:10,color:"#bfc5d0"}}>{seek.toFixed(1)}S</span>
     </div>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginTop:10}}>
+    <div style={{display:"flex",gap:12,marginTop:10,marginBottom:8,alignItems:"center",flexWrap:"wrap",fontSize:10,color:"#c7ccda"}}>
+      <label style={{display:"inline-flex",alignItems:"center",gap:5}}>
+        <input disabled={recording} checked={fullHD} type="checkbox" onChange={e=>setFullHD(e.target.checked)}/>
+        FULL HD / 1080P
+      </label>
+      <label style={{display:"inline-flex",alignItems:"center",gap:5}}>
+        <input disabled={recording} checked={includeScore} type="checkbox" onChange={e=>setIncludeScore(e.target.checked)}/>
+        ORIGINAL SOUNDTRACK / EXPORT ONLY
+      </label>
+    </div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginTop:10,flexWrap:"wrap"}}>
       <button disabled={!received||recording} style={button} type="button" onClick={exportVideo}>{recording?"◌ RECORDING":"↓ EXPORT VIDEO"}</button>
       <button disabled={!exportReady||recording} style={button} type="button" onClick={()=>void sendToChatGPT()}>
         ↥ SAVE TO CHATGPT
       </button>
-      <span style={{fontSize:10,color:"#a8b3c1"}}>720P · LOCAL · 24FPS</span>
+      <span style={{fontSize:10,color:"#a8b3c1"}}>{fullHD?"1080P":"720P"} · LOCAL · 24FPS</span>
     </div>
     <div role="status" style={{fontSize:10,lineHeight:1.5,marginTop:9,color:"#bfc6d4"}}>{notice}</div>
   </main>;
