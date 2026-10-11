@@ -10,6 +10,7 @@ export default function Home(){return <main style={{minHeight:"100vh",maxWidth:1
 <Link href="/connect" style={{background:"#d7e5f8",color:"#101b2a",padding:"13px 18px",borderRadius:6,textDecoration:"none",fontWeight:800}}>CONNECT TO CHATGPT ↗</Link>
 <Link href="/motion" style={{background:"#e0e7f0",color:"#11151e",padding:"13px 18px",borderRadius:6,textDecoration:"none",fontWeight:700}}>OPEN MOTION STUDIO ↗</Link>
 <Link href="/motion/chat-preview" style={{border:"1px solid #536078",padding:"13px 18px",borderRadius:6,textDecoration:"none"}}>PREVIEW ENGINE ↗</Link>
+<Link href="/quality-lab" style={{border:"1px solid #85a4c6",padding:"13px 18px",borderRadius:6,textDecoration:"none",fontWeight:750}}>TEST REAL VIDEO OUTPUT ↗</Link>
 <Link href="/motion#film-sequence" style={{border:"1px solid #536078",padding:"13px 18px",borderRadius:6,textDecoration:"none"}}>FEATURE FILM STUDIO / 120–300S ↗</Link></div>
 <section style={{marginTop:95,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:20}}>
 {facts.map(([head,copy])=><article key={head} style={{borderTop:"1px solid #354050",paddingTop:20}}><b style={{fontSize:12,letterSpacing:".06em"}}>{head}</b><p style={{color:"#a6b1c0",lineHeight:1.7}}>{copy}</p></article>)}</section>
