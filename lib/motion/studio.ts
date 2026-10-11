@@ -288,7 +288,7 @@ export function sanitizeMotionProject(input: unknown): MotionProject {
       mediaStart:typeof s.mediaStart==="number"&&Number.isFinite(s.mediaStart)
         ?Math.min(3600,Math.max(0,Number(s.mediaStart.toFixed(2)))):0,
       ...sanitizeSourceDirection(s),
-      overlayMediaId:typeof s.overlayMediaId==="string"&&/^[\\w-]{6,100}$/.test(s.overlayMediaId)
+      overlayMediaId:typeof s.overlayMediaId==="string"&&/^[\w-]{6,100}$/.test(s.overlayMediaId)
         ?s.overlayMediaId:undefined,
       ...sanitizeOverlayDirection(s,Math.max(2,Math.min(8,Number.isFinite(seconds)?seconds:4))),
       intensity: Math.max(0, Math.min(1, Number.isFinite(Number(s.intensity)) && s.intensity !== undefined ? Number(s.intensity) : .5)),
