@@ -810,6 +810,7 @@ export default function MotionStudioPage() {
       <span>Reels из своих видео, фото и музыки</span>
     </button>
     <a className={styles.proofLaunch} href="/motion/proof"><strong>ПРОВЕРИТЬ ПРОДУКТ ↗</strong><span>Тест настоящего экрана Promptence</span></a>
+    <a className={styles.proofLaunch} href="/motion/mcp"><strong>CHATGPT · MCP ↗</strong><span>Подключить свой режиссёрский движок</span></a>
   </nav>;
   if(launcherOpen)return <MotionStart initialBrand={project.brand}
     currentTitle={project.title} hasSavedDraft={hasSavedFilm}
