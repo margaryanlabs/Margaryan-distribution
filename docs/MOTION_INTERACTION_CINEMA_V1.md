@@ -52,6 +52,22 @@ npm run motion:master -- \
   --fps 24 --crf 19
 ```
 
+For native **click-synced sound design**, use the real action manifest to add subtle interaction sound effects to our own procedural Motion score. Nothing is sourced from third-party generators:
+
+```bash
+npm run motion:interaction-score -- \
+  --evidence out/motion/promptence-interaction/interaction-evidence.json \
+  --project out/motion/promptence-interaction/interaction-film.motion.json \
+  --out out/motion/promptence-interaction/click-scored.wav
+
+npm run motion:master -- \
+  out/motion/promptence-interaction/interaction-film.motion.json \
+  out/motion/promptence-interaction/with-real-clicks.mp4 \
+  --media-map out/motion/promptence-interaction/interaction-media-map.json \
+  --music out/motion/promptence-interaction/click-scored.wav \
+  --url http://localhost:3000/motion
+```
+
 For original **approved** voice/music, use the normal `--voice /original.wav --music /licensed.mp3` options. The existing built-in Motion procedural score is used by default. The film's scenes use the newly introduced **showcase** stage, almost 16:9 inside 9:16, so most of the real website remains visible rather than being destructively cover-cropped. The other familiar camera styles remain available. Browser-local production requires importing both `interaction-film.motion.json` and the real video as a private source; JSON alone is not footage.
 
 ## Deliberate quality and security boundaries
