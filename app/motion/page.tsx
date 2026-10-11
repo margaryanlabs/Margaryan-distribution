@@ -23,7 +23,10 @@ import { makeProductionPack } from "@/lib/motion/production-pack";
 import { sanitizeAudioEdit, voiceWindow } from "@/lib/motion/timeline-edit";
 import { ensureSpatialRenderer, spatialStatus, spatialError } from "@/lib/motion/spatial-bridge";
 import { createKeylessStoryboard, getLocalDirectorExamples, type MotionLanguage, type MotionStyle } from "@/lib/motion/director";
-import QuickStudio from "./quick-studio";
+import QuickStudio,{type QuickStudioStart} from "./quick-studio";
+import MotionStart from "./start-film";
+import {prepareStudioFilm,studioFilmInstruction,type StudioFilmChoice,
+  type StudioFilmKind} from "@/lib/motion/start-film";
 import MultitrackEditor from "./multitrack-editor";
 import PrecisionCutDesk from "./precision-cut-desk";
 import ReleaseReadinessDesk from "./release-readiness-desk";
@@ -57,6 +60,10 @@ function downloadFile(name: string, blob: Blob) {
 
 export default function MotionStudioPage() {
   const [mode,setMode] = useState<"cinematic"|"quick">("cinematic");
+  const [launcherOpen,setLauncherOpen]=useState(false);
+  const [hasSavedFilm,setHasSavedFilm]=useState(false);
+  const [quickStart,setQuickStart]=useState<QuickStudioStart|null>(null);
+  const [startedKind,setStartedKind]=useState<StudioFilmKind|null>(null);
   const [project, setProject] = useState<MotionProject>(() => makeMotionPreset());
   const [hydrated, setHydrated] = useState(false);
   const [brief, setBrief] = useState(defaultBrief);
@@ -269,7 +276,13 @@ export default function MotionStudioPage() {
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY);
-      if (saved) setProject(sanitizeMotionProject(JSON.parse(saved)));
+      if (saved){
+        setProject(sanitizeMotionProject(JSON.parse(saved)));
+        setHasSavedFilm(true);
+      }
+      const startSeen=window.localStorage.getItem("motion-first-film-v1")==="yes";
+      const directQuick=new URLSearchParams(window.location.search).get("mode")==="quick";
+      if(!startSeen&&!directQuick)setLauncherOpen(true);
     } catch { /* Ignore malformed local drafts. */ }
     setHydrated(true);
   }, []);
@@ -746,6 +759,45 @@ export default function MotionStudioPage() {
     return()=>window.removeEventListener("keydown",keys);
   },[mode,featureOpen,exporting,generating,directorRepairing,visualReviewing,shortcutHelp,focusMode]);
 
+  function showFilmLauncher(){
+    if(exporting||generating)return;
+    setPlaying(false);setFocusMode(false);setFeatureOpen(false);
+    setQuickStart(null);setLauncherOpen(true);
+  }
+  function closeFilmLauncher(){
+    setLauncherOpen(false);
+    try{window.localStorage.setItem("motion-first-film-v1","yes");}
+    catch{/* Browser can be private; work still opens. */}
+  }
+  function startSelectedFilm(raw:StudioFilmChoice){
+    if(exporting||generating||directorRepairing)throw Error("Сначала завершите текущий экспорт");
+    if(hasSavedFilm&&!window.confirm(
+      "Создать новый ролик? Текущий проект в редакторе будет заменён. Сохраните его JSON или переносимый архив, если нужно оставить копию."
+    ))return;
+    const selected={...raw,brief:raw.brief.trim()};
+    setPlaying(false);setFeatureOpen(false);setFocusMode(false);setShortcutHelp(false);
+    timeRef.current=0;setPlayhead(0);setSelectedIndex(0);
+    setSoundEnabled(false);setVoiceover(null);setLicensedMusic(null);
+    setNarrationSeconds(null);setMusicSeconds(null);
+    if(selected.kind==="reel"){
+      setQuickStart({brand:selected.brand,format:selected.format,
+        language:selected.language==="auto"?"ru":selected.language});
+      switchMode("quick");setStartedKind("reel");
+      setNotice(studioFilmInstruction("reel"));
+    }else if(selected.kind==="proof"){
+      window.location.assign("/motion/proof");return;
+    }else{
+      const ready=prepareStudioFilm(selected);
+      setProject(ready);setBrief(selected.brief||defaultBrief);
+      setLanguage(selected.language);
+      setStartedKind(selected.kind);
+      setEditorPanel(selected.kind==="product"?"media":selected.kind==="feature"?"create":"scene");
+      switchMode("cinematic");
+      if(selected.kind==="feature")setFeatureOpen(true);
+      setNotice(studioFilmInstruction(selected.kind));
+    }
+    setHasSavedFilm(true);closeFilmLauncher();
+  }
   const modePicker=<nav className={styles.productionModes} aria-label="Production pipeline">
     <button type="button" data-selected={mode==="cinematic"} aria-pressed={mode==="cinematic"}
       onClick={()=>switchMode("cinematic")} disabled={exporting}>
@@ -759,6 +811,10 @@ export default function MotionStudioPage() {
     </button>
     <a className={styles.proofLaunch} href="/motion/proof"><strong>03 / PROOF DIRECTOR ↗</strong><span>Real Promptence pixels · 10-second source-first pilot · quality gate</span></a>
   </nav>;
+  if(launcherOpen)return <MotionStart initialBrand={project.brand}
+    currentTitle={project.title} hasSavedDraft={hasSavedFilm}
+    busy={exporting||generating||directorRepairing}
+    onStart={startSelectedFilm} onResume={closeFilmLauncher}/>;
   if(mode==="quick")return <main className={styles.root} style={{"--brand-accent":info.accent} as CSSProperties}>
     <header className={styles.header}>
       <div>
@@ -766,10 +822,19 @@ export default function MotionStudioPage() {
         <h1>Motion <em>Studio.</em></h1>
         <p className={styles.deck}>Real footage, original screenshots and local publishing. Build short cuts here, or switch to Cinematic for chapter-based feature films and editorial control.</p>
       </div>
-      <div className={styles.headerRight}><span className={styles.liveDot}/> QUICK / LOCAL MEDIA</div>
+      <div className={styles.headerRight}><span className={styles.liveDot}/> QUICK / LOCAL MEDIA
+        <button type="button" className={styles.headerNewFilm}
+          onClick={showFilmLauncher}>✦ Создать видео</button></div>
     </header>
     {modePicker}
-    <QuickStudio/>
+    <div className={styles.quickEntryBar}>
+      <div><span>ВЫБРАН РЕЖИМ: REELS / QUICK CUT</span>
+        <strong>Добавь свои кадры → отредактируй → сохрани ролик</strong>
+        <small>Этот режим работает с настоящими фото и видео, не генерирует вымышленные съёмки.</small>
+      </div>
+      <button type="button" onClick={showFilmLauncher}>✦ ДРУГОЙ ТИП РОЛИКА</button>
+    </div>
+    <QuickStudio start={quickStart}/>
   </main>;
   return <main className={styles.root} style={{ "--brand-accent": info.accent } as CSSProperties}>
     <header className={styles.header}>
@@ -780,6 +845,8 @@ export default function MotionStudioPage() {
       </div>
       <div className={styles.headerRight}>
         <span className={styles.liveDot}/> KEYLESS / LOCAL ENGINE
+        <button type="button" className={styles.headerNewFilm}
+          onClick={showFilmLauncher}>✦ Создать видео</button>
         <a href="/motion/commission">Sell a film / client brief ↗</a>
         <a href="/smm">Marketing Command ↗</a>
       </div>
@@ -793,6 +860,9 @@ export default function MotionStudioPage() {
         <small>{info.name} <i>·</i> {project.format.toUpperCase()} <i>·</i> {project.scenes.length} SHOTS <i>·</i> {timeLabel(total)}</small>
       </div>
       <div className={styles.barUtilities}>
+        <button type="button" className={styles.barNewFilm} onClick={showFilmLauncher}>
+          ✦ НОВЫЙ РОЛИК
+        </button>
         <span className={styles.privacyChip}>● LOCAL / NO API CREDIT</span>
         <button type="button" className={featureOpen?styles.barActive:""}
           onClick={()=>{setPlaying(false);setFeatureOpen(v=>!v);}}
@@ -817,6 +887,14 @@ export default function MotionStudioPage() {
       </aside>}
     </div>
     <div className={styles.notice} role="status">{notice}</div>
+    {startedKind&&<div className={styles.filmGuidance} aria-label="Следующий шаг производства">
+      <span>ВЫ СОЗДАЁТЕ / {startedKind==="campaign"?"КИНО-РЕКЛАМУ":startedKind==="product"?"ДЕМО ПРОДУКТА":startedKind==="feature"?"БОЛЬШОЙ ФИЛЬМ":"REELS"}</span>
+      <p>{studioFilmInstruction(startedKind)}</p>
+      {startedKind!=="feature"&&<button type="button"
+        onClick={()=>{setFeatureOpen(false);setEditorPanel(startedKind==="product"?"media":"scene");}}>
+        {startedKind==="product"?"ОТКРЫТЬ ИСХОДНИКИ ↗":"НАЧАТЬ МОНТАЖ ↗"}
+      </button>}
+    </div>}
     {featureOpen&&<div id="film-sequence" className={styles.featureWorkspace}>
       <div className={styles.featureBack}>
         <span>FEATURE FILM / CHAPTER ASSEMBLY</span>
