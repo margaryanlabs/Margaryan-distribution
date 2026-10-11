@@ -16,9 +16,10 @@ function load(path,deps={}){
 }
 const audio=load("lib/motion/timeline-edit.ts");
 const framing=load("lib/motion/source-composition.ts");
+const motionFraming=load("lib/motion/source-composition.ts");
+const motionOverlay=load("lib/motion/image-overlay.ts");
 const studio=load("lib/motion/studio.ts",{
- "./timeline-edit":audio,"./source-composition":framing
-});
+ "./timeline-edit":audio,"./source-composition":framing,"./image-overlay":motionOverlay});
 const chat=load("lib/motion/chat-operator.ts",{"./studio":studio});
 const voiceQA=load("lib/motion/voice-quality.ts");
 const sine=Float32Array.from({length:48000},(_,i)=>Math.sin(i*.035)*.22);
