@@ -114,7 +114,7 @@ function drawOpening(ctx:CanvasRenderingContext2D,source:ProofMedia,t:number,W:n
   line(ctx,77,613,77+mix(0,420,between(t,.48,1.75)),613,MINT,3);
   ctx.restore();
 }
-function drawEvidence(ctx:CanvasRenderingContext2D,source:HTMLImageElement,t:number,W:number,H:number) {
+function drawEvidence(ctx:CanvasRenderingContext2D,source:ProofMedia,t:number,W:number,H:number) {
   bg(ctx,W,H,true);
   const enter=between(t,2.1,2.75);
   const journey=between(t,3.0,7.15);
@@ -145,7 +145,7 @@ function drawEvidence(ctx:CanvasRenderingContext2D,source:HTMLImageElement,t:num
     107,1585,48,IVORY,740);
   text(ctx,"Observe  →  Diagnose  →  Verify",107,1641,29,MINT,640);
   ctx.restore();
-  text(ctx,"SOURCE SCREENSHOT / REVIEW REQUIRED",73,1807,21,"#2E624F",700);
+  text(ctx,source instanceof HTMLVideoElement?"REAL VIDEO SOURCE / REVIEW REQUIRED":"SOURCE SCREENSHOT / REVIEW REQUIRED",73,1807,21,"#2E624F",700);
 }
 function drawClosure(
   ctx:CanvasRenderingContext2D,logo:HTMLImageElement|null,t:number,W:number,H:number
