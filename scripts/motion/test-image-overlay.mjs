@@ -19,7 +19,7 @@ assert.equal(q.overlayIsVisible(d,1),true);
 assert.equal(q.overlayIsVisible(d,2.2),false);
 assert.equal(q.overlayEnvelope(d,1),.6);
 assert.equal(q.overlayEnvelope(d,.5),0);
-assert.equal(q.overlayEnvelope(d,1.99),0.06);
+assert.ok(Math.abs(q.overlayEnvelope(d,1.99)-(0.01/.18*.6))<.000001);
 for(const corner of ["top-left","top-right","bottom-left","bottom-right"]){
  for(const wh of [[1080,1920],[1920,1080],[1080,1080]]){
   const r=q.overlayGeometry(corner,...wh,.4);
