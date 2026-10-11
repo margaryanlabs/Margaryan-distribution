@@ -149,7 +149,7 @@ export default function QualityLab(){
       if(blob.size<2048)throw Error("Encoded file is empty or implausibly small ("+blob.size+" bytes)");
       const ext=codec.startsWith("video/mp4")?"mp4":"webm";
       const name="content-studio-video-proof-"+new Date().toISOString().slice(0,10)+"."+ext;
-      push("ENCODED VIDEO","pass",ext.toUpperCase()+" · "+sizeText(blob)+" · original "+WIDTH+" × "+HEIGHT+" canvas.");
+      push("ENCODED VIDEO","pass",ext.toUpperCase()+" · "+sizeText(blob.size)+" · original "+WIDTH+" × "+HEIGHT+" canvas.");
       setFormat(ext.toUpperCase());setFile(blob);setFileName(name);
       const url=URL.createObjectURL(blob);
       liveURL.current=url;setPlayUrl(url);
