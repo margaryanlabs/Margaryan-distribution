@@ -140,3 +140,18 @@ The public Vercel project ignores automatic builds from unrelated branches, prev
 - Public marketplace review, approved data/privacy policies, billing and commercial accounts.
 
 A Vercel READY build establishes compilation and route packaging. It is not proof that the installed plugin works in ChatGPT. Connect it first through ChatGPT Plugins → Add custom MCP server using the HTTPS endpoint above.
+
+
+## Follow-on: Local brand/logo, real narration and licensed music (October 11, 2026)
+
+**Standalone beta:** https://studio.promptence.tech/motion/chat-preview (supports a local working starter when opened directly), plus the same original Canvas in the MCP Apps nested player. Now offers an expandable BRAND LOGO & VOICE / MUSIC panel:
+
+- Customer-provided PNG/JPEG/WebP ≤5MB; dimensions validated at 30–4096px / ≤8MP, no SVG/remote URLs or server upload. Decoded image is composited into every rendered video frame at a configurable corner. Displayed as a subtle translucent card over the motion footage.
+- User-owned audio narration ≤15MB and licensed background music ≤30MB. The existing `createProceduralSoundtrack` WebAudio mixer decodes local files and mixes narration/music/optional procedural score into the actual MediaRecorder stream. The voice recording is user-provided; GPT does not automatically synthesize speech, generate voice clones, download commercial music or use paid APIs.
+- If the film identity changes (title/brand/client name), private local media is cleared to avoid accidentally carrying one customer's materials to another film. ChatGPT tool arguments and public URL fragments contain no files.
+- MCP player iframe uses ResizeObserver-based height coordination so media controls are reachable on mobile; the iframe never receives raw user files through MCP. The resulting exported video can optionally be explicitly uploaded to the user's ChatGPT library when its client supports the file API and size limits.
+- Public Vercel deployment built and reported READY (commit e340b6b430ea19e79ea113c240347b96137e22af). 7/7 live JSON-RPC HTTP diagnostics still pass.
+
+**Remaining release blockers:** actual Android/desktop AV playback and encoded file validation, file-picker permissions inside ChatGPT nested iframe, audio duration and synchronization review, option to merge local logo into advanced full editor (currently scoped to embedded preview), customer auth/billing, and submission review. Do not claim these have passed until actually tested.
+
+User-facing test: open https://studio.promptence.tech/motion/chat-preview without installing the plugin, play the provided local demonstration, attach a small owned logo and a short recorded narration, optionally choose music, then explicitly export and inspect the local MP4/WebM. If the nested ChatGPT iframe does not permit local file selection, use the full external studio until that capability is approved.
