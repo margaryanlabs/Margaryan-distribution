@@ -117,6 +117,10 @@ const featureBrief={
 };
 const feature=bridge.runContentStudioTool("create_motion_feature_film",featureBrief);
 assert.equal(feature.durationSeconds,120);
+assert.throws(()=>bridge.runContentStudioTool("create_motion_feature_film",{
+  ...featureBrief,scenes:featureBrief.scenes.map((s,i)=>i===4?{...s,kind:"spatial"}:s)
+}),/Spatial 3D scenes require workstation Master/);
+
 assert.equal(feature.chapters,2);
 assert.equal(feature.scenes,16);
 assert.equal(feature.videoFileCreated,false);
