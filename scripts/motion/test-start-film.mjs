@@ -19,11 +19,14 @@ const frames=(brand,format)=>({version:1,title:"Original branded film",brand,for
  ]});
 let generated=null;
 const f=new Function("BRAND_INFO","makeMotionPreset","sanitizeMotionProject",
- "createKeylessStoryboard","autoPolishMotionProject",js+
+ "createKeylessStoryboard","autoPolishMotionProject","createPromptenceCampaign",js+
  "\nreturn {STUDIO_FILM_CHOICES,checkStudioFilmChoice,prepareStudioFilm,studioFilmInstruction};");
 const api=f(brandInfo,frames,x=>x,
  obj=>{generated=obj;return frames(obj.brand,obj.format);},
- obj=>({project:{...obj,qualityMode:"signature"}}));
+ obj=>({project:{...obj,qualityMode:"signature"}}),
+ (lang,format)=>({...frames("promptence",format),title:"PROMPTENCE / 2026 DIRECTOR CUT",
+ language:lang,signatureFilm:"promptence-answer",
+ scenes:Array.from({length:8},(_,i)=>({id:"scene-"+(i+1),kind:"kinetic",seconds:4.56}))}));
 assert.equal(api.STUDIO_FILM_CHOICES.length,5);
 assert.deepEqual(new Set(api.STUDIO_FILM_CHOICES.map(x=>x.kind)),
  new Set(["reel","campaign","product","feature","proof"]));
@@ -42,13 +45,22 @@ assert.equal(generated.style,"cinematic");
 assert.equal(campaign.scenes.length,4);
 const product=api.prepareStudioFilm({...choice,kind:"product",
  brand:"promptence",format:"landscape"});
+assert.equal(product.scenes.length,8,"Actual demo storyboard should be near 40s, not a false 20s ad");
 assert.equal(product.scenes[2].kind,"screen");
-assert.equal(product.scenes[2].mediaId,undefined,
+assert.equal(product.scenes.filter(s=>s.kind==="screen").length,3);
+assert.ok(product.scenes.reduce((n,s)=>n+s.seconds,0)>30);
+assert.ok(product.scenes.every(s=>s.kind!=="screen"||!s.mediaId),
  "No imaginary real screenshot can be embedded in a product demo");
-assert.match(product.scenes[2].support,/одобренные|Добавьте запись/);
+assert.match(product.scenes[2].support,/оригинальную|запись|настоящ/);
 assert.equal(product.format,"landscape");
 assert.equal(product.filmChrome,"clean");
 const feature=api.prepareStudioFilm({...choice,kind:"feature",brand:"labs",format:"square",language:"en"});
+const director=api.prepareStudioFilm({...choice,kind:"campaign",
+ brand:"promptence",format:"landscape",brief:"",language:"ru"});
+assert.equal(director.scenes.length,8);
+assert.equal(director.signatureFilm,"promptence-answer");
+assert.equal(director.format,"landscape");
+assert.equal(director.filmChrome,"clean");
 assert.equal(feature.brand,"labs");assert.equal(feature.language,"en");
 assert.equal(feature.format,"square");assert.equal(feature.scenes.length,4);
 for(const kind of ["reel","proof"])assert.throws(()=>
