@@ -5,7 +5,7 @@ import { drawMotionFrame } from "@/lib/motion/render-engine";
 import { preloadMotionLogo } from "@/lib/motion/brand-assets";
 import { createProceduralSoundtrack, type ProceduralAudioSession } from "@/lib/motion/sound-engine";
 import {
-  BRAND_INFO, FORMAT_SIZE, durationOf, makeMotionPreset, sanitizeMotionProject,
+  BRAND_INFO, clientBrandInfo, FORMAT_SIZE, durationOf, makeMotionPreset, sanitizeMotionProject,
   type MotionProject
 } from "@/lib/motion/studio";
 
@@ -258,7 +258,7 @@ export default function ChatMotionPreviewPage() {
 
   return <main style={outer}>
     <div style={{display:"flex",justifyContent:"space-between",gap:8,fontSize:10,letterSpacing:".1em",color:"#b4c1d8"}}>
-      <span>◈ {BRAND_INFO[project.brand].name} / LIVE CANVAS</span>
+      <span>◈ {clientBrandInfo(project).name} / LIVE CANVAS</span>
       <span>{project.format.toUpperCase()} · {total.toFixed(1)}S</span>
     </div>
     <div style={{display:"flex",justifyContent:"center",alignItems:"center",minHeight:258,maxHeight:270,margin:"10px auto",borderRadius:9,overflow:"hidden",background:"#0c1018"}}>
