@@ -102,6 +102,10 @@ export async function POST(request: Request) {
             }
           },
           "openai/ui": {availableDisplayModes: ["inline", "fullscreen"]},
+          // Required ChatGPT extension: approve ONLY our owned domain for
+          // the external, user-triggered full editor link. The standard
+          // _meta.ui.csp does not currently specify redirect domains.
+          "openai/widgetCSP": {redirect_domains: [new URL(studioOrigin).origin]},
           "openai/widgetDescription": "Live playback and browser-based render of a ChatGPT-authored motion graphics draft."
         }
       }]
