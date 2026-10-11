@@ -1,0 +1,37 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "margaryan-content-studio",
+  "version": "0.1.0",
+  "description": "Create and revise editable motion-graphics film storyboards from ChatGPT without an OpenAI API key; preview and render with Margaryan Motion Studio.",
+  "author": {
+    "name": "Margaryan Labs"
+  },
+  "homepage": "https://margaryan-distribution.vercel.app/motion",
+  "repository": "https://github.com/margaryanlabs/Margaryan-distribution",
+  "keywords": [
+    "video",
+    "motion graphics",
+    "content studio",
+    "creative"
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Margaryan Content Studio",
+        "shortDescription": "Make editable motion videos from a ChatGPT conversation",
+        "longDescription": "ChatGPT directs the storyboard and edits, while the existing browser-based Motion Studio previews and exports procedurally rendered video. No OpenAI API key required for these tools.",
+        "developerName": "Margaryan Labs",
+        "category": "Productivity",
+        "capabilities": [
+          "Read",
+          "Write"
+        ],
+        "websiteURL": "https://margaryan-distribution.vercel.app/motion",
+        "defaultPrompt": [
+          "Create a 30-second vertical motion-graphics video for my business.",
+          "Revise the second shot in my existing Motion Studio video."
+        ]
+      }
+    }
+  }
+}
