@@ -24,7 +24,7 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
 .shots{overflow-y:auto;max-height:400px;border:1px solid var(--line);border-radius:12px;padding:12px;background:#101217}
 .shots h2{font-size:11px;letter-spacing:.1em;font-weight:700;margin:0 0 12px;color:var(--muted)}
 .shot{padding:10px 0;border-top:1px solid #282b32}.shot:first-of-type{border:0}.shot .number{font-size:10px;color:var(--accent)}.shot strong{display:block;font-size:12px;margin:4px 0;line-height:1.35}.shot small{color:var(--muted)}
-.chapterNav{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.chapterNav button{font-size:11px;cursor:pointer;border:1px solid #526077;border-radius:8px;padding:8px 11px;background:#17202d;color:#c3d4ed}.chapterNav button[aria-current="true"]{background:#cedcf1;color:#131b28;font-weight:800}
+.chapterNav{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.chapterNav button{font-size:11px;cursor:pointer;border:1px solid #526077;border-radius:8px;padding:8px 11px;background:#17202d;color:#c3d4ed}.chapterNav[hidden]{display:none}\n.chapterNav button[aria-current="true"]{background:#cedcf1;color:#131b28;font-weight:800}
 .actions{display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
 .btn{appearance:none;border:1px solid #6d7f9b;border-radius:9px;background:#1e293d;color:var(--ink);font-weight:700;font-size:12px;padding:10px 14px;cursor:pointer;text-decoration:none}.btn:hover{background:#34435c}
 .note{font-size:11px;line-height:1.5;color:var(--muted)}#status{color:#b7cdff}
