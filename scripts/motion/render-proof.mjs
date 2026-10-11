@@ -1,0 +1,110 @@
+#!/usr/bin/env node
+/**
+ * SOURCE-FIRST PROOF DIRECTOR / deterministic 10-second native MP4.
+ * Offline workstation only. No fake UI, no Flite/TTS, no automatic uploads.
+ *
+ * Requires: local Next Motion OS at http://127.0.0.1:3000/motion/proof,
+ * Playwright Chromium, FFmpeg, owner-approved screenshot file.
+ *
+ * npm run motion:proof -- --screen ./approved/promptence-public.png \
+ *   --out ./out/promptence-proof-10s.mp4 --voice ./approved/voice.wav
+ */
+import {readFile,writeFile,stat,mkdir} from "node:fs/promises";
+import {spawn,spawnSync} from "node:child_process";
+import {dirname,resolve,extname} from "node:path";
+import {once} from "node:events";
+import process from "node:process";
+
+const args=process.argv.slice(2),o={};
+for(let i=0;i<args.length;i++){
+ const k=args[i];
+ if(!["--screen","--out","--voice","--music","--url","--fps"].includes(k))throw Error("Unknown argument: "+k);
+ const v=args[++i];if(!v||v.startsWith("--"))throw Error("Missing value for "+k);
+ o[k.slice(2)]=v;
+}
+if(!o.screen)throw Error("SOURCE GATE: provide --screen /path/to/owner-approved-real.png");
+const source=resolve(o.screen);
+const out=resolve(o.out||"out/promptence-proof-10s.mp4");
+if(extname(out).toLowerCase()!==".mp4")throw Error("Output must end .mp4");
+const host=new URL(o.url||"http://127.0.0.1:3000/motion/proof");
+if(host.protocol!=="http:"||!["localhost","127.0.0.1","[::1]"].includes(host.hostname)
+ ||host.pathname!=="/motion/proof")throw Error("Proof Studio must be served locally at /motion/proof");
+const fps=o.fps?Number(o.fps):30;
+if(!Number.isInteger(fps)||fps<24||fps>30)throw Error("Use 24–30 frames/s");
+const f=await stat(source);
+if(!f.isFile()||f.size<100||f.size>12_000_000||![".png",".jpg",".jpeg",".webp"].includes(extname(source).toLowerCase())){
+ throw Error("Approved screenshot must be PNG/JPEG/WebP and 100 bytes–12 MB");
+}
+const run=(exe,argv,timeout=90_000)=>spawnSync(exe,argv,{encoding:"utf8",maxBuffer:2_000_000,timeout});
+if(run("ffmpeg",["-version"]).status!==0)throw Error("FFmpeg is not installed");
+for(const asset of [o.music,o.voice].filter(Boolean)){
+ const f=await stat(resolve(asset));
+ if(!f.isFile()||f.size<100||f.size>100_000_000)throw Error("Invalid approved audio file: "+asset);
+}
+if(o.voice){
+ const v=run("ffprobe",["-v","error","-show_entries","format=duration","-of","default=nw=1:nk=1",resolve(o.voice)]);
+ const d=Number(v.stdout?.trim());
+ if(v.status!==0||!Number.isFinite(d)||d>9.7)throw Error("Narration must fit naturally under 9.7 seconds. Never speed up a robotic voice.");
+}
+await mkdir(dirname(out),{recursive:true});
+const {chromium}=await import("playwright").catch(()=>{throw Error("Install local Playwright: npm install --no-save playwright");});
+let browser,encoder;
+try{
+ browser=await chromium.launch({headless:true});
+ const page=await browser.newPage({viewport:{width:1440,height:1000}});
+ const errors=[];
+ page.on("pageerror",e=>errors.push(e.message));
+ const response=await page.goto(host.href,{waitUntil:"domcontentloaded",timeout:45000});
+ if(!response?.ok())throw Error("Proof Studio unavailable: HTTP "+response?.status());
+ await page.locator('[data-testid="proof-source-input"]').setInputFiles(source);
+ await page.waitForFunction(()=>window.__motionProofReady===true,{timeout:30000});
+ await page.evaluate(()=>document.fonts.ready);
+ if(errors.length)throw Error("Studio page errors: "+errors.join("; "));
+ const audio=[o.voice?{path:resolve(o.voice),volume:1}:null,o.music?{path:resolve(o.music),volume:o.voice?.18:.75}:null].filter(Boolean);
+ const ff=["-y","-hide_banner","-loglevel","error","-f","image2pipe","-framerate",String(fps),
+   "-vcodec","png","-i","pipe:0"];
+ for(const a of audio)ff.push("-i",a.path);
+ if(audio.length){
+  const stages=[];
+  for(let i=0;i<audio.length;i++)stages.push("["+(i+1)+":a:0]volume="+audio[i].volume+",apad,atrim=0:10[track"+i+"]");
+  stages.push(audio.length===2?"[track0][track1]amix=inputs=2:duration=first:dropout_transition=0[mixed]":"[track0]anull[mixed]");
+  ff.push("-filter_complex",stages.join(";"),"-map","0:v:0","-map","[mixed]","-c:a","aac","-b:a","192k");
+ } else ff.push("-an");
+ ff.push("-c:v","libx264","-pix_fmt","yuv420p","-preset","medium","-crf","18","-r",String(fps),
+   "-t","10","-movflags","+faststart",out);
+ encoder=spawn("ffmpeg",ff,{stdio:["pipe","ignore","pipe"]});
+ let log="";
+ encoder.stderr.on("data",buf=>{log=(log+String(buf)).slice(-4000);});
+ encoder.stdin.on("error",()=>{});
+ const frames=10*fps;
+ for(let i=0;i<frames;i++){
+  if(encoder.exitCode!==null)throw Error("FFmpeg stopped: "+log);
+  const data=await page.evaluate(t=>window.__motionProofFrame(t),i/fps);
+  const bytes=Buffer.from(data,"base64");
+  if(bytes.length<1000)throw Error("Missing rendered source frame "+i);
+  if(!encoder.stdin.write(bytes))await once(encoder.stdin,"drain");
+ }
+ encoder.stdin.end();
+ const [status]=await once(encoder,"close");
+ if(status!==0)throw Error("FFmpeg exited "+status+": "+log);
+ const probe=run("ffprobe",["-v","error","-show_entries","stream=codec_type,codec_name,width,height",
+  "-show_entries","format=duration","-of","json",out]);
+ if(probe.status!==0)throw Error("Cannot probe final MP4");
+ const info=JSON.parse(probe.stdout),video=info.streams?.find(s=>s.codec_type==="video"),audioTrack=info.streams?.find(s=>s.codec_type==="audio");
+ const d=Number(info.format?.duration);
+ if(!video||video.codec_name!=="h264"||video.width!==1080||video.height!==1920||Math.abs(d-10)>.1)throw Error("Incorrect source-native master format");
+ if(audio.length&&!audioTrack)throw Error("Audio was supplied but stream is missing");
+ const prefix=out.slice(0,-4);
+ const sheet=run("ffmpeg",["-y","-v","error","-i",out,"-vf","fps=1,scale=270:-2,tile=5x2:padding=6:margin=6:color=0x101917",
+  "-frames:v","1",prefix+"-contact-sheet.png"],120000);
+ await writeFile(prefix+".proof-report.json",JSON.stringify({
+   engine:"SOURCE-FIRST PROOF DIRECTOR",duration:d,width:video.width,height:video.height,
+   fps,sourceFile:source,voiceProvided:Boolean(o.voice),musicProvided:Boolean(o.music),
+   contactSheetCreated:sheet.status===0,sourceReviewRequired:true,humanCreativeApprovalRequired:true,
+   note:"Codec and source-authenticity gates cannot judge cinematic quality or voice performance."
+ },null,2)+"\n");
+ process.stdout.write("Proof MP4 encoded and probed: "+out+"\nSource-based visual review REQUIRED before publication.\n");
+} finally{
+ if(encoder&&encoder.exitCode===null)encoder.kill("SIGTERM");
+ if(browser)await browser.close().catch(()=>undefined);
+}
