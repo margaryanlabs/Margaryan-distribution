@@ -20,8 +20,8 @@ have **✦ Создать видео** within the Cinematic/Quick editor header 
 | What the user chooses | Output expectation | Opens / what works |
 | --- | --- | --- |
 | Reels / Stories | Short 9:16 clip of *original user footage* | Existing Quick Studio, prefilled brand, format and language. User attaches real MP4/photos before export; no AI clip generation promised. |
-| Кино-реклама | Cinematic typographic brand promo | Existing original in-browser storyboard + safe auto-polish + full Cinematic editor. This creates editable motion graphics, not invented product shots. |
-| Демо продукта | Product explain video | Existing Cinematic editor with a deliberate **missing original screen** shot. User must attach approved real product screenshot/video before it passes preflight. |
+| Кино-реклама | Cinematic typographic brand promo | For Promptence with no custom brief, opens the existing human-authored **36.5-second / eight-shot** 2026 Director's Cut; other brands/custom briefs use the original storyboard generator and safe auto-polish. This creates editable motion graphics, not invented product shots. |
+| Демо продукта | Product explain video | 8-scene **~38-second** RU/EN/HY script containing **three deliberately empty real-interface shots**. Each needs approved original screenshot/video before export; there are no fictional app screenshots. |
 | Большой фильм | 2–5 min chapters | Existing Feature Film assembler / chapter editing / workprint and local master workflows. Clicking the button does **not** falsely claim a five-minute MP4 has been automatically generated. |
 | Реальный продукт | Promptence 10-second source-first pilot | Existing `/motion/proof` Director, which requires actual original Promptence pixels. No fake AI ranking, customer claim or approved output. |
 
