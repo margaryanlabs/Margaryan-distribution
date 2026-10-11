@@ -38,7 +38,7 @@ async function run():Promise<Check[]> {
   try {
     const r=await call("tools/list",{},22);
     const names=(r.result.tools as Array<{name:string}>).map(x=>x.name);
-    const pass=names.length===2&&names.includes("create_motion_film")&&names.includes("revise_motion_film");
+    const pass=names.length===3&&["create_motion_film","revise_motion_film","create_motion_feature_film"].every(n=>names.includes(n));
     checks.push(card("PUBLIC TOOL DISCOVERY",pass,names.join(", "),r.milliseconds));
     if(!pass)return checks;
   }catch(e){checks.push(card("PUBLIC TOOL DISCOVERY",false,String(e),0));return checks;}
@@ -76,6 +76,28 @@ async function run():Promise<Check[]> {
     checks.push(card("REVISION ROUND-TRIP",true,"Updated shot 02",r.milliseconds));
   }catch(e){checks.push(card("REVISION ROUND-TRIP",false,String(e),0));}
   try {
+    const demoScenes=Array.from({length:16},(_,i)=>({
+      kind:i===0?"opener":i===15?"closer":"statement",
+      eyebrow:"ACT "+(i<8?"ONE":"TWO"),
+      headline:"PRODUCTION SCENE "+String(i+1).padStart(2,"0"),
+      support:"Procedural motion picture; browser-local render and approval required.",
+      seconds:7.5
+    }));
+    const r=await call("tools/call",{name:"create_motion_feature_film",arguments:{
+      title:"CONTENT STUDIO / 120-SECOND FILM",brand:"labs",format:"portrait",
+      language:"en",style:"cinematic",chapter_titles:["THE IDEA","THE RESPONSE"],
+      scenes:demoScenes
+    }},27);
+    if(r.result.isError)throw Error("Feature tool returned isError");
+    const film=r.result.structuredContent as {editorUrl?:string;durationSeconds?:number;chapters?:number;videoFileCreated?:boolean};
+    if(!film||film.durationSeconds!==120||film.chapters!==2||film.videoFileCreated!==false||
+      typeof film.editorUrl!=="string"||
+      !film.editorUrl.startsWith("https://studio.promptence.tech/motion?")||
+      !film.editorUrl.includes("#motion-sequence-v1="))
+      throw Error("Long-form film did not return a safe 120s review link");
+    checks.push(card("120S MULTI-CHAPTER FILM",true,"16 shots / 2 acts / 120s / private editor review link",r.milliseconds));
+  }catch(e){checks.push(card("120S MULTI-CHAPTER FILM",false,String(e),0));}
+  try {
     const before=Date.now();
     const r=await fetch("https://studio.promptence.tech/api/worker/private",{cache:"no-store",signal:AbortSignal.timeout(9000)});
     checks.push(card("PRIVATE CRM ISOLATION",r.status===404,"private /api/worker/private returned "+r.status,Date.now()-before));
@@ -85,7 +107,7 @@ async function run():Promise<Check[]> {
 export default async function DiagnosticsPage(){
   const checks=await run();
   const good=checks.filter(x=>x.ok).length;
-  const full=checks.length===7&&good===7;
+  const full=checks.length===8&&good===8;
   return <main style={{background:"#090c10",color:"#eaf0f8",minHeight:"100vh",fontFamily:"system-ui,sans-serif",padding:"clamp(25px,7vw,85px) 24px"}}>
   <div style={{maxWidth:890,margin:"auto"}}>
   <Link href="/connect" style={{color:"#98abc5",textDecoration:"none",letterSpacing:".12em",fontSize:12,fontWeight:700}}>← CONTENT STUDIO / CONNECT</Link>
