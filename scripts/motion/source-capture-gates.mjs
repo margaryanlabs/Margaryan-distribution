@@ -5,6 +5,7 @@
  */
 export const PROMPTENCE_SECTIONS = Object.freeze([
   {assetId:"promptence-real-landing",label:"landing",heading:"See who AI recommends instead of you — and what to change."},
+  {assetId:"promptence-real-free-check",label:"free-check",heading:"Free AI visibility check — real input form",selector:'input[placeholder="example.com"]'},
   {assetId:"promptence-real-evidence",label:"evidence",heading:"See the decision trail, not just a visibility number."},
   {assetId:"promptence-real-baseline",label:"baseline",heading:"A public baseline before the success story."},
   {assetId:"promptence-real-implement",label:"implement",heading:"Promptence can implement approved changes — then verify what actually shipped."},
@@ -51,6 +52,21 @@ export async function inspectProductFrame(page,heading){
     return {overlayVisible,headingVisible,
       headingWidth:rect?.width||0,viewportWidth:innerWidth,pageTitle:document.title};
   },heading);
+  assertReadableFrame(signal);
+  return signal;
+}
+
+/** The genuine Free Check form is intentionally captured without executing a scan. */
+export async function inspectProductElement(page,selector){
+  const signal=await page.evaluate(select=>{
+    const overlay=document.querySelector(".promptence-tour-overlay");
+    const overlayVisible=!!overlay&&getComputedStyle(overlay).display!=="none"&&
+      overlay.getBoundingClientRect().height>0;
+    const input=document.querySelector(select);
+    const rect=input?.getBoundingClientRect();
+    return {overlayVisible,headingVisible:!!rect&&rect.width>0&&rect.top>=0&&rect.bottom<innerHeight,
+      headingWidth:rect?.width||0,viewportWidth:innerWidth,pageTitle:document.title};
+  },selector);
   assertReadableFrame(signal);
   return signal;
 }
