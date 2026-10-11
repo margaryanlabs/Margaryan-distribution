@@ -23,7 +23,7 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
 .player iframe{border:0;width:100%;height:510px;display:block;transition:height .18s ease}
 .shots{overflow-y:auto;max-height:400px;border:1px solid var(--line);border-radius:12px;padding:12px;background:#101217}
 .shots h2{font-size:11px;letter-spacing:.1em;font-weight:700;margin:0 0 12px;color:var(--muted)}
-.shot{padding:10px 0;border-top:1px solid #282b32}.shot:first-of-type{border:0}.shot .number{font-size:10px;color:var(--accent)}.shot strong{display:block;font-size:12px;margin:4px 0;line-height:1.35}.shot small{color:var(--muted)}
+.shot{display:block;width:100%;appearance:none;text-align:left;cursor:pointer;background:transparent;color:inherit;padding:10px 6px;border:0;border-top:1px solid #282b32;border-radius:4px}.shot:first-of-type{border:0}.shot:hover,.shot[aria-pressed="true"]{background:#1b2b45;outline:1px solid #405a83}.shot:focus-visible{outline:2px solid #b4c9ff;outline-offset:2px}.shot .number{font-size:10px;color:var(--accent)}.shot strong{display:block;font-size:12px;margin:4px 0;line-height:1.35}.shot small{color:var(--muted)}
 .actions{display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
 .btn{appearance:none;border:1px solid #6d7f9b;border-radius:9px;background:#1e293d;color:var(--ink);font-weight:700;font-size:12px;padding:10px 14px;cursor:pointer;text-decoration:none}.btn:hover{background:#34435c}
 .note{font-size:11px;line-height:1.5;color:var(--muted)}#status{color:#b7cdff}
@@ -48,6 +48,14 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
   const status = document.getElementById("status");
   const editor = document.getElementById("openEditor");
   let latest = null;
+  let selectedIndex = 0;
+  let lastFilmTitle = "";
+  // A selected shot is UI state, NOT authoritative film storage. In ChatGPT
+  // widget state belongs to this specific instance and may not be available.
+  const existingState = window.openai && window.openai.widgetState;
+  if (existingState && Number.isInteger(existingState.selectedShot) &&
+      existingState.selectedShot>=0 && existingState.selectedShot<8)
+    selectedIndex = existingState.selectedShot;
   let ready = false;
   let appInitialized = false;
   let nextId = 0;
@@ -58,13 +66,20 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
     if (!data || data.protocol !== "motion-chat-v1" || !data.previewProject) return;
     const film = data.previewProject;
     if (!Array.isArray(film.scenes) || film.scenes.length < 1 || film.scenes.length > 8) return;
+    if(lastFilmTitle && lastFilmTitle!==film.title) selectedIndex=0;
+    lastFilmTitle=film.title;
+    selectedIndex=Math.min(selectedIndex,film.scenes.length-1);
     latest = data;
     title.textContent = safe(film.title);
     subtitle.textContent = film.scenes.length + " SCENES · " + Number(data.durationSeconds).toFixed(1) + " SEC · " + safe(film.format).toUpperCase();
     shots.replaceChildren();
     const h = document.createElement("h2"); h.textContent = "SHOT LIST / DIRECTOR"; shots.appendChild(h);
     film.scenes.forEach((shot, i) => {
-      const div = document.createElement("div");div.className = "shot";
+      const div = document.createElement("button");
+      div.type="button";div.className="shot";
+      div.setAttribute("aria-label","Jump to shot "+(i+1)+": "+safe(shot.headline));
+      div.setAttribute("aria-pressed",String(i===selectedIndex));
+      div.addEventListener("click",()=>focusShot(i));
       const number = document.createElement("span");number.className = "number";number.textContent = "SHOT " + String(i + 1).padStart(2, "0") + " / " + Number(shot.seconds).toFixed(1) + "S";
       const strong = document.createElement("strong");strong.textContent = safe(shot.headline);
       const small = document.createElement("small");small.textContent = safe(shot.kind);
@@ -73,12 +88,40 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
     if (typeof data.editorUrl === "string" && data.editorUrl.startsWith(origin + "/motion?")) {
       editor.href = data.editorUrl; editor.hidden = false;
     }
-    status.textContent = "Editable motion draft loaded. Click play, or export from the preview.";
+    status.textContent = "Editable motion draft loaded. Choose a shot, play, or export.";
     sendToPlayer();
+  }
+  function currentShotTime() {
+    if(!latest || !Array.isArray(latest.previewProject.scenes))return 0;
+    const scenes=latest.previewProject.scenes;
+    const elapsed=scenes.slice(0,selectedIndex)
+      .reduce((sum,shot)=>sum+(Number(shot.seconds)||0),0);
+    return elapsed+Math.min(0.5,Math.max(0,Number(scenes[selectedIndex]?.seconds)||0)/2);
+  }
+  function focusShot(index) {
+    if(!latest || !Number.isInteger(index) ||
+       index<0 || index>=latest.previewProject.scenes.length)return;
+    selectedIndex=index;
+    shots.querySelectorAll(".shot").forEach((element,i)=>{
+      element.setAttribute("aria-pressed",String(i===index));
+    });
+    // The host owns this optional ephemeral widget state. Do not persist
+    // client scripts, original image/audio bytes, or business data here.
+    if(window.openai && typeof window.openai.setWidgetState==="function")
+      window.openai.setWidgetState({selectedShot:index});
+    if(ready&&player.contentWindow){
+      player.contentWindow.postMessage({
+        kind:"margaryan-motion-seek-v1",time:currentShotTime()
+      },origin);
+    }
+    status.textContent="Shot "+String(index+1).padStart(2,"0")+" selected in the live film player.";
   }
   function sendToPlayer() {
     if (!ready || !latest || !player.contentWindow) return;
-    player.contentWindow.postMessage({kind:"margaryan-motion-preview-v1",project:latest.previewProject},origin);
+    player.contentWindow.postMessage({
+      kind:"margaryan-motion-preview-v1",project:latest.previewProject,
+      seekToSeconds:currentShotTime()
+    },origin);
   }
   player.addEventListener("load", () => { ready = true; sendToPlayer(); });
   player.src = origin + "/motion/chat-preview";
