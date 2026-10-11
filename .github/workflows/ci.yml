@@ -17,6 +17,10 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Motion Workspace V2 / central canvas, 7 edit workspaces and mobile production navigation
+        run: npm run motion:test-editor-workspace
+      - name: ChatGPT Content Studio / public MCP Apps and safety preflight
+        run: npm run motion:test-plugin
       - name: Motion Film Commissions / secure public brief and honest conversion funnel
         run: npm run motion:test-commission
       - name: Motion Feature Film / 120s and multi-chapter H264 master dry-run
@@ -41,8 +45,6 @@ jobs:
         run: npm run motion:test-real-source
       - name: Motion Chat Operator / create, patch and visual-asset safety
         run: npm run motion:test-chat
-      - name: ChatGPT Content Studio / MCP Apps and customer-brand safety
-        run: npm run motion:test-plugin
       - name: Motion editorial story / RU EN HY / cinematic transitions
         run: npm run motion:test-editorial
       - name: Motion Production Desk schema and cue contract
