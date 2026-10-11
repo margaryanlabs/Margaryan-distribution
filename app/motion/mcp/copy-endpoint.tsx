@@ -1,11 +1,11 @@
 "use client";
 import {useState} from "react";
 import styles from "./mcp.module.css";
-export default function CopyMcpEndpoint(){
+export default function CopyMcpEndpoint({endpoint}:{endpoint:string}){
  const [copied,setCopied]=useState(false);
  async function copy(){
   try{
-   await navigator.clipboard.writeText(new URL("/api/motion/mcp",window.location.origin).toString());
+   await navigator.clipboard.writeText(endpoint);
    setCopied(true);
    window.setTimeout(()=>setCopied(false),2400);
   }catch{setCopied(false);}

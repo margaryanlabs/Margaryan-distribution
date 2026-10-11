@@ -4,11 +4,11 @@
 
 Margaryan Motion Studio now has a **real MCP Streamable HTTP endpoint**:
 
-`https://<YOUR_DEPLOYED_DISTRIBUTION_DOMAIN>/api/motion/mcp`
+`https://distribution-web-production.up.railway.app/api/motion/mcp`
 
 It uses the official `@modelcontextprotocol/server@2.3.1` SDK, modern 2026 and legacy 2025-era per-request stateless MCP. It has no OpenAI API integration, no key costs, no Huggsfield/Higgsfield generator and no hidden cloud agent. Vercel serves the control-plane only.
 
-**Read-only public MCP tools** (exact tool IDs):
+**Public endpoint routing:** The existing Distribution Railway web service at `distribution-web-production.up.railway.app` is the intended publicly reachable domain. The main Vercel Distribution project currently applies deployment protection even to production; **do not disable it globally** merely for MCP. The Railway `proxy.ts` exception is exact-match for only `/api/motion/mcp` and `/motion/mcp`; every other private Distribution/CRM route keeps Basic operator authentication.\n\n**Read-only public MCP tools** (exact tool IDs):
 
 | Tool | What it DOES | What it DOES NOT |
 |---|---|---|
@@ -37,7 +37,7 @@ The live suite exercises the MCP **initialize**, **tools/list**, **tools/call**,
 1. Use an eligible **web** ChatGPT workspace and enable **Developer mode** in Apps settings. Workspace Admin/Owner may need to enable it.
 2. Open **Settings → Apps → Create** (or workspace Settings → Apps → Create).
 3. Choose a **custom MCP app**, name `Margaryan Motion Studio`.
-4. Endpoint: `https://<YOUR_DEPLOYED_DISTRIBUTION_DOMAIN>/api/motion/mcp`.
+4. Endpoint: `https://distribution-web-production.up.railway.app/api/motion/mcp`.
 5. **Authentication: None** only for the five public read-only tools above. These commands are public-safe; do not add rendering/account writes or private user data to this unprotected endpoint.
 6. **Scan Tools**. Verify 5 tools, then Create/enable the draft and select the app for the current ChatGPT message.
 7. Ask `@Margaryan Motion Studio create a Promptence campaign storyboard in Russian`. The response is a genuine editable project JSON for the local Motion Studio.

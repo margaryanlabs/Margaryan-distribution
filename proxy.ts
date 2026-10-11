@@ -37,9 +37,14 @@ export function proxy(request:NextRequest){
  // separately protected with same-origin checks, mandatory Turnstile and
  // fail-closed verified mail delivery. This exception must NEVER cover /api/leads.
  // These public routes do not expose CRM data or provider credentials.
+ // The PUBLIC Motion MCP is read-only/stateless and implements its own origin,
+ // input and schema validation. This exception is EXACT-MATCH only: no CRM,
+ // worker, private file, authenticated editing or render path is exposed.
+ // Vercel deployment protection may still run before this proxy; Railway's
+ // publicly reachable distribution-web origin serves the narrow MCP route.
  // Do not open other /api, /motion/* or Distribution routes without operator authentication.
- if((path==="/motion"||path==="/motion/proof"||path==="/motion/commission")||
-   (path==="/api/motion/storyboard"||path==="/api/motion/captions"||path==="/api/motion/signature"||path==="/api/motion/commission")||/^\/motion\/brands\/(?:promptence|meqena|ingu|veto-sport|veto-private|hay-engine|tun-component-preview)\.svg$/.test(path))return NextResponse.next();
+ if((path==="/motion"||path==="/motion/proof"||path==="/motion/commission"||path==="/motion/mcp")||
+   (path==="/api/motion/storyboard"||path==="/api/motion/captions"||path==="/api/motion/signature"||path==="/api/motion/commission"||path==="/api/motion/mcp")||/^\/motion\/brands\/(?:promptence|meqena|ingu|veto-sport|veto-private|hay-engine|tun-component-preview)\.svg$/.test(path))return NextResponse.next();
  const expectedUser=process.env.DISTRIBUTION_BASIC_USER;
  const expectedPassword=process.env.DISTRIBUTION_BASIC_PASSWORD;
  const operatorAuthConfigured=Boolean(expectedUser&&expectedPassword);
