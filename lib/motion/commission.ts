@@ -24,7 +24,7 @@ const url=(x:unknown)=>{
  try{const u=new URL(value);return ["https:","http:"].includes(u.protocol)&&
    !u.username&&!u.password?u.origin+u.pathname.slice(0,180):"";}catch{return ""}
 };
-export function parseMotionCommission(raw:unknown):MotionCommission{
+export function parseMotionCommission(raw:unknown,requireConsent=true):MotionCommission{
  if(!raw||typeof raw!=="object"||Array.isArray(raw))throw Error("Complete the film brief first");
  const p=raw as Record<string,unknown>;
  const name=plain(p.name,80),email=plain(p.email,254),company=plain(p.company,100),
@@ -40,9 +40,9 @@ export function parseMotionCommission(raw:unknown):MotionCommission{
    throw Error("Select a valid film type, format and goal");
  if(!MOTION_BUDGETS.includes(budget as typeof MOTION_BUDGETS[number]))
    throw Error("Choose a budget range, including 'Not sure yet'");
- if(p.consent!==true)throw Error("Consent is required to contact you about this brief");
+ if(requireConsent&&p.consent!==true)throw Error("Consent is required to contact you about this brief");
  return{name,email,company,website:url(p.website),offer,format,goal,audience,
-  budget,timeline,brief,assets,consent:true};
+  budget,timeline,brief,assets,consent:p.consent===true};
 }
 export function motionCommissionText(c:MotionCommission):string{
  const offer=MOTION_OFFERS.find(o=>o.id===c.offer)!;
