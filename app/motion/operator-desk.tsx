@@ -21,6 +21,7 @@ type Props={
   busy:boolean;
   onApplyProject:(next:MotionProject,reason:string)=>void;
   onScreenshot:(file:File)=>Promise<void>;
+  onSceneMedia:(mediaId:string,file:File)=>Promise<void>;
   onVoice:(file:File)=>void;
   onMusic:(file:File)=>void;
   onCreateBlank:()=>void;
@@ -39,7 +40,7 @@ async function copy(value:string){
   await navigator.clipboard.writeText(value);
 }
 export default function OperatorDesk({
-  project,selectedIndex,busy,onApplyProject,onScreenshot,onVoice,onMusic,onCreateBlank,onOpenQuick
+  project,selectedIndex,busy,onApplyProject,onScreenshot,onSceneMedia,onVoice,onMusic,onCreateBlank,onOpenQuick
 }:Props){
   const [tab,setTab]=useState<"chat"|"media"|"grade">("chat");
   const [source,setSource]=useState("");
@@ -105,16 +106,14 @@ export default function OperatorDesk({
     setLoading(true);
     try{
       const file=mediaAsFile(asset);
-      if(["screenshot","image","logo"].includes(asset.role)){
-        await onScreenshot(file);
-        setNotice("Real source image loaded into selected Cinematic shot. Confirm crop and source accuracy.");
+      if(["screenshot","image","logo","video"].includes(asset.role)){
+        await onSceneMedia(asset.id,file);
+        setNotice("Approved "+(asset.role==="video"?"genuine moving video":"real source image")+
+          " linked to Cinematic shot "+(selectedIndex+1)+". Preview, inspect crop and source coverage before exporting.");
       }else if(asset.role==="voice"){
         onVoice(file);setNotice("Recorded voice attached to current film. Check length and start offset in the timeline.");
       }else if(asset.role==="music"){
         onMusic(file);setNotice("Licensed score attached. Listen to final audio mix before publishing.");
-      }else if(asset.role==="video"){
-        onOpenQuick(asset.id);
-        setNotice("Approved video handed off locally to Quick Studio. Motion OS will attach genuine source frames to its first shot.");
       }else{
         setNotice("Sound effects are stored for review; a dedicated sound-effects track is not connected yet.");
       }
@@ -217,15 +216,17 @@ export default function OperatorDesk({
             <button type="button" disabled={loading||busy||!item.approved} onClick={()=>void useAsset(item)}>
               {["screenshot","image","logo"].includes(item.role)?"USE AS SOURCE SCREEN":
                 item.role==="voice"?"ATTACH VOICE":item.role==="music"?"ATTACH SCORE":
-                item.role==="video"?"OPEN IN QUICK STUDIO ↗":"PREVIEW ONLY"}
+                item.role==="video"?"USE AS MOVING VIDEO SHOT":"PREVIEW ONLY"}
             </button>
+            {item.role==="video"&&<button type="button" disabled={loading||busy||!item.approved}
+              onClick={()=>onOpenQuick(item.id)}>OPEN IN QUICK STUDIO</button>}
             <button type="button" disabled={loading||busy} onClick={()=>{void removeLocalMedia(item.id)
               .then(()=>{setSelectedAsset(null);return refresh();})
               .catch(error=>setNotice(String(error)));}}>DELETE LOCAL COPY</button>
           </div>
         </div>}
       </article>)}</div>}
-      <p className={styles.hint}>Approved moving video can be handed off directly to the <b>first Quick Studio shot</b>. Cinematic Studio still accepts a real still image per brand and voice/music tracks; it does not silently pretend a stored MP4 is part of its output.</p>
+      <p className={styles.hint}>Approved real video now attaches directly to the selected <b>Cinematic screen shot</b> with genuine decoded frames, adjustable source inpoint and export coverage checks. It can also be sent to the <b>first Quick Studio shot</b>. Media remains on your device. Exact offline MP4 rendering requires reattaching approved files with an explicit operator media map.</p>
     </div>}
     {tab==="grade"&&<div className={styles.contents}>
       <p className={styles.hint}>Film-wide controls modify rendered Canvas frames and saved project JSON. Start with restrained changes. They work on legacy scenes too.</p>
