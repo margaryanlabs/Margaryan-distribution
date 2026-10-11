@@ -135,7 +135,8 @@ try {
       const W=1080,H=1080*dims[1]/dims[0],layout=scene.sourceLayout||"card";
       const landscape=H<810,square=H>=810&&H<1250;
       let sw=W,sh=H;
-      if(layout==="theater"){sw=W*(landscape?.46:.82);sh=H*(landscape?.78:square?.31:.25);}
+      if(layout==="showcase"){sw=W*(landscape?.87:square?.88:.93);sh=H*(landscape?.72:square?.42:.30);}
+      else if(layout==="theater"){sw=W*(landscape?.46:.82);sh=H*(landscape?.78:square?.31:.25);}
       else if(layout==="split"){sw=W*(landscape?.46:.8);sh=H*(landscape?.73:square?.26:.25);}
       else if(layout==="card"){sw=W*(landscape?.46:.84);sh=H*(landscape?.57:square?.21:.25);}
       framing[scene.mediaId]=assertSourceFraming(actual?.width,actual?.height,sw,sh,scene.mediaId);
