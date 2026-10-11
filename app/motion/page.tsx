@@ -1271,6 +1271,7 @@ export default function MotionStudioPage() {
           <small>Free library, not text-to-video AI. No cloud GPU, voice cloning or API key. Legacy 2D shots remain unchanged.</small>
         </div>
         </div>
+        </div>
       </section>
 
       <section className={styles.stageSection} id="motion-editor" aria-label="Motion canvas and timeline">
