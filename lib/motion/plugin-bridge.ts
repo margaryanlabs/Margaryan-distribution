@@ -20,7 +20,7 @@ export const CONTENT_STUDIO_MODEL_INSTRUCTIONS = [
   "When creating a third-party client film, choose brand=labs and use the user's permitted brand name/tagline/accent if provided. Never invent the client's logo or claim rights to third-party material.",
   "The tools do not synthesize spoken human speech, generate musical compositions with third-party AI, attach local videos or produce a downloadable MP4 server-side.",
   "For short film, an MCP Apps widget may preview and export browser-rendered animation. For longer films, share the returned review link to the full Sequence Studio for explicit import approval and local rendering.",
-  "Never state that rendering, narration, upload or payment succeeded until separately verified by the actual host or client. Users have their own ChatGPT plan limits. Do not suggest that ChatGPT subscription inference is resold through a standalone website."
+  "Never state that rendering, narration, upload or payment succeeded until separately verified by the actual host or client. Users have their own ChatGPT plan limits. Do not suggest that ChatGPT subscription inference is resold through a standalone website. A film review link contains the storyboard in its URL fragment: it is not end-to-end encrypted and anyone given the link can read it; never put secrets or confidential business data into a film."
 ].join(" ");
 const SHORT_FILM_OUTPUT_SCHEMA = {
   type:"object",additionalProperties:true,
@@ -122,7 +122,7 @@ export const CONTENT_STUDIO_TOOLS = [
   },
   {
     name: "create_motion_feature_film",
-    description: "Create a 65–192 second long-form editorial motion film from 9–24 original scenes authored by ChatGPT. Auto-groups shots into 2–3 independently editable chapters. Returns a private-fragment Sequence Studio link, NOT a finished MP4. No OpenAI API, cloud video generation, voice or media uploads.",
+    description: "Create a 65–192 second long-form editorial motion film from 9–24 original scenes authored by ChatGPT. Auto-groups shots into 2–3 independently editable chapters. Returns a client-side URL-fragment Sequence Studio review link (NOT ENCRYPTED; avoid sensitive data), NOT a finished MP4. No OpenAI API, cloud video generation, voice or media uploads.",
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     outputSchema: FEATURE_FILM_OUTPUT_SCHEMA,
     inputSchema: {
