@@ -52,6 +52,8 @@ try{
     waitUntil:"domcontentloaded",timeout:30_000
   });
   assert.equal(res?.status(),200);
+  // Editor V2 starts on the creative desk; select the real FEATURE FILM workspace.
+  await page.getByRole("button",{name:/FEATURE FILM/}).first().click();
   const button=page.getByRole("button",{name:"↓ EXPORT VISUAL FILM"});
   await button.waitFor({timeout:30_000});
   await page.waitForFunction(()=>{
