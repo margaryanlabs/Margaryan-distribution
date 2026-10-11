@@ -7,7 +7,7 @@ const code=readFileSync(new URL("../../lib/motion/review-markers.ts",import.meta
 const mod=await import("data:text/javascript;base64,"+
  Buffer.from(stripTypeScriptTypes(code,{mode:"strip"})).toString("base64"));
 const {sanitizeReviewMarker,parseReviewMarkers,addReviewMarker,
- reviewMarkersAsText,updateReviewMarkerStatus,markerSceneIndex,reviewProjectStorageKey}=mod;
+ reviewMarkersAsText,updateReviewMarkerStatus,markerSceneIndex,markerFilmTime,reviewProjectStorageKey}=mod;
 assert.equal(reviewProjectStorageKey("veto","Investor Film"),
  reviewProjectStorageKey("veto","Investor Film"));
 assert.notEqual(reviewProjectStorageKey("veto","Investor Film"),
@@ -26,6 +26,15 @@ assert.equal(markerSceneIndex(first[0],scenes),1,"Notes follow stable scene iden
 assert.equal(markerSceneIndex(first[0],[...scenes,{id:"scene-001"}]),null,
  "Ambiguous duplicate IDs must never jump into wrong footage");
 assert.equal(markerSceneIndex(first[0],[{id:"scene-999"}]),null);
+const anchored={...first[0],localSeconds:1.5};
+const reassembled=[{id:"scene-999",seconds:5},{id:"scene-001",seconds:4}];
+assert.equal(markerFilmTime(anchored,reassembled),6.5,
+ "Director note must move with the shot instead of old absolute timestamp");
+assert.equal(markerFilmTime({...anchored,localSeconds:3.99},
+ [{id:"scene-999",seconds:5},{id:"scene-001",seconds:2}]),6.95,
+ "Shot trim must clamp a note inside the remaining footage");
+assert.equal(markerFilmTime(anchored,[{id:"new",seconds:4}]),null);
+assert.match(reviewMarkersAsText("Film",[anchored],reassembled),/6.50s/);
 assert.equal(sanitizeReviewMarker({...first[0],atSeconds:NaN}),null);
 assert.equal(sanitizeReviewMarker({...first[0],id:"<script>"}),null);
 assert.equal(sanitizeReviewMarker({...first[0],priority:"published"}),null);
