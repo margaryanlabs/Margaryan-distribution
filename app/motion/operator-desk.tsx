@@ -80,6 +80,27 @@ export default function OperatorDesk({
     return()=>URL.revokeObjectURL(url);
   },[selected]);
   useEffect(()=>{setPreview(null);},[source,project]);
+  // Only the small, editable Chat Pack is in the URL fragment: no remote
+  // source media and no automatic edits. The separate long-film fragment is
+  // handled by Sequence Studio, never by this short-film importer.
+  useEffect(()=>{
+    const prefix="#motion-chat-v1=";
+    if(!window.location.hash.startsWith(prefix))return;
+    const encoded=window.location.hash.slice(prefix.length);
+    window.history.replaceState(window.history.state,"",window.location.pathname+window.location.search);
+    try{
+      if(encoded.length<10||encoded.length>15000||!/^[A-Za-z0-9_-]+$/.test(encoded))
+        throw Error("Invalid or oversized Motion handoff");
+      const raw=atob(encoded.replace(/-/g,"+").replace(/_/g,"/")+"=".repeat((4-encoded.length%4)%4));
+      if(raw.length>12000)throw Error("Film Chat Pack too large");
+      const decoded=new TextDecoder("utf-8",{fatal:true}).decode(Uint8Array.from(raw,ch=>ch.charCodeAt(0)));
+      const value:unknown=JSON.parse(decoded);
+      if(!value||typeof value!=="object"||(value as Record<string,unknown>).protocol!=="motion-chat-v1")
+        throw Error("Unsupported Motion Pack");
+      setTab("chat");setPreview(null);setSource(JSON.stringify(value,null,2));
+      setNotice("CHATGPT FILM RECEIVED. Click INSPECT / PREVIEW; then explicitly approve. Nothing has been rendered or changed.");
+    }catch(e){setNotice("CHATGPT IMPORT REJECTED: "+(e instanceof Error?e.message:String(e)));}
+  },[]);
   async function loadPublicChatCut(){
     if(busy||inboxLoading)return;
     setInboxLoading(true);setPreview(null);
