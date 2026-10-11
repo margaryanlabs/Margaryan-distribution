@@ -57,9 +57,7 @@ export function duplicateMotionShot(
   const original=scenes[index];
   // Stills can be reused. No hypothetical synthesized source screenshot.
   scenes.splice(index+1,0,{...original,id:"scene-duplicate-"+index,
-    transition:original.transition,voiceCue:"",
-    // The first shot ends in a hard CUT; no duplicate transition overlap.
-    ...{}} as MotionScene);
+    transition:original.transition,voiceCue:""});
   scenes[index]={...original,transition:"cut"};
   return{project:{...project,scenes},selectedIndex:index+1,
     description:"Duplicated approved still/design shot. Second voice cue cleared and preceding cut hard-edited."};
@@ -80,7 +78,7 @@ export function splitMotionShot(project:MotionProject,index:number,offsetSeconds
   const first:MotionScene={...before,seconds:left,transition:"cut",
     sourceZoomStart:shot.sourceZoomStart??1,sourceZoomEnd:middleZoom};
   const second:MotionScene={...after,id:"scene-split-"+index,
-    seconds:right,mediaStart:round((shot.mediaStart||0)+left),
+    seconds:right,mediaStart:shot.mediaId?round((shot.mediaStart||0)+left):0,
     sourceZoomStart:middleZoom,sourceZoomEnd:shot.sourceZoomEnd??1.075,
     voiceCue:""};
   const scenes=project.scenes.map(x=>({...x}));
