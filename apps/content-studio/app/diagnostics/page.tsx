@@ -57,11 +57,11 @@ async function run():Promise<Check[]> {
   }catch(e){checks.push(card("MCP APPS RESOURCE DISCOVERY",false,String(e),0));}
   try {
     const r=await call("tools/call",{name:"create_motion_film",arguments:{
-      title:"CONTENT STUDIO / DIAGNOSTIC",brand:"labs",format:"portrait",language:"en",scenes:SCENES
+      title:"CONTENT STUDIO / DIAGNOSTIC",brand:"labs",client_brand_name:"DEMO CAFÉ",client_brand_caption:"YOUR EVENING, REIMAGINED",client_brand_accent:"#B7C5E9",format:"portrait",language:"en",scenes:SCENES
     }},25);
     if(r.result.isError)throw Error("Tool returned isError");
     film=r.result.structuredContent as Record<string,unknown>;
-    if(!film||typeof film.editorUrl!=="string"||!film.editorUrl.startsWith("https://studio.promptence.tech/motion")||film.scenes!==3)
+    if(!film||typeof film.editorUrl!=="string"||!film.editorUrl.startsWith("https://studio.promptence.tech/motion")||film.scenes!==3||(film.previewProject as {clientBrand?:{name?:string}})?.clientBrand?.name!=="DEMO CAFÉ")
       throw Error("Invalid film URL or scene count");
     checks.push(card("CREATE EDITABLE FILM",true,"3 shots / "+String(film.durationSeconds)+" seconds",r.milliseconds));
   }catch(e){checks.push(card("CREATE EDITABLE FILM",false,String(e),0));}
