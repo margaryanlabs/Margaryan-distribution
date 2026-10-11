@@ -116,6 +116,12 @@ assert.ok(first.text.includes('kind:"margaryan-motion-seek-v1"'),
   "MCP Apps widget must let users inspect shots by jumping the real Canvas player");
 assert.ok(first.text.includes("window.openai.setWidgetState"),
   "Widget must preserve safe UI-only selected-shot state when host supports it");
+assert.ok(first.text.includes("window.openai.sendFollowUpMessage({prompt,scrollToBottom:true})"),
+  "ChatGPT edit button must request a real natural-language follow-up instead of faking film edits");
+assert.ok(first.text.includes("askEdit.disabled=false")&&
+  first.text.includes("selectedIndex=index"),
+  "ChatGPT embedded director must allow a user to select and revise a specific scene");
+
 const publicEditor=readFileSync(new URL("apps/content-studio/app/motion/page.tsx",root),"utf8");
 const publicCSS=readFileSync(new URL("apps/content-studio/app/motion/motion.module.css",root),"utf8");
 const child=readFileSync(new URL("apps/content-studio/app/motion/chat-preview/page.tsx",root),"utf8");
