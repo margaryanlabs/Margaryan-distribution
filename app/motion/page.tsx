@@ -544,6 +544,8 @@ export default function MotionStudioPage() {
       return;
     }
     try{
+      const sourceIssues=motionSourceIssues(project);
+      if(sourceIssues.length)throw Error(sourceIssues.join(" / "));
       const checked=await reviewMotionVisuals(project);
       if(!checked.pass){
         const revised=await repairMotionProject(project);
@@ -584,6 +586,7 @@ export default function MotionStudioPage() {
       let cursor = 0;
       for (const scene of project.scenes) {
         const candidate = cursor + scene.seconds * .5;
+        await prepareMotionSourceFrame(project,candidate);
         drawMotionFrame(ctx, project, candidate, width, height);
         const thumbnail = document.createElement("canvas");
         thumbnail.width = 180;
@@ -605,6 +608,7 @@ export default function MotionStudioPage() {
         });
         stream.addTrack(audioSession.track);
       }
+      await prepareMotionSourceFrame(project,0);
       drawMotionFrame(ctx, project, 0, width, height);
       recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8_000_000 });
       const chunks: BlobPart[] = [];
@@ -614,10 +618,12 @@ export default function MotionStudioPage() {
         currentRecorder.onerror = () => reject(new Error("Video encoder failed"));
         currentRecorder.onstop = () => resolve();
         currentRecorder.start(1000);
+        syncMotionSourcePlayback(project,0,true);
         const began = performance.now();
         function render(now: number) {
           if (currentRecorder.state !== "recording") return;
           const seconds = Math.min(total, (now - began) / 1000);
+          syncMotionSourcePlayback(project,seconds,true);
           if (ctx) drawMotionFrame(ctx, project, seconds, width, height);
           setExportProgress(Math.min(100, Math.round(seconds / total * 100)));
           if (seconds >= total) currentRecorder.stop();
@@ -636,6 +642,7 @@ export default function MotionStudioPage() {
       cancelAnimationFrame(raf);
       if (recorder && recorder.state !== "inactive") recorder.stop();
       stream?.getTracks().forEach(track => track.stop());
+      pauseMotionSourceVideos();
       if (audioSession) await audioSession.close();
       setExporting(false);
     }
