@@ -231,3 +231,11 @@
 .productionModes button:not([data-selected="true"]):hover{border-color:#8a98aa}
 .productionModes button:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:650px){.productionModes{grid-template-columns:1fr}.productionModes button{padding:15px}.productionModes button strong{font-size:11px}}
+
+/* Source-first director is an independent third step; existing modes untouched. */
+.proofLaunch{display:grid;gap:8px;min-width:0;text-decoration:none;padding:18px 20px;
+ border:1px solid #336b52;border-radius:13px;background:linear-gradient(125deg,#0b2219,#10271d);
+ color:#e4faeb;align-items:center}
+.proofLaunch strong{font-size:12px;letter-spacing:.11em;color:#6cf4b2}
+.proofLaunch span{font-size:11px;line-height:1.55;color:#a4c6b4}
+.proofLaunch:hover{border-color:#6cf4b2}
