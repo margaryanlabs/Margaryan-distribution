@@ -98,6 +98,11 @@ export function motionSourceIssues(project:MotionProject):string[]{
       issues.push("Shot "+(i+1)+" and "+(i+2)+" reuse one video in an overlapping transition. Set CUT on shot "+
         (i+1)+" or use separate approved source recordings.");
     }
+    if(scene.overlayMediaId){
+      const overlay=registered.get(scene.overlayMediaId);
+      if(!overlay)issues.push("Shot "+(i+1)+": approved image overlay "+scene.overlayMediaId+" is not attached in this browser.");
+      else if(overlay.type!=="image")issues.push("Shot "+(i+1)+": second-layer overlays only support genuine still images, not video.");
+    }
     if(scene.kind!=="screen"||!scene.mediaId)continue;
     const media=registered.get(scene.mediaId);
     if(!media){issues.push("Shot "+(i+1)+": approved source file "+scene.mediaId+" not attached in this browser.");continue;}
