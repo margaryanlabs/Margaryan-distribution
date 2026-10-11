@@ -34,6 +34,8 @@ export default function ChatMotionPreviewPage() {
   const [received, setReceived] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [exportReady, setExportReady] = useState(false);
+  const lastExportRef = useRef<{blob:Blob;filename:string}|null>(null);
   const [seek, setSeek] = useState(0);
   const [notice, setNotice] = useState("Waiting for a ChatGPT film draft");
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -68,6 +70,8 @@ export default function ChatMotionPreviewPage() {
         const safe = sanitizeMotionProject(raw);
         if (durationOf(safe) > 64 || safe.scenes.some(s => s.mediaId))
           throw Error("Private video/media cannot enter embedded preview");
+        lastExportRef.current = null;
+        setExportReady(false);
         setPlaying(false); playbackRef.current = 0;
         setSeek(0); setProject(safe); setReceived(true);
         setNotice("Ready to preview / browser graphics only");
@@ -75,11 +79,21 @@ export default function ChatMotionPreviewPage() {
         setNotice("Rejected untrusted film: " + (err instanceof Error ? err.message : String(err)));
       }
     };
+    const uploadReply = (e:MessageEvent<unknown>) => {
+      if(e.source!==window.parent || !e.data || typeof e.data!=="object")return;
+      const message=e.data as {kind?:string;message?:unknown};
+      if(message.kind==="margaryan-motion-upload-status-v1" && typeof message.message==="string")
+        setNotice(message.message.slice(0,250));
+    };
+    window.addEventListener("message", uploadReply);
     window.addEventListener("message", listener);
     // Handshake ensures the parent MCP widget cannot miss a draft while
     // Next.js hydrates the child React app after the iframe load event.
     if (window.parent !== window) window.parent.postMessage({kind:"margaryan-motion-preview-ready-v1"}, "*");
-    return () => window.removeEventListener("message", listener);
+    return () => {
+      window.removeEventListener("message",listener);
+      window.removeEventListener("message",uploadReply);
+    };
   }, []);
 
   useEffect(() => {void preloadMotionLogo(project.brand).then(()=>render(playbackRef.current));}, [project.brand,render]);
@@ -138,6 +152,7 @@ export default function ChatMotionPreviewPage() {
       stream = canvas.captureStream(fps);
       const recorder = new MediaRecorder(stream, {mimeType:type,videoBitsPerSecond:4_000_000});
       chunksRef.current = [];
+      lastExportRef.current = null; setExportReady(false);
       recorder.ondataavailable = event => {
         if (event.data.size > 0) chunksRef.current.push(event.data);
       };
@@ -148,7 +163,10 @@ export default function ChatMotionPreviewPage() {
         const ext = type.startsWith("video/mp4") ? "mp4" : "webm";
         const blob = new Blob(chunksRef.current,{type});
         if (blob.size > 0) {
-          download(blob,"margaryan-content-studio-"+project.brand+"."+ext);
+          const fileName="margaryan-content-studio-"+project.brand+"."+ext;
+          lastExportRef.current={blob,filename:fileName};
+          setExportReady(true);
+          download(blob,fileName);
           setNotice(ext.toUpperCase() + " downloaded. No audio was generated; inspect playback on device.");
         } else setNotice("Recording was empty — try the full editor");
         chunksRef.current = [];
@@ -170,6 +188,33 @@ export default function ChatMotionPreviewPage() {
     }
   }
 
+  async function sendToChatGPT(){
+    const file=lastExportRef.current;
+    if(!file||recording)return;
+    if(file.blob.size>25_000_000){
+      setNotice("Video exceeds 25MB ChatGPT transfer limit. Keep the local download.");
+      return;
+    }
+    if(window.parent===window){
+      setNotice("ChatGPT storage is available only in an installed ChatGPT plugin.");
+      return;
+    }
+    try{
+      const bytes=await file.blob.arrayBuffer();
+      // Explicit user action. The parent (MCP Apps widget) validates file and
+      // uses the host's optional uploadFile() only when actually supported.
+      window.parent.postMessage({
+        kind:"margaryan-motion-export-file-v1",
+        fileName:file.filename,
+        mimeType:file.blob.type,
+        bytes
+      },"*",[bytes]);
+      setNotice("Sent to the ChatGPT app. Upload confirmation will appear here.");
+    }catch(error){
+      setNotice("ChatGPT upload handoff failed: "+String(error));
+    }
+  }
+
   return <main style={outer}>
     <div style={{display:"flex",justifyContent:"space-between",gap:8,fontSize:10,letterSpacing:".1em",color:"#b4c1d8"}}>
       <span>◈ {BRAND_INFO[project.brand].name} / LIVE CANVAS</span>
@@ -187,6 +232,9 @@ export default function ChatMotionPreviewPage() {
     </div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginTop:10}}>
       <button disabled={!received||recording} style={button} type="button" onClick={exportVideo}>{recording?"◌ RECORDING":"↓ EXPORT VIDEO"}</button>
+      <button disabled={!exportReady||recording} style={button} type="button" onClick={()=>void sendToChatGPT()}>
+        ↥ SAVE TO CHATGPT
+      </button>
       <span style={{fontSize:10,color:"#a8b3c1"}}>720P · LOCAL · 24FPS</span>
     </div>
     <div role="status" style={{fontSize:10,lineHeight:1.5,marginTop:9,color:"#bfc6d4"}}>{notice}</div>
