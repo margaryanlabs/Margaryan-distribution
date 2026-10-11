@@ -26,7 +26,8 @@ const LENGTH_NOTE:Record<StudioFilmKind,string>={
  campaign:"Создадим оригинальный графический сценарий. Для реальных кадров добавьте свои исходники.",
  product:"В редакторе появится место для настоящего экрана. Без видео продукта финальная проверка не пройдёт.",
  feature:"Фильм собирается из отдельных глав. Сначала открывается рабочая область глав.",
- proof:"Отдельный пилот на реальных кадрах Promptence, а не генерация вымышленных экранов."
+ proof:"Отдельный пилот на реальных кадрах Promptence, а не генерация вымышленных экранов.",
+ interaction:"Реальный курсор, клики, прокрутка и ввод — без фиктивных результатов. Видео записывает оператор на своём компьютере; этот мастер открывает монтаж исходника."
 };
 export default function MotionStart({
  initialBrand,currentTitle,hasSavedDraft,busy,onStart,onResume,onSaveCurrent
@@ -41,13 +42,13 @@ export default function MotionStart({
  const selected=STUDIO_FILM_CHOICES.find(c=>c.kind===kind)!;
  function pick(next:StudioFilmKind){
    setKind(next);setError("");
-   if(next==="reel"||next==="campaign")setFormat("portrait");
+   if(next==="reel"||next==="campaign"||next==="interaction")setFormat("portrait");
    if(next==="product"||next==="feature"||next==="proof")setFormat("landscape");
-   if(next==="proof")setBrand("promptence");
+   if(next==="proof"||next==="interaction")setBrand("promptence");
  }
  function start(){
    try{
-     onStart({kind,brand:kind==="proof"?"promptence":brand,format,language,brief});
+     onStart({kind,brand:kind==="proof"||kind==="interaction"?"promptence":brand,format,language,brief});
    }catch(e){setError(e instanceof Error?e.message:"Не удалось начать проект.");}
  }
  return <main className={styles.page} aria-label="Выберите, какой ролик создать">
@@ -76,20 +77,25 @@ export default function MotionStart({
          </button>
        </div>}
      </section>
-     <div className={styles.step}><span>01</span><strong>Выберите тип видео</strong><small>5 вариантов · все существующие режимы</small></div>
+     <div className={styles.step}><span>01</span><strong>Выберите тип видео</strong><small>6 вариантов · все существующие режимы</small></div>
      <section className={styles.selectionLayout}>
        <div className={styles.catalog} role="group" aria-label="Выбор типа видеоролика">
          {STUDIO_FILM_CHOICES.map(item=><button key={item.kind} type="button"
            className={styles.card} data-kind={item.kind} data-active={kind===item.kind}
            aria-pressed={kind===item.kind} onClick={()=>pick(item.kind)}>
            <div className={styles.cardArt} aria-hidden="true">
-             <div className={styles.artTop}><span>0{Number(item.id)} / MOTION FILM</span><i/></div>
+             <div className={styles.artTop}><span>{item.id} / MOTION FILM</span><i/></div>
              <div className={styles.artMain}>
                {item.kind==="reel"&&<><div className={styles.phoneCard}><span>YOUR</span><b>STORY.</b><i/></div><div className={styles.artGlint}/></>}
                {item.kind==="campaign"&&<><div className={styles.cineWord}>MAKE<br/><i>IT</i> MOVE.</div><span className={styles.artOrb}/></>}
                {item.kind==="product"&&<><div className={styles.productWindow}><span>◉&nbsp; YOUR REAL SCREEN</span><div className={styles.productBar}/><div className={styles.productRow}/><div className={styles.productRow}/><div className={styles.productHighlight}/></div><span className={styles.productGlare}/></>}
                {item.kind==="feature"&&<><div className={styles.featureText}>ONE<br/>BIG<br/><i>STORY.</i></div><span className={styles.featureRing}/></>}
                {item.kind==="proof"&&<><div className={styles.proofBox}><span>REAL SOURCE</span><strong>NO<br/>GUESSWORK.</strong><i>✓ SOURCE CHECK</i></div></>}
+               {item.kind==="interaction"&&<div className={styles.interactionArt}><div className={styles.interactionBrowser}>
+                 <div className={styles.interactionBrowserBar}><i/><i/><i/><span>promptence.tech</span></div>
+                 <div className={styles.interactionUI}><div className={styles.interactionInput}/><div className={styles.interactionInput}/>
+                   <div className={styles.interactionClick}>RUN FREE CHECK <b>↗</b></div></div>
+               </div><span className={styles.interactionCursor}>↖</span><span className={styles.interactionRing}/></div>}
              </div>
              <div className={styles.artBottom}><span>{item.badge}</span><span>↗</span></div>
            </div>
@@ -109,7 +115,7 @@ export default function MotionStart({
          </div>
          <div className={styles.inputs}>
            <label>ДЛЯ КАКОГО БРЕНДА?
-             <select value={kind==="proof"?"promptence":brand} disabled={kind==="proof"}
+             <select value={kind==="proof"||kind==="interaction"?"promptence":brand} disabled={kind==="proof"||kind==="interaction"}
                onChange={e=>setBrand(e.target.value as MotionBrand)}>
                {PORTFOLIO_BRANDS.map(item=><option key={item} value={item}>{BRAND_INFO[item].name}</option>)}
              </select>
@@ -118,6 +124,7 @@ export default function MotionStart({
              <div className={styles.formatPicker} role="group" aria-label="Формат кадра">
                {FORMATS.map(f=><button key={f.id} type="button"
                  className={styles.formatOption} data-active={format===f.id}
+                 disabled={kind==="interaction"&&f.id!=="portrait"}
                  aria-pressed={format===f.id} onClick={()=>setFormat(f.id)}>
                  <span className={styles.frame} data-shape={f.id}/>
                  <strong>{f.name}</strong><small>{f.sub}</small>
@@ -150,9 +157,10 @@ export default function MotionStart({
          {kind==="proof"
            ?<a href="/motion/proof" className={styles.go}>Открыть Proof Director <span>↗</span></a>
            :<button type="button" className={styles.go} disabled={busy} onClick={start}>
-              {kind==="reel"?"Перейти к монтажу Reels":kind==="feature"?"Создать большой фильм":
+              {kind==="reel"?"Перейти к монтажу Reels":kind==="feature"?"Создать большой фильм":kind==="interaction"?"Создать кликающее демо":
                 kind==="product"?"Создать демо продукта":"Создать рекламный ролик"} <span>↗</span>
             </button>}
+         {kind==="interaction"&&<p className={styles.setupFine}>Только Promptence (первый пилот). Автоматическая запись браузера выполняется локально через Playwright и FFmpeg; сайт не запускает скрытый серверный рендер и не выполняет настоящий Free Scan.</p>}
          <div className={styles.honesty}><span>✓ Без API-ключей</span><span>✓ Редактируемый проект</span></div>
          <p className={styles.setupFine}>Превью выше — художественные макеты стиля, не готовые видео и не реальные результаты AI. Готовый ролик требует исходных материалов, проверки и экспорта.</p>
        </aside>

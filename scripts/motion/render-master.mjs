@@ -13,7 +13,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
 import {createReadStream} from "node:fs";
 import {createHash} from "node:crypto";
-import {assertApprovedSourceManifest,assertDirectorRelease,assertSourceFraming} from "./release-quality-gates.mjs";
+import {assertApprovedSourceManifest,assertApprovedInteractionManifest,assertDirectorRelease,assertSourceFraming} from "./release-quality-gates.mjs";
 import { dirname, resolve, extname } from "node:path";
 import process from "node:process";
 import { buildAudioMix } from "./audio-mix.mjs";
@@ -122,7 +122,9 @@ try {
     const manifest=JSON.parse(await readFile(manifestPath,"utf8"));
     const sourceChecksums={};
     for(const id of sourceIDs)sourceChecksums[id]=await fileHash(resolve(sourceMap[id]));
-    releaseEvidence=assertApprovedSourceManifest(manifest,sourceIDs,sourceChecksums,project.brand);
+    releaseEvidence=manifest.schema==="motion-interaction-cinema/v1"
+      ?assertApprovedInteractionManifest(manifest,sourceIDs,sourceChecksums,project.brand)
+      :assertApprovedSourceManifest(manifest,sourceIDs,sourceChecksums,project.brand);
     if(project.scenes.some(s=>s.kind==="screen"&&!s.mediaId))
       throw Error("RELEASE BLOCKED: all commercial product frames must have individual reviewed source IDs.");
     const framing={};
@@ -135,7 +137,8 @@ try {
       const W=1080,H=1080*dims[1]/dims[0],layout=scene.sourceLayout||"card";
       const landscape=H<810,square=H>=810&&H<1250;
       let sw=W,sh=H;
-      if(layout==="theater"){sw=W*(landscape?.46:.82);sh=H*(landscape?.78:square?.31:.25);}
+      if(layout==="showcase"){sw=W*(landscape?.87:square?.88:.93);sh=H*(landscape?.72:square?.42:.30);}
+      else if(layout==="theater"){sw=W*(landscape?.46:.82);sh=H*(landscape?.78:square?.31:.25);}
       else if(layout==="split"){sw=W*(landscape?.46:.8);sh=H*(landscape?.73:square?.26:.25);}
       else if(layout==="card"){sw=W*(landscape?.46:.84);sh=H*(landscape?.57:square?.21:.25);}
       framing[scene.mediaId]=assertSourceFraming(actual?.width,actual?.height,sw,sh,scene.mediaId);

@@ -3,7 +3,7 @@
  * controls, so preview and frame-exact offline mastering share identical pixels.
  * Source content is never re-synthesized or secretly replaced.
  */
-export type SourceLayout="card"|"theater"|"split"|"immersive";
+export type SourceLayout="card"|"theater"|"split"|"showcase"|"immersive";
 export interface SourceDirection{
   sourceLayout:SourceLayout;
   sourceFocusX:number;
@@ -21,7 +21,7 @@ const finite=(v:unknown,fallback:number,min:number,max:number)=>
 export function sanitizeSourceDirection(raw:unknown):SourceDirection{
   const o=raw&&typeof raw==="object"&&!Array.isArray(raw)?raw as Record<string,unknown>:{};
   return {
-    sourceLayout:["card","theater","split","immersive"].includes(String(o.sourceLayout))
+    sourceLayout:["card","theater","split","showcase","immersive"].includes(String(o.sourceLayout))
       ?o.sourceLayout as SourceLayout:"card",
     sourceFocusX:finite(o.sourceFocusX,.5,0,1),
     sourceFocusY:finite(o.sourceFocusY,.5,0,1),
@@ -56,6 +56,12 @@ export function sourceStage(layout:SourceLayout,W:number,H:number):StageRect{
   const landscape=H<810;
   const square=H>=810&&H<1250;
   if(layout==="immersive")return{x:0,y:0,w:W,h:H,r:0,angle:0};
+  // Interaction Cinema: a larger, nearly 16:9 *real* browser plane in a 9:16 ad.
+  // Preserve the source's aspect ratio rather than severely cropping the UI.
+  if(layout==="showcase")return landscape
+    ?{x:W*.065,y:H*.14,w:W*.87,h:H*.72,r:16,angle:0}
+    :square?{x:W*.06,y:H*.43,w:W*.88,h:H*.42,r:18,angle:0}
+    :{x:W*.035,y:H*.50,w:W*.93,h:H*.30,r:20,angle:0};
   if(layout==="split"){
     return landscape
       ?{x:W*.455,y:H*.16,w:W*.46,h:H*.73,r:15,angle:0}
