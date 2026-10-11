@@ -155,3 +155,19 @@ A Vercel READY build establishes compilation and route packaging. It is not proo
 **Remaining release blockers:** actual Android/desktop AV playback and encoded file validation, file-picker permissions inside ChatGPT nested iframe, audio duration and synchronization review, option to merge local logo into advanced full editor (currently scoped to embedded preview), customer auth/billing, and submission review. Do not claim these have passed until actually tested.
 
 User-facing test: open https://studio.promptence.tech/motion/chat-preview without installing the plugin, play the provided local demonstration, attach a small owned logo and a short recorded narration, optionally choose music, then explicitly export and inspect the local MP4/WebM. If the nested ChatGPT iframe does not permit local file selection, use the full external studio until that capability is approved.
+
+
+## Main sync and long-form public film workflow (11 October 2026)
+
+Content Studio beta branch has been merged **forward from the latest main** commit 1bbf1b7c85d6a978eb291f9542d45c7041bd47f5. This is a merge INTO the draft branch, not a release merge into main. The sync preserves the ChatGPT-native film widget, customer-brand drawing, and stateless MCP adapter, and incorporates the separately completed Motion Feature Film V1:
+
+- Public `/motion` now includes the real `FilmSequenceDesk` with multiclip `FilmBrowserExport` (up to 300 seconds of locally rendered 720p Canvas workprint on compatible devices), Premiere-like `PrecisionCutDesk` and source-aligned sound editor.
+- Public self-contained Next build has the new components, CSS, browser film planner/mixer and sample 120s/300s manifests copied to its own public root. It does not mount the distribution CRM, workers or private API routes.
+- `create_motion_feature_film` is now advertised by the public MCP endpoint as a **third stateless tool**. It accepts 9–24 model-authored shot scripts of 2–8 seconds and returns a **65–192 second, 2–3 chapter** editable proposal via a fragment-only `/motion?mode=cinematic#motion-sequence-v1=...` link. Requires explicit review and approval before it changes local chapters. It does NOT return an MP4, live action footage, or generated voice.
+- The long tool now accepts a sanitized approved customer text brand name, caption and accent when `brand=labs`, consistently in each chapter. No special media URLs, no third-party logos or cloud assets.
+- The diagnostics at `/diagnostics` perform a REAL server-to-server HTTP `create_motion_feature_film` call and decode the returned manifest to check brand propagation to both chapters. Expected count now **8/8** (pending deployed production runtime verification). The browser /connect page has a corresponding one-click 120s sample-review link.
+- Browser-rendered **300-second** films are only promised through the manual editor/Sequence Studio (subject to maximum chapter constraints, privacy, hardware/codec performance). **ChatGPT's long-film tool remains capped at 192 seconds**.
+- The separate MCP Apps inline canvas is still the SHORT film preview (≤64 seconds); long sequences open the fuller Motion editor in a browser, and we must not pretend an in-ChatGPT 300-second MP4 is finished.
+- Requires actual operator validation on Android and desktop (AV integrity, audio codec, browser permissions, memory), and installed-client plugin testing. Site build success is not sufficient.
+
+Long-form test inputs use preapproved synthetic brand text, not private customers, and all client imagery/audio remains device-local.
