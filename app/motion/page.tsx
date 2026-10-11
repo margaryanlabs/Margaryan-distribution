@@ -26,6 +26,7 @@ import { createKeylessStoryboard, getLocalDirectorExamples, type MotionLanguage,
 import QuickStudio from "./quick-studio";
 import MultitrackEditor from "./multitrack-editor";
 import PrecisionCutDesk from "./precision-cut-desk";
+import FilmSequenceDesk from "./film-sequence-desk";
 import VoiceBooth from "./voice-booth";
 import OperatorDesk from "./operator-desk";
 import { getLocalMedia, mediaAsFile } from "@/lib/motion/local-media";
@@ -703,9 +704,9 @@ export default function MotionStudioPage() {
   return <main className={styles.root} style={{ "--brand-accent": info.accent } as CSSProperties}>
     <header className={styles.header}>
       <div>
-        <p className={styles.kicker}>MARGARYAN DISTRIBUTION / CREATIVE SYSTEMS / MOTION OS 2.0 / SIGNATURE FILMS</p>
-        <h1>Motion <em>OS.</em></h1>
-        <p className={styles.deck}>CINEMATIC STUDIO · original procedural compositions · real brand assets · EN / RU / HY · frame review · offline H.264 workflow.</p>
+        <p className={styles.kicker}>MARGARYAN LABS / CINEMA & POSTPRODUCTION / MOTION OS PRO</p>
+        <h1>Motion <em>Studio.</em></h1>
+        <p className={styles.deck}>Direct films from the first frame to the final cut. One creative workspace for source footage, scene editing, human narration, and chapter-based long-form production.</p>
       </div>
       <div className={styles.headerRight}>
         <span className={styles.liveDot}/> KEYLESS / LOCAL ENGINE
@@ -714,9 +715,25 @@ export default function MotionStudioPage() {
     </header>
 
     {modePicker}
+    <nav className={styles.productionNav} aria-label="Motion Studio production stages">
+      <a href="#film-sequence" className={styles.productionNavFeatured}>
+        <span>01 / FEATURE FILM</span><strong>2–5 MINUTES</strong>
+        <small>CHAPTERS · MASTER TIMELINE · FULL-FILM PREVIEW ↗</small>
+      </a>
+      <a href="#motion-storyboard"><span>02 / DIRECT</span><strong>CREATIVE BRIEF</strong><small>BRAND · SHOTS · CAMERA ↗</small></a>
+      <a href="#motion-editor"><span>03 / CUT</span><strong>PICTURE & AUDIO</strong><small>ORIGINAL VIDEO · VOICE · TIMING ↗</small></a>
+      <a href="#motion-export"><span>04 / DELIVER</span><strong>EXPORT</strong><small>FRAME QC · MP4 MASTER ↗</small></a>
+    </nav>
     <div className={styles.notice} role="status">{notice}</div>
-
-    <div className={styles.workspace}>
+    <div id="film-sequence" className={styles.featureWorkspace}>
+      <FilmSequenceDesk project={project}
+        busy={exporting||generating||directorRepairing||visualReviewing}
+        onLoadProject={(next,reason)=>{
+          setPlaying(false);updateProject(next);setSelectedIndex(0);jump(0);
+          setNotice(reason+". Chapter loaded into the editable director below. Source rights and codec proof remain required.");
+        }}/>
+    </div>
+    <div className={styles.workspace} id="motion-storyboard">
       <section className={styles.sidebar} aria-label="Creative director controls">
         <OperatorDesk project={project} selectedIndex={selectedIndex}
           voiceFile={voiceover} musicFile={licensedMusic}
@@ -1172,7 +1189,7 @@ export default function MotionStudioPage() {
         </div>
       </section>
 
-      <section className={styles.stageSection} aria-label="Motion canvas and timeline">
+      <section className={styles.stageSection} id="motion-editor" aria-label="Motion canvas and timeline">
         <div className={styles.stageTop}><div><span>LIVE CANVAS</span><strong>{info.name}</strong></div>
           <div><i/> {needsSpatial&&spatialStatus()==="ready"?"2D + WEBGL · THREE.JS / GSAP":"KEYLESS PROCEDURAL ENGINE"}</div></div>
         <div className={styles.stageShell}>
@@ -1217,7 +1234,7 @@ export default function MotionStudioPage() {
         </div>
         <div className={styles.bottom}>
           <div><b>MAKE SOMETHING THAT MOVES PEOPLE.</b><p>Every frame is deterministic, locally editable and exported only on command.</p></div>
-          <div className={styles.exportActions}>
+          <div className={styles.exportActions} id="motion-export">
             <label className={styles.importLabel}>Import JSON<input type="file" accept=".json,application/json" onChange={event => { void importJson(event.target.files?.[0]); event.currentTarget.value = ""; }}/></label>
             <button onClick={saveJson}>Save project</button>
             <button type="button" onClick={()=>{
