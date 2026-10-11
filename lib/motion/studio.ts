@@ -1,5 +1,6 @@
 import { sanitizeAudioEdit } from "./timeline-edit";
 import { sanitizeSourceDirection, type SourceDirection } from "./source-composition";
+import { sanitizeOverlayDirection, type OverlayDirection } from "./image-overlay";
 
 export type MotionBrand = "veto" | "promptence" | "raios" | "labs" | "ingu" | "meqena" | "suren" | "veto_private" | "veto_sport" | "armat" | "tun" | "hay_engine" | "reality_engine";
 export type MotionFormat = "portrait" | "square" | "landscape";
@@ -8,6 +9,8 @@ export type MotionCameraCue = "inherit" | "locked" | "push" | "pull" | "drift";
 export type MotionTransitionCue = "auto" | "dissolve" | "wipe" | "slash" | "cut" | "zoom" | "flash" | "slide" | "grid";
 export type MotionQualityMode = "basic" | "premium" | "signature";
 export type MotionTitleTreatment = "editorial" | "mask" | "kinetic" | "minimal";
+/** Film overlay style: no gratuitous editor debug text on shipped commercials. */
+export type MotionFilmChrome = "clean" | "brand" | "editor";
 /** Concept compositions, not fabricated provider screens or verified client results. */
 export type PromptenceBeat = "question" | "answer" | "gap" | "sources" | "diagnose" | "priority" | "approve" | "implement" | "remeasure" | "close";
 export const PROMPTENCE_BEATS: PromptenceBeat[] = ["question","answer","gap","sources","diagnose","priority","approve","implement","remeasure","close"];
@@ -38,6 +41,13 @@ export interface MotionScene {
   sourceFocusY?: number;
   sourceZoomStart?: number;
   sourceZoomEnd?: number;
+  /** Second genuine photographic layer. Only approved PNG/JPEG/WebP. */
+  overlayMediaId?: string;
+  overlayCorner?: OverlayDirection["overlayCorner"];
+  overlaySize?: number;
+  overlayOpacity?: number;
+  overlayStart?: number;
+  overlayDuration?: number;
   intensity?: number;
   /** Editorial narration cue, not automatically generated or spoken. */
   voiceCue?: string;
@@ -80,6 +90,7 @@ export interface MotionProject {
   format: MotionFormat;
   style?: "cinematic" | "kinetic" | "technical";
   qualityMode?: MotionQualityMode;
+  filmChrome?: MotionFilmChrome;
   visual?: MotionVisualControls;
   /** Timecoded edit metadata only: voice/music files must be reattached after reload. */
   audio?: MotionAudioEdit;
@@ -277,6 +288,9 @@ export function sanitizeMotionProject(input: unknown): MotionProject {
       mediaStart:typeof s.mediaStart==="number"&&Number.isFinite(s.mediaStart)
         ?Math.min(3600,Math.max(0,Number(s.mediaStart.toFixed(2)))):0,
       ...sanitizeSourceDirection(s),
+      overlayMediaId:typeof s.overlayMediaId==="string"&&/^[\w-]{6,100}$/.test(s.overlayMediaId)
+        ?s.overlayMediaId:undefined,
+      ...sanitizeOverlayDirection(s,Math.max(2,Math.min(8,Number.isFinite(seconds)?seconds:4))),
       intensity: Math.max(0, Math.min(1, Number.isFinite(Number(s.intensity)) && s.intensity !== undefined ? Number(s.intensity) : .5)),
       voiceCue: clean(s.voiceCue, 300)
     };
@@ -286,8 +300,10 @@ export function sanitizeMotionProject(input: unknown): MotionProject {
   const language = ["en", "ru", "hy"].includes(String(obj.language)) ? obj.language as MotionProject["language"] : undefined;
   const qualityMode = ["basic","premium","signature"].includes(String(obj.qualityMode)) ? obj.qualityMode as MotionQualityMode : undefined;
   const visual=sanitizeVisual(obj.visual);
+  const filmChrome:MotionFilmChrome=["clean","brand","editor"].includes(String(obj.filmChrome))
+    ?obj.filmChrome as MotionFilmChrome:"brand";
   const signatureFilm = brand === "promptence" && obj.signatureFilm === "promptence-answer" ? "promptence-answer" as const : undefined;
-  return { version: 1, title: clean(obj.title, 100) || "UNTITLED MOTION", brand, format, style, seed, scenes, language, signatureFilm, qualityMode, visual, audio: sanitizeAudioEdit(obj.audio) };
+  return { version: 1, title: clean(obj.title, 100) || "UNTITLED MOTION", brand, format, style, seed, scenes, language, signatureFilm, qualityMode, filmChrome, visual, audio: sanitizeAudioEdit(obj.audio) };
 }
 
 export function durationOf(project: MotionProject) {

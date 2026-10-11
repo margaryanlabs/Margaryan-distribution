@@ -17,6 +17,12 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Motion Advanced Editor / independent owner-approved picture in picture
+        run: npm run motion:test-overlays
+      - name: Motion private portable production bundle / ZIP integrity, ownership and source remapping
+        run: npm run motion:test-bundle
+      - name: Motion commercial film chrome and genuine local microphone booth contract
+        run: npm run motion:test-voice-booth
       - name: Motion real media camera framing and synchronized voice/recorder clock
         run: npm run motion:test-source-camera
       - name: Motion Public Chat Cut / safe campaign schema and 36s timeline
@@ -25,7 +31,7 @@ jobs:
         run: npm run motion:test-real-source
       - name: Motion Chat Operator / create, patch and visual-asset safety
         run: npm run motion:test-chat
-      - name: ChatGPT Content Studio MCP / stateless keyless film handoff
+      - name: ChatGPT Content Studio plugin / MCP Apps and file safety
         run: npm run motion:test-plugin
       - name: Motion editorial story / RU EN HY / cinematic transitions
         run: npm run motion:test-editorial

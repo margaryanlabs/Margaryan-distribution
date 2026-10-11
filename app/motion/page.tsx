@@ -25,6 +25,7 @@ import { ensureSpatialRenderer, spatialStatus, spatialError } from "@/lib/motion
 import { createKeylessStoryboard, getLocalDirectorExamples, type MotionLanguage, type MotionStyle } from "@/lib/motion/director";
 import QuickStudio from "./quick-studio";
 import MultitrackEditor from "./multitrack-editor";
+import VoiceBooth from "./voice-booth";
 import OperatorDesk from "./operator-desk";
 import { getLocalMedia, mediaAsFile } from "@/lib/motion/local-media";
 import {
@@ -110,7 +111,10 @@ export default function MotionStudioPage() {
   useEffect(()=>{
     if(!hydrated)return;
     let cancelled=false;
-    const ids=[...new Set(project.scenes.filter(x=>x.kind==="screen"&&x.mediaId).map(x=>x.mediaId!))];
+    const ids=[...new Set(project.scenes.flatMap(x=>[
+      ...(x.kind==="screen"&&x.mediaId?[x.mediaId]:[]),
+      ...(x.overlayMediaId?[x.overlayMediaId]:[])
+    ]))];
     void (async()=>{
       for(const id of ids){
         if(cancelled||getMotionSceneSource(id))continue;
@@ -714,6 +718,7 @@ export default function MotionStudioPage() {
     <div className={styles.workspace}>
       <section className={styles.sidebar} aria-label="Creative director controls">
         <OperatorDesk project={project} selectedIndex={selectedIndex}
+          voiceFile={voiceover} musicFile={licensedMusic}
           busy={exporting||generating||directorRepairing||visualReviewing}
           onApplyProject={(next,reason)=>{
             setPlaying(false);updateProject(next);setSelectedIndex(0);jump(0);
@@ -726,6 +731,16 @@ export default function MotionStudioPage() {
             setPlaying(false);setSelectedIndex(0);jump(0);setProject(draft);
             setSoundEnabled(true);
             setNotice("CREATED FROM ZERO: editable brand storyboard and local original synth soundtrack. No media, API key, neural video generation or fake evidence was required.");
+          }}
+          onImageOverlay={async (mediaId,file)=>{
+            const decoded=await registerMotionSceneSource(mediaId,file);
+            if(decoded.type!=="image")throw Error("A separate overlay must be a genuine still image");
+            updateProject({...project,scenes:project.scenes.map((scene,index)=>
+              index===selectedIndex?{...scene,overlayMediaId:mediaId,
+                overlayCorner:"bottom-right",overlayStart:0,
+                overlayDuration:scene.seconds,overlayOpacity:.95,overlaySize:.3}:scene)});
+            setAssetRevision(n=>n+1);setPlaying(false);
+            setNotice("Approved picture-in-picture image attached to shot "+(selectedIndex+1)+". Review size, position and evidence.");
           }}
           onSceneMedia={async (mediaId,file)=>{
             const loaded=await registerMotionSceneSource(mediaId,file);
@@ -831,11 +846,27 @@ export default function MotionStudioPage() {
           </select>
         </label>
         <p className={styles.hint}>Quality modes change actual transition timing and selection; they do not claim to increase physical video resolution or guarantee advertising quality.</p>
+        <label className={styles.field}><span>FILM CHROME / BRAND VS DEBUG</span>
+          <select value={project.filmChrome||"brand"} disabled={exporting}
+            onChange={event=>updateProject({...project,
+              filmChrome:event.target.value as "clean"|"brand"|"editor"})}>
+            <option value="clean">Clean cinematic / nothing overlaid</option>
+            <option value="brand">Signature brand / quiet mark on first and last shot</option>
+            <option value="editor">Editorial review / internal technical overlay</option>
+          </select>
+        </label>
+        <p className={styles.hint}>Commercial exports no longer need to expose debug labels, clip counters or the Motion Engine footer. Use EDITOR only while reviewing.</p>
         <label className={styles.audioToggle}>
           <input type="checkbox" checked={soundEnabled} disabled={exporting} onChange={event => setSoundEnabled(event.target.checked)}/>
           ORIGINAL SYNTH SOUNDTRACK <strong>{soundEnabled ? "ON" : "OFF"}</strong>
         </label>
         <p className={styles.hint}>Optional original synthetic score is mixed below narration.</p>
+        <VoiceBooth project={project} busy={exporting||generating||directorRepairing}
+          onAccept={file=>{
+            setVoiceover(file);setPlaying(false);
+            setNotice("Genuine voice recorded and attached locally: "+file.name+
+              ". Check Voice timeline placement, final listening, and user permission before publishing.");
+          }}/>
         <label className={styles.voiceUpload}><span>NARRATION / YOUR MP3, WAV OR M4A</span>
           <input type="file" accept="audio/*" disabled={exporting} onChange={event=>{
             const file=event.target.files?.[0] || null;
@@ -1071,6 +1102,40 @@ export default function MotionStudioPage() {
               index===selectedIndex?{...shot,mediaId:undefined,mediaStart:0}:shot)});
           }}>DETACH FROM SHOT</button>
         </div>}
+        <div className={styles.sourceInspector}>
+          <strong>ADVANCED EDIT / INDEPENDENT IMAGE LAYER</strong>
+          <p>Optional second original image, independently positioned above the designed background. Add one in MEDIA LIBRARY. Genuine PNG/JPEG/WebP only.</p>
+          {selected.overlayMediaId&&<>
+            <p>{getMotionSceneSource(selected.overlayMediaId)?.filename||"Overlay source not loaded in this browser"}</p>
+            <label className={styles.field}><span>LAYER POSITION</span>
+              <select value={selected.overlayCorner||"bottom-right"} disabled={exporting}
+                onChange={event=>editScene("overlayCorner",event.target.value)}>
+                <option value="bottom-right">Bottom right</option>
+                <option value="bottom-left">Bottom left</option>
+                <option value="top-right">Top right</option>
+                <option value="top-left">Top left</option>
+              </select>
+            </label>
+            {([
+              ["overlaySize","LAYER SIZE",.16,.48,.01],
+              ["overlayOpacity","LAYER OPACITY",.2,1,.05],
+              ["overlayStart","START IN SHOT / SECONDS",0,Math.max(0,selected.seconds-.25),.05],
+              ["overlayDuration","LAYER DURATION / SECONDS",.25,
+                Math.max(.25,selected.seconds-(selected.overlayStart||0)),.05]
+            ] as Array<[keyof MotionScene,string,number,number,number]>).map(([field,label,min,max,step])=>
+              <label className={styles.field} key={field}>
+                <span>{label} / {Number(selected[field]??0).toFixed(2)}</span>
+                <input type="range" min={min} max={max} step={step} disabled={exporting}
+                  value={Math.max(min,Math.min(max,Number(selected[field]??min)))}
+                  onChange={event=>editScene(field,Number(event.target.value))}/>
+              </label>)}
+            <button type="button" disabled={exporting} onClick={()=>
+              updateProject({...project,scenes:project.scenes.map((shot,index)=>
+                index===selectedIndex?{...shot,overlayMediaId:undefined}:shot)})}>
+              REMOVE SECOND IMAGE LAYER
+            </button>
+          </>}
+        </div>
         <label className={styles.screenUpload}>
           <strong>REAL PRODUCT SCREEN / SOURCE FOOTAGE</strong>
           <span>{hasProductScreen(project.brand)

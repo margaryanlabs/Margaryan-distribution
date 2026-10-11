@@ -14,6 +14,12 @@ export interface ProductionCue {
   titleTreatment?: string;
   mediaId?: string;
   mediaStart?: number;
+  overlayMediaId?: string;
+  overlayCorner?: string;
+  overlaySize?: number;
+  overlayOpacity?: number;
+  overlayStart?: number;
+  overlayDuration?: number;
   sourceLayout?: string;
   sourceFocusX?: number;
   sourceFocusY?: number;
@@ -49,6 +55,12 @@ export function makeProductionPack(project: MotionProject) {
       titleTreatment: scene.titleTreatment,
       mediaId: scene.mediaId,
       mediaStart: scene.mediaStart,
+      overlayMediaId:scene.overlayMediaId,
+      overlayCorner:scene.overlayCorner,
+      overlaySize:scene.overlaySize,
+      overlayOpacity:scene.overlayOpacity,
+      overlayStart:scene.overlayStart,
+      overlayDuration:scene.overlayDuration,
       sourceLayout: scene.sourceLayout,
       sourceFocusX: scene.sourceFocusX,
       sourceFocusY: scene.sourceFocusY,
@@ -74,6 +86,7 @@ export function makeProductionPack(project: MotionProject) {
     language: project.language || "manual-review",
     format: project.format,
     qualityMode: project.qualityMode || "basic",
+    filmChrome: project.filmChrome || "brand",
     duration: durationOf(project),
     audioEdit: sanitizeAudioEdit(project.audio),
     shots: cues,

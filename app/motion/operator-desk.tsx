@@ -13,15 +13,22 @@ import {
   removeLocalMedia, saveLocalMedia,
   type LocalMediaRecord, type MediaRole
 } from "@/lib/motion/local-media";
+import {
+  createMotionBundle,inspectMotionBundle,restoreMotionBundle,
+  type BundleReview
+} from "@/lib/motion/project-bundle";
 import styles from "./operator-desk.module.css";
 
 type Props={
   project:MotionProject;
   selectedIndex:number;
+  voiceFile:File|null;
+  musicFile:File|null;
   busy:boolean;
   onApplyProject:(next:MotionProject,reason:string)=>void;
   onScreenshot:(file:File)=>Promise<void>;
   onSceneMedia:(mediaId:string,file:File)=>Promise<void>;
+  onImageOverlay:(mediaId:string,file:File)=>Promise<void>;
   onVoice:(file:File)=>void;
   onMusic:(file:File)=>void;
   onCreateBlank:()=>void;
@@ -40,9 +47,13 @@ async function copy(value:string){
   await navigator.clipboard.writeText(value);
 }
 export default function OperatorDesk({
-  project,selectedIndex,busy,onApplyProject,onScreenshot,onSceneMedia,onVoice,onMusic,onCreateBlank,onOpenQuick
+  project,selectedIndex,busy,voiceFile,musicFile,onApplyProject,onScreenshot,onSceneMedia,onImageOverlay,onVoice,onMusic,onCreateBlank,onOpenQuick
 }:Props){
-  const [tab,setTab]=useState<"chat"|"media"|"grade">("chat");
+  const [tab,setTab]=useState<"chat"|"media"|"grade"|"bundle">("chat");
+  const [bundleBusy,setBundleBusy]=useState(false);
+  const [archiveFile,setArchiveFile]=useState<File|null>(null);
+  const [archiveReview,setArchiveReview]=useState<BundleReview|null>(null);
+  const [rightsConfirmed,setRightsConfirmed]=useState(false);
   const [source,setSource]=useState("");
   const [inboxLoading,setInboxLoading]=useState(false);
   const [preview,setPreview]=useState<ChatOperatorPreview|null>(null);
@@ -148,6 +159,20 @@ export default function OperatorDesk({
     }catch(e){setNotice("LOCAL MEDIA: "+(e instanceof Error?e.message:String(e)));}
     finally{setLoading(false);}
   };
+  const useOverlay=async(asset:LocalMediaRecord)=>{
+    if(!asset.approved){setNotice("Approve source rights before adding picture-in-picture.");return;}
+    if(!["screenshot","image","logo"].includes(asset.role)){
+      setNotice("Advanced image overlay accepts only original still PNG, JPEG and WebP, not video.");return;
+    }
+    if(busy||loading)return;
+    setLoading(true);
+    try{
+      await onImageOverlay(asset.id,mediaAsFile(asset));
+      setNotice("Independent approved image layer attached to shot "+(selectedIndex+1)+
+        ". Adjust overlay corner, size, opacity and in/out in the Scene Inspector.");
+    }catch(e){setNotice("OVERLAY: "+(e instanceof Error?e.message:String(e)));}
+    finally{setLoading(false);}
+  };
   const useAsset=async(asset:LocalMediaRecord)=>{
     if(!asset.approved){setNotice("Review rights and mark APPROVED before using this media in a film.");return;}
     if(asset.brand!==project.brand){setNotice("This asset belongs to "+asset.brand+". Select that brand first.");return;}
@@ -168,6 +193,50 @@ export default function OperatorDesk({
     }catch(e){setNotice(e instanceof Error?e.message:String(e));}
     finally{setLoading(false);}
   };
+  const downloadBundle=async()=>{
+    if(busy||bundleBusy)return;
+    setBundleBusy(true);
+    try{
+      const blob=await createMotionBundle(project,voiceFile,musicFile);
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");a.href=url;
+      a.download="motion-"+project.brand+"-"+Date.now()+".motionzip";
+      document.body.appendChild(a);a.click();a.remove();
+      window.setTimeout(()=>URL.revokeObjectURL(url),60_000);
+      setNotice("PORTABLE PROJECT SAVED: "+fmt(blob.size)+
+        ", including "+project.scenes.filter(s=>s.kind==="screen"&&s.mediaId).length+
+        " approved real-media scenes and attached voice/music when present. Store the file privately.");
+    }catch(error){setNotice("PORTABLE EXPORT FAILED: "+(error instanceof Error?error.message:String(error)));}
+    finally{setBundleBusy(false);}
+  };
+  const inspectArchive=async(file:File)=>{
+    setArchiveFile(null);setArchiveReview(null);setRightsConfirmed(false);
+    if(busy||bundleBusy)return;
+    setBundleBusy(true);
+    try{
+      const review=await inspectMotionBundle(file);
+      setArchiveFile(file);setArchiveReview(review);
+      setNotice("PRIVATE PORTABLE PROJECT INSPECTED. Review title, media count, and ownership before confirming local import.");
+    }catch(error){setNotice("PORTABLE FILE REJECTED: "+(error instanceof Error?error.message:String(error)));}
+    finally{setBundleBusy(false);}
+  };
+  const applyArchive=async()=>{
+    if(!archiveFile||!archiveReview||!rightsConfirmed||busy||bundleBusy)return;
+    setBundleBusy(true);
+    try{
+      const restored=await restoreMotionBundle(archiveFile,true);
+      setUndo(project);
+      // User explicitly approved the materials. This is a *local* restore.
+      onApplyProject(restored.project,"Private portable production bundle imported");
+      if(restored.voice)onVoice(restored.voice);
+      if(restored.music)onMusic(restored.music);
+      await refresh();
+      setArchiveFile(null);setArchiveReview(null);setRightsConfirmed(false);
+      setNotice("PROJECT RESTORED: "+restored.project.title+" / "+restored.restoredIds.length+
+        " original source file(s) restored into this device's private library. Check the canvas and voice before exporting.");
+    }catch(error){setNotice("PORTABLE IMPORT FAILED: "+(error instanceof Error?error.message:String(error)));}
+    finally{setBundleBusy(false);}
+  };
   const grade=(key:keyof MotionVisualControls,value:number)=>{
     const next=sanitizeVisual({...visual,[key]:value});
     onApplyProject({...project,visual:next},"Global film visual grade updated");
@@ -177,9 +246,10 @@ export default function OperatorDesk({
     <h2>Motion Operator.</h2>
     <p className={styles.dek}>Create without media, bring approved source files, or direct the existing film from ChatGPT. Everything is explicit, editable and keyless.</p>
     <div className={styles.tabRow} role="tablist" aria-label="Operator tools">
-      {(["chat","media","grade"] as const).map(name=><button type="button"
+      {(["chat","media","grade","bundle"] as const).map(name=><button type="button"
         role="tab" aria-selected={tab===name} key={name}
-        onClick={()=>setTab(name)}>{name==="chat"?"01 / CHAT PACK":name==="media"?"02 / MEDIA LIBRARY":"03 / VISUAL GRADE"}</button>)}
+        onClick={()=>setTab(name)}>{name==="chat"?"01 / CHAT PACK":name==="media"?"02 / MEDIA LIBRARY":
+          name==="grade"?"03 / VISUAL GRADE":"04 / PORTABLE FILM"}</button>)}
     </div>
     {tab==="chat"&&<div className={styles.contents}>
       <div className={styles.publicChatChannel}>
@@ -274,6 +344,10 @@ export default function OperatorDesk({
                 item.role==="voice"?"ATTACH VOICE":item.role==="music"?"ATTACH SCORE":
                 item.role==="video"?"USE AS MOVING VIDEO SHOT":"PREVIEW ONLY"}
             </button>
+            {["screenshot","image","logo"].includes(item.role)&&<button type="button"
+              disabled={loading||busy||!item.approved} onClick={()=>void useOverlay(item)}>
+              + ADD SECOND IMAGE LAYER
+            </button>}
             {item.role==="video"&&<button type="button" disabled={loading||busy||!item.approved}
               onClick={()=>onOpenQuick(item.id)}>OPEN IN QUICK STUDIO</button>}
             <button type="button" disabled={loading||busy} onClick={()=>{void removeLocalMedia(item.id)
@@ -283,6 +357,53 @@ export default function OperatorDesk({
         </div>}
       </article>)}</div>}
       <p className={styles.hint}>Approved real video now attaches directly to the selected <b>Cinematic screen shot</b> with genuine decoded frames, adjustable source inpoint and export coverage checks. It can also be sent to the <b>first Quick Studio shot</b>. Media remains on your device. Exact offline MP4 rendering requires reattaching approved files with an explicit operator media map.</p>
+    </div>}
+    {tab==="bundle"&&<div className={styles.contents}>
+      <div className={styles.portable}>
+        <div className={styles.portableHead}><strong>PORTABLE PRODUCTION FILE</strong>
+          <span>PROJECT + SOURCE + SOUND</span></div>
+        <p>Save your entire film as one private <b>.motionzip</b> file: storyboard, camera settings,
+          approved real screenshots/video clips, and the currently attached human voice and music.
+          Move it between browsers and devices without relying on the old device's IndexedDB.
+          No media uploads, external APIs, or automatic publishing.</p>
+        <button type="button" className={styles.primary} disabled={busy||bundleBusy}
+          onClick={()=>void downloadBundle()}>
+          {bundleBusy?"PACKAGING LOCAL FILES…":"↓ EXPORT COMPLETE PORTABLE FILM"}
+        </button>
+        <small>This is a ZIP with original source media, not a compressed MP4.
+          Protect it like your source footage. Maximum 128MB; large mobile clips may require a desktop.</small>
+        <div className={styles.portableDivider}/>
+        <label className={styles.label}>OPEN PORTABLE FILM / LOCAL FILE ONLY
+          <input type="file" accept=".motionzip,.zip,application/zip" disabled={busy||bundleBusy}
+            onChange={event=>{
+              const picked=event.currentTarget.files?.[0];
+              event.currentTarget.value="";
+              if(picked)void inspectArchive(picked);
+            }}/>
+        </label>
+        {archiveReview&&<div className={styles.bundleReview}>
+          <strong>RESTORE / HUMAN APPROVAL REQUIRED</strong>
+          <p>{archiveReview.title}</p>
+          <small>{archiveReview.brand.toUpperCase()} · {archiveReview.shots} scenes ·
+            {archiveReview.seconds.toFixed(1)}s · {archiveReview.assets} original media ·
+            {archiveReview.hasVoice?"voice attached":"no voice"} ·
+            {archiveReview.hasMusic?"score attached":"no score"} · {fmt(archiveReview.bytes)}</small>
+          <label><input type="checkbox" checked={rightsConfirmed}
+              onChange={e=>setRightsConfirmed(e.target.checked)}/>
+            I own or have permission to use ALL bundled media and I approve restoring local source files.</label>
+          <div className={styles.buttons}>
+            <button type="button" disabled={!rightsConfirmed||bundleBusy||busy} className={styles.primary}
+              onClick={()=>void applyArchive()}>
+              {bundleBusy?"RESTORING…":"✓ IMPORT PROJECT AND APPROVED MEDIA"}
+            </button>
+            <button type="button" onClick={()=>{setArchiveFile(null);setArchiveReview(null);
+              setRightsConfirmed(false);}}>CANCEL</button>
+          </div>
+        </div>}
+        <p>Private imports generate fresh media identifiers to prevent overwriting existing
+          library files. ZIP integrity is checked before any material is restored.
+          The last project can be reverted, but you should still keep original files backed up.</p>
+      </div>
     </div>}
     {tab==="grade"&&<div className={styles.contents}>
       <p className={styles.hint}>Film-wide controls modify rendered Canvas frames and saved project JSON. Start with restrained changes. They work on legacy scenes too.</p>

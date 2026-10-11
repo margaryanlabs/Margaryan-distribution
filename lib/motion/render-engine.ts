@@ -12,6 +12,8 @@ import { drawProductScreen } from "./screen-media";
 import { drawSpatialFrame } from "./spatial-bridge";
 import { drawPromptenceBeat } from "./promptence-beats";
 import { chooseTransition, editorialTransition } from "./editorial-transitions";
+import { getMotionSceneSource } from "./scene-source";
+import { overlayIsVisible,overlayEnvelope,overlayGeometry,sanitizeOverlayDirection } from "./image-overlay";
 
 const TAU = Math.PI * 2;
 const clamp = (x: number, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -319,6 +321,32 @@ function drawShot(ctx: CanvasRenderingContext2D, project: MotionProject, index: 
     renderScenery();
     ctx.restore();
   });
+  // Second real-media layer is composited independently of the base scene,
+  // and is not moved by the scene camera. This is only for approved stills;
+  // no synthetic image or moving-source video is silently substituted.
+  if(scene.overlayMediaId){
+    const source=getMotionSceneSource(scene.overlayMediaId);
+    const direction=sanitizeOverlayDirection(scene,scene.seconds);
+    if(source?.type==="image"&&overlayIsVisible(direction,localTime)){
+      const rect=overlayGeometry(direction.overlayCorner,W,H,direction.overlaySize);
+      const img=source.element as HTMLImageElement;
+      const dw=source.width,dh=source.height;
+      const fit=Math.min(rect.w/dw,rect.h/dh);
+      const fw=dw*fit,fh=dh*fit;
+      const left=rect.x+(rect.w-fw)/2,top=rect.y+(rect.h-fh)/2;
+      ctx.save();
+      ctx.globalAlpha*=overlayEnvelope(direction,localTime);
+      ctx.shadowColor="#000000b0";ctx.shadowBlur=38;ctx.shadowOffsetY=17;
+      ctx.fillStyle="#070e13";ctx.beginPath();ctx.roundRect(rect.x-12,rect.y-12,rect.w+24,rect.h+24,18);ctx.fill();
+      ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+      ctx.save();ctx.beginPath();ctx.roundRect(rect.x,rect.y,rect.w,rect.h,11);ctx.clip();
+      ctx.drawImage(img,left,top,fw,fh);
+      ctx.restore();
+      ctx.lineWidth=1.2;ctx.strokeStyle=accent+"a0";
+      ctx.beginPath();ctx.roundRect(rect.x-6,rect.y-6,rect.w+12,rect.h+12,14);ctx.stroke();
+      ctx.restore();
+    }
+  }
   // Text is outside the camera transform: never sacrifice glyph readability.
   renderText(ctx,{...scene,typographyScale:(scene.typographyScale??1)*grade.textScale},
     W,H,progress,accent,artTime,project.style,project.language,project.qualityMode);
@@ -369,8 +397,15 @@ export function drawMotionFrame(ctx: CanvasRenderingContext2D, project: MotionPr
     editorialTransition(ctx,method,amount,W,H,accent,opacity=>
       drawShot(ctx,project,index+1,Math.max(.05,amount*transition),t,W,H,opacity));
   }
+  // Editorial film output must not inherit the recorder's debugging labels.
+  // CLEAN: no persistent frame furniture. BRAND: quiet wordmark on first/last
+  // shot only. EDITOR: full technical overlay for internal reviews.
+  const filmChrome=project.filmChrome||"brand";
+  if(filmChrome==="clean"||(filmChrome==="brand"&&index!==0&&index!==project.scenes.length-1)){
+    ctx.restore();return;
+  }
   const pad = H < 810 ? 82 : 88;
-  // Brand bars / metainformation are drawn above scene transitions.
+  // Minimal brand mark stays outside camera movement and scene cuts.
   const top = H < 810 ? 28 : 55;
   const mark = getLoadedMotionLogo(project.brand);
   if (mark) {
@@ -381,6 +416,9 @@ export function drawMotionFrame(ctx: CanvasRenderingContext2D, project: MotionPr
   ctx.fillStyle = "#d8e0e9"; ctx.font = "700 19px Arial, sans-serif";
   ctx.textBaseline = "middle"; ctx.textAlign = "left";
   ctx.fillText(BRAND_INFO[project.brand].name, pad + 65, top + 8);
+  if(filmChrome==="brand"){
+    ctx.restore();return;
+  }
   ctx.textAlign = "right"; ctx.fillStyle = "#8a96a3"; ctx.font = "700 13px Arial, sans-serif";
   ctx.fillText("MOTION ENGINE / " + String(index + 1).padStart(2,"0"), W - pad, top + 8);
   const footer = H - (H < 810 ? 65 : 103);

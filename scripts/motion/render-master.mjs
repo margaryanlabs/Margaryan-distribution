@@ -74,7 +74,10 @@ try {
   // Explicit operator-local source map, e.g. {"approved-asset-id":"/absolute/path/to/real.mp4"}.
   // Asset IDs must be present in the project JSON; no implicit remote URL or
   // unreviewed media search and no huge video blobs embedded into project JSON.
-  const sourceIDs=[...new Set(project.scenes.filter(s=>s.kind==="screen"&&s.mediaId).map(s=>s.mediaId))];
+  const sourceIDs=[...new Set(project.scenes.flatMap(s=>[
+    ...(s.kind==="screen"&&s.mediaId?[s.mediaId]:[]),
+    ...(s.overlayMediaId?[s.overlayMediaId]:[])
+  ]))];
   let sourceMap={};
   if(opts["media-map"]){
     const sourceFile=resolve(opts["media-map"]);
@@ -92,6 +95,8 @@ try {
     const video=[".mp4",".webm",".mov"].includes(ext);
     if(!video&&![".png",".jpeg",".jpg",".webp"].includes(ext))
       throw Error("Unsupported local source media "+id);
+    if(video&&project.scenes.some(scene=>scene.overlayMediaId===id))
+      throw Error("Source "+id+" is assigned to a separate image-only overlay but points to moving video");
     const info=await stat(resolve(file));
     if(!info.isFile()||info.size<100||info.size>(video?100_000_000:12_000_000))
       throw Error("Local media size invalid for "+id);
