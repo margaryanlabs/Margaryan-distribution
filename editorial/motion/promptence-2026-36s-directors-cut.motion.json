@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "title": "PROMPTENCE / 2026 DIRECTOR'S CUT / THE ANSWER IS THE NEW FRONT PAGE",
+  "brand": "promptence",
+  "format": "portrait",
+  "style": "cinematic",
+  "language": "en",
+  "signatureFilm": "promptence-answer",
+  "seed": 20261011,
+  "scenes": [
+    {
+      "id": "scene-1",
+      "kind": "kinetic",
+      "eyebrow": "01 / THE SHIFT",
+      "headline": "THE FRONT PAGE HAS CHANGED.",
+      "support": "Discovery is becoming a conversation.",
+      "seconds": 4.3,
+      "typographyScale": 0.92
+    },
+    {
+      "id": "scene-2",
+      "kind": "opener",
+      "eyebrow": "02 / BUYER INTENT",
+      "headline": "YOUR CUSTOMER ASKS AI.",
+      "support": "What enters the answer?",
+      "seconds": 4.2,
+      "typographyScale": 0.92
+    },
+    {
+      "id": "scene-3",
+      "kind": "network",
+      "eyebrow": "03 / THE BLIND SPOT",
+      "headline": "WHAT IF THEY NEVER SEE YOU?",
+      "support": "Your brand may be missing from the conversation.",
+      "seconds": 4.4,
+      "typographyScale": 0.92
+    },
+    {
+      "id": "scene-4",
+      "kind": "orbit",
+      "eyebrow": "04 / THE OPPORTUNITY",
+      "headline": "MAKE THE INVISIBLE VISIBLE.",
+      "support": "Observe answers. Trace sources. Find the signal.",
+      "seconds": 4.5,
+      "typographyScale": 0.92
+    },
+    {
+      "id": "scene-5",
+      "kind": "statement",
+      "eyebrow": "05 / THE INTELLIGENCE",
+      "headline": "DISCOVER. MEASURE. DIAGNOSE.",
+      "support": "A workflow built around observable evidence.",
+      "seconds": 4.9,
+      "typographyScale": 0.92
+    },
+    {
+      "id": "scene-6",
+      "kind": "network",
+      "eyebrow": "06 / THE ACTION",
+      "headline": "FROM SIGNAL TO ACTION.",
+      "support": "Prioritize. Review. Verify.",
+      "seconds": 4.7,
+      "typographyScale": 0.92
+    },
+    {
+      "id": "scene-7",
+      "kind": "orbit",
+      "eyebrow": "07 / THE EVIDENCE",
+      "headline": "MEASURE AGAIN. KNOW WHAT CHANGED.",
+      "support": "Before and after. Without the guesswork.",
+      "seconds": 4.3,
+      "typographyScale": 0.92
+    },
+    {
+      "id": "scene-8",
+      "kind": "closer",
+      "eyebrow": "08 / INTRODUCING",
+      "headline": "BE PRESENT IN THE ANSWER.",
+      "support": "Understand your AI visibility. promptence.tech",
+      "seconds": 5.2,
+      "typographyScale": 0.92
+    }
+  ]
+}
