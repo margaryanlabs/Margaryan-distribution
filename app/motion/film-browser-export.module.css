@@ -16,3 +16,15 @@
 .warning{font-size:10px;line-height:1.57;color:#8296af;margin:8px 0 0}
 .warning b{color:#b8cbea}
 @media(max-width:400px){.actions{grid-template-columns:1fr}.actions .stop{grid-column:auto}}
+
+.soundPanel{border:1px solid rgba(169,198,231,.16);border-radius:11px;padding:12px;margin:14px 0;background:rgba(3,9,17,.45)}
+.soundHeading{font-size:9px;letter-spacing:.1em;font-weight:800;color:#a6b9d3;margin-bottom:11px}
+.soundFiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.soundFiles label{font-size:9px;letter-spacing:.015em;font-weight:800;color:#bccfe9;display:flex;flex-direction:column;gap:7px;min-width:0}
+.soundFiles input{display:block;width:100%;max-width:100%;font-size:9px;color:#acbcd1}
+.soundFiles input::file-selector-button{background:#1b2d43;border:1px solid #405b7b;color:#e3eeff;border-radius:6px;padding:6px;margin-right:4px;cursor:pointer}
+.soundFiles small{font-size:9px;font-weight:450;color:#8ca4c3;overflow-wrap:anywhere;letter-spacing:0;line-height:1.3}
+.rights{display:flex;align-items:flex-start;gap:10px;margin:11px 0 4px;line-height:1.5;font-size:10px;color:#cbd8e9;cursor:pointer}
+.rights input{accent-color:#b5cee9;flex:none;width:15px;height:15px}
+.clearAudio{font-size:9px;color:#dfb9b9;padding:7px;border:1px solid rgba(223,155,155,.22);background:transparent;border-radius:7px;cursor:pointer;margin-top:4px}
+@media(max-width:430px){.soundFiles{grid-template-columns:1fr}}
