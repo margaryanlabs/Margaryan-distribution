@@ -221,12 +221,30 @@ export default function FilmSequenceDesk({
     setNotice("Film sequence reset. Current editable chapter and local source media remain intact.");
   }
   return <section className={styles.shell} aria-label="Professional film sequence studio">
-    <div className={styles.kicker}>MOTION PRO / FEATURE FILM ASSEMBLER</div>
+    <div className={styles.kicker}><span className={styles.signalDot}/> FEATURE FILM / THE DIRECTOR'S WORKSPACE</div>
     <div className={styles.head}>
-      <div><h3>Sequence <em>Studio.</em></h3>
-        <p>Build an actual long-form film from short, independently reviewable chapters.</p></div>
+      <div><h3>Make the <em>whole film.</em></h3>
+        <p>Build films from editable chapters. Review the story from beginning to end, then render with the original Motion engine.</p></div>
       <div className={styles.pill}>{chapters.length}/{MAX} CHAPTERS</div>
     </div>
+    <div className={styles.productionFlow} aria-label="Film production workflow">
+      <div><span>01</span><strong>DIRECT</strong><small>Write & edit each chapter below</small></div>
+      <div><span>02</span><strong>ASSEMBLE</strong><small>Save chapters into one timeline</small></div>
+      <div><span>03</span><strong>REVIEW</strong><small>Full-film canvas and soundtrack</small></div>
+      <div><span>04</span><strong>MASTER</strong><small>H.264 via local FFmpeg / Chromium</small></div>
+    </div>
+    {!chapters.length&&<div className={styles.starter}>
+      <div>
+        <span>NO CHAPTERS SAVED YET</span>
+        <h4>One story. Several acts.</h4>
+        <p>Start with the approved 120-second Promptence storyboard, or create an original first chapter in the Creative Brief editor below. Each chapter keeps its own scenes and can be revised before delivery.</p>
+      </div>
+      <div className={styles.starterActions}>
+        <button type="button" disabled={busy} onClick={()=>void openDemo()}>✦ OPEN 120s PROMPTENCE EXAMPLE</button>
+        <a href="#motion-storyboard">START WITH A BLANK CHAPTER ↘</a>
+      </div>
+      <small>Examples are original motion graphics only. They contain no fabricated AI results or customer data.</small>
+    </div>}
     <div className={styles.stats}>
       <span><strong>{seconds(length)}</strong><small>TOTAL RUNTIME</small></span>
       <span><strong>{shots}</strong><small>EDITABLE SHOTS</small></span>
@@ -246,6 +264,12 @@ export default function FilmSequenceDesk({
     <label className={styles.field}>FILM TITLE
       <input maxLength={100} value={title} onChange={e=>setTitle(e.target.value)}/>
     </label>
+    {chapters.length>0&&<div className={styles.featureStatus}>
+      <span>PRODUCTION STATUS</span>
+      <strong>{dirty?"UNSAVED CHAPTER CHANGES":length>=120&&length<=300?"FEATURE RUNTIME READY":"BUILDING THE FEATURE FILM"}</strong>
+      <small>{length<120?"For a 2-minute film, add "+Math.ceil((120-length)/8)+" or more substantial scenes.":
+        length>300?"Feature is longer than 5 minutes; consider a shorter social edit.":"Your current film can be reviewed across all saved chapters."}</small>
+    </div>}
     {chapters.length>0&&<div className={styles.fullTimeline} aria-label="Entire film visual timeline">
       <div className={styles.timelineHead}><span>MASTER TIMELINE / ALL SCENES</span><b>{seconds(length)}</b></div>
       <div className={styles.chapterTimeline}>
@@ -288,6 +312,11 @@ export default function FilmSequenceDesk({
       <button type="button" onClick={resetFilm} disabled={busy||!chapters.length}>RESET SEQUENCE</button>
     </div>
     <p className={styles.notice} role="status">{notice}</p>
-    <p className={styles.footnote}>Feature films are mastered with <code>npm run motion:sequence</code> on a workstation with Chromium and FFmpeg. The browser exports a genuine silent visual workprint (up to 192s) from our Canvas Engine; soundtrack, real footage and broadcast-quality full MP4 mastering remain part of the local Chromium/FFmpeg workflow. No OpenAI API needed. Keep private footage and client information out of public Chat Packs.</p>
+    <div className={styles.deliveryNote}>
+      <strong>KNOW YOUR EXPORT</strong>
+      <p><b>BROWSER WORKPRINT</b> — up to 192s of procedural graphics, optionally mixed with your own locally attached voice/music. Requires a visible tab and compatible browser.</p>
+      <p><b>LOCAL MASTER</b> — chapter-by-chapter H.264 MP4, up to 512s, including approved actual source footage and original overlay images when provided via the workstation's local media map. Requires installed Chromium and FFmpeg. Human playback review remains mandatory.</p>
+      <small>We don't send private client footage to ChatGPT or fabricate AI-provider results.</small>
+    </div>
   </section>;
 }
