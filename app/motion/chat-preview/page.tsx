@@ -35,6 +35,8 @@ export default function ChatMotionPreviewPage() {
   const [received, setReceived] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [preparing, setPreparing] = useState(false);
+  const exportingRef = useRef(false);
   const [includeScore, setIncludeScore] = useState(false);
   const [fullHD, setFullHD] = useState(false);
   const audioRef = useRef<ProceduralAudioSession|null>(null);
@@ -66,6 +68,7 @@ export default function ChatMotionPreviewPage() {
       // adjacent frames, URLs or document messages.
       if (e.source !== window.parent || !isPacket(e.data)) return;
       try {
+        if(exportingRef.current)throw Error("Export in progress — finish it before replacing the film");
         const raw = e.data.project;
         if (!raw || typeof raw !== "object" || !Array.isArray((raw as MotionProject).scenes))
           throw Error("Invalid film");
@@ -130,18 +133,18 @@ export default function ChatMotionPreviewPage() {
   }, [playing, recording, total, render]);
 
   function toggle() {
-    if (recording) return;
+    if (recording || preparing) return;
     if (!playing && seek >= total - 0.1) {playbackRef.current = 0;setSeek(0);}
     setPlaying(!playing);
   }
   function scrub(value: number) {
-    if (recording) return;
+    if (recording || preparing) return;
     setPlaying(false);
     playbackRef.current = value; setSeek(value); render(value);
   }
   async function exportVideo() {
     const canvas = canvasRef.current;
-    if (!received || !canvas || recording || !("MediaRecorder" in window) || !canvas.captureStream) {
+    if (!received || !canvas || recording || preparing || exportingRef.current || !("MediaRecorder" in window) || !canvas.captureStream) {
       setNotice("Video export unavailable in this browser or no film was received");
       return;
     }
@@ -152,6 +155,9 @@ export default function ChatMotionPreviewPage() {
           "video/webm;codecs=vp8","video/webm"];
     const type = codecs.find(x => MediaRecorder.isTypeSupported(x));
     if (!type) {setNotice("Browser has no supported video recorder codec");return;}
+    exportingRef.current = true;
+    setPreparing(true);
+    setNotice("Preparing local video and optional audio tracks…");
     let stream: MediaStream | null = null;
     let audioSession: ProceduralAudioSession | null = null;
     let recorderFailed = false;
@@ -181,6 +187,7 @@ export default function ChatMotionPreviewPage() {
       };
       recorder.onstop = () => {
         recordingRef.current = false;
+        exportingRef.current = false;
         stream?.getTracks().forEach(t => t.stop());
         const audio = audioRef.current;
         audioRef.current = null;
@@ -207,7 +214,10 @@ export default function ChatMotionPreviewPage() {
       setNotice("Recording in real time on device — " + (type.startsWith("video/mp4")?"MP4":"WebM") +
         " / "+(fullHD?"1080p":"720p")+" / "+(includeScore?"original score":"silent"));
       setRecording(true);
+      setPreparing(false);
     } catch(e) {
+      exportingRef.current = false;
+      setPreparing(false);
       recordingRef.current = false;
       stream?.getTracks().forEach(t=>t.stop());
       const audio = audioRef.current;
@@ -221,7 +231,7 @@ export default function ChatMotionPreviewPage() {
 
   async function sendToChatGPT(){
     const file=lastExportRef.current;
-    if(!file||recording)return;
+    if(!file||recording||preparing)return;
     if(file.blob.size>25_000_000){
       setNotice("Video exceeds 25MB ChatGPT transfer limit. Keep the local download.");
       return;
@@ -256,24 +266,24 @@ export default function ChatMotionPreviewPage() {
         style={{display:"block",width:"auto",height:"auto",maxWidth:"100%",maxHeight:270,aspectRatio:fmt.width+"/"+fmt.height}} />
     </div>
     <div style={{display:"flex",gap:8,alignItems:"center"}}>
-      <button type="button" disabled={!received||recording} style={button} onClick={toggle}>{playing?"Ⅱ PAUSE":"▶ PLAY"}</button>
-      <input aria-label="Film playhead" disabled={!received||recording} type="range" min={0} max={total} step={0.05}
+      <button type="button" disabled={!received||recording||preparing} style={button} onClick={toggle}>{playing?"Ⅱ PAUSE":"▶ PLAY"}</button>
+      <input aria-label="Film playhead" disabled={!received||recording||preparing} type="range" min={0} max={total} step={0.05}
         value={seek} onChange={e=>scrub(Number(e.target.value))} style={{flex:1,minWidth:60}}/>
       <span style={{fontSize:10,color:"#bfc5d0"}}>{seek.toFixed(1)}S</span>
     </div>
     <div style={{display:"flex",gap:12,marginTop:10,marginBottom:8,alignItems:"center",flexWrap:"wrap",fontSize:10,color:"#c7ccda"}}>
       <label style={{display:"inline-flex",alignItems:"center",gap:5}}>
-        <input disabled={recording} checked={fullHD} type="checkbox" onChange={e=>setFullHD(e.target.checked)}/>
+        <input disabled={recording||preparing} checked={fullHD} type="checkbox" onChange={e=>setFullHD(e.target.checked)}/>
         FULL HD / 1080P
       </label>
       <label style={{display:"inline-flex",alignItems:"center",gap:5}}>
-        <input disabled={recording} checked={includeScore} type="checkbox" onChange={e=>setIncludeScore(e.target.checked)}/>
+        <input disabled={recording||preparing} checked={includeScore} type="checkbox" onChange={e=>setIncludeScore(e.target.checked)}/>
         ORIGINAL SOUNDTRACK / EXPORT ONLY
       </label>
     </div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,marginTop:10,flexWrap:"wrap"}}>
-      <button disabled={!received||recording} style={button} type="button" onClick={exportVideo}>{recording?"◌ RECORDING":"↓ EXPORT VIDEO"}</button>
-      <button disabled={!exportReady||recording} style={button} type="button" onClick={()=>void sendToChatGPT()}>
+      <button disabled={!received||recording||preparing} style={button} type="button" onClick={()=>void exportVideo()}>{preparing?"◌ PREPARING":recording?"◌ RECORDING":"↓ EXPORT VIDEO"}</button>
+      <button disabled={!exportReady||recording||preparing} style={button} type="button" onClick={()=>void sendToChatGPT()}>
         ↥ SAVE TO CHATGPT
       </button>
       <span style={{fontSize:10,color:"#a8b3c1"}}>{fullHD?"1080P":"720P"} · LOCAL · 24FPS</span>
