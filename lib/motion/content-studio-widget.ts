@@ -93,7 +93,7 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
         const json = new TextDecoder("utf-8",{fatal:true}).decode(Uint8Array.from(raw,c=>c.charCodeAt(0)));
         const manifest = JSON.parse(json);
         if (manifest.type !== "motion-sequence-v1" || !Array.isArray(manifest.chapters) ||
-            manifest.chapters.length < 2 || manifest.chapters.length > 3) return;
+            manifest.chapters.length < 2 || manifest.chapters.length > 5) return;
         let elapsed = 0;
         const checked = manifest.chapters.map((chapter,i) => {
           if (!chapter || !chapter.project || !Array.isArray(chapter.project.scenes) ||
@@ -106,7 +106,7 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
           }
           return chapter;
         });
-        if (elapsed < 65 || elapsed > 192 || Math.abs(elapsed-data.durationSeconds)>.1) return;
+        if (elapsed < 65 || elapsed > 300 || Math.abs(elapsed-data.durationSeconds)>.1) return;
         featureChapters = checked;
         scenes = checked.flatMap((chapter,i) => chapter.project.scenes.map(shot =>
           ({...shot,chapter:i+1})));
