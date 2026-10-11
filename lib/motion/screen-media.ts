@@ -1,4 +1,5 @@
 import type { MotionBrand } from "./studio";
+import { getMotionSceneSource } from "./scene-source";
 /**
  * Source-faithful product screenshot media. Assets remain only in current
  * browser memory and never upload to the server, localStorage, or JSON projects.
@@ -46,10 +47,14 @@ export function hasProductScreen(brand:MotionBrand):boolean{return loaded.has(br
 export function getProductScreen(brand:MotionBrand):HTMLImageElement|undefined{return loaded.get(brand);}
 /** Director's source-faithful screenshot card, with gentle depth and clean crop. */
 export function drawProductScreen(
-  ctx:CanvasRenderingContext2D,brand:MotionBrand,W:number,H:number,time:number,progress:number,accent:string
+  ctx:CanvasRenderingContext2D,brand:MotionBrand,W:number,H:number,time:number,progress:number,accent:string,mediaId?:string
 ) {
-  const img=loaded.get(brand);
+  const local=getMotionSceneSource(mediaId);
+  const img=local?.element||loaded.get(brand);
   if(!img)return;
+  // True source video is rendered directly from the browser-decoded video
+  // element — not a still placeholder. Timing belongs to scene-source.ts.
+  if(local?.type==="video"&&(img as HTMLVideoElement).readyState<2)return;
   const landscape=H<810;
   const width=landscape?W*.46:W*.84;
   const square=H>=810&&H<1250;
@@ -68,7 +73,8 @@ export function drawProductScreen(
   ctx.shadowBlur=0;ctx.shadowOffsetY=0;
   ctx.save();
   ctx.beginPath();ctx.roundRect(left,top,width,height,Math.max(8,r-4));ctx.clip();
-  const desired=width/height,actual=img.naturalWidth/img.naturalHeight;
+  const desired=width/height,actual=(local?.width||((img as HTMLImageElement).naturalWidth||1))/
+    (local?.height||((img as HTMLImageElement).naturalHeight||1));
   let drawW=width,drawH=height;
   if(actual>desired)drawW=height*actual;
   else drawH=width/actual;
@@ -85,6 +91,7 @@ export function drawProductScreen(
   // A verified screenshot is visibly labeled, not passed off as a synthetic UI.
   ctx.font='700 '+(landscape?10:14)+'px Arial,sans-serif';
   ctx.fillStyle=accent;ctx.textAlign="left";ctx.textBaseline="middle";
-  ctx.fillText("SOURCE IMAGE / REVIEW REQUIRED",left+8,top-14);
+  ctx.fillText(local?.type==="video"?"REAL VIDEO / SOURCE REVIEW REQUIRED":
+    "SOURCE IMAGE / REVIEW REQUIRED",left+8,top-14);
   ctx.restore();
 }
