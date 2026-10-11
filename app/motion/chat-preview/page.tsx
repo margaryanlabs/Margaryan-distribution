@@ -206,7 +206,7 @@ export default function ChatMotionPreviewPage() {
       window.parent.postMessage({
         kind:"margaryan-motion-export-file-v1",
         fileName:file.filename,
-        mimeType:file.blob.type,
+        mimeType:file.blob.type.split(";")[0].toLowerCase(),
         bytes
       },"*",[bytes]);
       setNotice("Sent to the ChatGPT app. Upload confirmation will appear here.");
