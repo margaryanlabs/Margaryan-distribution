@@ -24,7 +24,7 @@ export function soundtrackConfig(seconds:number,hasVoice:boolean,hasMusic:boolea
     throw Error("Approve media ownership/licensing before recording with voice or music");
   return {seconds,hasVoice,hasMusic,
     voiceVolume:1,
-    musicVolume:hasVoice?.19:.7,
+    musicVolume:hasVoice?0.19:0.7,
     fadeIn:.18,
     fadeOut:.8,
     mode:hasVoice||hasMusic?"approved-local-audio":"silent" as const
