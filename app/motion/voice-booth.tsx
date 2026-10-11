@@ -42,7 +42,10 @@ export default function VoiceBooth({project,busy,onAccept}:Props){
     rec.current=null;
     setLevel(0);
   },[]);
-  useEffect(()=>()=>{active.current=false;stop();},[stop]);
+  useEffect(()=>{
+    active.current=true;
+    return()=>{active.current=false;stop();};
+  },[stop]);
   useEffect(()=>{
     if(!clip){setURL(null);return;}
     const source=URL.createObjectURL(clip);
@@ -65,8 +68,9 @@ export default function VoiceBooth({project,busy,onAccept}:Props){
         audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false
       });
       if(!active.current){media.getTracks().forEach(track=>track.stop());return;}
+      stream.current=media;
       const recorder=new MediaRecorder(media,{mimeType:mime,audioBitsPerSecond:128_000});
-      stream.current=media;rec.current=recorder;
+      rec.current=recorder;
       const parts:BlobPart[]=[];
       recorder.ondataavailable=e=>{if(e.data.size)parts.push(e.data);};
       recorder.onerror=()=>{if(active.current)setMessage("Recorder error. Re-check microphone access and try again.");stop();};
