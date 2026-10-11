@@ -20,14 +20,14 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
 .logo{letter-spacing:.12em;font-size:11px;font-weight:800}.tag{font-size:11px;color:var(--muted);letter-spacing:.05em}.title{font-size:20px;line-height:1.2;font-weight:650;letter-spacing:-.03em;margin:18px 0 6px}
 .subtitle{color:var(--muted);margin:0 0 16px;font-size:12px}.layout{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(200px,.85fr);gap:16px}
 .player{border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#07090d;min-height:315px;position:relative}
-.player iframe{border:0;width:100%;height:400px;display:block}
+.player iframe{border:0;width:100%;height:510px;display:block;transition:height .18s ease}
 .shots{overflow-y:auto;max-height:400px;border:1px solid var(--line);border-radius:12px;padding:12px;background:#101217}
 .shots h2{font-size:11px;letter-spacing:.1em;font-weight:700;margin:0 0 12px;color:var(--muted)}
 .shot{padding:10px 0;border-top:1px solid #282b32}.shot:first-of-type{border:0}.shot .number{font-size:10px;color:var(--accent)}.shot strong{display:block;font-size:12px;margin:4px 0;line-height:1.35}.shot small{color:var(--muted)}
 .actions{display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
 .btn{appearance:none;border:1px solid #6d7f9b;border-radius:9px;background:#1e293d;color:var(--ink);font-weight:700;font-size:12px;padding:10px 14px;cursor:pointer;text-decoration:none}.btn:hover{background:#34435c}
 .note{font-size:11px;line-height:1.5;color:var(--muted)}#status{color:#b7cdff}
-@media(max-width:600px){.layout{grid-template-columns:1fr}.player iframe{height:390px}.shots{max-height:230px}.title{font-size:18px}}
+@media(max-width:600px){.layout{grid-template-columns:1fr}.player iframe{height:530px}.shots{max-height:230px}.title{font-size:18px}}
 </style></head>
 <body><main class="wrap">
 <div class="head"><div><div class="logo">MARGARYAN / CONTENT STUDIO</div><div class="tag">MOTION ENGINE · CHATGPT NATIVE PREVIEW</div></div><div class="tag">KEYLESS BETA</div></div>
@@ -36,7 +36,7 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
 <div class="layout"><div class="player"><iframe id="player" title="Live motion canvas" sandbox="allow-scripts allow-same-origin allow-downloads"></iframe></div>
 <div class="shots" id="shots"><h2>SHOT LIST / DIRECTOR</h2><p class="note">Ask ChatGPT to create a motion film. Its actual Canvas preview will appear here.</p></div></div>
 <div class="actions"><a id="openEditor" class="btn" href="#" target="_blank" rel="noopener noreferrer" hidden>OPEN FULL EDITOR ↗</a><span class="note" id="status" role="status">Preview only; video has not been exported.</span></div>
-<p class="note">This player uses browser motion graphics, not AI-generated live-action footage. Export is a device-local video recording; format depends on browser support. User media is not uploaded.</p>
+<p class="note">This player uses browser motion graphics, not AI-generated live-action footage. Export runs in your browser. Use your own local brand logo, voiceover and licensed music without uploading them to our servers. Video format depends on browser support.</p>
 </main><script>
 (() => {
   "use strict";
@@ -122,6 +122,15 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
   }
   window.addEventListener("message", event => {
     if (event.source === player.contentWindow && event.origin === origin) {
+      if (event.data && event.data.kind === "margaryan-motion-resize-v1") {
+        const pixels=Number(event.data.height);
+        if(Number.isFinite(pixels)&&pixels>320&&pixels<1500){
+          player.style.height=Math.round(Math.min(1150,Math.max(440,pixels)))+"px";
+          if(window.openai&&typeof window.openai.notifyIntrinsicHeight==="function")
+            window.openai.notifyIntrinsicHeight();
+        }
+        return;
+      }
       if (event.data && event.data.kind === "margaryan-motion-preview-ready-v1") {
         ready = true; sendToPlayer(); return;
       }
