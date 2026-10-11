@@ -17,6 +17,8 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Motion real media camera framing and synchronized voice/recorder clock
+        run: npm run motion:test-source-camera
       - name: Motion Public Chat Cut / safe campaign schema and 36s timeline
         run: npm run motion:test-chat-channel
       - name: Motion local source video / frame-timing and no-freeze preflight
