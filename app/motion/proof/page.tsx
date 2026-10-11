@@ -17,8 +17,8 @@ const VIDEO_TYPES=new Set(["video/mp4","video/webm"]);
 /** Seek the actual browser-decoded video frame for its exact film time.
  * Called before deterministic offline frame export and during timeline scrubbing.
  * Browser preview during playback uses direct video.play for smooth decode. */
-async function seekSourceFrame(media:ProofMedia,seconds:number):Promise<void>{
-  if(!(media instanceof HTMLVideoElement)||seconds>=7.55)return;
+async function seekSourceFrame(media:ProofMedia,seconds:number,force=false):Promise<void>{
+  if(!(media instanceof HTMLVideoElement)||(seconds>=7.55&&!force))return;
   const end=Math.max(.01,media.duration-.11);
   const target=Math.min(Math.max(0,seconds),end);
   if(media.readyState>=2&&Math.abs(media.currentTime-target)<.006)return;
@@ -206,7 +206,7 @@ export default function ProofDirectorPage(){
   function seek(t:number){
     setPlaying(false);latestSeconds.current=t;setSeconds(t);
     const src=sourceRef.current;
-    if(src)void seekSourceFrame(src,t).then(()=>paint(t)).catch(err=>setNotice(String(err)));
+    if(src)void seekSourceFrame(src,t,showRaw).then(()=>paint(t)).catch(err=>setNotice(String(err)));
   }
   async function exportContactSheet(){
     const source=sourceRef.current;
