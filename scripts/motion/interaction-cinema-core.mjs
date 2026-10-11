@@ -27,8 +27,8 @@ export const TARGETS=Object.freeze({
  "company":{mode:"css",value:'input[placeholder="Company name"]',kind:"input"},
  "region":{mode:"css",value:'input[placeholder="Country or region"]',kind:"input"},
  "category":{mode:"css",value:'input[placeholder="CRM, real estate, delivery"]',kind:"input"},
- "local-tab":{mode:"button",value:"Local AI",kind:"button"},
- "ai-tab":{mode:"button",value:"AI visibility",kind:"button"},
+ "local-tab":{mode:"radio",value:"Local AI",kind:"button"},
+ "ai-tab":{mode:"radio",value:"AI visibility",kind:"button"},
  "evidence-link":{mode:"css",value:'a[href="#deliverables"]',kind:"anchor",href:"#deliverables"},
  "how-link":{mode:"css",value:'a[href="#how-it-works"]',kind:"anchor",href:"#how-it-works"}
 });
@@ -61,7 +61,7 @@ export function assertSafeClick(target,observation){
    if(observation.tag!=="A"||observation.href!==target.href||!/^#[a-z0-9-]+$/i.test(observation.href))
       fail("navigation was redirected or target changed");
  }else if(target.kind==="button"){
-   if(observation.tag!=="BUTTON"||observation.type!=="button"||observation.insideForm===true)
+   if(observation.tag!=="BUTTON"||observation.type!=="button"||observation.role!=="radio")
       fail("button could submit a form");
  }
  return true;
