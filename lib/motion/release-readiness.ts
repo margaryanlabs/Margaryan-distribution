@@ -7,7 +7,7 @@ import type { MotionQAReport } from "./quality";
  * leaving all commercial release approvals explicitly pending.
  */
 export type ReadinessState="pass"|"review"|"block";
-export type ReadinessPanel="create"|"media"|"scene"|"audio"|"review"|"deliver";
+export type ReadinessPanel="create"|"media"|"scene"|"sound"|"review"|"deliver";
 export interface ReadinessItem {
   id:string;
   state:ReadinessState;
@@ -125,27 +125,27 @@ export function inspectReleaseReadiness(
     if(input.voiceSeconds===null){
       items.push(item("audio.decode","review","Voice duration unavailable",
         "The attached human voice was not decoded or measured. Review playback on this device.",
-        "OPEN AUDIO","audio"));
+        "OPEN AUDIO","sound"));
     }else if(!input.voiceReady){
       items.push(item("audio.window","block","Voice does not fit the cut",
         "Attached voice exceeds the remaining film timeline by "+
         Math.max(0,input.voiceOverflowSeconds).toFixed(2)+"s or cannot be placed. Adjust voice trim or shot timing.",
-        "FIX VOICE TIMING","audio"));
+        "FIX VOICE TIMING","sound"));
     }else{
       items.push(item("audio.attached","pass","Narration attached",
         "A browser-local voice file fits the edited time window. Listen for synchronization, pronunciation and room noise.",
-        "LISTEN TO MIX","audio"));
+        "LISTEN TO MIX","sound"));
     }
   }else{
     items.push(item("audio.no-voice","review","No recorded narration",
       "A silent, music-only or text-led film can be intentional. Narration cues are not real spoken audio.",
-      "RECORD A VOICE","audio"));
+      "RECORD A VOICE","sound"));
   }
   items.push(item("audio.license","review","Music and sound permissions",
     input.musicAttached?
       "Music is attached locally; verify actual usage rights, playback level and ducking against voice.":
       "No licensed music file attached. The local synthetic score may be used; listen to the exported film.",
-    "OPEN AUDIO","audio"));
+    "OPEN AUDIO","sound"));
   const warns=qa.checks.filter(c=>c.severity==="warn");
   if(warns.length){
     items.push(item("story.review","review","Editorial and composition review",
