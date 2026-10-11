@@ -1,3 +1,4 @@
+import {PLAN as PUBLIC_PLAN} from "./interaction-cinema-core.mjs";
 #!/usr/bin/env node
 /** No external APIs or browser needed. Production guards are exercised independently. */
 import assert from "node:assert/strict";
@@ -45,17 +46,19 @@ const browserEvidence={
  sourceUrl:"https://promptence.tech/",capturedFromRealBrowser:true,
  providerAPIsUsed:false,readOnly:true,submitPrevented:true,
  mediaId:realId,originalVideo:{sha256:realHash},
- duration:34.167,frames:820,
- events:["focus","click","type","click"].map((kind,i)=>({
-  kind,action:"safe-"+i,timestampSeconds:i*6+1,source:"live-browser",
+ duration:34.167,frames:820,firstVisitOnboardingHandled:{checked:true,dismissed:true},
+ events:PUBLIC_PLAN.map((step,i)=>({
+  kind:step.kind,action:step.id,target:step.target,
+  timestampSeconds:i*3.4+2.25,source:"live-browser",
   publicReadOnly:true,submitted:false
  })),
  approval:{status:"APPROVED",sourceRights:true,privacyReviewed:true,
  copyAndProductTruthReviewed:true,voiceReviewed:true,musicReviewed:true}
 };
-assert.equal(assertApprovedInteractionManifest(browserEvidence,[realId],{[realId]:realHash},"promptence").realUiEvents,4);
+assert.equal(assertApprovedInteractionManifest(browserEvidence,[realId],{[realId]:realHash},"promptence").realUiEvents,10);
 assert.throws(()=>assertApprovedInteractionManifest({...browserEvidence,approval:{...browserEvidence.approval,status:"PENDING_HUMAN_REVIEW"}},[realId],{[realId]:realHash},"promptence"),/human review/);
 assert.throws(()=>assertApprovedInteractionManifest(browserEvidence,[realId],{[realId]:"b".repeat(64)},"promptence"),/original bytes/);
 assert.throws(()=>assertApprovedInteractionManifest({...browserEvidence,events:[{...browserEvidence.events[0],submitted:true},...browserEvidence.events.slice(1)]},[realId],{[realId]:realHash},"promptence"),/unsafe/);
 assert.throws(()=>assertApprovedInteractionManifest({...browserEvidence,providerAPIsUsed:true},[realId],{[realId]:realHash},"promptence"),/unsafe/);
+assert.throws(()=>assertApprovedInteractionManifest({...browserEvidence,events:[{...browserEvidence.events[0],action:"run-paid-scan"},...browserEvidence.events.slice(1)]},[realId],{[realId]:realHash},"promptence"),/unsafe/);
 console.log("Motion first-visit source, visual novelty, fail-closed release and human approval contracts PASS");
