@@ -17,7 +17,7 @@ export type MotionCommission = {
 };
 const plain=(x:unknown,max:number)=>{
  if(typeof x!=="string")return "";
- return x.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g,"").trim().slice(0,max);
+ return x.replace(/[\u0000-\u001F\u007F]/g," ").replace(/\s{2,}/g," ").trim().slice(0,max);
 };
 const url=(x:unknown)=>{
  const value=plain(x,250);if(!value)return "";
