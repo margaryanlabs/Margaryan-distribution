@@ -39,6 +39,33 @@ assert.equal(created.chatPack.action, "create");
 assert.equal(created.videoFileCreated, false);
 assert.equal(created.voiceFileCreated, false);
 assert.equal(created.durationSeconds, 13);
+
+const clientFilm = bridge.runContentStudioTool("create_motion_film", {
+  ...data, brand:"labs",
+  client_brand_name:"BLUE ROOM",
+  client_brand_caption:"A NEW KIND OF NIGHT",
+  client_brand_accent:"#C0D9FA"
+});
+assert.equal(clientFilm.previewProject.clientBrand.name,"BLUE ROOM");
+assert.equal(clientFilm.previewProject.clientBrand.caption,"A NEW KIND OF NIGHT");
+assert.equal(studio.clientBrandInfo(clientFilm.previewProject).name,"BLUE ROOM");
+assert.equal(studio.clientBrandInfo(clientFilm.previewProject).accent,"#C0D9FA");
+assert.ok(clientFilm.chatPack.project.clientBrand);
+assert.throws(()=>bridge.runContentStudioTool("create_motion_film", {
+  ...data,brand:"veto",client_brand_name:"FAKE VETO"
+}),/only supported with brand=labs/);
+assert.throws(()=>bridge.runContentStudioTool("create_motion_film",{
+  ...data,brand:"labs",client_brand_name:"CLIENT",client_brand_accent:"red; background: url(https://evil.com)"
+}),/Invalid client_brand_accent|must be #RRGGBB/);
+const fallback=studio.sanitizeMotionProject({
+  ...clientFilm.previewProject,clientBrand:{name:"BLUE ROOM",caption:"A NEW KIND OF NIGHT",accent:"#000000"}
+});
+assert.equal(fallback.clientBrand.accent,"#C4D9F4","Unusable dark text accents must be corrected to a visible color");
+assert.equal(studio.clientBrandInfo(studio.sanitizeMotionProject({
+  ...clientFilm.previewProject,brand:"veto"
+})).name,studio.BRAND_INFO.veto.name,
+"Official brand logos and captions must never be overwritten with client kits");
+
 assert.ok(created.editorUrl.startsWith("https://"));
 const fragment = created.editorUrl.split("#motion-chat-v1=")[1];
 assert.deepEqual(JSON.parse(Buffer.from(fragment, "base64url").toString("utf8")), created.chatPack);
