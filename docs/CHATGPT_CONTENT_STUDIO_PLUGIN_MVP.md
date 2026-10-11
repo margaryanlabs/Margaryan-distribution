@@ -98,3 +98,22 @@ upload, or client-account storage is implied.
 Longer films (up to eight chapters / 512s) are supported in Sequence Studio
 through its own chapter editor and manifest import, not by sending an
 oversized tool response as a URL fragment.
+
+
+## ChatGPT-native player v0.3 — browser-rendered video and optional ChatGPT file
+
+NEW: The Content Studio MCP Apps resource embeds a first-party 2D/Canvas video preview built with the exact existing Motion drawMotionFrame engine (not a separate AI/video API). The user may play, scrub and export a file locally at 24 FPS, choose 720p or optional 1080p, and enable the existing keyless original WebAudio soundtrack. This soundtrack is instrumental procedural audio; no voice narration or licensed music is invented.
+
+After a successful browser export, the user can explicitly click SAVE TO CHATGPT. The nested first-party preview transfers the browser-generated video file to the MCP Apps widget, which calls ChatGPT's optional window.openai.uploadFile(file,{library:true}) only if that capability exists. File validation requires an expected first-party frame origin, .mp4/.webm extension, video MIME and <=25 MB bytes. An unavailable helper or failed upload leaves the user's local downloaded copy unaffected. The upload may still be rejected by the ChatGPT client because of plan, file, size, or host restrictions.
+
+**Not yet proven end-to-end:** Browser export has Vercel-ready build evidence, and a simulated MCP widget JS contract test was added, but we have not installed the plugin in a real ChatGPT client or verified exported file upload. These are gates, not marketing claims. Likewise, the repository code does not implement public accounts, entitlement checks, client billing, or ChatGPT plan delegation.
+
+### Manual acceptance
+
+1. On an owned HTTPS registrable domain, connect an isolated public MCP endpoint without weakening private Distribution / CRM protection.
+2. From ChatGPT Work install the custom MCP plugin; confirm create tool renders its UI resource and the actual moving frame canvas, not a placeholder.
+3. Request a 20–30s RU demo; play, scrub and test 720p silent export; validate the decoded video duration and frame content.
+4. Test 1080p and original soundtrack separately, inspecting synchronisation and mobile thermals (disable the optional functions if a device struggles).
+5. Click SAVE TO CHATGPT. Verify the success confirmation and that the file appears in the user's ChatGPT file library only if this host offers uploadFile.
+6. Test denied/unsupported upload, private media rejected, 25MB cutoff, origin spoof, concurrent export prevention and mid-recording revision handling.
+7. Only then take PR #55 out of draft and prepare review/privacy/terms/paid pilot.
