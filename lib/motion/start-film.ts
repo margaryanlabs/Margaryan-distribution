@@ -82,7 +82,7 @@ export function prepareStudioFilm(choice:StudioFilmChoice):MotionProject{
       headline:["ПРОДУКТ В ДЕЙСТВИИ.","ОТКРОЕМ ПРОВЕРКУ.","ВВЕДЁМ САЙТ.","НАЗОВЁМ КОМПАНИЮ.",
         "ВЫБЕРЕМ РЫНОК.","ДОБАВИМ КАТЕГОРИЮ.","ПЕРЕКЛЮЧИМ РЕЖИМ.","ИЗУЧИМ ИСТОЧНИКИ."][i],
       support:"Реальные клики и прокрутка: прикрепите проверенную запись Interaction Cinema.",
-      seconds:4,mediaStart:i*4,sourceLayout:"theater" as const,
+      seconds:4,mediaStart:i*4,sourceLayout:"showcase" as const,
       camera:"locked" as const,transition:"cut" as const,titleTreatment:"minimal" as const
     }));
     return sanitizeMotionProject({...makeMotionPreset("promptence","portrait"),
