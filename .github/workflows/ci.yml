@@ -17,6 +17,8 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Motion production focus view, shortcuts and local human review markers
+        run: npm run motion:test-focus-notes
       - name: Motion production release readiness / verified original sources and voice timelines
         run: npm run motion:test-release
       - name: Motion Workspace V2 / central canvas, 7 edit workspaces and mobile production navigation
