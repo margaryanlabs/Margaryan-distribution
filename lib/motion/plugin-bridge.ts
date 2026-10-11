@@ -74,6 +74,40 @@ export const CONTENT_STUDIO_TOOLS = [
       },
       required: ["current_project", "changes"]
     }
+  },
+  {
+    name: "create_motion_feature_film",
+    description: "Create a 65–192 second long-form editorial motion film from 9–24 original scenes authored by ChatGPT. Auto-groups shots into 2–3 independently editable chapters. Returns a private-fragment Sequence Studio link, NOT a finished MP4. No OpenAI API, cloud video generation, voice or media uploads.",
+    annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    inputSchema: {
+      type: "object", additionalProperties: false,
+      properties: {
+        title: { type: "string", minLength: 1, maxLength: 100 },
+        brand: { type: "string", enum: Object.keys(BRAND_INFO), description: "Use labs for unverified third-party brands; real client brand kits are not yet supported." },
+        format: { type: "string", enum: ["portrait", "square", "landscape"] },
+        language: { type: "string", enum: ["ru", "en", "hy"] },
+        style: { type: "string", enum: ["cinematic", "kinetic", "technical"] },
+        scenes: {
+          type: "array", minItems: 9, maxItems: 24,
+          description: "Write a complete original narrative: opening hook, stakes, demonstration, proof only if source-backed, and CTA. Each shot 2–8 seconds.",
+          items: {
+            type: "object", additionalProperties: false,
+            properties: {
+              kind: { type: "string", enum: ["opener", "statement", "network", "closer", "kinetic", "orbit", "spatial"] },
+              eyebrow: { type: "string", maxLength: 65 },
+              headline: { type: "string", minLength: 1, maxLength: 105 },
+              support: { type: "string", maxLength: 180 },
+              seconds: { type: "number", minimum: 2, maximum: 8 },
+              transition: { type: "string", enum: ["auto", "dissolve", "wipe", "slash", "cut", "zoom", "flash", "slide", "grid"] },
+              titleTreatment: { type: "string", enum: ["editorial", "mask", "kinetic", "minimal"] },
+              voiceCue: { type: "string", maxLength: 300, description: "Narration cue text only; no synthetic voice is generated." }
+            }, required: ["kind", "eyebrow", "headline", "support", "seconds"]
+          }
+        },
+        chapter_titles: { type: "array", maxItems: 3, items: { type: "string", maxLength: 100 },
+          description: "Optional titles for the 2 or 3 acts." }
+      }, required: ["title", "brand", "format", "language", "scenes"]
+    }
   }
 ] as const;
 
@@ -134,7 +168,61 @@ function linkForPack(pack: ChatMotionPack): string {
   return publicEditorUrl() + "/motion?mode=cinematic#motion-chat-v1=" + encoded;
 }
 
+function createFeatureFilm(raw: Record<string,unknown>) {
+  const title=checkString(raw.title,"title",100);
+  const brand=oneOf(raw.brand,Object.keys(BRAND_INFO) as MotionProject["brand"][],"brand");
+  const format=oneOf(raw.format,["portrait","square","landscape"] as const,"format");
+  const language=oneOf(raw.language,["ru","en","hy"] as const,"language");
+  const style=raw.style===undefined?"cinematic":oneOf(raw.style,["cinematic","kinetic","technical"] as const,"style");
+  if(!Array.isArray(raw.scenes)||raw.scenes.length<9||raw.scenes.length>24)
+    throw Error("Feature films require 9–24 original scenes (2–3 chapters)");
+  const chunkCount=Math.ceil(raw.scenes.length/8);
+  if(raw.chapter_titles!==undefined && (
+    !Array.isArray(raw.chapter_titles)||raw.chapter_titles.length>chunkCount||
+    raw.chapter_titles.some(x=>typeof x!=="string"||x.length>100)
+  )) throw Error("Invalid chapter titles");
+  const chapterTitles=raw.chapter_titles as string[]|undefined;
+  const chapters=[] as Array<{id:string;title:string;project:MotionProject}>;
+  let duration=0;
+  for(let i=0;i<chunkCount;i++){
+    const localScenes=validateScenes(raw.scenes.slice(i*8,(i+1)*8));
+    const chapterTitle=chapterTitles?.[i]?.trim()||("ACT "+String(i+1).padStart(2,"0"));
+    const project=sanitizeMotionProject({
+      version:1,title: title+" / "+chapterTitle,brand,format,language,style,
+      qualityMode:"signature",scenes:localScenes
+    });
+    if(project.scenes.length!==localScenes.length)
+      throw Error("Feature film chapter was truncated");
+    duration+=durationOf(project);
+    chapters.push({id:"chapter-"+(i+1),title:chapterTitle,project});
+  }
+  duration=Number(duration.toFixed(3));
+  if(duration<=64)throw Error("Feature-film timeline must exceed 64 seconds. Increase shot duration.");
+  const sequence={
+    version:1 as const,type:"motion-sequence-v1" as const,title,brand,format,
+    expectedDurationSeconds:duration,chapters
+  };
+  // Fragment is neither encryption nor a substitute for per-user private storage.
+  // The user's browser strips the fragment before loading the proposal.
+  const encoded=Buffer.from(JSON.stringify(sequence),"utf8").toString("base64url");
+  if(encoded.length>26_000||Buffer.byteLength(JSON.stringify(sequence),"utf8")>20_000)
+    throw Error("Feature film is too large for private one-click handoff. Shorten copy or use an exported JSON manifest.");
+  return {
+    protocol:"motion-sequence-v1", action:"review-feature-film" as const,
+    title,brand,format,chapters:chapters.length,scenes:raw.scenes.length,
+    durationSeconds:duration,
+    filmType:"editable multi-chapter procedural motion graphics; not generated live-action footage",
+    videoFileCreated:false,voiceFileCreated:false,requiresUserApproval:true,
+    editorUrl:publicEditorUrl()+"/motion?mode=cinematic#motion-sequence-v1="+encoded,
+    nextStep:"Open the editor link, review the whole-film proposal in Sequence Studio, approve to save chapters, inspect each chapter, then export a manifest for local Chromium/FFmpeg mastering. This tool has NOT created an MP4."
+  };
+}
+
 export function runContentStudioTool(name: string, raw: unknown) {
+  if(name==="create_motion_feature_film") {
+    if(!record(raw))throw Error("Tool arguments must be an object");
+    return createFeatureFilm(raw);
+  }
   if (!record(raw)) throw Error("Tool arguments must be an object");
   let pack: ChatMotionPack;
   let film: MotionProject;
