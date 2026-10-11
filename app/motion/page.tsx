@@ -271,6 +271,21 @@ export default function MotionStudioPage() {
     jump(scenes.slice(0,selectedIndex+1).reduce((total,shot)=>total+shot.seconds,0));
     setNotice("Shot duplicated — modify the copy to avoid repetitive visuals.");
   }
+  function loadSpatialDemo() {
+    if(generating||exporting||directorRepairing)return;
+    const demo=makeMotionPreset(project.brand,project.format);
+    const interior=Math.max(0,Math.min(demo.scenes.length-2,Math.floor(demo.scenes.length/2)));
+    const scenes=demo.scenes.map((scene,index)=>index===interior
+      ? {...scene,kind:"spatial" as const,camera:"push" as const,
+        intensity:.7,transition:"dissolve" as const}
+      : scene);
+    updateProject({...demo,title:demo.title+" / SPATIAL EDITION",scenes});
+    setSelectedIndex(interior);
+    setPlaying(false);
+    jump(0);
+    setNotice("SPATIAL DEMO: real 3D WebGL shot added at scene "+(interior+1)+
+      ". Theme depends on brand. Select the spatial shot and inspect camera/transition controls.");
+  }
   function generate() {
     if (generating || exporting) return;
     setGenerating(true);
@@ -578,7 +593,11 @@ export default function MotionStudioPage() {
         <button className={styles.heroButton} onClick={generate} disabled={generating || exporting || brief.trim().length < 6}>
           {generating ? "DIRECTING…" : "CREATE FILM / NO API KEY ↗"}
         </button>
-        <p className={styles.hint}>Own procedural motion director: language-aware storyboard + animated graphics. Runs locally. Not a generative neural video model.</p>
+        <button className={styles.spatialDemoButton} type="button" onClick={loadSpatialDemo}
+          disabled={generating||exporting||directorRepairing}>
+          ◈ LOAD 3D / SPATIAL BRAND FILM
+        </button>
+        <p className={styles.hint}>Own procedural motion director: language-aware storyboard + animated graphics. Write “3D” / “WebGL” in a brief to include a real spatial shot automatically. Not a generative neural video model.</p>
         <div className={styles.signatureShowcase}>
           <div><b>DIRECTOR'S EDITION / PROMPTENCE</b><span>SIGNATURE CAMPAIGN · 8 AUTHORED SHOTS · EN/RU/HY</span></div>
           <strong>THE ANSWER IS<br/>THE NEW FRONT PAGE.</strong>
