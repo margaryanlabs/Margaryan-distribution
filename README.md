@@ -228,3 +228,5 @@ Realtime voice runs separately in `voice-gateway` because Twilio Media Streams u
 The Motion Studio includes the editable feature-film Sequence Studio and a ChatGPT MCP server at `/api/mcp`: three storyboard/edit/120s feature-film tools and an optional first-party Canvas widget. The storyboard works without an OpenAI API key; real user footage and narration remain consented locally. Long H.264 mastering requires local Chromium and FFmpeg; cloud MP4 and a public approved ChatGPT Directory listing are NOT yet available.
 
 Full release/security gates: [Motion × ChatGPT combined release](docs/MOTION_CHATGPT_UNIFIED_RELEASE.md). Developer contracts: `npm run motion:test-plugin`, `npm run motion:test-sequence`. In Cinematic Studio, try the provided 120s Promptence film and inspect every chapter before exporting.
+
+**New:** browser-generated full-film visual workprints from Sequence Studio (up to 192s, silent Canvas only) with explicit licensed-media exclusions. Live preview and proper FFmpeg mastery are independent workflows.
