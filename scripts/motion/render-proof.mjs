@@ -32,6 +32,7 @@ if(host.protocol!=="http:"||!["localhost","127.0.0.1","[::1]"].includes(host.hos
  ||host.pathname!=="/motion/proof")throw Error("Proof Studio must be served locally at /motion/proof");
 const fps=o.fps?Number(o.fps):30;
 if(!Number.isInteger(fps)||fps<24||fps>30)throw Error("Use 24–30 frames/s");
+const run=(exe,argv,timeout=90_000)=>spawnSync(exe,argv,{encoding:"utf8",maxBuffer:2_000_000,timeout});
 const f=await stat(source);
 const validExt=isVideo?[".mp4",".webm"]:[".png",".jpg",".jpeg",".webp"];
 if(!f.isFile()||f.size<100||f.size>(isVideo?180_000_000:12_000_000)
@@ -48,7 +49,7 @@ if(isVideo){
    throw Error("Real source clip requires 8–300s and at least 720×480 decoded frames.");
  }
 }
-const run=(exe,argv,timeout=90_000)=>spawnSync(exe,argv,{encoding:"utf8",maxBuffer:2_000_000,timeout});
+
 if(run("ffmpeg",["-version"]).status!==0)throw Error("FFmpeg is not installed");
 for(const asset of [o.music,o.voice].filter(Boolean)){
  const f=await stat(resolve(asset));
