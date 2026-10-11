@@ -24,5 +24,5 @@ approval step before locally rendering the movie. Procedural graphics, not AI-sh
 <Link href="/motion#film-sequence" style={{display:"inline-flex",textDecoration:"none",border:"1px solid #8099b9",padding:"12px 18px",borderRadius:7,fontWeight:800,fontSize:12}}>
 OPEN FEATURE FILM WORKSPACE ↗</Link>
 </section>
-<footer style={{borderTop:"1px solid #28303a",marginTop:90,paddingTop:20,color:"#7f90a8",fontSize:12}}>Margaryan Content Studio · Keyless motion graphics · No private Distribution or CRM integration on this public server.</footer>
+<footer style={{borderTop:"1px solid #28303a",marginTop:90,paddingTop:20,color:"#7f90a8",fontSize:12}}>Margaryan Content Studio · Keyless motion graphics · No private Distribution or CRM integration on this public server. <Link href="/privacy" style={{color:"#c4d3ea",marginLeft:13}}>PRIVACY</Link> · <Link href="/terms" style={{color:"#c4d3ea"}}>BETA TERMS</Link></footer>
 </main>}
