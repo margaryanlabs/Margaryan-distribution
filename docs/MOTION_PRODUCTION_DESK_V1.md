@@ -19,11 +19,35 @@ This is an **in-place upgrade** of the existing `/motion?mode=cinematic` scene-b
 4. Export **DIRECTOR PACK** for a timecoded production specification. Upload approved real interface screenshots to replace purely conceptual visuals when applicable.
 5. Preview, run Quality Director, then export locally. Browser recording may create WebM; the existing `motion:master` offline CLI provides deterministic H.264/AAC MP4 when FFmpeg and Chromium are available.
 
+## Optional open-source neural narration (operator machine, no keys)
+
+A keyless **Chatterbox Multilingual V3** adapter is included in
+`scripts/motion/local-chatterbox-voice.py`. It is NOT deployed on Vercel and
+is NOT wired into the browser Generate button. It produces a reviewable
+single WAV with silence between shots according to the Director Pack timestamps.
+It fails visibly instead of squeezing or cropping words to fit.
+
+On a GPU-equipped machine with Python and compatible PyTorch:
+
+```bash
+pip install chatterbox-tts torch torchaudio
+python scripts/motion/local-chatterbox-voice.py \
+  motion-promptence-production-pack.json narration.wav --device cuda --lang ru
+# Review/listen to the WAV, then import it under NARRATION on /motion.
+```
+
+To use a reference voice, add `--reference /path/to/authorized-voice.wav`
+ONLY with permission from its owner. The model weights download when first
+used and require disk space and powerful hardware; software being free does not
+make hosted CPU/GPU time free. Russian/English are supported; Armenian is NOT
+among Chatterbox Multilingual's 23 supported languages. Use separately recorded
+or properly licensed Armenian narration for HY films.
+
 ## Explicit limitations
 
 - No OpenAI, Claude, ElevenLabs, Chatterbox or CosyVoice account was connected. No API keys were created.
 - This change does **not** integrate GSAP, Three.js, Theatre.js or Remotion as live production dependencies. The new camera treatments are implemented in the existing deterministic Canvas engine to avoid breaking existing masters. These tools may be introduced in separate, render-verified steps.
-- No TTS voices are generated. Narration is uploaded locally; any voice samples or third-party model inference must follow consent and rights requirements.
+- Browser Studio does not generate TTS. An optional Chatterbox CLI script can generate a **local** approved narration WAV on suitable hardware, to be imported by the operator. It has not been runtime-tested on a GPU in this PR.
 - No video-provider generation, hosted render worker, 3D photorealism, operator account, auto-publishing or unlimited free GPU credits are claimed.
 - The product site must be tested in real desktop/mobile browsers and sampled exported clips must be listened to/viewed before describing them as production-quality. Passing code checks is not artistic certification.
 
