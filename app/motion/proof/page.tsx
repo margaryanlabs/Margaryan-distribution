@@ -390,13 +390,13 @@ export default function ProofDirectorPage(){
           <label className={styles.edlControl}>
             <span><b>TAKE 01 · SOURCE START</b><strong>{edit.firstIn.toFixed(2)}s</strong></span>
             <input type="range" min="0" max={Math.max(0,sourceDuration-1)} step=".1"
-              disabled={!(source instanceof HTMLVideoElement)||exporting}
+              disabled={!source || !(source instanceof HTMLVideoElement) || exporting}
               value={edit.firstIn} onChange={e=>changeEDL({firstIn:Number(e.target.value)})}/>
           </label>
           <label className={styles.edlControl}>
             <span><b>TAKE 02 · SOURCE START</b><strong>{edit.secondIn.toFixed(2)}s</strong></span>
             <input type="range" min="0" max={Math.max(0,sourceDuration-1)} step=".1"
-              disabled={!(source instanceof HTMLVideoElement)||exporting}
+              disabled={!source || !(source instanceof HTMLVideoElement) || exporting}
               value={edit.secondIn} onChange={e=>changeEDL({secondIn:Number(e.target.value)})}/>
           </label>
           <label className={styles.edlControl}>
