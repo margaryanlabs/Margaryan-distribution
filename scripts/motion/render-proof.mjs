@@ -79,9 +79,17 @@ try{
    "-vcodec","png","-i","pipe:0"];
  for(const a of audio)ff.push("-i",a.path);
  if(audio.length){
+  // Natural source recording only. The chain cleans sub-bass/ultrahigh hiss,
+  // normalizes dialog loudness and keeps a controlled score underneath.
+  // No time stretching, robotic TTS fallback, pitch shifting or auto dubbing.
   const stages=[];
-  for(let i=0;i<audio.length;i++)stages.push("["+(i+1)+":a:0]volume="+audio[i].volume+",apad,atrim=0:10[track"+i+"]");
-  stages.push(audio.length===2?"[track0][track1]amix=inputs=2:duration=first:dropout_transition=0[mixed]":"[track0]anull[mixed]");
+  if(o.voice){
+    stages.push("[1:a:0]highpass=f=75,lowpass=f=14500,loudnorm=I=-16:TP=-1.5:LRA=11,apad,atrim=0:10[voice]");
+    if(o.music){
+      stages.push("[2:a:0]volume=0.14,apad,atrim=0:10[score]");
+      stages.push("[voice][score]amix=inputs=2:normalize=0:duration=first,loudnorm=I=-16:TP=-1.5:LRA=11[mixed]");
+    } else stages.push("[voice]anull[mixed]");
+  }else stages.push("[1:a:0]loudnorm=I=-18:TP=-1.5:LRA=11,apad,atrim=0:10[mixed]");
   ff.push("-filter_complex",stages.join(";"),"-map","0:v:0","-map","[mixed]","-c:a","aac","-b:a","192k");
  } else ff.push("-an");
  ff.push("-c:v","libx264","-pix_fmt","yuv420p","-preset","medium","-crf","18","-r",String(fps),
@@ -113,7 +121,7 @@ try{
   "-frames:v","1",prefix+"-contact-sheet.png"],120000);
  await writeFile(prefix+".proof-report.json",JSON.stringify({
    engine:"SOURCE-FIRST PROOF DIRECTOR",duration:d,width:video.width,height:video.height,
-   fps,sourceFile:source,sourceType:isVideo?'actual-browser-video':'owner-supplied-screenshot',voiceProvided:Boolean(o.voice),musicProvided:Boolean(o.music),
+   fps,sourceFile:source,sourceType:isVideo?'actual-browser-video':'owner-supplied-screenshot',voiceProvided:Boolean(o.voice),musicProvided:Boolean(o.music),audioMaster:"licensed-source-only / loudnorm dialogue -16 LUFS target / no time stretch",
    contactSheetCreated:sheet.status===0,sourceReviewRequired:true,humanCreativeApprovalRequired:true,
    note:"Codec and source-authenticity gates cannot judge cinematic quality or voice performance."
  },null,2)+"\n");
