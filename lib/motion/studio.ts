@@ -40,6 +40,28 @@ export interface MotionAudioEdit {
   musicFadeIn: number;
   musicFadeOut: number;
 }
+export interface MotionVisualControls {
+  /** Relative speed/intensity: 0=static scenery, 1=regular, 1.5=energetic. */
+  motion: number;
+  /** Measured title size within fit-to-frame bounds (0.75–1). */
+  textScale: number;
+  /** Gentle scene contrast 0–1; 0.5 is the unmodified original. */
+  contrast: number;
+  /** Strength of ambient color glow, 0–1. */
+  glow: number;
+}
+export const DEFAULT_VISUAL:MotionVisualControls={motion:1,textScale:1,contrast:.5,glow:.5};
+export function sanitizeVisual(input:unknown):MotionVisualControls {
+  const obj=input&&typeof input==="object"&&!Array.isArray(input)?input as Record<string,unknown>:{};
+  const bound=(key:keyof MotionVisualControls,min:number,max:number)=>{
+    const v=obj[key];
+    return typeof v==="number"&&Number.isFinite(v)
+      ?Math.max(min,Math.min(max,Number(v.toFixed(2))))
+      :DEFAULT_VISUAL[key];
+  };
+  return {motion:bound("motion",0,1.5),textScale:bound("textScale",.75,1),
+    contrast:bound("contrast",0,1),glow:bound("glow",0,1)};
+}
 export interface MotionProject {
   version: 1;
   title: string;
@@ -47,6 +69,7 @@ export interface MotionProject {
   format: MotionFormat;
   style?: "cinematic" | "kinetic" | "technical";
   qualityMode?: MotionQualityMode;
+  visual?: MotionVisualControls;
   /** Timecoded edit metadata only: voice/music files must be reattached after reload. */
   audio?: MotionAudioEdit;
   seed?: number;
@@ -246,8 +269,9 @@ export function sanitizeMotionProject(input: unknown): MotionProject {
   const seed = typeof obj.seed === "number" && Number.isFinite(obj.seed) ? Math.floor(obj.seed) >>> 0 : 41;
   const language = ["en", "ru", "hy"].includes(String(obj.language)) ? obj.language as MotionProject["language"] : undefined;
   const qualityMode = ["basic","premium","signature"].includes(String(obj.qualityMode)) ? obj.qualityMode as MotionQualityMode : undefined;
+  const visual=sanitizeVisual(obj.visual);
   const signatureFilm = brand === "promptence" && obj.signatureFilm === "promptence-answer" ? "promptence-answer" as const : undefined;
-  return { version: 1, title: clean(obj.title, 100) || "UNTITLED MOTION", brand, format, style, seed, scenes, language, signatureFilm, qualityMode, audio: sanitizeAudioEdit(obj.audio) };
+  return { version: 1, title: clean(obj.title, 100) || "UNTITLED MOTION", brand, format, style, seed, scenes, language, signatureFilm, qualityMode, visual, audio: sanitizeAudioEdit(obj.audio) };
 }
 
 export function durationOf(project: MotionProject) {
