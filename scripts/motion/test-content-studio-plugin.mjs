@@ -18,7 +18,11 @@ const timeline = load("lib/motion/timeline-edit.ts");
 const studio = load("lib/motion/studio.ts", { "./timeline-edit": timeline });
 const chat = load("lib/motion/chat-operator.ts", { "./studio": studio });
 const bridge = load("lib/motion/plugin-bridge.ts", { "./studio": studio, "./chat-operator": chat });
-const route = load("app/api/mcp/route.ts", { "@/lib/motion/plugin-bridge": bridge });
+const widget = load("lib/motion/content-studio-widget.ts");
+const route = load("app/api/mcp/route.ts", {
+  "@/lib/motion/plugin-bridge": bridge,
+  "@/lib/motion/content-studio-widget": widget
+});
 const data = {
   title: "RESTAURANT / THE NEW EXPERIENCE", brand: "labs", format: "portrait",
   language: "ru", style: "cinematic", qualityMode: "signature",
@@ -112,6 +116,22 @@ const init = await send({ jsonrpc: "2.0", id: 1, method: "initialize", params: {
 assert.equal(init.json.result.serverInfo.name, "margaryan-content-studio");
 const listed = await send({ jsonrpc: "2.0", id: "tools", method: "tools/list" });
 assert.equal(listed.json.result.tools.length, 3);
+const studioTool=listed.json.result.tools.find(t=>t.name==="create_motion_film");
+assert.equal(studioTool._meta.ui.resourceUri,bridge.CONTENT_STUDIO_WIDGET_URI);
+const resources=await send({jsonrpc:"2.0",id:"res-list",method:"resources/list"});
+assert.ok(resources.json.result.resources.some(x=>x.uri===bridge.CONTENT_STUDIO_WIDGET_URI));
+const resource=await send({jsonrpc:"2.0",id:"res-read",method:"resources/read",params:{uri:bridge.CONTENT_STUDIO_WIDGET_URI}});
+const body=resource.json.result.contents[0];
+assert.equal(body.mimeType,"text/html;profile=mcp-app");
+assert.ok(body.text.includes('ui/initialize'));
+assert.ok(body.text.includes('ui/notifications/tool-result'));
+assert.ok(body.text.includes('/motion/chat-preview'));
+assert.ok(body._meta.ui.csp.frameDomains.includes("https://margaryan-distribution.vercel.app"));
+assert.equal(resource.json.result.contents.length,1);
+const badResource=await send({jsonrpc:"2.0",id:"bad-res",method:"resources/read",params:{uri:"ui://unknown"}});
+assert.equal(badResource.json.error.code,-32002);
+assert.equal(created.previewProject.title,created.title);
+assert.ok(!created.previewProject.scenes.some(x=>x.mediaId));
 const tool = await send({ jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "create_motion_film", arguments: data } });
 assert.equal(tool.json.result.structuredContent.videoFileCreated, false);
 assert.equal(tool.json.result.structuredContent.scenes, 3);
