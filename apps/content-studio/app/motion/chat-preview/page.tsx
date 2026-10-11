@@ -52,6 +52,7 @@ export default function ChatMotionPreviewPage() {
   const lastExportRef = useRef<{blob:Blob;filename:string}|null>(null);
   const [seek, setSeek] = useState(0);
   const [notice, setNotice] = useState("Waiting for a ChatGPT film draft");
+  const wrapperRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -146,6 +147,18 @@ export default function ChatMotionPreviewPage() {
     };
   }, []);
 
+  // The MCP widget controls the iframe height; prevent nested scrollbars
+  // from hiding the export/audio controls when the customer opens the asset kit.
+  useEffect(()=>{
+    const node=wrapperRef.current;
+    if(!node||window.parent===window||typeof ResizeObserver==="undefined")return;
+    const resize=new ResizeObserver(()=>{
+      const height=Math.ceil(node.getBoundingClientRect().height+12);
+      window.parent.postMessage({kind:"margaryan-motion-resize-v1",height},"*");
+    });
+    resize.observe(node);
+    return ()=>resize.disconnect();
+  },[]);
   useEffect(() => {void preloadMotionLogo(project.brand).then(()=>render(playbackRef.current));}, [project.brand,render]);
   useEffect(()=>()=>{if(logoUrlRef.current)URL.revokeObjectURL(logoUrlRef.current);},[]);
 
@@ -314,7 +327,7 @@ export default function ChatMotionPreviewPage() {
 
   async function sendToChatGPT(){
     const file=lastExportRef.current;
-    if(!file||recording||preparing)return;
+    if(!file||recording||preparing||exportingRef.current)return;
     if(file.blob.size>25_000_000){
       setNotice("Video exceeds 25MB ChatGPT transfer limit. Keep the local download.");
       return;
@@ -339,7 +352,7 @@ export default function ChatMotionPreviewPage() {
     }
   }
 
-  return <main style={outer}>
+  return <main ref={wrapperRef} style={outer}>
     <div style={{display:"flex",justifyContent:"space-between",gap:8,fontSize:10,letterSpacing:".1em",color:"#b4c1d8"}}>
       <span>◈ {clientBrandInfo(project).name} / LIVE CANVAS</span>
       <span>{project.format.toUpperCase()} · {total.toFixed(1)}S</span>
@@ -410,11 +423,11 @@ export default function ChatMotionPreviewPage() {
     </details>
     <div style={{display:"flex",gap:12,marginTop:10,marginBottom:8,alignItems:"center",flexWrap:"wrap",fontSize:10,color:"#c7ccda"}}>
       <label style={{display:"inline-flex",alignItems:"center",gap:5}}>
-        <input disabled={recording||preparing} checked={fullHD} type="checkbox" onChange={e=>setFullHD(e.target.checked)}/>
+        <input disabled={recording||preparing} checked={fullHD} type="checkbox" onChange={e=>{setFullHD(e.target.checked);lastExportRef.current=null;setExportReady(false);}}/>
         FULL HD / 1080P
       </label>
       <label style={{display:"inline-flex",alignItems:"center",gap:5}}>
-        <input disabled={recording||preparing} checked={includeScore} type="checkbox" onChange={e=>setIncludeScore(e.target.checked)}/>
+        <input disabled={recording||preparing} checked={includeScore} type="checkbox" onChange={e=>{setIncludeScore(e.target.checked);lastExportRef.current=null;setExportReady(false);}}/>
         ORIGINAL SOUNDTRACK / EXPORT ONLY
       </label>
     </div>
