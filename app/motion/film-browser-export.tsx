@@ -4,11 +4,10 @@ import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {FORMAT_SIZE,durationOf,type MotionProject} from "@/lib/motion/studio";
 import {drawMotionFrame} from "@/lib/motion/render-engine";
 import {preloadMotionLogo} from "@/lib/motion/brand-assets";
+import {planBrowserFeature,type BrowserSegment} from "@/lib/motion/film-browser-plan";
 import styles from "./film-browser-export.module.css";
 
 type Phase="idle"|"playing"|"recording"|"finishing";
-type Segment={project:MotionProject;start:number;end:number};
-const LIMIT=192; // Browser workprints only; offline Master supports up to 512s.
 const FPS=24;
 const bitRate=2_500_000;
 
@@ -18,31 +17,10 @@ function mime(){
   return ["video/mp4;codecs=avc1.42E01E","video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"]
     .find(t=>MediaRecorder.isTypeSupported(t))||"";
 }
-function getSceneAt(parts:Segment[],at:number){
+function getSceneAt(parts:BrowserSegment[],at:number){
   const segment=parts.find(p=>at<p.end)||parts[parts.length-1];
   if(!segment)throw Error("No film chapters");
   return {project:segment.project,local:Math.min(Math.max(0,at-segment.start),durationOf(segment.project)-.0001)};
-}
-function safeBrowserFilm(projects:MotionProject[]){
-  let duration=0;const segments:Segment[]=[];
-  if(!projects.length)throw Error("Save at least one chapter first");
-  const brand=projects[0].brand,format=projects[0].format;
-  for(const project of projects){
-    if(project.brand!==brand||project.format!==format)throw Error("Every chapter needs one brand and film format");
-    if(!project.scenes.length||project.scenes.length>8)throw Error("Every chapter needs 1–8 scenes");
-    if(project.signatureFilm)throw Error("Signature-film art needs the full workstation master");
-    for(const shot of project.scenes){
-      if(shot.kind==="screen"||shot.mediaId||shot.overlayMediaId)
-        throw Error("Real source footage/image overlay needs the workstation Master with approved files");
-      if(!Number.isFinite(shot.seconds)||shot.seconds<2||shot.seconds>8)
-        throw Error("Invalid film scene duration");
-    }
-    const len=durationOf(project);
-    segments.push({project,start:duration,end:duration+len});
-    duration+=len;
-  }
-  if(duration>LIMIT)throw Error("Browser export is limited to 192s. Use the workstation Master for longer films");
-  return {segments,total:duration,brand,format};
 }
 export default function FilmBrowserExport({chapters,busy,dirty}:{
   chapters:MotionProject[];busy:boolean;dirty:boolean;
@@ -58,7 +36,7 @@ export default function FilmBrowserExport({chapters,busy,dirty}:{
   const [message,setMessage]=useState("Local browser workprint / graphics only, without soundtrack.");
   const [exportType,setExportType]=useState("");
   const bounds=useMemo(()=>{
-    try{return {ok:true as const,...safeBrowserFilm(chapters)}}
+    try{return {ok:true as const,...planBrowserFeature(chapters)}}
     catch(e){return {ok:false as const,reason:e instanceof Error?e.message:String(e)}}
   },[chapters]);
   const active=phase!=="idle";
