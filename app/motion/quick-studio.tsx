@@ -92,6 +92,7 @@ export default function QuickStudio({start}: {start?:QuickStudioStart|null}) {
   const previewWidth=project.format==="landscape"?800:project.format==="square"?640:540;
   const previewHeight=Math.round(previewWidth*dims.height/dims.width);
   const assetCount=project.shots.filter(shot=>assets.current.has(shot.id)).length;
+  const firstMissing=project.shots.findIndex(shot=>!assets.current.has(shot.id));
   const status=quickSourceStatus(project,assets.current);
 
   useEffect(()=>{
@@ -420,6 +421,30 @@ export default function QuickStudio({start}: {start?:QuickStudioStart|null}) {
       <h2>Quick Studio<span>.</span></h2>
       <p>Make a real advertisement from approved photos, product screens, videos (including exported AI footage) and your soundtrack. Everything renders in this browser. No Higgsfield login or API is linked; it does not create AI footage by itself.</p>
     </section>
+    <div className={styles.quickGuide} aria-label="Простой путь к ролику">
+      <div data-complete={status.ready}>
+        <span>ШАГ 01</span><strong>Добавить свои кадры</strong>
+        <small>{assetCount} из {project.shots.length} сцен с исходниками</small>
+        <button type="button" disabled={exporting||status.ready} onClick={()=>{
+          if(firstMissing>=0)selectShot(firstMissing);
+          document.getElementById("quick-upload")?.scrollIntoView({behavior:"smooth",block:"center"});
+        }}>{status.ready?"✓ ГОТОВО":"ЗАГРУЗИТЬ ВИДЕО ↗"}</button>
+      </div>
+      <div>
+        <span>ШАГ 02</span><strong>Поправить текст</strong>
+        <small>Своё сообщение на каждом кадре</small>
+        <button type="button" onClick={()=>document.getElementById("quick-edit")?.scrollIntoView({
+          behavior:"smooth",block:"center"
+        })}>ИЗМЕНИТЬ ТЕКСТ ↗</button>
+      </div>
+      <div data-complete={status.ready}>
+        <span>ШАГ 03</span><strong>Посмотреть и сохранить</strong>
+        <small>{status.ready?"Исходники готовы к проверке":"Нужны кадры для всех сцен"}</small>
+        <button type="button" onClick={()=>document.getElementById("quick-export")?.scrollIntoView({
+          behavior:"smooth",block:"center"
+        })}>К ГОТОВОМУ РОЛИКУ ↗</button>
+      </div>
+    </div>
     <div className={styles.notice} role="status">{notice}</div>
     <div className={styles.columns}>
       <section className={styles.panel}>
@@ -446,7 +471,7 @@ export default function QuickStudio({start}: {start?:QuickStudioStart|null}) {
             data-selected={project.format===x} disabled={exporting} onClick={()=>changeFormat(x)}>
             {x==="portrait"?"9:16":x==="square"?"1:1":"16:9"}</button>)}
         </div>
-        <div className={styles.panelHead}><b>03 / EDIT SHOT</b><span>{selected+1} / {project.shots.length}</span></div>
+        <div id="quick-edit" className={styles.panelHead}><b>03 / ТЕКСТ И КАДРЫ</b><span>{selected+1} / {project.shots.length}</span></div>
         <div className={styles.shotStack}>{project.shots.map((shot,i)=><button key={shot.id} type="button"
           data-selected={selected===i} disabled={exporting} onClick={()=>selectShot(i)}>
           <span>0{i+1} / {shot.seconds}s {assets.current.has(shot.id)?"● SOURCE":"○ MISSING"}</span>
@@ -463,7 +488,7 @@ export default function QuickStudio({start}: {start?:QuickStudioStart|null}) {
           onChange={e=>updateShot("visual",e.target.value)}>
           <option value="fill">Full cinematic crop</option><option value="contain">Entire source (letterbox)</option>
         </select></label>
-        <label className={styles.media}><b>IMPORT REAL FOOTAGE / IMAGE</b>
+        <label id="quick-upload" className={styles.media}><b>01 / ЗАГРУЗИТЬ СВОЁ ВИДЕО ИЛИ ФОТО</b>
           <span>MP4, WebM, MOV / PNG, JPEG, WebP · max 150 MB · stored only in this tab.</span>
           <input type="file" accept="video/mp4,video/webm,video/quicktime,image/png,image/jpeg,image/webp,.mp4,.webm,.mov"
             disabled={exporting} onChange={e=>{void attach(e.currentTarget.files?.[0]);e.currentTarget.value="";}}/>
@@ -509,7 +534,7 @@ export default function QuickStudio({start}: {start?:QuickStudioStart|null}) {
             status.missing.length+" shot(s) missing source media · export is blocked"}</span>
           <small>NO SYNTHETIC PRODUCT METRICS · NO AUTO-PUBLISH · NO HIGGSFIELD API CHARGES</small>
         </div>
-        <button type="button" className={styles.export} disabled={exporting||!status.ready||playing}
+        <button id="quick-export" type="button" className={styles.export} disabled={exporting||!status.ready||playing}
           onClick={()=>void exportFilm()}>
           {exporting?"EXPORTING "+progress+"%":status.ready?"RENDER QUICK FILM / LOCAL EXPORT ↗":"ADD REAL MEDIA TO ALL SHOTS"}
         </button>
