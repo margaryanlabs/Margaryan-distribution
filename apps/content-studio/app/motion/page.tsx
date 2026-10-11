@@ -2,7 +2,7 @@
 
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import {
-  BRAND_INFO, FORMAT_SIZE, PROMPTENCE_BEATS, durationOf, makeMotionPreset,
+  BRAND_INFO, clientBrandInfo, FORMAT_SIZE, PROMPTENCE_BEATS, durationOf, makeMotionPreset,
   sanitizeMotionProject, sceneAt,
   type MotionBrand, type MotionFormat, type MotionProject, type MotionScene
 } from "@/lib/motion/studio";
@@ -99,7 +99,7 @@ export default function MotionStudioPage() {
   const audioEdit = sanitizeAudioEdit(project.audio);
   const narrationWindow = voiceWindow(total,audioEdit,narrationSeconds);
   const selected = project.scenes[Math.min(selectedIndex, project.scenes.length - 1)] || project.scenes[0];
-  const info = BRAND_INFO[project.brand];
+  const info = clientBrandInfo(project);
   const provenance = PORTFOLIO[project.brand];
   const qa = auditMotionProject(project);
   // Comparison statistics are always tied to the exact scene edit; they cannot
