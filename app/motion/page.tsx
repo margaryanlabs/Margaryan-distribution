@@ -1041,6 +1041,30 @@ export default function MotionStudioPage() {
               onChange={event=>editScene("mediaStart",Number(event.target.value))}/>
             <small>Decoder uses real source frames. A short clip blocks export rather than freezing its last frame.</small>
           </label>}
+          <div className={styles.sourceArtDirection}>
+            <label className={styles.field}><span>FILM SOURCE / ART DIRECTION</span>
+              <select disabled={exporting} value={selected.sourceLayout||"card"}
+                onChange={event=>editScene("sourceLayout",event.target.value)}>
+                <option value="card">Floating product card</option>
+                <option value="theater">Product theater / larger screen</option>
+                <option value="split">Split editorial / real interface</option>
+                <option value="immersive">Immersive real footage / title overlay</option>
+              </select>
+            </label>
+            {([
+              ["sourceFocusX","CAMERA FOCUS / X",0,1,.05],
+              ["sourceFocusY","CAMERA FOCUS / Y",0,1,.05],
+              ["sourceZoomStart","SOURCE ZOOM / START",1,2,.025],
+              ["sourceZoomEnd","SOURCE ZOOM / END",1,2,.025]
+            ] as Array<[keyof MotionScene,string,number,number,number]>).map(([key,label,min,max,step])=>
+              <label className={styles.field} key={key}>
+                <span>{label} / {Number(selected[key]??(key.startsWith("sourceZoom")?1:.5)).toFixed(2)}</span>
+                <input type="range" min={min} max={max} step={step} disabled={exporting}
+                  value={Number(selected[key]??(key.startsWith("sourceZoom")?1:.5))}
+                  onChange={event=>editScene(key,Number(event.target.value))}/>
+              </label>)}
+            <small>These are real camera crops of your uploaded frames, not AI-generated screens. Check that source captions, dates and measurements remain readable.</small>
+          </div>
           <button type="button" disabled={exporting} onClick={()=>{
             updateProject({...project,scenes:project.scenes.map((shot,index)=>
               index===selectedIndex?{...shot,mediaId:undefined,mediaStart:0}:shot)});
