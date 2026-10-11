@@ -24,6 +24,7 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
 .shots{overflow-y:auto;max-height:400px;border:1px solid var(--line);border-radius:12px;padding:12px;background:#101217}
 .shots h2{font-size:11px;letter-spacing:.1em;font-weight:700;margin:0 0 12px;color:var(--muted)}
 .shot{padding:10px 0;border-top:1px solid #282b32}.shot:first-of-type{border:0}.shot .number{font-size:10px;color:var(--accent)}.shot strong{display:block;font-size:12px;margin:4px 0;line-height:1.35}.shot small{color:var(--muted)}
+.chapterNav{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.chapterNav button{font-size:11px;cursor:pointer;border:1px solid #526077;border-radius:8px;padding:8px 11px;background:#17202d;color:#c3d4ed}.chapterNav button[aria-current="true"]{background:#cedcf1;color:#131b28;font-weight:800}
 .actions{display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
 .btn{appearance:none;border:1px solid #6d7f9b;border-radius:9px;background:#1e293d;color:var(--ink);font-weight:700;font-size:12px;padding:10px 14px;cursor:pointer;text-decoration:none}.btn:hover{background:#34435c}
 .note{font-size:11px;line-height:1.5;color:var(--muted)}#status{color:#b7cdff}
@@ -35,6 +36,7 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
 <p class="subtitle" id="subtitle">Waiting for an editable storyboard from ChatGPT.</p>
 <div class="layout"><div class="player"><iframe id="player" title="Live motion canvas" sandbox="allow-scripts allow-same-origin allow-downloads"></iframe></div>
 <div class="shots" id="shots"><h2>SHOT LIST / DIRECTOR</h2><p class="note">Ask ChatGPT to create a motion film. Its actual Canvas preview will appear here.</p></div></div>
+<div id="chapterNav" class="chapterNav" hidden aria-label="Preview feature film chapters"></div>
 <div class="actions"><a id="openEditor" class="btn" href="#" target="_blank" rel="noopener noreferrer" hidden>OPEN FULL EDITOR ↗</a><span class="note" id="status" role="status">Preview only; video has not been exported.</span></div>
 <p class="note">This player uses browser motion graphics, not AI-generated live-action footage. Export is a device-local video recording; format depends on browser support. User media is not uploaded.</p>
 </main><script>
@@ -47,34 +49,110 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
   const subtitle = document.getElementById("subtitle");
   const status = document.getElementById("status");
   const editor = document.getElementById("openEditor");
+  const chapterNav = document.getElementById("chapterNav");
   let latest = null;
+  let featureChapters = null;
   let ready = false;
   let appInitialized = false;
   let nextId = 0;
   const waiting = new Map();
   const safe = (x) => String(x || "").slice(0,250);
+  function featurePreview(index) {
+    if (!featureChapters || !featureChapters[index]) return;
+    const chapter = featureChapters[index];
+    latest = {previewProject:chapter.project};
+    chapterNav.querySelectorAll("button").forEach((button, i) => {
+      button.setAttribute("aria-current",String(i===index));
+    });
+    status.textContent = "PREVIEW ONLY — ACT " + (index+1) + "/" + featureChapters.length +
+      ". In-frame export only records this act; complete MP4 requires full Motion editor/workstation.";
+    sendToPlayer();
+  }
   function setResult(envelope) {
     const data = envelope && envelope.structuredContent ? envelope.structuredContent : envelope;
-    if (!data || data.protocol !== "motion-chat-v1" || !data.previewProject) return;
-    const film = data.previewProject;
-    if (!Array.isArray(film.scenes) || film.scenes.length < 1 || film.scenes.length > 8) return;
-    latest = data;
-    title.textContent = safe(film.title);
-    subtitle.textContent = film.scenes.length + " SCENES · " + Number(data.durationSeconds).toFixed(1) + " SEC · " + safe(film.format).toUpperCase();
+    if (!data || typeof data.editorUrl !== "string") return;
+    let destination;
+    try {
+      destination = new URL(data.editorUrl);
+      if (destination.origin !== origin || destination.pathname !== "/motion" ||
+          destination.searchParams.get("mode") !== "cinematic") return;
+    } catch {return;}
+    let film = null;
+    let scenes = [];
+    featureChapters = null;
+    chapterNav.hidden = true;
+    chapterNav.replaceChildren();
+    if (data.protocol === "motion-sequence-v1") {
+      try {
+        if (!destination.hash.startsWith("#motion-sequence-v1=")) return;
+        const encoded = destination.hash.slice("#motion-sequence-v1=".length);
+        if (encoded.length < 50 || encoded.length > 26000 ||
+          !/^[A-Za-z0-9_-]+$/.test(encoded)) return;
+        const raw = atob(encoded.replace(/-/g,"+").replace(/_/g,"/") + "=".repeat((4-encoded.length%4)%4));
+        if (raw.length > 20000) return;
+        const json = new TextDecoder("utf-8",{fatal:true}).decode(Uint8Array.from(raw,c=>c.charCodeAt(0)));
+        const manifest = JSON.parse(json);
+        if (manifest.type !== "motion-sequence-v1" || !Array.isArray(manifest.chapters) ||
+            manifest.chapters.length < 2 || manifest.chapters.length > 3) return;
+        let elapsed = 0;
+        const checked = manifest.chapters.map((chapter,i) => {
+          if (!chapter || !chapter.project || !Array.isArray(chapter.project.scenes) ||
+              !chapter.project.scenes.length || chapter.project.scenes.length > 8) throw Error("Invalid act");
+          for (const scene of chapter.project.scenes) {
+            if (!scene || typeof scene.headline !== "string" || scene.headline.length > 105 ||
+                typeof scene.seconds !== "number" || scene.seconds < 2 || scene.seconds > 8 ||
+                scene.mediaId || scene.src || scene.url) throw Error("Unsafe source or timing");
+            elapsed += scene.seconds;
+          }
+          return chapter;
+        });
+        if (elapsed < 65 || elapsed > 192 || Math.abs(elapsed-data.durationSeconds)>.1) return;
+        featureChapters = checked;
+        scenes = checked.flatMap((chapter,i) => chapter.project.scenes.map(shot =>
+          ({...shot,chapter:i+1})));
+        film = checked[0].project;
+        title.textContent = safe(manifest.title);
+        subtitle.textContent = checked.length + " ACTS · " + scenes.length + " SHOTS · " +
+          elapsed.toFixed(1) + " SEC / FEATURE FILM";
+        chapterNav.hidden = false;
+        checked.forEach((chapter,i) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = "ACT " + (i+1) + " / " + safe(chapter.title);
+          button.addEventListener("click",()=>featurePreview(i));
+          chapterNav.appendChild(button);
+        });
+      }catch{return;}
+    } else if (data.protocol === "motion-chat-v1") {
+      film=data.previewProject;
+      if (!film || !Array.isArray(film.scenes) ||
+          film.scenes.length<1 || film.scenes.length>8) return;
+      title.textContent=safe(film.title);
+      subtitle.textContent=film.scenes.length+" SCENES · "+Number(data.durationSeconds).toFixed(1)+
+        " SEC · "+safe(film.format).toUpperCase();
+      scenes=film.scenes;
+    } else return;
+    editor.href = data.editorUrl;
+    editor.hidden = false;
     shots.replaceChildren();
-    const h = document.createElement("h2"); h.textContent = "SHOT LIST / DIRECTOR"; shots.appendChild(h);
-    film.scenes.forEach((shot, i) => {
-      const div = document.createElement("div");div.className = "shot";
-      const number = document.createElement("span");number.className = "number";number.textContent = "SHOT " + String(i + 1).padStart(2, "0") + " / " + Number(shot.seconds).toFixed(1) + "S";
-      const strong = document.createElement("strong");strong.textContent = safe(shot.headline);
-      const small = document.createElement("small");small.textContent = safe(shot.kind);
+    const h = document.createElement("h2");
+    h.textContent = featureChapters ? "FEATURE FILM / COMPLETE STORYBOARD" : "SHOT LIST / DIRECTOR";
+    shots.appendChild(h);
+    scenes.forEach((shot,i) => {
+      const div=document.createElement("div");div.className="shot";
+      const number=document.createElement("span");number.className="number";
+      number.textContent="SHOT "+String(i+1).padStart(2,"0")+
+        (shot.chapter ? " / ACT "+shot.chapter : "")+" / "+Number(shot.seconds).toFixed(1)+"S";
+      const strong=document.createElement("strong");strong.textContent=safe(shot.headline);
+      const small=document.createElement("small");small.textContent=safe(shot.kind);
       div.append(number,strong,small);shots.appendChild(div);
     });
-    if (typeof data.editorUrl === "string" && data.editorUrl.startsWith(origin + "/motion?")) {
-      editor.href = data.editorUrl; editor.hidden = false;
+    if (featureChapters) featurePreview(0);
+    else {
+      latest={previewProject:film};
+      status.textContent="Editable motion draft. Preview/export uses browser graphics and may not include audio.";
+      sendToPlayer();
     }
-    status.textContent = "Editable motion draft loaded. Click play, or export from the preview.";
-    sendToPlayer();
   }
   function sendToPlayer() {
     if (!ready || !latest || !player.contentWindow) return;
