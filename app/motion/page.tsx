@@ -68,6 +68,8 @@ export default function MotionStudioPage() {
   const [musicSeconds, setMusicSeconds] = useState<number | null>(null);
   const [assetRevision, setAssetRevision] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [editorPanel,setEditorPanel]=useState<"create"|"media"|"scene"|"sound"|"look"|"review"|"deliver">("scene");
+  const [featureOpen,setFeatureOpen]=useState(false);
   const [playing, setPlaying] = useState(false);
   const [playhead, setPlayhead] = useState(0);
   const [generating, setGenerating] = useState(false);
@@ -285,7 +287,7 @@ export default function MotionStudioPage() {
         .then(()=>{if(!playing)drawMotionFrame(ctx,project,timeRef.current,canvas.width,canvas.height);})
         .catch(error=>setNotice("PREVIEW SOURCE: "+(error instanceof Error?error.message:String(error))));
     }
-  }, [project, playing, playhead, assetRevision]);
+  }, [project, playing, playhead, assetRevision, featureOpen]);
 
   useEffect(() => {
     if (!playing) {
@@ -676,6 +678,17 @@ export default function MotionStudioPage() {
   const previewHeight = Math.round(previewWidth * formatSize.height / formatSize.width);
   const activeIndex = sceneAt(project, playhead).index;
 
+  useEffect(()=>{
+    const handler=(event:KeyboardEvent)=>{
+      if(event.defaultPrevented||event.ctrlKey||event.metaKey||!event.altKey)return;
+      if(["INPUT","TEXTAREA","SELECT"].includes((event.target as HTMLElement)?.tagName))return;
+      const panels=["create","media","scene","sound","look","review","deliver"] as const;
+      const index=Number(event.key);
+      if(index>=1&&index<=7){event.preventDefault();setFeatureOpen(false);setEditorPanel(panels[index-1]);}
+    };
+    window.addEventListener("keydown",handler);
+    return()=>window.removeEventListener("keydown",handler);
+  },[]);
   const modePicker=<nav className={styles.productionModes} aria-label="Production pipeline">
     <button type="button" data-selected={mode==="cinematic"} aria-pressed={mode==="cinematic"}
       onClick={()=>switchMode("cinematic")} disabled={exporting}>
@@ -716,33 +729,90 @@ export default function MotionStudioPage() {
     </header>
 
     {modePicker}
-    <aside className={styles.commercialBanner}>
-      <div><span>MADE IN MARGARYAN LABS / AVAILABLE FOR COMMISSIONS</span>
-        <strong>We design product films — from concept to the original final cut.</strong>
-        <small>Separate client brief · agreed scope and licensing · no invented case-study results</small>
+    <div className={styles.editorProjectBar} aria-label="Current motion production">
+      <div className={styles.editorProjectTitle}>
+        <span className={styles.barStudioTag}>MOTION / EDITOR</span>
+        <strong title={project.title}>{project.title}</strong>
+        <small>{info.name} <i>·</i> {project.format.toUpperCase()} <i>·</i> {project.scenes.length} SHOTS <i>·</i> {timeLabel(total)}</small>
       </div>
-      <a href="/motion/commission">BUILD A CLIENT BRIEF ↗</a>
-    </aside>
-    <nav className={styles.productionNav} aria-label="Motion Studio production stages">
-      <a href="#film-sequence" className={styles.productionNavFeatured}>
-        <span>01 / FEATURE FILM</span><strong>2–5 MINUTES</strong>
-        <small>CHAPTERS · MASTER TIMELINE · FULL-FILM PREVIEW ↗</small>
-      </a>
-      <a href="#motion-storyboard"><span>02 / DIRECT</span><strong>CREATIVE BRIEF</strong><small>BRAND · SHOTS · CAMERA ↗</small></a>
-      <a href="#motion-editor"><span>03 / CUT</span><strong>PICTURE & AUDIO</strong><small>ORIGINAL VIDEO · VOICE · TIMING ↗</small></a>
-      <a href="#motion-export"><span>04 / DELIVER</span><strong>EXPORT</strong><small>FRAME QC · MP4 MASTER ↗</small></a>
-    </nav>
+      <div className={styles.barUtilities}>
+        <span className={styles.privacyChip}>● LOCAL / NO API CREDIT</span>
+        <button type="button" className={featureOpen?styles.barActive:""}
+          onClick={()=>{setPlaying(false);setFeatureOpen(v=>!v);}}
+          aria-pressed={featureOpen}>◫ FEATURE FILM</button>
+        <a href="/motion/commission">CLIENT PROJECTS ↗</a>
+      </div>
+    </div>
     <div className={styles.notice} role="status">{notice}</div>
-    <div id="film-sequence" className={styles.featureWorkspace}>
+    {featureOpen&&<div id="film-sequence" className={styles.featureWorkspace}>
+      <div className={styles.featureBack}>
+        <span>FEATURE FILM / CHAPTER ASSEMBLY</span>
+        <button type="button" onClick={()=>setFeatureOpen(false)}>← BACK TO EDITOR</button>
+      </div>
       <FilmSequenceDesk project={project}
         busy={exporting||generating||directorRepairing||visualReviewing}
         onLoadProject={(next,reason)=>{
           setPlaying(false);updateProject(next);setSelectedIndex(0);jump(0);
-          setNotice(reason+". Chapter loaded into the editable director below. Source rights and codec proof remain required.");
+          setFeatureOpen(false);setEditorPanel("scene");
+          setNotice(reason+". Chapter loaded in the director. Verify source coverage and final audio.");
         }}/>
-    </div>
+    </div>}
+    {!featureOpen&&
     <div className={styles.workspace} id="motion-storyboard">
-      <section className={styles.sidebar} aria-label="Creative director controls">
+      <nav className={styles.editorRail} aria-label="Editor workspaces">
+        {([
+          ["create","✦","CREATE","Concept and storyboard"],
+          ["media","▧","ASSETS","Original video and Chat Pack"],
+          ["scene","◈","SCENE","Selected shot properties"],
+          ["sound","♫","AUDIO","Human voice and score"],
+          ["look","◐","LOOK","Format and film presentation"],
+          ["review","◇","REVIEW","Evidence and visual quality"],
+          ["deliver","↥","EXPORT","Delivery and project files"]
+        ] as const).map(([panel,icon,label,desc],i)=><button key={panel} type="button"
+          className={editorPanel===panel?styles.railCurrent:""}
+          aria-current={editorPanel===panel?"page":undefined}
+          aria-label={label+" – "+desc+" (Alt+"+(i+1)+")"}
+          title={desc+" · Alt+"+(i+1)}
+          onClick={()=>{
+            setEditorPanel(panel);
+            if(window.matchMedia("(max-width: 850px)").matches)
+              requestAnimationFrame(()=>document.getElementById("motion-inspector")?.scrollIntoView({behavior:"smooth",block:"start"}));
+            else document.getElementById("motion-inspector-scroll")?.scrollTo({top:0});
+          }}>
+            <span className={styles.railIcon} aria-hidden="true">{icon}</span>
+            <span className={styles.railLabel}>{label}</span>
+          </button>)}
+        <div className={styles.railFoot} title="Film assets remain in this browser">PRIVATE<br/>LOCAL</div>
+      </nav>
+      <section className={styles.sidebar} id="motion-inspector" aria-label="Creative director inspector">
+        <div className={styles.inspectorHeader}>
+          <div><span>INSPECTOR / {editorPanel.toUpperCase()}</span>
+            <strong>{({
+              create:"Creative brief",media:"Source library",
+              scene:"Shot "+String(selectedIndex+1).padStart(2,"0")+" / "+project.scenes.length,
+              sound:"Audio studio",look:"Film presentation",
+              review:"Quality review",deliver:"Production delivery"
+            })[editorPanel]}</strong>
+          </div>
+          <small>ALT + {["create","media","scene","sound","look","review","deliver"].indexOf(editorPanel)+1}</small>
+        </div>
+        <div id="motion-inspector-scroll" className={styles.inspectorScroll}>
+        {editorPanel==="deliver"&&<div className={styles.deliverIntro}>
+          <strong>Ready for the final cut?</strong>
+          <p>Export your video from the delivery tray under the preview.
+            Run quality checks before using footage or music in a commercial.</p>
+          <div><span>{qa.blockers===0?"✓":"!"} Structure {qa.blockers===0?"ready":qa.blockers+" blockers"}</span>
+          <span>{project.scenes.length} shots / {timeLabel(total)}</span></div>
+          <button type="button" className={styles.deliverPrimary}
+            disabled={exporting||generating} onClick={()=>void exportVideo()}>
+            {exporting?"RENDERING "+exportProgress+"%":qa.pass?"RUN QA & EXPORT VIDEO ↗":"REVIEW QA BLOCKERS ↗"}
+          </button>
+          <button type="button" className={styles.deliverSecondary}
+            onClick={saveJson}>↓ SAVE EDITABLE PROJECT</button>
+          <button type="button" className={styles.deliverSecondary}
+            onClick={()=>setEditorPanel("review")}>◈ OPEN FRAME & EVIDENCE REVIEW</button>
+        </div>}
+        <div className={styles.panelSection} hidden={editorPanel!=="media"}>
         <OperatorDesk project={project} selectedIndex={selectedIndex}
           voiceFile={voiceover} musicFile={licensedMusic}
           busy={exporting||generating||directorRepairing||visualReviewing}
@@ -792,6 +862,8 @@ export default function MotionStudioPage() {
             switchMode("quick");
           }}
         />
+        </div>
+        <div className={styles.panelSection} hidden={editorPanel!=="create"}>
         <div className={styles.sectionHeader}><span>01 / CREATIVE BRIEF</span><strong>LOCAL DIRECTOR</strong></div>
         <label className={styles.field}><span>PRODUCT / BRAND</span>
           <select value={project.brand} onChange={event => loadBrand(event.target.value as MotionBrand)}>
@@ -852,7 +924,8 @@ export default function MotionStudioPage() {
           <small>Original film grammar and approved Promptence SVG. Illustrative data motifs are never real provider results.</small>
         </div>
 
-        <div className={styles.divider}/>
+        </div>
+        <div className={styles.panelSection} hidden={editorPanel!=="look"}>
         <div className={styles.sectionHeader}><span>02 / FORMAT</span><strong>OUTPUT</strong></div>
         <div className={styles.segment}>
           {FORMATS.map(format => <button key={format} type="button" aria-pressed={project.format === format} className={project.format === format ? styles.active : ""} onClick={() => updateProject({ ...project, format })}>
@@ -882,6 +955,8 @@ export default function MotionStudioPage() {
           </select>
         </label>
         <p className={styles.hint}>Commercial exports no longer need to expose debug labels, clip counters or the Motion Engine footer. Use EDITOR only while reviewing.</p>
+        </div>
+        <div className={styles.panelSection} hidden={editorPanel!=="sound"}>
         <label className={styles.audioToggle}>
           <input type="checkbox" checked={soundEnabled} disabled={exporting} onChange={event => setSoundEnabled(event.target.checked)}/>
           ORIGINAL SYNTH SOUNDTRACK <strong>{soundEnabled ? "ON" : "OFF"}</strong>
@@ -939,6 +1014,8 @@ export default function MotionStudioPage() {
           </label>
           <small>Audio clips are mixed into the browser export. For H.264/AAC mastering use the existing offline FFmpeg workflow with the original licensed files.</small>
         </section>
+        </div>
+        <div className={styles.panelSection} hidden={editorPanel!=="review"}>
         <section className={styles.referenceLab} aria-label="Reference film comparison">
           <div className={styles.referenceLabHead}>
             <strong>REFERENCE LAB / REAL FILM SIGNALS</strong>
@@ -1010,8 +1087,23 @@ export default function MotionStudioPage() {
           <p>{qa.scenes} shots · {qa.seconds.toFixed(1)}s · {qa.warnings} reviews · {qa.blockers} blockers</p>
           {qa.checks.filter(c=>c.severity!=="info").slice(0,4).map(c=><small key={c.id}>• {c.message}</small>)}
         </div>
-        <div className={styles.divider}/>
+        </div>
+        <div className={styles.panelSection} hidden={editorPanel!=="scene"}>
         <div className={styles.sectionHeader}><span>03 / SCENE INSPECTOR</span><strong>{String(selectedIndex + 1).padStart(2, "0")}</strong></div>
+        <div className={styles.quickSceneEdit}>
+          <label className={styles.field}><span>HEADLINE</span>
+            <textarea rows={2} value={selected.headline} maxLength={105}
+              onChange={event=>editScene("headline",event.target.value)}/>
+          </label>
+          <label className={styles.field}><span>SECOND LINE</span>
+            <textarea rows={2} value={selected.support} maxLength={180}
+              onChange={event=>editScene("support",event.target.value)}/>
+          </label>
+          <label className={styles.field}><span>SCENE DURATION · {selected.seconds.toFixed(1)} SEC</span>
+            <input type="range" min="2" max="8" step=".5"
+              value={selected.seconds} onChange={event=>editScene("seconds",Number(event.target.value))}/>
+          </label>
+        </div>
         <label className={styles.field}><span>VISUAL COMPOSITION</span>
           <select value={selected.kind} onChange={event => updateProject({...project,
             scenes:project.scenes.map((scene,i)=>i===selectedIndex
@@ -1180,11 +1272,7 @@ export default function MotionStudioPage() {
           <small>PNG / JPEG / WebP · max 12MB. A real capture only — not fabricated dashboard statistics. For reproducible offline MP4, add --screen screenshot.png.</small>
         </label>
         <label className={styles.field}><span>EYEBROW</span><input value={selected.eyebrow} maxLength={65} onChange={event => editScene("eyebrow", event.target.value)}/></label>
-        <label className={styles.field}><span>HEADLINE</span><textarea rows={2} value={selected.headline} maxLength={105} onChange={event => editScene("headline", event.target.value)}/></label>
-        <label className={styles.field}><span>SUPPORT LINE</span><textarea rows={2} value={selected.support} maxLength={180} onChange={event => editScene("support", event.target.value)}/></label>
-        <label className={styles.field}><span>DURATION · {selected.seconds.toFixed(1)} SEC</span>
-          <input type="range" min="2" max="8" step=".5" value={selected.seconds} onChange={event => editScene("seconds", Number(event.target.value))}/>
-        </label>
+        <p className={styles.editorTip}>Primary scene copy and duration are above. The controls below are for advanced camera and compositing.</p>
         <div className={styles.inlineActions}>
           <button onClick={addScene} disabled={project.scenes.length >= 8}>+ Add scene</button>
           <button onClick={removeScene} disabled={project.scenes.length <= 1}>Remove</button>
@@ -1195,11 +1283,19 @@ export default function MotionStudioPage() {
           {needsSpatial&&spatialError()&&<small>{spatialError()}</small>}
           <small>Free library, not text-to-video AI. No cloud GPU, voice cloning or API key. Legacy 2D shots remain unchanged.</small>
         </div>
+        </div>
+        </div>
       </section>
 
       <section className={styles.stageSection} id="motion-editor" aria-label="Motion canvas and timeline">
-        <div className={styles.stageTop}><div><span>LIVE CANVAS</span><strong>{info.name}</strong></div>
-          <div><i/> {needsSpatial&&spatialStatus()==="ready"?"2D + WEBGL · THREE.JS / GSAP":"KEYLESS PROCEDURAL ENGINE"}</div></div>
+        <div className={styles.stageTop}>
+          <div><span>MONITOR / LIVE CANVAS</span><strong>{info.name}</strong></div>
+          <div className={styles.stageTopTools}>
+            <span className={styles.frameBadge}>{project.format==="portrait"?"9:16":project.format==="landscape"?"16:9":"1:1"}</span>
+            <span className={styles.frameBadge}>{qa.blockers?qa.blockers+" QA BLOCKERS":"STRUCTURE READY"}</span>
+            <button type="button" onClick={()=>setEditorPanel("deliver")}>EXPORT ↗</button>
+          </div>
+        </div>
         <div className={styles.stageShell}>
           <canvas ref={previewRef} className={styles.canvas} width={previewWidth} height={previewHeight}
             style={{ aspectRatio: String(formatSize.width) + " / " + String(formatSize.height) }}
@@ -1211,6 +1307,19 @@ export default function MotionStudioPage() {
           <input type="range" min="0" max={total} step=".05" value={playhead} aria-label="Scrub animation timeline" onChange={event => { setPlaying(false); jump(Number(event.target.value)); }}/>
           <span>{timeLabel(total)}</span>
         </div>
+        <div className={styles.sectionHeader}><span>04 / FRAME SEQUENCE</span><strong>{project.scenes.length} SHOTS</strong></div>
+        <div className={styles.timeline}>
+          {project.scenes.map((scene, index) => <button key={scene.id} type="button"
+            className={(index === selectedIndex ? styles.selectedShot + " " : "") + (index === activeIndex ? styles.currentShot : "")}
+            onClick={() => {selectScene(index);setEditorPanel("scene");}}>
+            <span className={styles.shotNumber}>SHOT {String(index + 1).padStart(2, "0")} <i>{scene.seconds}s</i></span>
+            <strong>{scene.headline}</strong>
+            <small>{scene.kind}</small>
+          </button>)}
+        </div>
+        <details className={styles.advancedTimeline}>
+          <summary><span>◫ MULTITRACK & PRECISION CUT</span>
+            <small>Advanced / audio trim · split · reorder · undo</small></summary>
         <MultitrackEditor project={project} playhead={playhead} selectedIndex={selectedIndex}
           voice={voiceover} voiceSeconds={narrationSeconds}
           music={licensedMusic} musicSeconds={musicSeconds} playing={playing}
@@ -1230,17 +1339,8 @@ export default function MotionStudioPage() {
             setNotice(description+" Original video remains local. Check the next transition and export preflight.");
           }}
         />
-        <div className={styles.sectionHeader}><span>04 / FRAME SEQUENCE</span><strong>{project.scenes.length} SHOTS</strong></div>
-        <div className={styles.timeline}>
-          {project.scenes.map((scene, index) => <button key={scene.id} type="button"
-            className={(index === selectedIndex ? styles.selectedShot + " " : "") + (index === activeIndex ? styles.currentShot : "")}
-            onClick={() => selectScene(index)}>
-            <span className={styles.shotNumber}>SHOT {String(index + 1).padStart(2, "0")} <i>{scene.seconds}s</i></span>
-            <strong>{scene.headline}</strong>
-            <small>{scene.kind}</small>
-          </button>)}
-        </div>
-        <div className={styles.bottom}>
+        </details>
+        <div className={styles.bottom} hidden={editorPanel!=="deliver"}>
           <div><b>MAKE SOMETHING THAT MOVES PEOPLE.</b><p>Every frame is deterministic, locally editable and exported only on command.</p></div>
           <div className={styles.exportActions} id="motion-export">
             <label className={styles.importLabel}>Import JSON<input type="file" accept=".json,application/json" onChange={event => { void importJson(event.target.files?.[0]); event.currentTarget.value = ""; }}/></label>
@@ -1275,8 +1375,8 @@ export default function MotionStudioPage() {
             </button>
           </div>
         </div>
-        <p className={styles.footnote}>Spatial shots use actual WebGL geometry via Three.js and deterministic GSAP easing only when selected; rendering requires WebGL support. Local cinema staging and original MP4 soundtracks run without paid video APIs. Product screenshots are local-only and never stored in saved JSON. Source-verified marks are original SVGs; private GitHub sources are never exposed here. Browser EXPORT may produce WebM depending on support. For deterministic professional H.264/AAC MP4, use the offline <code>npm run motion:master</code> workflow in the repository; it needs a local computer with FFmpeg/Chromium. QA checks structure and sampled frames but cannot certify taste, factual claims or music licenses. Final creative review is still required.</p>
+        <p className={styles.footnote} hidden={editorPanel!=="deliver"}>Spatial shots use actual WebGL geometry via Three.js and deterministic GSAP easing only when selected; rendering requires WebGL support. Local cinema staging and original MP4 soundtracks run without paid video APIs. Product screenshots are local-only and never stored in saved JSON. Source-verified marks are original SVGs; private GitHub sources are never exposed here. Browser EXPORT may produce WebM depending on support. For deterministic professional H.264/AAC MP4, use the offline <code>npm run motion:master</code> workflow in the repository; it needs a local computer with FFmpeg/Chromium. QA checks structure and sampled frames but cannot certify taste, factual claims or music licenses. Final creative review is still required.</p>
       </section>
-    </div>
+    </div>}
   </main>;
 }
