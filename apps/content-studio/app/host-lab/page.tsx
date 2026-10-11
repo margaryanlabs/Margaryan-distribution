@@ -211,6 +211,6 @@ export default function HostLab(){
       </section>
     </div>
     <div className={styles.next}><strong>Final release gate:</strong> In an actual ChatGPT conversation, a user must install the custom plugin, request a film, verify the real embedded player and browser export, and authorize any ChatGPT file-library upload. This simulated host does not bypass that step. For a genuine device video codec test, open <Link href="/quality-lab">VIDEO QUALITY LAB ↗</Link>.</div>
-    <footer><Link href="/connect">CONNECT PLUGIN ↗</Link><Link href="/diagnostics">SERVER 8/8 ↗</Link><Link href="/quality-lab">REAL VIDEO QUALITY ↗</Link></footer>
+    <footer><Link href="/connect">CONNECT PLUGIN ↗</Link><Link href="/diagnostics">SERVER 9/9 ↗</Link><Link href="/quality-lab">REAL VIDEO QUALITY ↗</Link></footer>
   </div></main>;
 }
