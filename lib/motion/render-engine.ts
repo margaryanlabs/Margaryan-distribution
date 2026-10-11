@@ -269,7 +269,7 @@ function drawShot(ctx: CanvasRenderingContext2D, project: MotionProject, index: 
       // Time-addressable Three.js compositing (only on an explicitly selected shot).
       // A missing renderer is not silently represented as genuine WebGL:
       // export and offline mastering preflight must load it first.
-      if(!drawSpatialFrame(ctx,W,H,accent,absoluteTime,progress,index,scene)) {
+      if(!drawSpatialFrame(ctx,W,H,accent,absoluteTime,progress,index,scene,project.brand)) {
         drawCinematicSet(ctx,project,scene,index,absoluteTime,progress,W,H);
       }
     } else if(project.signatureFilm==="promptence-answer"&&project.brand==="promptence"){
