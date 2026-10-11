@@ -6,7 +6,7 @@
   "author": {
     "name": "Margaryan Labs"
   },
-  "homepage": "https://margaryan-distribution.vercel.app/motion",
+  "homepage": "https://studio.promptence.tech/motion",
   "repository": "https://github.com/margaryanlabs/Margaryan-distribution",
   "keywords": [
     "video",
@@ -26,7 +26,7 @@
           "Read",
           "Write"
         ],
-        "websiteURL": "https://margaryan-distribution.vercel.app/motion",
+        "websiteURL": "https://studio.promptence.tech/motion",
         "defaultPrompt": [
           "Create a 30-second vertical motion-graphics video for my business.",
           "Revise the second shot in my existing Motion Studio video."
