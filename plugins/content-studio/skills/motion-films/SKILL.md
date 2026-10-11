@@ -29,8 +29,10 @@ Public beta tools are stateless and free to call. They do not authenticate custo
 
 ## Public beta endpoint
 
-Public MCP: https://studio.promptence.tech/api/mcp. Use only the two advertised tools: create_motion_film and revise_motion_film. The isolated standalone application is publicly deployed on an owned subdomain and contains no private Distribution CRM routes. The interactive ChatGPT rendering and optional file library upload still require real installed-client testing.
+Public MCP: https://studio.promptence.tech/api/mcp. The isolated standalone application is publicly deployed on an owned subdomain and contains no private Distribution CRM routes. It advertises three stateless tools: create_motion_film, revise_motion_film, and create_motion_feature_film. Installation in ChatGPT and actual in-ChatGPT video export still require live client testing.
 
-## Longer films — not currently available through public plugin
+## Longer films — now available in public Sequence Studio
 
-The internal experimental create_motion_feature_film planner is intentionally not advertised by the public MCP endpoint. Its 65–192-second project link depends on the separate Sequence Studio PR #57, which is not yet deployed here. Do not tell users to call the unavailable tool or give a broken link. The current public plugin produces 1–8 scenes / up to 64 seconds. For more time, explain this limitation and offer a multipart storyboard without promising a single finished video.
+For a long-form 65–192 second narrated concept, call create_motion_feature_film with 9–24 original scenes, each 2–8 seconds; supply meaningful act/chapter titles and an editorial opening, proof or evidence with accurate sourcing, and CTA. You can also use client_brand_name/client_brand_caption/client_brand_accent for the customer's approved text identity when brand=labs. The tool returns a **multi-chapter project review link**, not a video file. Open the editor at that link to inspect and approve the import before changing any existing film.
+
+The publicly hosted /motion page now includes the actual Film Sequence Studio and local browser workprint render. Manual Sequence Studio can produce films up to 300 seconds from up to eight separately editable chapters (subject to validated technical restrictions), with demonstration templates. A browser-generated workprint or a separately mastered local H.264 output is different from a ChatGPT inline rendered video. **Do not promise one-click 300-second generation by the ChatGPT tool**: the current AI-directed tool is limited to 192 seconds; beyond that the user must build additional chapters manually. Do not claim an MP4 exists until actually exported and checked for audiovisual correctness.
