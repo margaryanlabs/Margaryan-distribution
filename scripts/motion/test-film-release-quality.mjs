@@ -1,5 +1,5 @@
-import {PLAN as PUBLIC_PLAN} from "./interaction-cinema-core.mjs";
 #!/usr/bin/env node
+import {PLAN as PUBLIC_PLAN} from "./interaction-cinema-core.mjs";
 /** No external APIs or browser needed. Production guards are exercised independently. */
 import assert from "node:assert/strict";
 import {assertReadableFrame,meanPixelDifference,verifyNovelShot,
