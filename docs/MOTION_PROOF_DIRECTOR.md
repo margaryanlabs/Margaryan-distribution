@@ -69,3 +69,13 @@ npm run motion:proof -- --screen out/approved-candidates/promptence-desktop.png 
 - A READY Vercel build only proves build/type-check viability; it does not prove an exported film looks good. A final **review of an actual MP4** is mandatory before expanding to 2–3 minutes.
 
 **Stop condition:** if the owner does not approve the ten-second sample, DO NOT produce a longer film.
+
+## Additive real movement asset (public page, not AI video)
+The operator can also record a **10s native 1080×1920 MP4** consisting of frames captured from the actual public Promptence website while the Playwright browser scrolls through the visible page:
+
+```bash
+npm run dev  # not strictly needed for the capture command
+npm run motion:capture-video -- out/motion/screens/promptence-actual.mp4
+```
+
+This creates real website footage (not drawn UI) that may be imported in the existing **Quick Studio** as an authorized source clip. Inspect for current product accuracy before reuse. This is separate from the Proof Director screenshot film and must not be called a live AI provider measurement or claim that real users interacted. Audio, creative direction, cuts, legitimate voice and mobile visual signoff are still missing. Rendering has to run on a capable workstation with network access, Playwright Chromium and FFmpeg.
