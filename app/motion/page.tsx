@@ -287,7 +287,7 @@ export default function MotionStudioPage() {
         .then(()=>{if(!playing)drawMotionFrame(ctx,project,timeRef.current,canvas.width,canvas.height);})
         .catch(error=>setNotice("PREVIEW SOURCE: "+(error instanceof Error?error.message:String(error))));
     }
-  }, [project, playing, playhead, assetRevision]);
+  }, [project, playing, playhead, assetRevision, featureOpen]);
 
   useEffect(() => {
     if (!playing) {
