@@ -159,6 +159,10 @@ export function runContentStudioTool(name: string, raw: unknown) {
       throw Error("Paste a valid existing MotionProject");
     if (raw.current_project.scenes.length > 8) throw Error("Too many scenes");
     const current = sanitizeMotionProject(raw.current_project);
+    if (Array.isArray(raw.changes) && raw.changes.some(change =>
+      record(change) && record(change.set) &&
+      ("mediaId" in change.set || "mediaStart" in change.set)))
+      throw Error("ChatGPT cannot attach or retime local media; use the approved editor Media Library");
     const preview = previewChatMotionPack({
       protocol: CHAT_PROTOCOL, action: "patch",
       expectedBrand: current.brand, expectedTitle: current.title, changes: raw.changes
