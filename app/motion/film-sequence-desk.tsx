@@ -193,6 +193,20 @@ export default function FilmSequenceDesk({
       setNotice("Imported "+parsed.chapters.length+" chapters; choose LOAD to edit an individual chapter.");
     }catch(e){setNotice(e instanceof Error?e.message:"Invalid film sequence");}
   }
+  async function openDemo(){
+    if(busy)return;
+    try{
+      const response=await fetch("/motion/film-templates/promptence-120s.json",{
+        method:"GET",cache:"no-store",credentials:"same-origin"
+      });
+      if(!response.ok)throw Error("Film demo is unavailable (HTTP "+response.status+")");
+      const text=await response.text();
+      if(text.length>20_000)throw Error("Film demo is unexpectedly large");
+      const draft=decodeManifest(JSON.parse(text));
+      setInbound(draft);
+      setNotice("Source-honest 120-second Promptence editorial demo staged. Review all chapters before approving.");
+    }catch(e){setNotice("FILM DEMO: "+(e instanceof Error?e.message:"Could not load demo"));}
+  }
   function removeChapter(index:number){
     if(busy||!window.confirm("Remove this chapter from the film manifest? The current editor will not change."))return;
     setChapters(prev=>prev.filter((_,i)=>i!==index).map((c,i)=>({...c,id:"chapter-"+(i+1)})));
@@ -267,6 +281,7 @@ export default function FilmSequenceDesk({
         <input type="file" accept=".json,application/json" disabled={busy}
           onChange={e=>{const f=e.target.files?.[0];e.target.value="";void importFilm(f);}}/>
       </label>
+      <button type="button" onClick={()=>{void openDemo()}} disabled={busy}>✦ TRY 120s DEMO</button>
       <button type="button" onClick={resetFilm} disabled={busy||!chapters.length}>RESET SEQUENCE</button>
     </div>
     <p className={styles.notice} role="status">{notice}</p>
