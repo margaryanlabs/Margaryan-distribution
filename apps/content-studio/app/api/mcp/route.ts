@@ -62,7 +62,10 @@ export async function POST(request: Request) {
     });
   }
   if (payload.method === "ping") return rpc(payload.id, {});
-  if (payload.method === "tools/list") return rpc(payload.id, { tools: CONTENT_STUDIO_TOOLS });
+  // The long-form tool needs the separately staged Sequence Studio. Do not
+  // advertise a dead link to customers while that UI remains a draft PR.
+  const publicTools=CONTENT_STUDIO_TOOLS.filter(tool=>tool.name!=="create_motion_feature_film");
+  if (payload.method === "tools/list") return rpc(payload.id, { tools: publicTools });
   if (payload.method === "resources/list") return rpc(payload.id, {
     resources: [{
       name: "Margaryan Content Studio film player",
@@ -88,6 +91,7 @@ export async function POST(request: Request) {
         text: html,
         _meta: {
           ui: {
+            domain: "https://studio.promptence.tech",
             prefersBorder: false,
             csp: {
               connectDomains: [],
@@ -104,7 +108,7 @@ export async function POST(request: Request) {
   if (payload.method !== "tools/call") return error(payload.id, -32601, "Unknown MCP method");
   const params = isRecord(payload.params) ? payload.params : {};
   const name = typeof params.name === "string" ? params.name : "";
-  if (!CONTENT_STUDIO_TOOLS.some(tool => tool.name === name))
+  if (!publicTools.some(tool => tool.name === name))
     return error(payload.id, -32602, "Unknown tool");
   try {
     const result = runContentStudioTool(name, params.arguments);
