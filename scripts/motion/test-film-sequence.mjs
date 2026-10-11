@@ -53,7 +53,7 @@ assert.throws(()=>validateFilmSequence(corrupt),/2–8/);
 const remote={...manifest,chapters:[chapter(1)]};
 remote.chapters[0].project.scenes[0].videoUrl="https://third-party.invalid/no.mp4";
 assert.throws(()=>validateFilmSequence(remote),/cannot carry videoUrl/);
-const source={...manifest,chapters:[chapter(1,1)]};
+const source={...manifest,expectedDurationSeconds:8,chapters:[chapter(1,1)]};
 source.chapters[0].project.scenes[0]={...source.chapters[0].project.scenes[0],
   kind:"screen",mediaId:"approved_media_0123",mediaStart:3};
 assert.equal(validateFilmSequence(source).shots,1);
