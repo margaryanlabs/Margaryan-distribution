@@ -316,3 +316,10 @@
  color:#caeed6;font-size:10px;font-weight:800;padding:9px 12px;cursor:pointer}
 .sourceInspector>button:hover:not(:disabled){background:#2e6545}
 .sourceInspector>button:disabled{opacity:.5;cursor:not-allowed}
+
+/* Direct authentic product footage, focus & zoom editorial inspector. */
+.sourceArtDirection{display:grid;gap:12px;padding:12px 9px 15px;margin:10px 0 12px;
+ background:#101e1c;border:1px solid #426756;border-radius:9px}
+.sourceArtDirection select{background:#0b1517;color:#e9f5ec;border:1px solid #527864;border-radius:6px;padding:10px;width:100%}
+.sourceArtDirection input[type=range]{accent-color:#4ee6a1;width:100%}
+.sourceArtDirection small{color:#a3bca9;font-size:10px;line-height:1.6}
