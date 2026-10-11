@@ -37,8 +37,13 @@
     "motion:test-source-camera": "node scripts/motion/test-source-camera.mjs",
     "motion:test-voice-booth": "node scripts/motion/test-voice-booth.mjs",
     "motion:test-bundle": "node scripts/motion/test-portable-bundle.mjs",
-    "prebuild": "npm run motion:test-overlays && npm run motion:test-bundle",
+    "prebuild": "npm run motion:test-sequence && npm run motion:test-film-browser && npm run motion:test-film-audio && npm run motion:test-precision && npm run motion:test-overlays && npm run motion:test-bundle",
     "motion:test-overlays": "node scripts/motion/test-image-overlay.mjs",
+    "motion:test-precision": "node scripts/motion/test-precision-edit.mjs",
+    "motion:sequence": "node scripts/motion/render-sequence.mjs",
+    "motion:test-sequence": "node scripts/motion/test-film-sequence.mjs",
+    "motion:test-film-browser": "node --experimental-strip-types scripts/motion/test-film-browser-plan.mjs",
+    "motion:test-film-audio": "node --experimental-strip-types scripts/motion/test-film-audio-mix.mjs",
     "motion:test-plugin": "node scripts/motion/test-content-studio-plugin.mjs"
   },
   "dependencies": {

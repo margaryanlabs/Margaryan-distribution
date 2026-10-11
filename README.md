@@ -1,4 +1,12 @@
 # Margaryan Distribution
+## Motion OS Feature Film / 2–5 minute production
+
+The existing **/motion?mode=cinematic** editor now has a wide **01 / Feature Film** production workspace with a multi-chapter Master Timeline, staged import, 120-second and five-minute **300-second original Promptence concepts**, source-safe full-film browser playback and optionally narrated 720p/24fps workprint recording. A single chapter is still independently editable with Precision Cut, genuine approved media, human Voice Booth and portable ZIPs.
+
+The operator-local `npm run motion:sequence -- film.motion-sequence.json output.mp4 --dry-run` previews H.264 chapter mastering and `npm run motion:sequence -- film.motion-sequence.json output.mp4 --media-map local-owner-assets.json --voice voice.wav --music licensed.mp3` renders and verifies actual original-source footage **on a machine with Chromium and FFmpeg**. The browser cannot silently synthesize private media or guarantee an actual 5-minute phone export. No separate OpenAI API or autonomous agent is required for the authored storyboard and local rendering; no claim of unlimited free AI generation.
+
+Full production guide, caveats, and visual design changes: [Motion Feature Film](docs/MOTION_STUDIO_FEATURE_FILM_V1.md).
+
 
 Autonomous **sales + SMM + distribution OS** for Margaryan Labs products.
 
