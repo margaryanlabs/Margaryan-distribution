@@ -82,8 +82,10 @@ function inputProject(raw: unknown, rejectRemoteMedia: boolean): MotionProject {
   ))) throw Error("External/user media cannot be attached from ChatGPT. Attach approved local files in Motion Studio.");
   const p = sanitizeMotionProject(raw);
   // The editor must never silently drop user-authored scenes or headlines.
-  if (p.scenes.length !== scenes.length || p.scenes.some((scene, i) =>
-    !object(scenes[i]) || scene.headline !== (typeof scenes[i].headline === "string" ? (scenes[i].headline as string).trim() : "")))
+  if (p.scenes.length !== scenes.length || p.scenes.some((scene, i) => {
+    const candidate = scenes[i];
+    return !object(candidate) || typeof candidate.headline !== "string" || scene.headline !== candidate.headline.trim();
+  }))
     throw Error("Scene content was invalid or truncated. Shorten the headline (max 105 characters).");
   return p;
 }
