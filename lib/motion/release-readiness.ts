@@ -167,7 +167,8 @@ export function inspectReleaseReadiness(
   const reviews=items.filter(i=>i.state==="review").length;
   return{
     title:project.title,brand:project.brand,filmSeconds:qa.seconds,
-    renderable:qa.pass&&input.voiceOverflowSeconds<=0&&
+    renderable:qa.pass&&shots.every(shot=>shot.status!=="block")&&
+      input.voiceOverflowSeconds<=0&&
       (!input.voiceAttached||input.voiceSeconds===null||input.voiceReady),
     blockers,reviews,sourceShots:covered.length,boundSources:readySources.length,
     voiceAttached:input.voiceAttached,musicAttached:input.musicAttached,
