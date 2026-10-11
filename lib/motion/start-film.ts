@@ -4,6 +4,7 @@ import {
 } from "./studio";
 import {createKeylessStoryboard,type MotionLanguage} from "./director";
 import {autoPolishMotionProject} from "./quality";
+import {createPromptenceCampaign} from "./signature-promptence";
 
 export type StudioFilmKind="reel"|"campaign"|"product"|"feature"|"proof";
 export interface StudioFilmChoice {
@@ -54,6 +55,12 @@ export function prepareStudioFilm(choice:StudioFilmChoice):MotionProject{
   if(input.kind==="reel"||input.kind==="proof")
     throw Error("Этот режим использует отдельный редактор оригинальных кадров");
   if(input.kind==="campaign"){
+    if(input.brand==="promptence"&&!input.brief){
+      // The existing human-authored 36.5s Promptence director's cut is a
+      // stronger product demo than a default generic word shuffle.
+      const directed=createPromptenceCampaign(input.language as "ru"|"en"|"hy",input.format);
+      return sanitizeMotionProject({...directed,filmChrome:"clean"});
+    }
     const prompt=input.brief.length>=12?input.brief:
       "Создай кино-рекламу для "+BRAND_INFO[input.brand].name+
       ". Сильное вступление, ясная идея, реальные доказательства только из одобренных исходников и финальный призыв.";
@@ -69,18 +76,56 @@ export function prepareStudioFilm(choice:StudioFilmChoice):MotionProject{
     return sanitizeMotionProject({...initial,language:input.language,filmChrome:"clean",
       title:BRAND_INFO[input.brand].name+" / БОЛЬШОЙ ФИЛЬМ"});
   }
-  // Genuine product demo: reserve a REAL unpopulated source shot. By design,
-  // export source preflight fails until the owner uploads approved footage.
-  const scenes=initial.scenes.map((s,index)=>
-    index===Math.min(2,initial.scenes.length-1)
-    ?{...s,kind:"screen" as const,productBeat:undefined,
-      mediaId:undefined,sourceLayout:"theater" as const,
-      eyebrow:"РЕАЛЬНЫЙ ПРОДУКТ",headline:"ПОКАЖИТЕ СВОЙ ИНТЕРФЕЙС",
-      support:"Добавьте запись работающего продукта в ASSETS."}
-    :s
-  );
-  return sanitizeMotionProject({...initial,scenes,language:input.language,
-    title:BRAND_INFO[input.brand].name+" / ДЕМО ПРОДУКТА",filmChrome:"clean"});
+  // A genuine ~38s product narrative: three deliberate empty screen shots,
+  // never synthetic UI. Preflight will block commercial export until original
+  // screenshots/recordings are attached and manually approved.
+  const lines:Record<"ru"|"en"|"hy",readonly [string,string,string][]> ={
+    ru:[
+      ["НАЧАЛО","ПРОДУКТ В ДЕЙСТВИИ.","Покажите реальную пользу на своих материалах."],
+      ["ВОПРОС","ЗАЧЕМ ЭТО НУЖНО?","Назовите задачу конкретного пользователя."],
+      ["НАСТОЯЩИЙ ЭКРАН","ВОТ КАК ЭТО ВЫГЛЯДИТ.","Загрузите оригинальную запись интерфейса."],
+      ["ПЕРВЫЙ ШАГ","НАЧНИТЕ С ПРОСТОГО.","Объясните первое действие без сложных терминов."],
+      ["НАСТОЯЩИЙ ЭКРАН","ШАГ ЗА ШАГОМ.","Добавьте второй настоящий кадр продукта."],
+      ["ПОЯСНЕНИЕ","НЕ ОБЕЩАТЬ. А ПОКАЗАТЬ.","Говорите только то, что можно проверить."],
+      ["НАСТОЯЩИЙ ЭКРАН","РЕАЛЬНЫЙ ПРОЦЕСС.","Покажите завершение действия в продукте."],
+      ["ФИНАЛ","ПОСМОТРИТЕ САМИ.","Укажите настоящий сайт или способ узнать больше."]
+    ],
+    en:[
+      ["OPEN","SEE THE PRODUCT.","Show authentic materials, not hypothetical results."],
+      ["THE QUESTION","WHY DOES IT MATTER?","Explain a real audience need."],
+      ["ORIGINAL SCREEN","THIS IS HOW IT LOOKS.","Attach actual recorded product screens."],
+      ["FIRST STEP","START WITH THE SIMPLE.","Explain the first real interaction."],
+      ["ORIGINAL SCREEN","STEP BY STEP.","Attach another genuine product screen."],
+      ["THE POINT","SHOW. DO NOT OVERPROMISE.","Use only supportable facts."],
+      ["ORIGINAL SCREEN","THE REAL WORKFLOW.","Show the action being completed in the product."],
+      ["THE CLOSE","SEE IT FOR YOURSELF.","Link to an actual product page."]
+    ],
+    hy:[
+      ["ՍԿԻԶԲ","ԱՀԱ ՁԵՐ ՊՐՈԴՈՒԿՏԸ։","Ցույց տվեք իրական արտադրանքը։"],
+      ["ՀԱՐՑԸ","ԻՆՉԻ՞ ՀԱՄԱՐ Է ԱՅՆ։","Ներկայացրեք օգտատիրոջ իրական խնդիրը։"],
+      ["ԻՐԱԿԱՆ ԷԿՐԱՆ","ՏԵՍԵՔ ԻՆՏԵՐՖԵՅՍԸ։","Կցեք արտադրանքի իրական էկրանի ձայնագրություն։"],
+      ["ԱՌԱՋԻՆ ՔԱՅԼ","ՍԿՍԵՔ ՊԱՐԶԻՑ։","Բացատրեք իրական առաջին քայլը։"],
+      ["ԻՐԱԿԱՆ ԷԿՐԱՆ","ՔԱՅԼ ԱՌ ՔԱՅԼ։","Ավելացրեք երկրորդ իրական էկրանը։"],
+      ["ԲԱՑԱՏՐՈՒԹՅՈՒՆ","ՑՈՒՅՑ ՏՎԵՔ ՓԱՍՏԵՐԸ։","Օգտագործեք ստուգված տեղեկություններ։"],
+      ["ԻՐԱԿԱՆ ԷԿՐԱՆ","ԻՐԱԿԱՆ ԳՈՐԾԸՆԹԱՑԸ։","Ցույց տվեք ամբողջական գործողությունը։"],
+      ["ԱՎԱՐՏ","ՓՈՐՁԵՔ ԻՆՔՆԵՐԴ։","Նշեք իրական կայքը կամ հղումը։"]
+    ]
+  };
+  const lang=input.language as "ru"|"en"|"hy";
+  const kinds=["opener","statement","screen","kinetic","screen","statement","screen","closer"] as const;
+  const durations=[4.5,4.5,5.2,4.5,5.2,4.3,5.2,4.6];
+  const scenes=lines[lang].map(([eyebrow,headline,support],index)=>({
+    id:"scene-"+(index+1),kind:kinds[index],eyebrow,headline,support,
+    seconds:durations[index],camera:"push" as const,
+    transition:index===0?"cut" as const:"dissolve" as const,
+    ...(kinds[index]==="screen"
+      ?{mediaId:undefined,sourceLayout:"theater" as const,mediaStart:0}
+      :{})
+  }));
+  return sanitizeMotionProject({
+    ...initial,scenes,language:lang,title:BRAND_INFO[input.brand].name+" / ДЕМО ПРОДУКТА",
+    filmChrome:"clean",qualityMode:"signature"
+  });
 }
 export function studioFilmInstruction(kind:StudioFilmKind):string{
   const item=STUDIO_FILM_CHOICES.find(x=>x.kind===kind);
