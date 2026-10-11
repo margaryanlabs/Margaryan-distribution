@@ -62,9 +62,10 @@ export async function POST(request: Request) {
     });
   }
   if (payload.method === "ping") return rpc(payload.id, {});
-  // The long-form tool needs the separately staged Sequence Studio. Do not
-  // advertise a dead link to customers while that UI remains a draft PR.
-  const publicTools=CONTENT_STUDIO_TOOLS.filter(tool=>tool.name!=="create_motion_feature_film");
+  // Sequence Studio and browser MP4/WebM workprint are now included in the
+  // isolated public /motion editor (synced from Motion Feature Film V1 main).
+  // Long-form model tool returns a REVIEWABLE project link, never an MP4.
+  const publicTools=CONTENT_STUDIO_TOOLS;
   if (payload.method === "tools/list") return rpc(payload.id, { tools: publicTools });
   if (payload.method === "resources/list") return rpc(payload.id, {
     resources: [{
