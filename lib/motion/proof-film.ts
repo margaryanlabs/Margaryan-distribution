@@ -141,7 +141,7 @@ function drawEvidence(ctx:CanvasRenderingContext2D,source:HTMLImageElement,t:num
     107,1585,48,IVORY,740);
   text(ctx,"Observe  →  Diagnose  →  Verify",107,1641,29,MINT,640);
   ctx.restore();
-  text(ctx,"SOURCE: OWNER-APPROVED PAGE CAPTURE",73,1807,21,"#2E624F",700);
+  text(ctx,"SOURCE SCREENSHOT / REVIEW REQUIRED",73,1807,21,"#2E624F",700);
 }
 function drawClosure(
   ctx:CanvasRenderingContext2D,logo:HTMLImageElement|null,t:number,W:number,H:number
