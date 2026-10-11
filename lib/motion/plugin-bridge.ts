@@ -55,7 +55,7 @@ export const CONTENT_STUDIO_TOOLS = [
   },
   {
     name: "revise_motion_film",
-    description: "Prepare a safe, reviewed patch to a currently open Motion Studio film, using its original full project JSON. Return a draft link, NEVER auto-publish or auto-overwrite the project.",
+    description: "Prepare a safe, reviewed patch to an existing Motion Studio film, including editable scene copy and generic labs clientBrand name, caption and accent. Use the exact current project; never auto-publish, attach local media or silently replace another film.",
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     _meta: { ui: { resourceUri: CONTENT_STUDIO_WIDGET_URI }, "openai/outputTemplate": CONTENT_STUDIO_WIDGET_URI },
     inputSchema: {
@@ -70,7 +70,7 @@ export const CONTENT_STUDIO_TOOLS = [
             properties: {
               target: { type: "string", enum: ["scene", "project"] },
               index: { type: "integer", minimum: 0, maximum: 7 },
-              set: { type: "object", description: "Permitted project/scene fields only; existing Motion Chat v1 validator enforces them." }
+              set: { type: "object", description: "Change only reviewed Motion fields. project.clientBrand may update name/caption/accent for labs films, safely sanitized. No mediaId bindings." }
             },
             required: ["target", "set"]
           }
