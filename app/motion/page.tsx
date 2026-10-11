@@ -464,6 +464,7 @@ export default function MotionStudioPage() {
       <strong>02 / QUICK STUDIO</strong>
       <span>Real video / photo imports · Armenian-first titles · local video export</span>
     </button>
+    <a className={styles.proofLaunch} href="/motion/proof"><strong>03 / PROOF DIRECTOR ↗</strong><span>Real Promptence pixels · 10-second source-first pilot · quality gate</span></a>
   </nav>;
   if(mode==="quick")return <main className={styles.root} style={{"--brand-accent":info.accent} as CSSProperties}>
     <header className={styles.header}>
