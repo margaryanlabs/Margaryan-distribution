@@ -114,7 +114,7 @@ export default function ConnectPage() {
       const output=await rpc("tools/call",{
         name:"create_motion_feature_film",
         arguments:{
-          title:"MARGARYAN / 120 SECOND FEATURE FILM",brand:"labs",format:"portrait",
+          title:"MARGARYAN / 120 SECOND FEATURE FILM",brand:"labs",client_brand_name:"STUDIO DEMO",client_brand_caption:"A FILM CREATED IN CHATGPT",client_brand_accent:"#B7C5E9",format:"portrait",
           language:"en",style:"cinematic",chapter_titles:["THE PROBLEM","THE SOLUTION"],
           scenes:Array.from({length:16},(_,i)=>({
             kind:i===0?"opener":i===15?"closer":"statement",
