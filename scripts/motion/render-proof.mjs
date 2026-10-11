@@ -18,7 +18,7 @@ import process from "node:process";
 const args=process.argv.slice(2),o={};
 for(let i=0;i<args.length;i++){
  const k=args[i];
- if(!["--screen","--video","--out","--voice","--music","--url","--fps"].includes(k))throw Error("Unknown argument: "+k);
+ if(!["--screen","--video","--out","--voice","--music","--url","--fps","--first-in","--second-in","--cut-at","--zoom"].includes(k))throw Error("Unknown argument: "+k);
  const v=args[++i];if(!v||v.startsWith("--"))throw Error("Missing value for "+k);
  o[k.slice(2)]=v;
 }
@@ -73,6 +73,13 @@ try{
  await page.locator('[data-testid="proof-source-input"]').setInputFiles(source);
  await page.waitForFunction(expected=>window.__motionProofReady===true&&window.__motionProofSource===expected,isVideo?"video":"image",{timeout:40000});
  await page.evaluate(()=>document.fonts.ready);
+ const filmEDL=await page.evaluate(changes=>window.__motionProofConfigure(changes),{
+   firstIn:o["first-in"]===undefined?0:Number(o["first-in"]),
+   secondIn:o["second-in"]===undefined?4:Number(o["second-in"]),
+   cutAt:o["cut-at"]===undefined?4.55:Number(o["cut-at"]),
+   zoom:o.zoom===undefined?1:Number(o.zoom)
+ });
+ if(!filmEDL||!Number.isFinite(filmEDL.cutAt))throw Error("Film edit decision list not applied");
  if(errors.length)throw Error("Studio page errors: "+errors.join("; "));
  const audio=[o.voice?{path:resolve(o.voice),volume:1}:null,o.music?{path:resolve(o.music),volume:o.voice?.18:.75}:null].filter(Boolean);
  const ff=["-y","-hide_banner","-loglevel","error","-f","image2pipe","-framerate",String(fps),
@@ -121,7 +128,7 @@ try{
   "-frames:v","1",prefix+"-contact-sheet.png"],120000);
  await writeFile(prefix+".proof-report.json",JSON.stringify({
    engine:"SOURCE-FIRST PROOF DIRECTOR",duration:d,width:video.width,height:video.height,
-   fps,sourceFile:source,sourceType:isVideo?'actual-browser-video':'owner-supplied-screenshot',voiceProvided:Boolean(o.voice),musicProvided:Boolean(o.music),audioMaster:"licensed-source-only / loudnorm dialogue -16 LUFS target / no time stretch",
+   fps,editDecisions:filmEDL,sourceFile:source,sourceType:isVideo?'actual-browser-video':'owner-supplied-screenshot',voiceProvided:Boolean(o.voice),musicProvided:Boolean(o.music),audioMaster:"licensed-source-only / loudnorm dialogue -16 LUFS target / no time stretch",
    contactSheetCreated:sheet.status===0,sourceReviewRequired:true,humanCreativeApprovalRequired:true,
    note:"Codec and source-authenticity gates cannot judge cinematic quality or voice performance."
  },null,2)+"\n");
