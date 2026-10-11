@@ -14,6 +14,7 @@ type Props={
  busy:boolean;
  onStart:(choice:StudioFilmChoice)=>void;
  onResume:()=>void;
+ onSaveCurrent:()=>void;
 };
 const FORMATS=[
  {id:"portrait",name:"9:16",sub:"Reels / TikTok"},
@@ -28,7 +29,7 @@ const LENGTH_NOTE:Record<StudioFilmKind,string>={
  proof:"Отдельный пилот на реальных кадрах Promptence, а не генерация вымышленных экранов."
 };
 export default function MotionStart({
- initialBrand,currentTitle,hasSavedDraft,busy,onStart,onResume
+ initialBrand,currentTitle,hasSavedDraft,busy,onStart,onResume,onSaveCurrent
 }:Props){
  const [kind,setKind]=useState<StudioFilmKind>("campaign");
  const [brand,setBrand]=useState<MotionBrand>(initialBrand);
@@ -66,9 +67,14 @@ export default function MotionStart({
        <div className={styles.breadcrumb}><span className={styles.line}/> ВАША СТУДИЯ / НАЧАЛО РАБОТЫ</div>
        <h1>Какой ролик<br/><em>создаём сегодня?</em></h1>
        <p>Выберите результат — мы откроем подходящие инструменты. Не нужно разбираться в движках, режимах и настройках заранее.</p>
-       {hasSavedDraft&&<button type="button" className={styles.resume} disabled={busy} onClick={onResume}>
-         <span>↶</span><span><strong>Продолжить текущий проект</strong><small>{currentTitle}</small></span><b>ОТКРЫТЬ ↗</b>
-       </button>}
+       {hasSavedDraft&&<div className={styles.resumeActions}>
+         <button type="button" className={styles.resume} disabled={busy} onClick={onResume}>
+           <span>↶</span><span><strong>Продолжить текущий проект</strong><small>{currentTitle}</small></span><b>ОТКРЫТЬ ↗</b>
+         </button>
+         <button type="button" className={styles.backup} disabled={busy} onClick={onSaveCurrent}>
+           ↓ Сохранить копию перед новым роликом
+         </button>
+       </div>}
      </section>
      <div className={styles.step}><span>01</span><strong>Выберите тип видео</strong><small>5 вариантов · все существующие режимы</small></div>
      <section className={styles.selectionLayout}>
@@ -81,7 +87,7 @@ export default function MotionStart({
              <div className={styles.artMain}>
                {item.kind==="reel"&&<><div className={styles.phoneCard}><span>YOUR</span><b>STORY.</b><i/></div><div className={styles.artGlint}/></>}
                {item.kind==="campaign"&&<><div className={styles.cineWord}>MAKE<br/><i>IT</i> MOVE.</div><span className={styles.artOrb}/></>}
-               {item.kind==="product"&&<><div className={styles.productWindow}><span>◉&nbsp; LIVE PRODUCT</span><div className={styles.productBar}/><div className={styles.productRow}/><div className={styles.productRow}/><div className={styles.productHighlight}/></div><span className={styles.productGlare}/></>}
+               {item.kind==="product"&&<><div className={styles.productWindow}><span>◉&nbsp; YOUR REAL SCREEN</span><div className={styles.productBar}/><div className={styles.productRow}/><div className={styles.productRow}/><div className={styles.productHighlight}/></div><span className={styles.productGlare}/></>}
                {item.kind==="feature"&&<><div className={styles.featureText}>ONE<br/>BIG<br/><i>STORY.</i></div><span className={styles.featureRing}/></>}
                {item.kind==="proof"&&<><div className={styles.proofBox}><span>REAL SOURCE</span><strong>NO<br/>GUESSWORK.</strong><i>✓ SOURCE CHECK</i></div></>}
              </div>
