@@ -73,7 +73,10 @@ export function smooth(t){
 export function createCinematicProject({duration,mediaId=TAKE_ID,brand="promptence"}={}){
  if(brand!=="promptence"||!Number.isFinite(duration)||duration<32)
   fail("need a source take >=32s with verified Promptence footage");
- const headlines=[
+ // Cover the final verified click as well, reserving 0.1s for decoder safety.
+ const sceneSeconds=Math.floor((duration-.10)*4)/32;
+ if(sceneSeconds<3.8)fail("source recording cannot cover all 8 native shots");
+  const headlines=[
   ["BEFORE THEY FIND YOU","THEY ASK AI.","What happens when AI shapes the shortlist?"],
   ["THE FIRST MOVE","OPEN A REAL FREE CHECK.","Recorded browser navigation, not a mockup."],
   ["ONE WEBSITE","ENTER YOUR DOMAIN.","The actual public input, no submitted scan."],
@@ -87,8 +90,8 @@ export function createCinematicProject({duration,mediaId=TAKE_ID,brand="prompten
   title:"PROMPTENCE / INTERACTION CINEMA / REAL CLICKS",seed:2026101107,
   visual:{motion:.48,textScale:.9,contrast:.5,glow:.03},
   scenes:headlines.map(([eyebrow,headline,support],i)=>({
-   id:"scene-"+(i+1),kind:"screen",seconds:4,eyebrow,headline,support,
-   mediaId,mediaStart:i*4,sourceLayout:"showcase",sourceZoomStart:1,sourceZoomEnd:1.035,
+   id:"scene-"+(i+1),kind:"screen",seconds:sceneSeconds,eyebrow,headline,support,
+   mediaId,mediaStart:Number((i*sceneSeconds).toFixed(4)),sourceLayout:"showcase",sourceZoomStart:1,sourceZoomEnd:1.035,
    sourceFocusX:.5,sourceFocusY:.5,transition:"cut",camera:"locked",titleTreatment:"minimal",
    typographyScale:.83,voiceCue:headline
   }))};
