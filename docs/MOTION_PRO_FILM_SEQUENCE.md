@@ -64,3 +64,38 @@ Every chapter is sent to the EXISTING render-master.mjs path, preserving genuine
 ## Validation
 
 Run npm run motion:test-sequence for 3 chapters × 8 scenes × 8 seconds (192 seconds), malformed input rejection, unsafe-path checks and a true no-render --dry-run. Also run npm run typecheck && npm run build and an actual local two-or-more-chapter audiovisual encode before launch. Test mobile browser save/import, storage quota, unsaved state and Unicode captions.
+
+## ChatGPT one-click feature-film import (beta)
+
+The companion Content Studio plugin branch (PR #55) now includes
+`create_motion_feature_film`: a ChatGPT-authored 9–24-scene proposal
+(65–192 seconds, 2–3 chapters) transported through the URL fragment
+`#motion-sequence-v1=<base64url manifest>`. This is **not** a remote
+AI-text-to-video render: the model authors the scene copy and pacing,
+and the Motion OS preview/editor owns the actual local graphics production.
+
+The Sequence Studio checks the incoming link before modifying any project:
+- Base64url characters and length are validated, and UTF-8 JSON parsed with
+  strict decoding; fragment is removed from browser history on arrival.
+- The chapter count, brand, aspect ratio and 2–8s scene lengths are checked,
+  and remote media URLs rejected.
+- A visible **ChatGPT → Film / Review Required** panel shows chapter titles,
+  total duration and scene count. The user explicitly approves or discards.
+  Saved local chapters are not replaced without approval; no existing chapter
+  is auto-loaded or rendered.
+- A **Master Timeline** shows every saved chapter and the relative duration
+  of every shot; clicking an act loads that chapter into the existing editor.
+
+This is a **two-PR integration**: PR #55 creates the feature-film link and
+PR #57 opens it. Production routing must deploy both changes together.
+Vercel-ready code is not proof of an installed/approved ChatGPT plugin
+or a tested final audiovisual MP4.
+
+The current fragment transport has a 20KB manifest / 26k characters limit.
+For longer films, use a local JSON file and Sequence Studio import. Fragment
+links are not encrypted; do not share confidential commercial scripts.
+
+**Editorial direction:** Write actual story beats, not repeated abstract
+copy. Use product screenshots only from user-approved original footage,
+respect official brand marks, and check the complete 120s exported MP4
+manually before distributing it.
