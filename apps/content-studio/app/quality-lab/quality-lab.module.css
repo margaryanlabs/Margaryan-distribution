@@ -31,6 +31,8 @@
 .result[data-status=fail]>b{background:#4b2829;color:#ffb5ae}
 .result strong{font-size:11px;letter-spacing:.06em}
 .result p{font-size:12px;color:#a5b6ca;line-height:1.65;margin:4px 0 0;overflow-wrap:anywhere}
+.copy{display:block;width:100%;margin-top:18px;padding:12px 14px;border-radius:7px;border:1px solid #657f9d;background:#14253a;color:#c4dcfa;font-size:11px;font-weight:850;letter-spacing:.075em;cursor:pointer;text-align:center}
+.copy:hover{background:#1b304c}
 .playback{border-top:1px solid #435770;padding-top:19px;margin-top:25px}
 .playback video{display:block;max-height:270px;max-width:100%;margin:14px auto;background:#05060b;border-radius:8px}
 .download{display:block}
