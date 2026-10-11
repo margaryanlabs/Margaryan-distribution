@@ -59,3 +59,42 @@ P3: Quality benchmarks vs incumbents, paid pilots, directory submission and part
 ## Design north star
 
 Content Studio is a production studio driven by conversation, not a text-to-video API reseller. Defensibility is reliable editing, templates, source provenance, team workflow, multilingual typography and great export experience.
+
+## New: full feature films directed in one ChatGPT request
+
+The independent **Motion PRO Film Sequence Studio** PR #57 adds a real local
+multi-chapter editor and operator-local MP4 assembler. The third plugin tool,
+`create_motion_feature_film`, now bridges a ChatGPT-authored commercial
+to that film sequence format (a portable, reviewed draft; no server rendering).
+
+ChatGPT can author **9–24 scenes** of 2–8s each, making a film of **more than
+64s up to 192s**, with up to three chapter titles. Scenes are grouped into
+8-shot chapters and validated using the same source-free field allowlist as
+`create_motion_film`. An example 16 × 7.5s commercial is precisely 120 seconds
+across two 8-shot chapters. The editor URL ends in
+`#motion-sequence-v1=<base64url manifest>`; all copy remains in the fragment
+until the user's browser reviews and clears it.
+
+**Dependency / rollout:** the importing **Sequence Studio** UI is in PR #57,
+not yet in main. The third MCP tool should not be publicly announced or
+submitted as ready for customers until the combined deployed build includes
+both the plugin and Sequence Studio, build and interface tests pass, and the
+MCP endpoint is externally accessible outside Vercel SSO.
+
+**In ChatGPT:** the model designs a complete storyboard; it does NOT call
+OpenAI API through our backend and does NOT get arbitrary background access
+to the customer's ChatGPT session. The website receives only what the user
+chooses to open from the provided link.
+
+**In Motion:** the user sees an explicit multi-chapter proposal with runtime,
+shot count and review buttons. APPROVE saves the draft into browser local
+storage. Each individual chapter is then reviewed through the same real
+video/Canvas player, approved source footage remains local, and an operator
+can export a full MP4 by running the existing
+`npm run motion:sequence` FFmpeg/Playwright workflow on a workstation.
+No automatic cloud render, audio voice clone, AI-footage generation, media
+upload, or client-account storage is implied.
+
+Longer films (up to eight chapters / 512s) are supported in Sequence Studio
+through its own chapter editor and manifest import, not by sending an
+oversized tool response as a URL fragment.
