@@ -20,10 +20,10 @@ assert.throws(()=>assertSafeClick(TARGETS["local-tab"],{tag:"BUTTON",type:"submi
 assert.equal(assertSafeClick(TARGETS["local-tab"],{tag:"BUTTON",type:"button",role:"radio",visible:true,enabled:true,insideForm:true}),true);
 assert.equal(smooth(0),0);assert.equal(smooth(1),1);
 assert.ok(Math.abs(smooth(.5)-.5)<1e-9);
-const project=createCinematicProject({duration:34});
+const project=createCinematicProject({duration:34.167});
 assert.equal(project.format,"portrait");
 assert.equal(project.scenes.length,8);
-assert.deepEqual(project.scenes.map(x=>x.mediaStart),[0,4,8,12,16,20,24,28]);
+assert.deepEqual(project.scenes.map(x=>x.mediaStart),[0,4.25,8.5,12.75,17,21.25,25.5,29.75]);\nassert.equal(project.scenes.reduce((n,s)=>n+s.seconds,0),34);\nassert.ok(project.scenes.at(-1).mediaStart+project.scenes.at(-1).seconds<34.167);
 assert.ok(project.scenes.every(s=>s.kind==="screen"&&s.mediaId===TAKE_ID&&s.transition==="cut"));
 assert.throws(()=>createCinematicProject({duration:20}),/source take/);
 console.log("Motion Interaction Cinema: real-click, no-submit policy, cinematic edit and source timing PASS");
