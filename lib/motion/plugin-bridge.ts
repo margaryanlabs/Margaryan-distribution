@@ -34,7 +34,7 @@ export const CONTENT_STUDIO_TOOLS = [
           items: {
             type: "object", additionalProperties: false,
             properties: {
-              kind: { type: "string", enum: ["opener", "statement", "network", "closer", "kinetic", "orbit", "spatial"] },
+              kind: { type: "string", enum: ["opener", "statement", "network", "closer", "kinetic", "orbit"] },
               eyebrow: { type: "string", maxLength: 65 },
               headline: { type: "string", minLength: 1, maxLength: 105 },
               support: { type: "string", maxLength: 180 },
@@ -93,7 +93,7 @@ export const CONTENT_STUDIO_TOOLS = [
           items: {
             type: "object", additionalProperties: false,
             properties: {
-              kind: { type: "string", enum: ["opener", "statement", "network", "closer", "kinetic", "orbit", "spatial"] },
+              kind: { type: "string", enum: ["opener", "statement", "network", "closer", "kinetic", "orbit"] },
               eyebrow: { type: "string", maxLength: 65 },
               headline: { type: "string", minLength: 1, maxLength: 105 },
               support: { type: "string", maxLength: 180 },
@@ -133,7 +133,7 @@ function validateScenes(source: unknown): MotionScene[] {
     const seconds = input.seconds;
     if (typeof seconds !== "number" || !Number.isFinite(seconds) || seconds < 2 || seconds > 8)
       throw Error("Scene " + (index + 1) + " must last 2–8 seconds");
-    const kind = oneOf(input.kind, ["opener", "statement", "network", "closer", "kinetic", "orbit", "spatial"] as const, "scene kind");
+    const kind = oneOf(input.kind, ["opener", "statement", "network", "closer", "kinetic", "orbit"] as const, "scene kind");
     // Media IDs are purposefully impossible to set from public MCP calls:
     // user-owned media can only be attached inside the browser after consent.
     const result: MotionScene = {
