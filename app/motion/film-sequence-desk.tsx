@@ -288,6 +288,6 @@ export default function FilmSequenceDesk({
       <button type="button" onClick={resetFilm} disabled={busy||!chapters.length}>RESET SEQUENCE</button>
     </div>
     <p className={styles.notice} role="status">{notice}</p>
-    <p className={styles.footnote}>Feature films are mastered with <code>npm run motion:sequence</code> on a workstation with Chromium and FFmpeg. The browser exports a genuine silent visual workprint (<=192s) from our Canvas Engine; soundtrack, real footage and broadcast-quality full MP4 mastering remain part of the local Chromium/FFmpeg workflow. No OpenAI API needed. Keep private footage and client information out of public Chat Packs.</p>
+    <p className={styles.footnote}>Feature films are mastered with <code>npm run motion:sequence</code> on a workstation with Chromium and FFmpeg. The browser exports a genuine silent visual workprint (up to 192s) from our Canvas Engine; soundtrack, real footage and broadcast-quality full MP4 mastering remain part of the local Chromium/FFmpeg workflow. No OpenAI API needed. Keep private footage and client information out of public Chat Packs.</p>
   </section>;
 }
