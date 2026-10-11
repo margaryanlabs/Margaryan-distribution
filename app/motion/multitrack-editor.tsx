@@ -93,6 +93,24 @@ export default function MultitrackEditor({
         </div>
       </div>
       <div className={styles.trackRow}>
+        <div className={styles.trackTitle}><b>OVERLAY</b><small>original image</small></div>
+        <div className={styles.track+" "+styles.overlayTrack} aria-label="Independent approved overlay image clips">
+          <div className={styles.playhead} style={{left:playheadPercent+"%"}}/>
+          {spans.map(({scene,index,start})=>scene.overlayMediaId?
+            <button type="button" key={"overlay-"+index}
+              className={styles.overlayClip} data-selected={selectedIndex===index}
+              style={{left:((start+(scene.overlayStart||0))/total*100)+"%",
+                width:((scene.overlayDuration||scene.seconds)/total*100)+"%"}}
+              title={"Authentic local image overlay "+scene.overlayMediaId+
+                " / "+(scene.overlayCorner||"bottom-right")}
+              onClick={()=>onSelect(index)}>
+              ◉ IMG {index+1}
+            </button>:null)}
+          {!project.scenes.some(scene=>scene.overlayMediaId)&&
+            <span className={styles.empty}>Use Media Library → approved image → ADD SECOND IMAGE LAYER</span>}
+        </div>
+      </div>
+      <div className={styles.trackRow}>
         <div className={styles.trackTitle}><b>COPY</b><small>on-screen</small></div>
         <div className={styles.track+" "+styles.copyTrack}>
           <div className={styles.playhead} style={{left:playheadPercent+"%"}}/>
