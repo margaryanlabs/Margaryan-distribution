@@ -20,7 +20,7 @@ const folder=resolve(argv[1]);
 const {chromium}=await import("playwright");
 const browser=await chromium.launch({headless:true});
 try{
-  const context=await browser.newContext({viewport:{width:540,height:960},deviceScaleFactor:2,
+  const context=await browser.newContext({viewport:{width:1280,height:720},deviceScaleFactor:1,
     locale:"en-US",serviceWorkers:"block",acceptDownloads:false});
   const page=await context.newPage();
   const response=await page.goto("https://promptence.tech/",{waitUntil:"domcontentloaded",timeout:45000});
@@ -54,7 +54,7 @@ try{
     process.stdout.write("Captured "+section.label+" / distinct source / difference "+novelty+"\n");
   }
   const manifest={version:1,brand:"promptence",sourceUrl:"https://promptence.tech/",
-    capturedAt:new Date().toISOString(),format:"portrait",viewport:{width:540,height:960},
+    capturedAt:new Date().toISOString(),format:"source-stage-landscape",viewport:{width:1280,height:720},
     firstVisitOnboardingHandled:onboarding,shots:verified,
     approval:{status:"PENDING_HUMAN_REVIEW",sourceRights:false,
       privacyReviewed:false,productTruthReviewed:false,finalMasterReviewed:false},
@@ -62,5 +62,5 @@ try{
   await writeFile(join(folder,"promptence-source-manifest.json"),JSON.stringify(manifest,null,2)+"\n",{mode:0o600});
   await writeFile(join(folder,"motion-media-map.json"),JSON.stringify(Object.fromEntries(
     verified.map(s=>[s.assetId,join(folder,s.filename)])),null,2)+"\n",{mode:0o600});
-  process.stdout.write("Six distinct real product sections ready for human review. No simulated AI answers.\n");
+  process.stdout.write("Six distinct, wide product stages ready for human review. No simulated AI answers.\n");
 }finally{await browser.close();}
