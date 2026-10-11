@@ -128,6 +128,22 @@ const manifest=JSON.parse(Buffer.from(fragmentSequence,"base64url").toString("ut
 assert.equal(manifest.type,"motion-sequence-v1");
 assert.equal(manifest.chapters.length,2);
 assert.equal(manifest.expectedDurationSeconds,120);
+const brandedFeature=bridge.runContentStudioTool("create_motion_feature_film",{
+  ...featureBrief,brand:"labs",client_brand_name:"NORTH STAR",client_brand_caption:"BRAND FILM",
+  client_brand_accent:"#C0D9FA"
+});
+assert.equal(brandedFeature.durationSeconds,120);
+const brandedLink=brandedFeature.editorUrl.split("#motion-sequence-v1=")[1];
+const brandedManifest=JSON.parse(Buffer.from(brandedLink,"base64url").toString("utf8"));
+assert.ok(brandedManifest.chapters.every(chapter=>chapter.project.clientBrand?.name==="NORTH STAR"));
+assert.ok(brandedManifest.chapters.every(chapter=>chapter.project.clientBrand?.accent==="#C0D9FA"));
+assert.throws(()=>bridge.runContentStudioTool("create_motion_feature_film",{
+  ...featureBrief,brand:"veto",client_brand_name:"SPOOFED OWNER"
+}),/only supported with brand=labs/);
+assert.throws(()=>bridge.runContentStudioTool("create_motion_feature_film",{
+  ...featureBrief,brand:"labs",client_brand_name:"USER",client_brand_accent:"not-a-color"
+}),/must be #RRGGBB|Invalid client_brand_accent/);
+
 assert.deepEqual(manifest.chapters.map(x=>x.project.scenes.length),[8,8]);
 assert.equal(manifest.chapters[0].project.language,"en");
 assert.equal(manifest.chapters[1].title,"THE RESPONSE");
