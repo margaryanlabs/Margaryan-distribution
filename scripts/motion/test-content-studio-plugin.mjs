@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import ts from "typescript";
+import vm from "node:vm";
 
 function load(path, deps = {}) {
   const js = ts.transpileModule(readFileSync(new URL("../../" + path, import.meta.url), "utf8"), {
@@ -140,4 +141,70 @@ assert.equal(blocked.response.status, 403);
 const featureTool=await send({ jsonrpc:"2.0",id:5,method:"tools/call",params:{name:"create_motion_feature_film",arguments:featureBrief} });
 assert.equal(featureTool.json.result.structuredContent.durationSeconds,120);
 assert.ok(featureTool.json.result.structuredContent.editorUrl.includes("#motion-sequence-v1="));
-console.log("Content Studio plugin: JSON-RPC, 3 tools, 120s/16-shot feature, safe handoff, patch guards PASS");
+// Exercise the REAL MCP Apps HTML script, not only its static metadata.
+// Simulated host supports ChatGPT file storage. Generated file must only
+// upload when the embedded player has explicitly requested it, with a strict
+// same-origin child and per-file size/type gate.
+const script=/\<script\>([\s\S]*?)\<\/script\>/.exec(body.text)?.[1];
+assert.ok(script,"MCP widget HTML should contain an executable script");
+new vm.Script(script); // syntax check against Node's JS parser
+const playerFrame={
+  postMessage(message,targetOrigin){assert.equal(targetOrigin,"https://margaryan-distribution.vercel.app");this.lastReply=message;},
+  lastReply:null
+};
+const player={
+  contentWindow:playerFrame,
+  addEventListener(){},
+  src:""
+};
+const controls=new Map();
+const element=(id)=>{
+  if(id==="player")return player;
+  if(!controls.has(id))controls.set(id,{
+    textContent:"",hidden:false,href:"",
+    replaceChildren(){},appendChild(){}
+  });
+  return controls.get(id);
+};
+const listeners=[];
+const uploads=[];
+const hostParent={postMessage(){}};
+const windowMock={
+  parent:hostParent,
+  openai:{
+    async uploadFile(file,opts){uploads.push({name:file.name,size:file.size,type:file.type,opts});return {fileId:"file_test_motion"};}
+  },
+  addEventListener(name,callback){if(name==="message")listeners.push(callback);}
+};
+const frame=vm.createContext({
+  window:windowMock,
+  document:{getElementById:element,createElement:()=>({textContent:"",className:"",append(){}})},
+  setTimeout(){},
+  File,
+  ArrayBuffer,
+  URL
+});
+new vm.Script(script).runInContext(frame);
+const dispatch=(source,origin,data)=>listeners.forEach(fn=>fn({source,origin,data}));
+dispatch(playerFrame,"https://evil.example",{
+  kind:"margaryan-motion-export-file-v1",
+  fileName:"fake.mp4",mimeType:"video/mp4",bytes:new ArrayBuffer(512)
+});
+await new Promise(resolve=>setImmediate(resolve));
+assert.equal(uploads.length,0,"Never accept files from an unexpected frame origin");
+dispatch(playerFrame,"https://margaryan-distribution.vercel.app",{
+  kind:"margaryan-motion-export-file-v1",
+  fileName:"fake.exe",mimeType:"application/x-msdownload",bytes:new ArrayBuffer(512)
+});
+await new Promise(resolve=>setImmediate(resolve));
+assert.equal(uploads.length,0,"Unknown file types cannot be uploaded");
+dispatch(playerFrame,"https://margaryan-distribution.vercel.app",{
+  kind:"margaryan-motion-export-file-v1",
+  fileName:"motion-export.mp4",mimeType:"video/mp4",bytes:new ArrayBuffer(512)
+});
+await new Promise(resolve=>setImmediate(resolve));
+assert.equal(uploads.length,1,"Valid user-approved video must be forwarded to ChatGPT only once");
+assert.deepEqual(uploads[0].opts,{library:true});
+assert.equal(uploads[0].size,512);
+assert.ok(controls.get("status").textContent.includes("saved to ChatGPT"));
+console.log("Content Studio plugin: JSON-RPC, video widget, optional consent-based ChatGPT upload, safe handoff, 120s feature film PASS");
