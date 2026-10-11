@@ -20,7 +20,10 @@ function load(path,deps={}){
   return mod.exports;
 }
 const timing=load("lib/motion/timeline-edit.ts");
-const studio=load("lib/motion/studio.ts",{"./timeline-edit":timing});
+const composition=load("lib/motion/source-composition.ts");
+const overlay=load("lib/motion/image-overlay.ts");
+const studio=load("lib/motion/studio.ts",{"./timeline-edit":timing,
+  "./source-composition":composition,"./image-overlay":overlay});
 const chat=load("lib/motion/chat-operator.ts",{"./studio":studio});
 const bridge=load("lib/motion/plugin-bridge.ts",{"./studio":studio,"./chat-operator":chat});
 const widget=load("lib/motion/content-studio-widget.ts");
