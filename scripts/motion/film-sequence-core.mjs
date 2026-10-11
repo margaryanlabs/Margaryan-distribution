@@ -92,7 +92,7 @@ export function validateFilmSequence(value){
   };
 }
 export function escapeConcatFilePath(filename) {
-  if(typeof filename!=="string"||/[\\r\\n']/.test(filename))
+  if(typeof filename!=="string"||/[\r\n']/.test(filename))
     throw Error("Unsafe FFmpeg concat path (quotes and newlines are unsupported)");
   return "file '"+filename+"'";
 }
