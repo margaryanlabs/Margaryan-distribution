@@ -84,7 +84,7 @@ export default function MotionStart({
            className={styles.card} data-kind={item.kind} data-active={kind===item.kind}
            aria-pressed={kind===item.kind} onClick={()=>pick(item.kind)}>
            <div className={styles.cardArt} aria-hidden="true">
-             <div className={styles.artTop}><span>0{Number(item.id)} / MOTION FILM</span><i/></div>
+             <div className={styles.artTop}><span>{item.id} / MOTION FILM</span><i/></div>
              <div className={styles.artMain}>
                {item.kind==="reel"&&<><div className={styles.phoneCard}><span>YOUR</span><b>STORY.</b><i/></div><div className={styles.artGlint}/></>}
                {item.kind==="campaign"&&<><div className={styles.cineWord}>MAKE<br/><i>IT</i> MOVE.</div><span className={styles.artOrb}/></>}
@@ -124,6 +124,7 @@ export default function MotionStart({
              <div className={styles.formatPicker} role="group" aria-label="Формат кадра">
                {FORMATS.map(f=><button key={f.id} type="button"
                  className={styles.formatOption} data-active={format===f.id}
+                 disabled={kind==="interaction"&&f.id!=="portrait"}
                  aria-pressed={format===f.id} onClick={()=>setFormat(f.id)}>
                  <span className={styles.frame} data-shape={f.id}/>
                  <strong>{f.name}</strong><small>{f.sub}</small>
