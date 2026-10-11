@@ -801,15 +801,15 @@ export default function MotionStudioPage() {
   const modePicker=<nav className={styles.productionModes} aria-label="Production pipeline">
     <button type="button" data-selected={mode==="cinematic"} aria-pressed={mode==="cinematic"}
       onClick={()=>switchMode("cinematic")} disabled={exporting}>
-      <strong>01 / CINEMATIC STUDIO</strong>
-      <span>Original Motion renderer · scenes · references · offline H.264 master</span>
+      <strong>КИНО-РЕДАКТОР</strong>
+      <span>Реклама, графика, сцены и финальный фильм</span>
     </button>
     <button type="button" data-selected={mode==="quick"} aria-pressed={mode==="quick"}
       onClick={()=>switchMode("quick")} disabled={exporting}>
-      <strong>02 / QUICK STUDIO</strong>
-      <span>Real video / photo imports · Armenian-first titles · local video export</span>
+      <strong>БЫСТРЫЙ МОНТАЖ</strong>
+      <span>Reels из своих видео, фото и музыки</span>
     </button>
-    <a className={styles.proofLaunch} href="/motion/proof"><strong>03 / PROOF DIRECTOR ↗</strong><span>Real Promptence pixels · 10-second source-first pilot · quality gate</span></a>
+    <a className={styles.proofLaunch} href="/motion/proof"><strong>ПРОВЕРИТЬ ПРОДУКТ ↗</strong><span>Тест настоящего экрана Promptence</span></a>
   </nav>;
   if(launcherOpen)return <MotionStart initialBrand={project.brand}
     currentTitle={project.title} hasSavedDraft={hasSavedFilm}
@@ -913,13 +913,13 @@ export default function MotionStudioPage() {
       style={{"--inspector-width":inspectorWide?"440px":"344px"} as CSSProperties}>
       <nav className={styles.editorRail} aria-label="Editor workspaces">
         {([
-          ["create","✦","CREATE","Concept and storyboard"],
-          ["media","▧","ASSETS","Original video and Chat Pack"],
-          ["scene","◈","SCENE","Selected shot properties"],
-          ["sound","♫","AUDIO","Human voice and score"],
-          ["look","◐","LOOK","Format and film presentation"],
-          ["review","◇","REVIEW","Evidence and visual quality"],
-          ["deliver","↥","EXPORT","Delivery and project files"]
+          ["create","✦","ИДЕЯ","Что хотим рассказать"],
+          ["media","▧","КАДРЫ","Свои видео и фотографии"],
+          ["scene","◈","СЦЕНА","Текст и движение кадра"],
+          ["sound","♫","ЗВУК","Озвучка и музыка"],
+          ["look","◐","СТИЛЬ","Оформление фильма"],
+          ["review","◇","ПРОВЕРКА","Проверить перед экспортом"],
+          ["deliver","↥","ЭКСПОРТ","Сохранить готовый ролик"]
         ] as const).map(([panel,icon,label,desc],i)=><button key={panel} type="button"
           className={editorPanel===panel?styles.railCurrent:""}
           aria-current={editorPanel===panel?"page":undefined}
@@ -940,10 +940,10 @@ export default function MotionStudioPage() {
         <div className={styles.inspectorHeader}>
           <div><span>INSPECTOR / {editorPanel.toUpperCase()}</span>
             <strong>{({
-              create:"Creative brief",media:"Source library",
-              scene:"Shot "+String(selectedIndex+1).padStart(2,"0")+" / "+project.scenes.length,
-              sound:"Audio studio",look:"Film presentation",
-              review:"Quality review",deliver:"Production delivery"
+              create:"Идея и сценарий",media:"Ваши кадры",
+              scene:"Сцена "+String(selectedIndex+1).padStart(2,"0")+" из "+project.scenes.length,
+              sound:"Озвучка и музыка",look:"Визуальный стиль",
+              review:"Проверка фильма",deliver:"Сохранить видео"
             })[editorPanel]}</strong>
           </div>
           <div className={styles.inspectorHeaderTools}>
