@@ -4,6 +4,7 @@ import {
 } from "./studio";
 import { specialCampaign } from "./special-campaigns";
 import { honorRequestedTiming } from "./timing";
+import { createPromptenceProductStory } from "./promptence-beats";
 
 /**
  * Keyless Motion Director.
@@ -246,6 +247,15 @@ export function createKeylessStoryboard(input: DirectorBrief): MotionProject {
   const hash = seedFrom([prompt, brand, format, input.style || "cinematic", lang].join("|"));
   const style = input.style || (/(быстро|динамич|fast|energetic|kinetic)/i.test(prompt) ? "kinetic" :
     /(data|данн|цифр|аналити|terminal|технолог|code|dashboard)/i.test(prompt) ? "technical" : "cinematic");
+  // Explicit product-story briefs use ten genuinely distinct illustrative
+  // composition types (eight curated shots) rather than repeating the orbit
+  // animation. Do not interpret "show real results" as permission to invent UI.
+  if(brand==="promptence" && /(?:product\s*(?:story|film)|\bproduct\s*ui\b|продуктов.{0,12}ролик|продуктов.{0,12}видео|интерфейс.{0,12}продукта)/iu.test(prompt)){
+    return applySpatialRequest(
+      honorRequestedTiming(createPromptenceProductStory(lang,format),prompt),
+      prompt
+    );
+  }
   const directed = specialCampaign(brand,lang,format,style,hash);
   if (directed) return applySpatialRequest(honorRequestedTiming(directed,prompt),prompt);
   if (brand === "promptence" && topic === "visibility") {

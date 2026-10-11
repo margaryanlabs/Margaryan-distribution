@@ -10,6 +10,8 @@ import { drawWorldRig, withSceneCamera } from "./camera-rig";
 import { drawPromptenceSignatureArt } from "./signature-art";
 import { drawProductScreen } from "./screen-media";
 import { drawSpatialFrame } from "./spatial-bridge";
+import { drawPromptenceBeat } from "./promptence-beats";
+import { chooseTransition, editorialTransition } from "./editorial-transitions";
 
 const TAU = Math.PI * 2;
 const clamp = (x: number, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -189,7 +191,8 @@ function drawTechnical(ctx: CanvasRenderingContext2D, W: number, H: number, t: n
 
 function renderText(
   ctx:CanvasRenderingContext2D,scene:MotionScene,W:number,H:number,
-  progress:number,accent:string,t:number,style:MotionProject["style"],language:MotionProject["language"]
+  progress:number,accent:string,t:number,style:MotionProject["style"],
+  language:MotionProject["language"],qualityMode:MotionProject["qualityMode"]
 ){
   const headline=scene.headline.toLocaleUpperCase(language||"en");
   const g=fitShotCopy(ctx,headline,scene.support,W,H,scene.typographyScale);
@@ -209,17 +212,27 @@ function renderText(
     if(ctx.measureText(kicker).width<=g.width)break;
   }
   ctx.fillStyle=accent;ctx.fillText(kicker,g.x,g.eyebrowY);
-  const stagger=scene.kind==="kinetic"||style==="kinetic";
+  const treatment=scene.titleTreatment||
+    (qualityMode==="signature"?(scene.kind==="closer"?"minimal":"mask"):
+      scene.kind==="kinetic"||style==="kinetic"?"kinetic":"editorial");
+  const stagger=treatment==="kinetic";
   ctx.font='850 '+g.title.fontSize+'px '+FILM_FONT;
   ctx.fillStyle="#F3F5F8";
   for(const [index,line] of g.title.lines.entries()){
-    const reveal=cubic((progress-index*.075)*(stagger?5.2:7.5));
+    const reveal=cubic((progress-index*.075)*(treatment==="minimal"?4:stagger?5.2:7.5));
     ctx.save();
     ctx.globalAlpha=originalAlpha*opacity*reveal;
-    const dx=stagger?(1-reveal)*(index%2?-120:115):-(1-reveal)*38;
-    const dy=stagger?0:(1-reveal)*38;
-    ctx.shadowColor=accent+"42";ctx.shadowBlur=10;
-    ctx.fillText(line,g.x+dx,g.titleY+index*g.title.lineHeight+dy);
+    const dx=stagger?(1-reveal)*(index%2?-120:115):
+      treatment==="minimal"?0:-(1-reveal)*38;
+    const dy=stagger||treatment==="minimal"?0:(1-reveal)*38;
+    const y=g.titleY+index*g.title.lineHeight;
+    if(treatment==="mask"){
+      // Hard crop reveals true font glyphs; no distorted/generated text.
+      const height=g.title.lineHeight*reveal;
+      ctx.beginPath();ctx.rect(g.x-18,y-8,g.width+32,Math.max(.01,height+12));ctx.clip();
+    }
+    ctx.shadowColor=accent+"2c";ctx.shadowBlur=treatment==="minimal"?0:7;
+    ctx.fillText(line,g.x+dx,y+dy);
     ctx.restore();
   }
   // Subtitle is kept in an explicit lower region, separate from hero graphics.
@@ -265,7 +278,12 @@ function drawShot(ctx: CanvasRenderingContext2D, project: MotionProject, index: 
       drawWorldRig(ctx,W,H,absoluteTime,accent,index,
         scene.kind==="opener"?"floor":scene.kind==="orbit"?"portal":"signal");
     }
-    if(scene.kind==="spatial") {
+    if(project.brand==="promptence"&&scene.productBeat) {
+      // Ten authored stage-specific conceptual compositions, not fake AI results.
+      // A real client/provider screenshot is only drawn through the separate
+      // explicit "screen" scene with approved source footage.
+      drawPromptenceBeat(ctx,scene.productBeat,W,H,absoluteTime,progress);
+    } else if(scene.kind==="spatial") {
       // Time-addressable Three.js compositing (only on an explicitly selected shot).
       // A missing renderer is not silently represented as genuine WebGL:
       // export and offline mastering preflight must load it first.
@@ -294,7 +312,8 @@ function drawShot(ctx: CanvasRenderingContext2D, project: MotionProject, index: 
     ctx.restore();
   });
   // Text is outside the camera transform: never sacrifice glyph readability.
-  renderText(ctx, scene, W, H, progress, accent, absoluteTime, project.style, project.language);
+  renderText(ctx, scene, W, H, progress, accent, absoluteTime,
+    project.style, project.language, project.qualityMode);
   ctx.restore();
 }
 
@@ -328,30 +347,12 @@ export function drawMotionFrame(ctx: CanvasRenderingContext2D, project: MotionPr
   ctx.save();
   ctx.setTransform(width / W, 0, 0, height / H, 0, 0);
   drawShot(ctx, project, index, local, t, W, H, 1);
-  const transition = Math.min(.6, scene.seconds * .18);
-  if (scene.transition!=="cut" && local > scene.seconds - transition && index < project.scenes.length - 1) {
-    const amount = smooth((local - (scene.seconds - transition)) / transition);
-    const method=scene.transition && scene.transition!=="auto"
-      ? scene.transition : index%3===1?"wipe":index%3===2?"slash":"dissolve";
-    // Alternating editorial transition grammar: soft cross-dissolve / directional
-    // vertical wipe / diagonal iris. The source shot remains fully drawn below.
-    ctx.save();
-    if (method === "wipe") {
-      const top = H * (1 - amount);
-      ctx.beginPath();ctx.rect(0, top, W, H - top);ctx.clip();
-      drawShot(ctx, project, index + 1, Math.max(.05, amount * transition), t, W, H, 1);
-    } else if (method === "slash") {
-      const span = W * 1.7;
-      ctx.beginPath();ctx.moveTo(-W + amount * span,0);
-      ctx.lineTo(amount * span,0);
-      ctx.lineTo(amount * span - W *.6,H);
-      ctx.lineTo(-W + amount * span - W*.6,H);
-      ctx.closePath();ctx.clip();
-      drawShot(ctx, project, index + 1, Math.max(.05, amount * transition), t, W, H, 1);
-    } else {
-      drawShot(ctx, project, index + 1, Math.max(.05, amount * transition), t, W, H, amount);
-    }
-    ctx.restore();
+  const transition = Math.min(project.qualityMode==="signature"?.55:.6, scene.seconds*.18);
+  if(local>scene.seconds-transition && index<project.scenes.length-1) {
+    const method=chooseTransition(scene.transition,project.qualityMode,index);
+    const amount=(local-(scene.seconds-transition))/transition;
+    editorialTransition(ctx,method,amount,W,H,accent,opacity=>
+      drawShot(ctx,project,index+1,Math.max(.05,amount*transition),t,W,H,opacity));
   }
   const pad = H < 810 ? 82 : 88;
   // Brand bars / metainformation are drawn above scene transitions.

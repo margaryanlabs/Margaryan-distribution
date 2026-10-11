@@ -2,7 +2,7 @@
 
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import {
-  BRAND_INFO, FORMAT_SIZE, durationOf, makeMotionPreset,
+  BRAND_INFO, FORMAT_SIZE, PROMPTENCE_BEATS, durationOf, makeMotionPreset,
   sanitizeMotionProject, sceneAt,
   type MotionBrand, type MotionFormat, type MotionProject, type MotionScene
 } from "@/lib/motion/studio";
@@ -14,6 +14,7 @@ import { auditMotionProject, inspectFramePixels, autoPolishMotionProject } from 
 import { reviewMotionVisuals } from "@/lib/motion/visual-review";
 import { repairMotionProject, serializeRepair } from "@/lib/motion/auto-director";
 import { createPromptenceSignature, createPromptenceCampaign } from "@/lib/motion/signature-promptence";
+import { BEAT_LABELS, createPromptenceProductStory } from "@/lib/motion/promptence-beats";
 import { compareFilmWithReference, summarizeReferenceComparison, type ReferenceComparison } from "@/lib/motion/reference-lab";
 import { createCaptionBundle } from "@/lib/motion/captions";
 import { rescaleProjectToSeconds } from "@/lib/motion/timing";
@@ -411,6 +412,16 @@ export default function MotionStudioPage() {
     }finally{setReferenceComparing(false);}
   }
 
+  function loadPromptenceProductStory():void {
+    if(generating||exporting||directorRepairing)return;
+    const lang=language==="auto"
+      ?(/\p{Script=Armenian}/u.test(brief)?"hy":/\p{Script=Cyrillic}/u.test(brief)?"ru":"en")
+      :language;
+    const story=createPromptenceProductStory(lang,project.format);
+    setPlaying(false);jump(0);setSelectedIndex(0);
+    setProject(story);
+    setNotice("PRODUCT STORY / SIGNATURE: 8 directed shots from a library of ten distinct conceptual compositions. No fabricated provider responses or customer results. Review each scene, then export.");
+  }
   function loadPromptenceSignature():void {
     if(generating||exporting||directorRepairing)return;
     const lang=language==="auto"
@@ -687,6 +698,13 @@ export default function MotionStudioPage() {
           ◈ LOAD 3D / SPATIAL BRAND FILM
         </button>
         <p className={styles.hint}>Own procedural motion director: language-aware storyboard + animated graphics. Write “3D” / “WebGL” in a brief to include a real spatial shot automatically. Not a generative neural video model.</p>
+        {project.brand==="promptence"&&<div className={styles.productStoryLaunch}>
+          <div className={styles.productionDeskHead}><strong>PROMPTENCE / PRODUCT CINEMA</strong><span>10 CONCEPT SCENES</span></div>
+          <p>Buyer asks AI → conceptual answer → visibility gap → source evidence → diagnostics → priorities → approval → implementation → remeasurement → brand close. This does not fabricate AI-provider results.</p>
+          <button type="button" disabled={exporting||generating||directorRepairing}
+            onClick={loadPromptenceProductStory}>▶ CREATE PRODUCT STORY / 8 CURATED SHOTS</button>
+          <small>Choose any of the ten compositions in Scene Inspector after loading. Product screen recordings must be owner-approved separately.</small>
+        </div>}
         <div className={styles.signatureShowcase}>
           <div><b>DIRECTOR'S EDITION / PROMPTENCE</b><span>SIGNATURE CAMPAIGN · 8 AUTHORED SHOTS · EN/RU/HY</span></div>
           <strong>THE ANSWER IS<br/>THE NEW FRONT PAGE.</strong>
@@ -709,6 +727,15 @@ export default function MotionStudioPage() {
         <div className={styles.specs}><span>RUN TIME</span><b>{timeLabel(total)} / {project.scenes.length} scenes</b></div>
         <div className={styles.specs}><span>RENDER</span><b>LOCAL · 30 FPS</b></div>
         <div className={styles.specs}><span>GENERATION COST</span><b>0 CREDITS · NO KEYS</b></div>
+        <label className={styles.field}><span>RENDER QUALITY / EDITORIAL LANGUAGE</span>
+          <select value={project.qualityMode||"basic"}
+            onChange={event=>updateProject({...project,qualityMode:event.target.value as "basic"|"premium"|"signature"})}>
+            <option value="basic">Basic / established cuts</option>
+            <option value="premium">Premium / restrained product pacing</option>
+            <option value="signature">Signature / authored cinema transitions</option>
+          </select>
+        </label>
+        <p className={styles.hint}>Quality modes change actual transition timing and selection; they do not claim to increase physical video resolution or guarantee advertising quality.</p>
         <label className={styles.audioToggle}>
           <input type="checkbox" checked={soundEnabled} disabled={exporting} onChange={event => setSoundEnabled(event.target.checked)}/>
           ORIGINAL SYNTH SOUNDTRACK <strong>{soundEnabled ? "ON" : "OFF"}</strong>
@@ -834,7 +861,10 @@ export default function MotionStudioPage() {
         <div className={styles.divider}/>
         <div className={styles.sectionHeader}><span>03 / SCENE INSPECTOR</span><strong>{String(selectedIndex + 1).padStart(2, "0")}</strong></div>
         <label className={styles.field}><span>VISUAL COMPOSITION</span>
-          <select value={selected.kind} onChange={event => editScene("kind", event.target.value)}>
+          <select value={selected.kind} onChange={event => updateProject({...project,
+            scenes:project.scenes.map((scene,i)=>i===selectedIndex
+              ? {...scene,kind:event.target.value as MotionScene["kind"],productBeat:undefined}
+              : scene)})}>
             <option value="opener">Cinematic opener</option>
             <option value="statement">Strong statement</option>
             <option value="network">Signal network</option>
@@ -845,6 +875,15 @@ export default function MotionStudioPage() {
             <option value="closer">Closing frame</option>
           </select>
         </label>
+        {project.brand==="promptence"&&<label className={styles.field}>
+          <span>PRODUCT STORY / TEN DISTINCT CONCEPT COMPOSITIONS</span>
+          <select value={selected.productBeat||"none"}
+            onChange={event=>editScene("productBeat",event.target.value==="none"?"":event.target.value)}>
+            <option value="none">None / standard composition</option>
+            {PROMPTENCE_BEATS.map(beat=><option key={beat} value={beat}>{BEAT_LABELS[beat]}</option>)}
+          </select>
+          <small className={styles.beatHint}>Conceptual graphics never invent actual AI answers, sources, customer statistics or rankings. For real UI, use the separate approved screenshot scene.</small>
+        </label>}
         <section className={styles.productionDesk} aria-label="Per-shot camera and edit controls">
           <div className={styles.productionDeskHead}><strong>DIRECTOR DESK / SHOT {String(selectedIndex+1).padStart(2,"0")}</strong><span>KEYFRAMED · KEYLESS</span></div>
           <p>Direct the actual rendered scenery, not a decorative preview. Text and real product marks stay readable.</p>
@@ -865,12 +904,25 @@ export default function MotionStudioPage() {
                 <option value="dissolve">Cross dissolve</option>
                 <option value="wipe">Vertical wipe</option>
                 <option value="slash">Diagonal wipe</option>
+                <option value="zoom">Camera zoom reveal</option>
+                <option value="slide">Directional slide</option>
+                <option value="grid">Staggered grid reveal</option>
+                <option value="flash">Controlled brand flash</option>
               </select>
             </label>
           </div>
           <label className={styles.fader}>CAMERA INTENSITY <strong>{Math.round((selected.intensity ?? .5)*100)}%</strong>
             <input type="range" min="0" max="1" step=".05" value={selected.intensity ?? .5}
               onChange={event=>editScene("intensity",Number(event.target.value))}/>
+          </label>
+          <label className={styles.field}><span>TYPOGRAPHY / REVEAL</span>
+            <select value={selected.titleTreatment||"auto"} onChange={event=>editScene("titleTreatment",event.target.value==="auto"?"":event.target.value)}>
+              <option value="auto">Automatic / quality mode</option>
+              <option value="editorial">Editorial rise</option>
+              <option value="mask">Masked film-title reveal</option>
+              <option value="kinetic">Kinetic stagger</option>
+              <option value="minimal">Minimal fade</option>
+            </select>
           </label>
           <label className={styles.field}><span>VOICE DIRECTION / EDITORIAL CUE</span>
             <textarea rows={3} maxLength={300} placeholder="What should the narrator say during this shot? No synthetic voice is created without a provider."

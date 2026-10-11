@@ -17,6 +17,8 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Motion editorial story / RU EN HY / cinematic transitions
+        run: npm run motion:test-editorial
       - name: Motion Production Desk schema and cue contract
         run: npm run motion:test-production
       - name: Motion multitrack voice/music FFmpeg edit contract

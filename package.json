@@ -29,6 +29,7 @@
     "motion:capture-video": "node scripts/motion/capture-promptence-video.mjs",
     "motion:test-audio": "node scripts/motion/test-audio-mix.mjs",
     "motion:test-proof-audio": "node scripts/motion/test-proof-audio.mjs",
+    "motion:test-editorial": "node scripts/motion/test-editorial.mjs",
     "motion:test-proof-edl": "node --experimental-strip-types scripts/motion/test-proof-edl.mjs"
   },
   "dependencies": {
