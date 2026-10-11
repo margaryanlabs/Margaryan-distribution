@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Real-source editor timing contract, no browser network and no fake footage. */
 import assert from "node:assert/strict";
-import {PROOF_DEFAULT_EDL,sanitizeProofEDL,proofSourceTime,proofShotAt} from "../../lib/motion/proof-edl.ts";
+import {PROOF_DEFAULT_EDL,sanitizeProofEDL,proofSourceTime,proofShotAt,reviewProofEDL,proofEDLFile,parseProofEDLFile} from "../../lib/motion/proof-edl.ts";
 
 const d=20;
 const edl=sanitizeProofEDL({firstIn:2.1,secondIn:12.5,cutAt:4.4,zoom:1.16},d);
@@ -23,4 +23,14 @@ assert.equal(malformed.zoom,.82);
 const empty=sanitizeProofEDL({},8);
 assert.deepEqual(empty,PROOF_DEFAULT_EDL);
 assert.deepEqual(sanitizeProofEDL({},8),empty,"sanitizer must be deterministic");
-process.stdout.write("Proof EDL pure contract PASS: actual source cuts, limits, view windows, stable defaults.\n");
+const okay=reviewProofEDL(8,PROOF_DEFAULT_EDL);
+assert.equal(okay.pass,true,"8s source should cover both default source takes");
+const forbidden=reviewProofEDL(8,{...PROOF_DEFAULT_EDL,secondIn:7});
+assert.equal(forbidden.pass,false,"Must block last-frame holds disguised as cinematic footage");
+assert.equal(forbidden.problems.length,1);
+const file=proofEDLFile(edl);
+assert.equal(file.kind,"margaryan-motion-source-edl");
+assert.deepEqual(parseProofEDLFile(file),edl,"Source-cut JSON roundtrip must preserve decisions");
+assert.throws(()=>parseProofEDLFile({...file,version:9}));
+assert.throws(()=>parseProofEDLFile({...file,firstIn:NaN}));
+process.stdout.write("Proof EDL contract PASS: real cuts, source footage gate, JSON roundtrip.\\n");
