@@ -17,6 +17,8 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Motion Precision Cut / chronological original video splits and non-destructive shot editing
+        run: npm run motion:test-precision
       - name: Motion Advanced Editor / independent owner-approved picture in picture
         run: npm run motion:test-overlays
       - name: Motion private portable production bundle / ZIP integrity, ownership and source remapping
