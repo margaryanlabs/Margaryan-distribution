@@ -19,6 +19,7 @@ import { createCaptionBundle } from "@/lib/motion/captions";
 import { rescaleProjectToSeconds } from "@/lib/motion/timing";
 import { createProceduralSoundtrack, type ProceduralAudioSession } from "@/lib/motion/sound-engine";
 import { makeProductionPack } from "@/lib/motion/production-pack";
+import { ensureSpatialRenderer, spatialStatus, spatialError } from "@/lib/motion/spatial-bridge";
 import { createKeylessStoryboard, getLocalDirectorExamples, type MotionLanguage, type MotionStyle } from "@/lib/motion/director";
 import QuickStudio from "./quick-studio";
 import styles from "./motion.module.css";
@@ -119,6 +120,7 @@ export default function MotionStudioPage() {
     host.__motionInstallScreen = async (input) => { await installOfflineScreen(input.brand,input.mime,input.base64); };
     host.__motionReview = async input=>{
       const validated=sanitizeMotionProject(input.project);
+      if(validated.scenes.some(scene=>scene.kind==="spatial"))await ensureSpatialRenderer();
       const result=await repairMotionProject(validated);
       const source=await new Promise<string>((resolve,reject)=>{
         const reader=new FileReader();
@@ -133,6 +135,7 @@ export default function MotionStudioPage() {
     };
     host.__motionFrame = async (input: FrameArgs) => {
       const shot = sanitizeMotionProject(input.project);
+      if(shot.scenes.some(scene=>scene.kind==="spatial"))await ensureSpatialRenderer();
       const dims = FORMAT_SIZE[shot.format];
       await preloadMotionLogo(shot.brand);
       if(shot.scenes.some(scene=>scene.kind==="screen")&&!hasProductScreen(shot.brand))throw new Error("Source product screenshot is missing; add --screen in the offline master.");
@@ -168,6 +171,19 @@ export default function MotionStudioPage() {
     void preloadMotionLogo(project.brand).then(() => { if(!cancelled)setAssetRevision(v=>v+1); });
     return () => { cancelled = true; };
   }, [project.brand]);
+
+  const needsSpatial=project.scenes.some(scene=>scene.kind==="spatial");
+  useEffect(()=>{
+    if(!needsSpatial)return;
+    let active=true;
+    void ensureSpatialRenderer().then(()=>{
+      if(active){setAssetRevision(v=>v+1);setNotice("3D ENGINE READY: real WebGL geometry, GSAP-directed deterministic motion and native export.");}
+    }).catch(error=>{
+      if(active)setNotice("3D ENGINE UNAVAILABLE: "+(error instanceof Error?error.message:String(error))+
+        ". Select a 2D scene or enable WebGL before export.");
+    });
+    return()=>{active=false;};
+  },[needsSpatial]);
 
   useEffect(() => {
     if (playing) return;
@@ -276,6 +292,7 @@ export default function MotionStudioPage() {
     setNotice("REFERENCE LAB: locally decoding the reference and measuring eight paired moments. No file upload.");
     try{
       const originalSnapshot=JSON.stringify(project);
+      if(needsSpatial)await ensureSpatialRenderer();
       const output=await compareFilmWithReference(project,referenceFile);
       if(JSON.stringify(latestProjectRef.current)!==originalSnapshot){
         setNotice("REFERENCE LAB: Project changed while frames were compared. Re-run comparison for the latest edit.");
@@ -327,6 +344,7 @@ export default function MotionStudioPage() {
     setNotice("DIRECTOR AUTOFIX: inspect shots, preserve multilingual copy, repair safe-area typography and composition, then verify again.");
     try {
       const previous=sanitizeMotionProject(project);
+      if(needsSpatial)await ensureSpatialRenderer();
       const result=await repairMotionProject(previous);
       if(result.changes.length){
         previousDirectorProject.current=previous;
@@ -401,6 +419,7 @@ export default function MotionStudioPage() {
     let recorder: MediaRecorder | null = null;
     try {
       await preloadMotionLogo(project.brand);
+      if(needsSpatial)await ensureSpatialRenderer();
       // Check representative actual rendered frames, not only scene JSON.
       let cursor = 0;
       for (const scene of project.scenes) {
@@ -694,6 +713,7 @@ export default function MotionStudioPage() {
               if(visualReviewing)return;
               setVisualReviewing(true);
               try{
+                if(needsSpatial)await ensureSpatialRenderer();
                 const report=await reviewMotionVisuals(project);
                 downloadFile("motion-"+project.brand+"-"+(project.language||language)+"-visual-review.png",report.sheet);
                 setNotice("VISUAL QA: "+report.sceneCoverage+" shots, "+report.frames+" sampled frames. "+(report.warnings.length?report.warnings.join(" · "):"All sampled frames have usable image contrast. Human creative review still required."));
@@ -713,6 +733,7 @@ export default function MotionStudioPage() {
             <option value="screen">Product screenshot / owner review required</option>
             <option value="kinetic">Kinetic typography</option>
             <option value="orbit">Orbit / parallax</option>
+            <option value="spatial">Real 3D / Three.js spatial hero</option>
             <option value="closer">Closing frame</option>
           </select>
         </label>
@@ -780,10 +801,17 @@ export default function MotionStudioPage() {
           <button onClick={addScene} disabled={project.scenes.length >= 8}>+ Add scene</button>
           <button onClick={removeScene} disabled={project.scenes.length <= 1}>Remove</button>
         </div>
+        <div className={styles.spatialStatus} role="status" data-ready={needsSpatial&&spatialStatus()==="ready"}>
+          <div><strong>THREE.JS / SPATIAL ENGINE</strong><span>{needsSpatial?spatialStatus().toUpperCase():"STANDBY"}</span></div>
+          <p>Choose “Real 3D” to add depth-tested geometry and moving studio lights. Real GPU-rendered frames are included in video export.</p>
+          {needsSpatial&&spatialError()&&<small>{spatialError()}</small>}
+          <small>Free library, not text-to-video AI. No cloud GPU, voice cloning or API key. Legacy 2D shots remain unchanged.</small>
+        </div>
       </section>
 
       <section className={styles.stageSection} aria-label="Motion canvas and timeline">
-        <div className={styles.stageTop}><div><span>LIVE CANVAS</span><strong>{info.name}</strong></div><div><i/> KEYLESS PROCEDURAL ENGINE</div></div>
+        <div className={styles.stageTop}><div><span>LIVE CANVAS</span><strong>{info.name}</strong></div>
+          <div><i/> {needsSpatial&&spatialStatus()==="ready"?"2D + WEBGL · THREE.JS / GSAP":"KEYLESS PROCEDURAL ENGINE"}</div></div>
         <div className={styles.stageShell}>
           <canvas ref={previewRef} className={styles.canvas} width={previewWidth} height={previewHeight}
             style={{ aspectRatio: String(formatSize.width) + " / " + String(formatSize.height) }}
@@ -840,7 +868,7 @@ export default function MotionStudioPage() {
             </button>
           </div>
         </div>
-        <p className={styles.footnote}>Local cinema staging and original MP4 soundtracks run without paid video APIs. Product screenshots are local-only and never stored in saved JSON. Source-verified marks are original SVGs; private GitHub sources are never exposed here. Browser EXPORT may produce WebM depending on support. For deterministic professional H.264/AAC MP4, use the offline <code>npm run motion:master</code> workflow in the repository; it needs a local computer with FFmpeg/Chromium. QA checks structure and sampled frames but cannot certify taste, factual claims or music licenses. Final creative review is still required.</p>
+        <p className={styles.footnote}>Spatial shots use actual WebGL geometry via Three.js and deterministic GSAP easing only when selected; rendering requires WebGL support. Local cinema staging and original MP4 soundtracks run without paid video APIs. Product screenshots are local-only and never stored in saved JSON. Source-verified marks are original SVGs; private GitHub sources are never exposed here. Browser EXPORT may produce WebM depending on support. For deterministic professional H.264/AAC MP4, use the offline <code>npm run motion:master</code> workflow in the repository; it needs a local computer with FFmpeg/Chromium. QA checks structure and sampled frames but cannot certify taste, factual claims or music licenses. Final creative review is still required.</p>
       </section>
     </div>
   </main>;
