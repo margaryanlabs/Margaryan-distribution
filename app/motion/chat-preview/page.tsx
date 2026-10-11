@@ -201,7 +201,10 @@ export default function ChatMotionPreviewPage() {
       discardRef.current=false;
       stream = canvas.captureStream(fps);
       streamRef.current=stream;
-      const recorder = new MediaRecorder(stream, {mimeType:type,videoBitsPerSecond:4_000_000});
+      // Multi-minute films must fit the 120MB local safety ceiling without
+      // falsely advertising a commercial-grade constant-bitrate master.
+      const targetBitrate=total>180?2_200_000:total>64?2_800_000:3_500_000;
+      const recorder = new MediaRecorder(stream, {mimeType:type,videoBitsPerSecond:targetBitrate});
       chunksRef.current = [];
       lastExportRef.current = null; setExportReady(false);
       recorder.ondataavailable = event => {
