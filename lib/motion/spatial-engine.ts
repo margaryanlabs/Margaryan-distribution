@@ -39,6 +39,10 @@ export function createSpatialRenderer(): SpatialFrameRenderer {
 
   const rig = new THREE.Group();
   world.add(rig);
+  const intelligenceRig=new THREE.Group();
+  const searchRig=new THREE.Group();
+  const architectureRig=new THREE.Group();
+  rig.add(intelligenceRig,searchRig,architectureRig);
 
   const metal = new THREE.MeshStandardMaterial({
     color:0x233b45, metalness:.65, roughness:.22,
@@ -46,12 +50,12 @@ export function createSpatialRenderer(): SpatialFrameRenderer {
   });
   const coreGeometry=new THREE.IcosahedronGeometry(1.18,2);
   const core = new THREE.Mesh(coreGeometry,metal);
-  rig.add(core);
+  intelligenceRig.add(core);
   const skeleton=new THREE.LineSegments(
     new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(1.22,1)),
     new THREE.LineBasicMaterial({color:0x9aafb9,transparent:true,opacity:.38})
   );
-  rig.add(skeleton);
+  intelligenceRig.add(skeleton);
 
   const rings:THREE.Mesh[] = [];
   for(let i=0;i<3;i++){
@@ -60,7 +64,7 @@ export function createSpatialRenderer(): SpatialFrameRenderer {
       new THREE.MeshBasicMaterial({color:0x9eb1ba,transparent:true,opacity:.47-i*.09})
     );
     mesh.rotation.set(.15+i*.62,.48+i*.31,.20+i*.77);
-    rig.add(mesh);
+    intelligenceRig.add(mesh);
     rings.push(mesh);
   }
 
@@ -78,9 +82,70 @@ export function createSpatialRenderer(): SpatialFrameRenderer {
     mesh.position.set(Math.cos(p)*2.98,Math.sin(p)*1.82+band,
       Math.sin(p*3)*.73);
     mesh.rotation.set(.17*p,p*.42,p+.15);
-    rig.add(mesh);
+    intelligenceRig.add(mesh);
     shards.push(mesh);
   }
+
+  // Visibility discovery: evidence tiles form a spatial, rotating search field.
+  // Decorative geometry only; never simulated AI responses or customer numbers.
+  const evidenceTiles:THREE.Mesh[]=[];
+  for(let i=0;i<9;i++){
+    const a=i*.65;
+    const card=new THREE.Mesh(
+      new THREE.BoxGeometry(1.25,.74,.052),
+      new THREE.MeshStandardMaterial({
+        color:0x466b64,metalness:.42,roughness:.35,
+        transparent:true,opacity:.76,side:THREE.DoubleSide
+      })
+    );
+    card.position.set(Math.sin(a)*2.25,(i-4)*.32,Math.cos(a)*1.5);
+    card.rotation.set(.12*Math.sin(i),a/4-.4,Math.sin(a)*.12);
+    searchRig.add(card);
+    const rimLines=new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(1.26,.75,.058)),
+      new THREE.LineBasicMaterial({color:0xc5eadd,transparent:true,opacity:.64})
+    );
+    card.add(rimLines);
+    evidenceTiles.push(card);
+  }
+  const helixPoints:number[]=[];
+  for(let i=0;i<=64;i++){
+    const a=i/64*TAU*1.9;
+    helixPoints.push(Math.sin(a)*2.4,(i/64-.5)*3.15,Math.cos(a)*1.5);
+  }
+  const helixBuffer=new THREE.BufferGeometry();
+  helixBuffer.setAttribute("position",new THREE.Float32BufferAttribute(helixPoints,3));
+  searchRig.add(new THREE.Line(helixBuffer,new THREE.LineBasicMaterial({
+    color:0x9ed8c6,transparent:true,opacity:.43
+  })));
+
+  // Architectural massing: a non-representational capital / real estate motif.
+  // Abstract physical volumes, not a fabricated Dubai listing or real building.
+  const buildings:THREE.Mesh[]=[];
+  for(let i=0;i<11;i++){
+    const height=1.0+(i*17%9)*.34;
+    const volume=new THREE.Mesh(
+      new THREE.BoxGeometry(.48,height,.53),
+      new THREE.MeshStandardMaterial({
+        color:0x566470,metalness:.45,roughness:.26,
+        transparent:true,opacity:.82
+      })
+    );
+    volume.position.set((i%6-2.5)*.68,-1.2+height/2,Math.floor(i/6)*.8-.4);
+    architectureRig.add(volume);
+    buildings.push(volume);
+    const boundary=new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(.485,height+.005,.535)),
+      new THREE.LineBasicMaterial({color:0xb9c7d0,transparent:true,opacity:.47})
+    );
+    volume.add(boundary);
+  }
+  const plinth=new THREE.Mesh(
+    new THREE.CylinderGeometry(2.95,3.1,.1,6),
+    new THREE.MeshStandardMaterial({color:0x24303b,metalness:.68,roughness:.44})
+  );
+  plinth.position.y=-1.25;
+  architectureRig.add(plinth);
 
   // Deterministic star field with seeded trigonometric distribution.
   const positions=new Float32Array(540*3);
@@ -114,11 +179,15 @@ export function createSpatialRenderer(): SpatialFrameRenderer {
     }
     for(const shard of shards)
       (shard.material as THREE.MeshStandardMaterial).color.copy(cool);
+    for(const tile of evidenceTiles)
+      (tile.material as THREE.MeshStandardMaterial).color.copy(base.clone().lerp(new THREE.Color("#31494a"),.68));
+    for(const block of buildings)
+      (block.material as THREE.MeshStandardMaterial).color.copy(base.clone().lerp(new THREE.Color("#3c4b58"),.84));
     rim.color.copy(base);
     previousColor=accent;
   }
 
-  return (ctx,width,height,accent,time,progress,index,scene)=>{
+  return (ctx,width,height,accent,time,progress,index,scene,brand)=>{
     if(!Number.isFinite(time)||width<1||height<1)return;
     const w=Math.max(1,Math.round(width));
     const h=Math.max(1,Math.round(height));
@@ -132,6 +201,10 @@ export function createSpatialRenderer(): SpatialFrameRenderer {
       currentHeight=h;
     }
     setColor(accent);
+    const motif=brand==="promptence"?"visibility":(["suren","tun","reality_engine"].includes(brand)?"architecture":"intelligence");
+    intelligenceRig.visible=motif==="intelligence";
+    searchRig.visible=motif==="visibility";
+    architectureRig.visible=motif==="architecture";
     const normalized=Math.max(0,Math.min(1,progress));
     const directed=ease(normalized);
     const strength=Math.max(0,Math.min(1,scene.intensity??.5));
@@ -142,6 +215,13 @@ export function createSpatialRenderer(): SpatialFrameRenderer {
       time*.21+index*.65+directed*.42,
       Math.sin(time*.13+index)*.06);
     core.rotation.set(time*.26,-time*.2,time*.12);
+    searchRig.rotation.set(.07*Math.sin(time*.27),.11*Math.sin(time*.22),.03*Math.sin(time*.18));
+    evidenceTiles.forEach((tile,i)=>{
+      tile.position.x=Math.sin(i*.65+time*.08)*2.25;
+      tile.position.z=Math.cos(i*.65+time*.08)*1.5;
+    });
+    architectureRig.rotation.y=.10*Math.sin(time*.2+index*.2);
+    // Architecture stays physically stable while the camera orbits; no jittery skyscrapers.
     skeleton.rotation.copy(core.rotation);
     rings.forEach((ring,i)=>{
       ring.rotation.x=.30+i*.62+Math.sin(time*.28+i)*.24;
