@@ -785,3 +785,20 @@
 @media(prefers-reduced-motion:reduce){
  .shortcutSheet *{animation:none!important;transition:none!important}
 }
+
+
+/* User-controlled right inspector width: source scripts and review notes
+ * can be read comfortably without changing the underlying editing state. */
+@media(min-width:1211px){
+ .workspace:not([data-focus="true"]){
+   grid-template-columns:72px minmax(0,1fr) var(--inspector-width,344px)
+ }
+}
+.inspectorHeaderTools{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.inspectorHeaderTools small{font-size:9px;color:#9bbca9;letter-spacing:.07em;
+ border:1px solid #44624f;border-radius:6px;white-space:nowrap;padding:5px 7px}
+.inspectorHeaderTools button{border:1px solid #5c7b6b;border-radius:6px;
+ background:#203d2d;color:#d5eee0;font-size:8px;letter-spacing:.05em;
+ font-weight:850;min-height:31px;padding:7px 10px;cursor:pointer}
+.inspectorHeaderTools button[aria-pressed="true"]{background:#bdebd1;color:#123124}
+@media(max-width:1210px){.inspectorHeaderTools button{display:none}}
