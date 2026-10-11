@@ -91,9 +91,11 @@ assert.equal(startEvents.filter(e=>e[0]==="source-start").length,0,
 session.start();
 const sources=startEvents.filter(e=>e[0]==="source-start");
 assert.equal(sources.length,2,"Narration and score both start after video recorder starts");
-assert.ok(sources.every(e=>e[1]>=18.1&&e[1]<18.21),
- "First sound timestamps should align within 110ms of video capture");
-assert.equal(sources[1][1],sources[0][1]-1);
+const starts=sources.map(e=>e[1]).sort((a,b)=>a-b);
+assert.ok(starts[0]>=18.1&&starts[0]<18.21,
+ "Initial music should align within 110ms of the video capture clock");
+assert.ok(Math.abs(starts[1]-starts[0]-1)<.0001,
+ "Narration must start exactly at the 1-second project offset");
 session.start();
 assert.equal(startEvents.filter(e=>e[0]==="source-start").length,2,
  "Sound start() must be idempotent");
