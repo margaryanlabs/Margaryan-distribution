@@ -7,6 +7,17 @@ import {spawnSync} from "node:child_process";
 import {validateFilmSequence,escapeConcatFilePath} from "./film-sequence-core.mjs";
 
 const demo=JSON.parse(await readFile(new URL("../../public/motion/film-templates/promptence-120s.json",import.meta.url),"utf8"));
+const fiveMinuteDemo=JSON.parse(await readFile(new URL("../../public/motion/film-templates/promptence-300s.json",import.meta.url),"utf8"));
+const checkedFive=validateFilmSequence(fiveMinuteDemo);
+assert.equal(checkedFive.durationSeconds,300);
+assert.equal(checkedFive.shots,40);
+assert.equal(checkedFive.chapters.length,5);
+assert.deepEqual(checkedFive.chapters.map(c=>c.startSeconds),[0,60,120,180,240]);
+assert.ok(checkedFive.chapters.every(c=>c.project.scenes.length===8));
+assert.ok(checkedFive.chapters.every(c=>c.project.scenes.every(s=>!s.mediaId&&!s.overlayMediaId)),
+ "The concept film must not fake private source footage or AI provider data");
+assert.equal(new Set(checkedFive.chapters.flatMap(c=>c.project.scenes.map(s=>s.headline))).size,40,
+ "The long film must contain forty distinctive editorial beats, not a repeated slideshow");
 const checkedDemo=validateFilmSequence(demo);
 assert.equal(checkedDemo.durationSeconds,120);
 assert.equal(checkedDemo.shots,16);
@@ -75,4 +86,4 @@ try{
   assert.equal(dry.plan.cloudRender,false);
   assert.equal(dry.plan.shots,24);
 }finally{await rm(dir,{recursive:true,force:true});}
-console.log("MOTION SEQUENCE PASS: 120s Russian demo, three acts/24 scenes/192s, dry-run, source/timing/schema/concat safety");
+console.log("MOTION SEQUENCE PASS: 120s & 300s original Russian films, 40 unique shot beats, 192s multi-act dry-run and 512s master safety");
