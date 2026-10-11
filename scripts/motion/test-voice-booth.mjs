@@ -20,6 +20,17 @@ const studio=load("lib/motion/studio.ts",{
  "./timeline-edit":audio,"./source-composition":framing
 });
 const chat=load("lib/motion/chat-operator.ts",{"./studio":studio});
+const voiceQA=load("lib/motion/voice-quality.ts");
+const sine=Float32Array.from({length:48000},(_,i)=>Math.sin(i*.035)*.22);
+const silence=new Float32Array(48000);
+const clipping=Float32Array.from({length:48000},(_,i)=>i%4?1:-1);
+const inspect=data=>voiceQA.inspectVoiceSignal({duration:1,numberOfChannels:1,
+  getChannelData:()=>data});
+assert.equal(inspect(sine).state,"ready");
+assert.equal(inspect(silence).state,"blocked");
+assert.equal(inspect(clipping).state,"blocked");
+assert.ok(inspect(sine).rms>.09);
+assert.ok(inspect(clipping).clippedPercent>2);
 const original=studio.makeMotionPreset("promptence");
 const clean=studio.sanitizeMotionProject({...original,filmChrome:"clean"});
 assert.equal(clean.filmChrome,"clean");
