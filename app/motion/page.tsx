@@ -6,6 +6,7 @@ import {
   sanitizeMotionProject, sceneAt,
   type MotionBrand, type MotionFormat, type MotionProject, type MotionScene
 } from "@/lib/motion/studio";
+import LocalFilmVaultPanel from "@/lib/motion/local-vault-panel";
 import { drawMotionFrame } from "@/lib/motion/render-engine";
 import { preloadMotionLogo } from "@/lib/motion/brand-assets";
 import { setLocalProductScreen, installOfflineScreen, hasProductScreen } from "@/lib/motion/screen-media";
@@ -725,6 +726,20 @@ export default function MotionStudioPage() {
       <a href="#motion-export"><span>04 / DELIVER</span><strong>EXPORT</strong><small>FRAME QC · MP4 MASTER ↗</small></a>
     </nav>
     <div className={styles.notice} role="status">{notice}</div>
+    <LocalFilmVaultPanel
+      project={project}
+      busy={exporting||generating||directorRepairing||visualReviewing}
+      onRestore={saved=>{
+        setPlaying(false);
+        setVoiceover(null);
+        setLicensedMusic(null);
+        updateProject(saved);
+        setSelectedIndex(0);
+        timeRef.current=0;
+        setPlayhead(0);
+        setNotice("LOCAL FILM RESTORED: "+saved.title+". Recheck any approved local source files before export.");
+      }}
+    />
     <div id="film-sequence" className={styles.featureWorkspace}>
       <FilmSequenceDesk project={project}
         busy={exporting||generating||directorRepairing||visualReviewing}
