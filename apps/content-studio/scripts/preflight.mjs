@@ -147,9 +147,72 @@ const shortResult=await rpc("tools/call",{name:"create_motion_film",arguments:{
   title:"RELEASE PREVIEW",brand:"labs",format:"portrait",language:"en",scenes
 }});
 assert.equal(shortResult.structuredContent.videoFileCreated,false);
+
+const widgetShots=[], widgetNodes=new Map(), uiMessages=[], followUps=[], uiStates=[];
+const nativePlayer={
+  contentWindow:{sent:[],postMessage(message,target){
+    assert.equal(target,new URL(origin).origin);this.sent.push(message);
+  }},
+  handlers:{},addEventListener(name,cb){this.handlers[name]=cb;}
+};
+const getWidgetNode=(id)=>{
+  if(id==="player")return nativePlayer;
+  if(!widgetNodes.has(id))widgetNodes.set(id,{
+    textContent:"",value:"",href:"",hidden:false,disabled:false,handlers:{},
+    addEventListener(name,cb){this.handlers[name]=cb;},
+    replaceChildren(){if(id==="shots")widgetShots.length=0;},
+    appendChild(){},
+    querySelectorAll(){return widgetShots;}
+  });
+  return widgetNodes.get(id);
+};
+const widgetHost={postMessage(){}};
+const widgetScope=vm.createContext({
+  window:{
+    parent:widgetHost,
+    openai:{
+      widgetState:{selectedShot:1},
+      setWidgetState(value){uiStates.push(value);},
+      async sendFollowUpMessage(value){followUps.push(value);}
+    },
+    addEventListener(name,callback){if(name==="message")uiMessages.push(callback);}
+  },
+  document:{
+    getElementById:getWidgetNode,
+    createElement(type){
+      const node={textContent:"",className:"",type:"",handlers:{},attrs:{},
+        append(){},setAttribute(name,value){this.attrs[name]=value;},
+        addEventListener(name,cb){this.handlers[name]=cb;}};
+      if(type==="button")widgetShots.push(node);
+      return node;
+    }
+  },
+  setTimeout(){},URL,File,ArrayBuffer
+});
+new vm.Script(script).runInContext(widgetScope);
+nativePlayer.handlers.load();
+for(const callback of uiMessages)callback({
+  source:widgetHost,origin:"https://chatgpt.com",
+  data:{jsonrpc:"2.0",method:"ui/notifications/tool-result",params:shortResult}
+});
+assert.equal(widgetShots.length,3,"Actual widget must create one selectable button per scene");
+assert.equal(widgetShots[1].attrs["aria-pressed"],"true",
+  "Host widget state must restore the previously selected storyboard shot");
+widgetShots[2].handlers.click();
+assert.equal(uiStates.at(-1).selectedShot,2,"Scene selection must persist only safe widget UI state");
+assert.deepEqual(Object.keys(uiStates.at(-1)),["selectedShot"]);
+assert.equal(nativePlayer.contentWindow.sent.at(-1).kind,"margaryan-motion-seek-v1");
+assert.ok(nativePlayer.contentWindow.sent.at(-1).time>scenes[0].seconds+scenes[1].seconds);
+getWidgetNode("editPrompt").value="Use bigger typography and a stronger product proof";
+await getWidgetNode("askEdit").handlers.click();
+assert.equal(followUps.length,1,"Natural-language film changes must be sent to ChatGPT, not simulated");
+assert.ok(followUps[0].prompt.includes("scene 3")&&
+  followUps[0].prompt.includes("revise_motion_film"));
+assert.equal(getWidgetNode("editPrompt").value,"","Text field should clear after accepted follow-up");
+
 const longResult=await rpc("tools/call",{name:"create_motion_feature_film",arguments:{
   title:"RELEASE FEATURE",brand:"labs",format:"portrait",language:"en",scenes:shots
 }});
 assert.equal(longResult.structuredContent.durationSeconds,120);
 assert.ok(longResult.structuredContent.editorUrl.startsWith(origin+"/motion?"));
-console.log("Content Studio standalone release preflight: MCP discovery, output schemas, widget JS, short + 120s film, customer kit, Editor V2 chapter links, selectable shots and local vault PASS");
+console.log("Content Studio standalone release preflight: MCP discovery, output schemas, widget JS, short + 120s film, customer kit, Editor V2, live shot selection, GPT edit follow-up and local vault PASS");
