@@ -99,7 +99,8 @@ export default function ConnectPage() {
         name:"revise_motion_film",
         arguments:{
           current_project:film.previewProject,
-          changes:[{target:"scene",index:1,set:{headline:"LIVE MOTION. FULL CONTROL."}}]
+          changes:[{target:"scene",index:1,set:{headline:"LIVE MOTION. FULL CONTROL."}},
+            {target:"project",set:{clientBrand:{accent:"#D8C4F9"}}}]
         }
       },106);
       if(output.isError)throw Error("Revision tool returned isError");
