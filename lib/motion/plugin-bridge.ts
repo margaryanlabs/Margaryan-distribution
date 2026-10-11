@@ -77,7 +77,7 @@ export const CONTENT_STUDIO_TOOLS = [
   },
   {
     name: "create_motion_feature_film",
-    description: "Create a 65–192 second long-form editorial motion film from 9–24 original scenes authored by ChatGPT. Auto-groups shots into 2–3 independently editable chapters. Returns a private-fragment Sequence Studio link, NOT a finished MP4. No OpenAI API, cloud video generation, voice or media uploads.",
+    description: "Create a 65–300 second motion film from 9–40 original scenes authored by ChatGPT. Auto-groups shots into 2–5 editable chapters. Returns a private-fragment Sequence Studio link, NOT a finished MP4. No OpenAI API, cloud video generation, voice or media uploads.",
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     inputSchema: {
       type: "object", additionalProperties: false,
@@ -88,7 +88,7 @@ export const CONTENT_STUDIO_TOOLS = [
         language: { type: "string", enum: ["ru", "en", "hy"] },
         style: { type: "string", enum: ["cinematic", "kinetic", "technical"] },
         scenes: {
-          type: "array", minItems: 9, maxItems: 24,
+          type: "array", minItems: 9, maxItems: 40,
           description: "Write a complete original narrative: opening hook, stakes, demonstration, proof only if source-backed, and CTA. Each shot 2–8 seconds.",
           items: {
             type: "object", additionalProperties: false,
@@ -104,8 +104,8 @@ export const CONTENT_STUDIO_TOOLS = [
             }, required: ["kind", "eyebrow", "headline", "support", "seconds"]
           }
         },
-        chapter_titles: { type: "array", maxItems: 3, items: { type: "string", maxLength: 100 },
-          description: "Optional titles for the 2 or 3 acts." }
+        chapter_titles: { type: "array", maxItems: 5, items: { type: "string", maxLength: 100 },
+          description: "Optional titles for the 2–5 acts." }
       }, required: ["title", "brand", "format", "language", "scenes"]
     }
   }
@@ -174,8 +174,8 @@ function createFeatureFilm(raw: Record<string,unknown>,requestOrigin?:string) {
   const format=oneOf(raw.format,["portrait","square","landscape"] as const,"format");
   const language=oneOf(raw.language,["ru","en","hy"] as const,"language");
   const style=raw.style===undefined?"cinematic":oneOf(raw.style,["cinematic","kinetic","technical"] as const,"style");
-  if(!Array.isArray(raw.scenes)||raw.scenes.length<9||raw.scenes.length>24)
-    throw Error("Feature films require 9–24 original scenes (2–3 chapters)");
+  if(!Array.isArray(raw.scenes)||raw.scenes.length<9||raw.scenes.length>40)
+    throw Error("Feature films require 9–40 original scenes (2–5 chapters)");
   const chunkCount=Math.ceil(raw.scenes.length/8);
   if(raw.chapter_titles!==undefined && (
     !Array.isArray(raw.chapter_titles)||raw.chapter_titles.length>chunkCount||
@@ -197,6 +197,7 @@ function createFeatureFilm(raw: Record<string,unknown>,requestOrigin?:string) {
     chapters.push({id:"chapter-"+(i+1),title:chapterTitle,project});
   }
   duration=Number(duration.toFixed(3));
+  if(duration>300)throw Error("This ChatGPT feature-film draft exceeds 300 seconds; reduce shot timing.");
   if(duration<=64)throw Error("Feature-film timeline must exceed 64 seconds. Increase shot duration.");
   const sequence={
     version:1 as const,type:"motion-sequence-v1" as const,title,brand,format,
