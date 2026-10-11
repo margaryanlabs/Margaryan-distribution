@@ -16,8 +16,8 @@ assert.throws(()=>validatePlan([{id:"hack",kind:"click",target:"check-link",seco
 const ok={tag:"A",href:"#free-check",visible:true,enabled:true};
 assert.equal(assertSafeClick(TARGETS["check-link"],ok),true);
 assert.throws(()=>assertSafeClick(TARGETS["check-link"],{...ok,href:"https://bad.example"}),/navigation/);
-assert.throws(()=>assertSafeClick(TARGETS["local-tab"],{tag:"BUTTON",type:"submit",visible:true,enabled:true,insideForm:true}),/button could submit/);
-assert.equal(assertSafeClick(TARGETS["local-tab"],{tag:"BUTTON",type:"button",visible:true,enabled:true,insideForm:false}),true);
+assert.throws(()=>assertSafeClick(TARGETS["local-tab"],{tag:"BUTTON",type:"submit",role:"radio",visible:true,enabled:true,insideForm:true}),/button could submit/);
+assert.equal(assertSafeClick(TARGETS["local-tab"],{tag:"BUTTON",type:"button",role:"radio",visible:true,enabled:true,insideForm:true}),true);
 assert.equal(smooth(0),0);assert.equal(smooth(1),1);
 assert.ok(Math.abs(smooth(.5)-.5)<1e-9);
 const project=createCinematicProject({duration:34});
