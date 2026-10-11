@@ -73,16 +73,17 @@ function choose<T extends string>(raw: unknown, allowed: readonly T[], label: st
 function inputProject(raw: unknown, rejectRemoteMedia: boolean): MotionProject {
   if (!object(raw) || !Array.isArray(raw.scenes) || raw.scenes.length < 1 || raw.scenes.length > 8)
     throw Error("A MotionProject with 1–8 scenes is required");
+  const scenes: unknown[] = raw.scenes;
   choose(raw.brand, BRAND_IDS, "project brand");
   choose(raw.format, FORMATS, "project format");
-  if (rejectRemoteMedia && raw.scenes.some(s => object(s) && (
+  if (rejectRemoteMedia && scenes.some(s => object(s) && (
     s.mediaId !== undefined || s.mediaStart !== undefined || s.src !== undefined ||
     s.url !== undefined || s.videoUrl !== undefined || s.imageUrl !== undefined
   ))) throw Error("External/user media cannot be attached from ChatGPT. Attach approved local files in Motion Studio.");
   const p = sanitizeMotionProject(raw);
   // The editor must never silently drop user-authored scenes or headlines.
-  if (p.scenes.length !== raw.scenes.length || p.scenes.some((scene, i) =>
-    !object(raw.scenes[i]) || scene.headline !== raw.scenes[i].headline?.trim()))
+  if (p.scenes.length !== scenes.length || p.scenes.some((scene, i) =>
+    !object(scenes[i]) || scene.headline !== (typeof scenes[i].headline === "string" ? (scenes[i].headline as string).trim() : "")))
     throw Error("Scene content was invalid or truncated. Shorten the headline (max 105 characters).");
   return p;
 }
