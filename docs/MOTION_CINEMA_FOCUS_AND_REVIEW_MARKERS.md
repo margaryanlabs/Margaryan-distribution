@@ -15,6 +15,10 @@ portable film bundles and its public commercial contact page.
 - Clicking any left work-rail tool automatically returns to editor mode.
 - Layout preference is saved locally when browser storage permits. Nothing
   is uploaded or sent to an AI model.
+- In the inspector header, **↔ WIDE / ↤ NARROW** toggles a larger 440px
+  writing/review panel versus the 344px compact panel on wide desktops.
+  It is remembered locally and does not affect the film. Smaller
+  tablet/mobile widths stay responsive automatically.
 - Mobile keeps the same editor filmstrip with a larger player when enabled.
 - **⌨ KEYS** in the project bar shows accessible shortcuts:
 
