@@ -20,6 +20,7 @@ const studio = load("lib/motion/studio.ts", { "./timeline-edit": timeline });
 const chat = load("lib/motion/chat-operator.ts", { "./studio": studio });
 const bridge = load("lib/motion/plugin-bridge.ts", { "./studio": studio, "./chat-operator": chat });
 const widget = load("lib/motion/content-studio-widget.ts");
+const vault = load("lib/motion/local-project-vault.ts", { "./studio": studio });
 const route = load("app/api/mcp/route.ts", {
   "@/lib/motion/plugin-bridge": bridge,
   "@/lib/motion/content-studio-widget": widget
@@ -39,6 +40,40 @@ assert.equal(created.chatPack.action, "create");
 assert.equal(created.videoFileCreated, false);
 assert.equal(created.voiceFileCreated, false);
 assert.equal(created.durationSeconds, 13);
+
+const slots = new Map();
+const localStorage = {
+  getItem(key){return slots.get(key)||null;},
+  setItem(key,value){slots.set(key,value);},
+  removeItem(key){slots.delete(key);}
+};
+assert.equal(vault.readLocalFilmVault(localStorage).length,0);
+const first = vault.saveLocalFilmSnapshot(localStorage,created.chatPack.project,"PRIVATE CUSTOMER FILM");
+assert.equal(first.name,"PRIVATE CUSTOMER FILM");
+assert.equal(vault.readLocalFilmVault(localStorage).length,1);
+assert.equal(vault.readLocalFilmVault(localStorage)[0].project.title,created.title);
+assert.equal(slots.get(vault.VAULT_KEY).includes("audioFile"),false);
+const second=vault.saveLocalFilmSnapshot(localStorage,created.chatPack.project,"SECOND EDITION");
+assert.notEqual(first.id,second.id);
+assert.equal(vault.readLocalFilmVault(localStorage).length,2);
+const replacement=vault.replaceLocalFilmSnapshot(localStorage,first.id,{
+  ...created.chatPack.project,title:"NEW VERSION OF CUSTOMER FILM"
+});
+assert.equal(replacement.project.title,"NEW VERSION OF CUSTOMER FILM");
+assert.equal(vault.readLocalFilmVault(localStorage).find(x=>x.id===first.id).project.title,"NEW VERSION OF CUSTOMER FILM");
+assert.equal(vault.readLocalFilmVault(localStorage).find(x=>x.id===second.id).name,"SECOND EDITION");
+assert.throws(()=>vault.replaceLocalFilmSnapshot(localStorage,"missing-project",created.chatPack.project),/not found/);
+vault.deleteLocalFilmSnapshot(localStorage,second.id);
+assert.equal(vault.readLocalFilmVault(localStorage).length,1);
+assert.throws(()=>vault.deleteLocalFilmSnapshot(localStorage,second.id),/not found/);
+for(let n=1;n<vault.VAULT_LIMIT;n++)vault.saveLocalFilmSnapshot(localStorage,created.chatPack.project,"ADDITIONAL "+n);
+assert.equal(vault.readLocalFilmVault(localStorage).length,vault.VAULT_LIMIT);
+assert.throws(()=>vault.saveLocalFilmSnapshot(localStorage,created.chatPack.project,"FULL"),/holds 18 films/);
+localStorage.setItem(vault.VAULT_KEY,JSON.stringify([{...first,id:"a-bad-uid",project:{scenes:new Array(90)}}]));
+assert.equal(vault.readLocalFilmVault(localStorage).length,0,"Corrupt vault must fail closed and never load invalid film");
+vault.clearLocalFilmVault(localStorage);
+assert.equal(localStorage.getItem(vault.VAULT_KEY),null);
+
 
 const clientFilm = bridge.runContentStudioTool("create_motion_film", {
   ...data, brand:"labs",
