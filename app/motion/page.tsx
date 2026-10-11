@@ -68,6 +68,8 @@ export default function MotionStudioPage() {
   const [musicSeconds, setMusicSeconds] = useState<number | null>(null);
   const [assetRevision, setAssetRevision] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [editorPanel,setEditorPanel]=useState<"create"|"media"|"scene"|"sound"|"look"|"review"|"deliver">("scene");
+  const [featureOpen,setFeatureOpen]=useState(false);
   const [playing, setPlaying] = useState(false);
   const [playhead, setPlayhead] = useState(0);
   const [generating, setGenerating] = useState(false);
@@ -676,6 +678,17 @@ export default function MotionStudioPage() {
   const previewHeight = Math.round(previewWidth * formatSize.height / formatSize.width);
   const activeIndex = sceneAt(project, playhead).index;
 
+  useEffect(()=>{
+    const handler=(event:KeyboardEvent)=>{
+      if(event.defaultPrevented||event.ctrlKey||event.metaKey||!event.altKey)return;
+      if(["INPUT","TEXTAREA","SELECT"].includes((event.target as HTMLElement)?.tagName))return;
+      const panels=["create","media","scene","sound","look","review","deliver"] as const;
+      const index=Number(event.key);
+      if(index>=1&&index<=7){event.preventDefault();setFeatureOpen(false);setEditorPanel(panels[index-1]);}
+    };
+    window.addEventListener("keydown",handler);
+    return()=>window.removeEventListener("keydown",handler);
+  },[]);
   const modePicker=<nav className={styles.productionModes} aria-label="Production pipeline">
     <button type="button" data-selected={mode==="cinematic"} aria-pressed={mode==="cinematic"}
       onClick={()=>switchMode("cinematic")} disabled={exporting}>
@@ -716,31 +729,35 @@ export default function MotionStudioPage() {
     </header>
 
     {modePicker}
-    <aside className={styles.commercialBanner}>
-      <div><span>MADE IN MARGARYAN LABS / AVAILABLE FOR COMMISSIONS</span>
-        <strong>We design product films — from concept to the original final cut.</strong>
-        <small>Separate client brief · agreed scope and licensing · no invented case-study results</small>
+    <div className={styles.editorProjectBar} aria-label="Current motion production">
+      <div className={styles.editorProjectTitle}>
+        <span className={styles.barStudioTag}>MOTION / EDITOR</span>
+        <strong title={project.title}>{project.title}</strong>
+        <small>{info.name} <i>·</i> {project.format.toUpperCase()} <i>·</i> {project.scenes.length} SHOTS <i>·</i> {timeLabel(total)}</small>
       </div>
-      <a href="/motion/commission">BUILD A CLIENT BRIEF ↗</a>
-    </aside>
-    <nav className={styles.productionNav} aria-label="Motion Studio production stages">
-      <a href="#film-sequence" className={styles.productionNavFeatured}>
-        <span>01 / FEATURE FILM</span><strong>2–5 MINUTES</strong>
-        <small>CHAPTERS · MASTER TIMELINE · FULL-FILM PREVIEW ↗</small>
-      </a>
-      <a href="#motion-storyboard"><span>02 / DIRECT</span><strong>CREATIVE BRIEF</strong><small>BRAND · SHOTS · CAMERA ↗</small></a>
-      <a href="#motion-editor"><span>03 / CUT</span><strong>PICTURE & AUDIO</strong><small>ORIGINAL VIDEO · VOICE · TIMING ↗</small></a>
-      <a href="#motion-export"><span>04 / DELIVER</span><strong>EXPORT</strong><small>FRAME QC · MP4 MASTER ↗</small></a>
-    </nav>
+      <div className={styles.barUtilities}>
+        <span className={styles.privacyChip}>● LOCAL / NO API CREDIT</span>
+        <button type="button" className={featureOpen?styles.barActive:""}
+          onClick={()=>{setPlaying(false);setFeatureOpen(v=>!v);}}
+          aria-pressed={featureOpen}>◫ FEATURE FILM</button>
+        <a href="/motion/commission">CLIENT PROJECTS ↗</a>
+      </div>
+    </div>
     <div className={styles.notice} role="status">{notice}</div>
-    <div id="film-sequence" className={styles.featureWorkspace}>
+    {featureOpen&&<div id="film-sequence" className={styles.featureWorkspace}>
+      <div className={styles.featureBack}>
+        <span>FEATURE FILM / CHAPTER ASSEMBLY</span>
+        <button type="button" onClick={()=>setFeatureOpen(false)}>← BACK TO EDITOR</button>
+      </div>
       <FilmSequenceDesk project={project}
         busy={exporting||generating||directorRepairing||visualReviewing}
         onLoadProject={(next,reason)=>{
           setPlaying(false);updateProject(next);setSelectedIndex(0);jump(0);
-          setNotice(reason+". Chapter loaded into the editable director below. Source rights and codec proof remain required.");
+          setFeatureOpen(false);setEditorPanel("scene");
+          setNotice(reason+". Chapter loaded in the director. Verify source coverage and final audio.");
         }}/>
-    </div>
+    </div>}
+    {!featureOpen&&
     <div className={styles.workspace} id="motion-storyboard">
       <section className={styles.sidebar} aria-label="Creative director controls">
         <OperatorDesk project={project} selectedIndex={selectedIndex}
