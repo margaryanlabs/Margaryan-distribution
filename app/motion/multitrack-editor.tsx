@@ -86,9 +86,9 @@ export default function MultitrackEditor({
             className={styles.shot} data-selected={selectedIndex===index}
             style={{left:(start/total*100)+"%",width:(width/total*100)+"%"}}
             onClick={()=>onSelect(index)} aria-label={"Edit shot "+(index+1)+" "+scene.headline}>
-            <span>{String(index+1).padStart(2,"0")} / {scene.kind.toUpperCase()}</span>
+            <span>{String(index+1).padStart(2,"0")} / {scene.mediaId&&scene.kind==="screen"?"REAL MEDIA":scene.kind.toUpperCase()}</span>
             <b>{scene.headline}</b>
-            <small>{fmt(width)}</small>
+            <small>{scene.mediaId&&scene.kind==="screen"?"SOURCE + "+fmt(scene.mediaStart||0):fmt(width)}</small>
           </button>)}
         </div>
       </div>
