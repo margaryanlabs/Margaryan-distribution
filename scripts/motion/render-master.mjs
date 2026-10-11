@@ -21,12 +21,12 @@ function parse(argv) {
     if(argv[i].startsWith("--")){
       const key=argv[i].slice(2);
       if(key==="silent"){opts.silent=true;continue;}
-      if(!["url","fps","crf","voice","music","chromium","screen","reference"].includes(key))throw Error("Unknown option: "+key);
+      if(!["url","fps","crf","voice","music","chromium","screen","reference","media-map"].includes(key))throw Error("Unknown option: "+key);
       const value=argv[++i];if(!value||value.startsWith("--"))throw Error("Missing value for --"+key);
       opts[key]=value;
     }else positional.push(argv[i]);
   }
-  if(positional.length!==2)throw Error("Usage: npm run motion:master -- project.json final.mp4 [--url http://127.0.0.1:3000/motion] [--fps 30] [--crf 18] [--voice audio.wav] [--music music.mp3] [--silent] [--reference source.mp4]");
+  if(positional.length!==2)throw Error("Usage: npm run motion:master -- project.json final.mp4 [--url http://127.0.0.1:3000/motion] [--fps 30] [--crf 18] [--voice audio.wav] [--music music.mp3] [--silent] [--reference source.mp4] [--media-map approved-asset-paths.json]");
   return {projectPath:resolve(positional[0]),outputPath:resolve(positional[1]),opts};
 }
 const run=(cmd,args,options={})=>spawnSync(cmd,args,{encoding:"utf8",timeout:80_000,maxBuffer:2_000_000,...options});
@@ -61,7 +61,7 @@ try {
   const dims=formats[project.format];
   if(!dims)throw Error("Invalid project format");
   const frames=Math.max(1,Math.round(duration*fps));
-  if(project.scenes.some(scene=>scene.kind==="screen")&&!opts.screen){
+  if(project.scenes.some(scene=>scene.kind==="screen"&&!scene.mediaId)&&!opts.screen){
     throw Error("Source screenshot scene requires --screen /path/to/approved-real-product-screenshot.png");
   }
   if(opts.screen){
@@ -69,6 +69,32 @@ try {
     if(![".png",".jpg",".jpeg",".webp"].includes(ext))throw Error("Product screen must be PNG, JPG or WebP");
     const source=await stat(resolve(opts.screen));
     if(!source.isFile()||source.size>12_000_000||source.size<100)throw Error("Invalid product screenshot size");
+  }
+
+  // Explicit operator-local source map, e.g. {"approved-asset-id":"/absolute/path/to/real.mp4"}.
+  // Asset IDs must be present in the project JSON; no implicit remote URL or
+  // unreviewed media search and no huge video blobs embedded into project JSON.
+  const sourceIDs=[...new Set(project.scenes.filter(s=>s.kind==="screen"&&s.mediaId).map(s=>s.mediaId))];
+  let sourceMap={};
+  if(opts["media-map"]){
+    const sourceFile=resolve(opts["media-map"]);
+    const sourceInfo=await stat(sourceFile);
+    if(!sourceInfo.isFile()||sourceInfo.size>12_000)throw Error("Asset map must be a local JSON file under 12KB");
+    const parsed=JSON.parse(await readFile(sourceFile,"utf8"));
+    if(!parsed||typeof parsed!=="object"||Array.isArray(parsed))throw Error("Invalid source asset map");
+    sourceMap=parsed;
+  }
+  for(const id of sourceIDs){
+    const file=sourceMap[id];
+    if(typeof file!=="string"||file.length>1000||/^\w+:\/\//.test(file))
+      throw Error("Real scene source "+id+" needs --media-map with its local file path");
+    const ext=extname(file).toLowerCase();
+    const video=[".mp4",".webm",".mov"].includes(ext);
+    if(!video&&![".png",".jpeg",".jpg",".webp"].includes(ext))
+      throw Error("Unsupported local source media "+id);
+    const info=await stat(resolve(file));
+    if(!info.isFile()||info.size<100||info.size>(video?100_000_000:12_000_000))
+      throw Error("Local media size invalid for "+id);
   }
 
   for(const file of [opts.voice,opts.music].filter(Boolean)){
@@ -124,6 +150,21 @@ try {
     process.stdout.write("Approved source screenshot loaded into local film session; nothing uploaded.\n");
   }
 
+
+  if(sourceIDs.length){
+    await page.waitForFunction(()=>typeof window.__motionInstallSceneFile==="function",{timeout:10000});
+    await page.evaluate(()=>{
+      const input=document.createElement("input");
+      input.type="file";input.id="__motion-offline-media-input";input.style.display="none";
+      document.body.appendChild(input);
+    });
+    for(const id of sourceIDs){
+      await page.locator("#__motion-offline-media-input").setInputFiles(resolve(sourceMap[id]));
+      await page.evaluate(async assetId=>window.__motionInstallSceneFile(assetId),id);
+      process.stdout.write("Decoded operator-approved source "+id+" without remote upload.\n");
+    }
+    await page.locator("#__motion-offline-media-input").evaluate(input=>input.remove());
+  }
 
   // Use precisely the same bounded, deterministic repairs as Studio before
   // rendering every frame. It never fabricates source images or changes copy.
@@ -239,6 +280,7 @@ try {
     referenceComparison,
     voiceTimingVerified:Boolean(opts.voice),
     directorAudit:repairReportPath,directorContactSheet:inspectPath,
+    sourceVideoIds:sourceIDs,sourcePathsMustBeReattachedOnAnotherDevice:true,
     directorRepairs:automatic.report.changes.length,unresolvedDirectorReviews:automatic.report.remaining,
     note:"Technical checks cannot independently certify aesthetics, truth of claims, or music/voice licensing."
   };
