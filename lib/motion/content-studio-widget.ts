@@ -111,8 +111,10 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
     });
     // The host owns this optional ephemeral widget state. Do not persist
     // client scripts, original image/audio bytes, or business data here.
-    if(window.openai && typeof window.openai.setWidgetState==="function")
-      window.openai.setWidgetState({selectedShot:index});
+    if(window.openai && typeof window.openai.setWidgetState==="function") {
+      try {window.openai.setWidgetState({selectedShot:index});}
+      catch { /* Widget state is an optional extension, never a playback gate. */ }
+    }
     if(ready&&player.contentWindow){
       player.contentWindow.postMessage({
         kind:"margaryan-motion-seek-v1",time:currentShotTime()
