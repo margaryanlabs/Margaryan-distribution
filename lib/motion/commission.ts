@@ -31,7 +31,8 @@ export function parseMotionCommission(raw:unknown,requireConsent=true):MotionCom
   audience=plain(p.audience,180),brief=plain(p.brief,1700),assets=plain(p.assets,420),
   goal=plain(p.goal,80),timeline=plain(p.timeline,80),budget=plain(p.budget,80),
   format=plain(p.format,20) as FilmFormat,offer=plain(p.offer,20) as FilmOffer;
- if(name.length<2||!/^\S+@\S+\.\S+$/.test(email)||email.includes("\n"))
+ if(name.length<2||typeof p.email!=="string"||/[\r\n]/.test(p.email)||
+    !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,63}$/i.test(email))
    throw Error("Enter your name and a valid contact email");
  if(company.length<2||brief.length<25||audience.length<4)
    throw Error("Add your company, audience and at least 25 characters about the film");
