@@ -18,12 +18,13 @@ import process from "node:process";
 const args=process.argv.slice(2),o={};
 for(let i=0;i<args.length;i++){
  const k=args[i];
- if(!["--screen","--out","--voice","--music","--url","--fps"].includes(k))throw Error("Unknown argument: "+k);
+ if(!["--screen","--video","--out","--voice","--music","--url","--fps"].includes(k))throw Error("Unknown argument: "+k);
  const v=args[++i];if(!v||v.startsWith("--"))throw Error("Missing value for "+k);
  o[k.slice(2)]=v;
 }
-if(!o.screen)throw Error("SOURCE GATE: provide --screen /path/to/owner-approved-real.png");
-const source=resolve(o.screen);
+if(Boolean(o.screen)===Boolean(o.video))throw Error("SOURCE GATE: supply exactly one approved --screen IMAGE or --video MP4/WEBM");
+const source=resolve(o.video||o.screen);
+const isVideo=Boolean(o.video);
 const out=resolve(o.out||"out/promptence-proof-10s.mp4");
 if(extname(out).toLowerCase()!==".mp4")throw Error("Output must end .mp4");
 const host=new URL(o.url||"http://127.0.0.1:3000/motion/proof");
@@ -32,8 +33,20 @@ if(host.protocol!=="http:"||!["localhost","127.0.0.1","[::1]"].includes(host.hos
 const fps=o.fps?Number(o.fps):30;
 if(!Number.isInteger(fps)||fps<24||fps>30)throw Error("Use 24–30 frames/s");
 const f=await stat(source);
-if(!f.isFile()||f.size<100||f.size>12_000_000||![".png",".jpg",".jpeg",".webp"].includes(extname(source).toLowerCase())){
- throw Error("Approved screenshot must be PNG/JPEG/WebP and 100 bytes–12 MB");
+const validExt=isVideo?[".mp4",".webm"]:[".png",".jpg",".jpeg",".webp"];
+if(!f.isFile()||f.size<100||f.size>(isVideo?180_000_000:12_000_000)
+  ||!validExt.includes(extname(source).toLowerCase())){
+ throw Error("Source must be approved MP4/WebM (<180 MB) or screenshot PNG/JPEG/WebP (<12 MB)");
+}
+if(isVideo){
+ const decoded=run("ffprobe",["-v","error","-show_entries","format=duration",
+   "-show_entries","stream=codec_type,width,height","-of","json",source]);
+ if(decoded.status!==0)throw Error("Real source video is unreadable");
+ const meta=JSON.parse(decoded.stdout);
+ const track=meta.streams?.find(x=>x.codec_type==="video");
+ if(!track||track.width<720||track.height<480||Number(meta.format?.duration)<8||Number(meta.format?.duration)>300){
+   throw Error("Real source clip requires 8–300s and at least 720×480 decoded frames.");
+ }
 }
 const run=(exe,argv,timeout=90_000)=>spawnSync(exe,argv,{encoding:"utf8",maxBuffer:2_000_000,timeout});
 if(run("ffmpeg",["-version"]).status!==0)throw Error("FFmpeg is not installed");
@@ -57,7 +70,7 @@ try{
  const response=await page.goto(host.href,{waitUntil:"domcontentloaded",timeout:45000});
  if(!response?.ok())throw Error("Proof Studio unavailable: HTTP "+response?.status());
  await page.locator('[data-testid="proof-source-input"]').setInputFiles(source);
- await page.waitForFunction(()=>window.__motionProofReady===true,{timeout:30000});
+ await page.waitForFunction(expected=>window.__motionProofReady===true&&window.__motionProofSource===expected,isVideo?"video":"image",{timeout:40000});
  await page.evaluate(()=>document.fonts.ready);
  if(errors.length)throw Error("Studio page errors: "+errors.join("; "));
  const audio=[o.voice?{path:resolve(o.voice),volume:1}:null,o.music?{path:resolve(o.music),volume:o.voice?.18:.75}:null].filter(Boolean);
@@ -99,7 +112,7 @@ try{
   "-frames:v","1",prefix+"-contact-sheet.png"],120000);
  await writeFile(prefix+".proof-report.json",JSON.stringify({
    engine:"SOURCE-FIRST PROOF DIRECTOR",duration:d,width:video.width,height:video.height,
-   fps,sourceFile:source,voiceProvided:Boolean(o.voice),musicProvided:Boolean(o.music),
+   fps,sourceFile:source,sourceType:isVideo?'actual-browser-video':'owner-supplied-screenshot',voiceProvided:Boolean(o.voice),musicProvided:Boolean(o.music),
    contactSheetCreated:sheet.status===0,sourceReviewRequired:true,humanCreativeApprovalRequired:true,
    note:"Codec and source-authenticity gates cannot judge cinematic quality or voice performance."
  },null,2)+"\n");
