@@ -35,7 +35,7 @@ assert.throws(()=>chat.previewChatMotionPack({...patch,changes:[
 const film=source("lib/motion/render-engine.ts");
 assert.match(film,/filmChrome==="clean"/);
 assert.match(film,/filmChrome==="brand"/);
-assert.match(film,/filmChrome==="editor"/); // optional change when editor context supported
+assert.match(film,/MOTION ENGINE \/ /); // technical HUD is retained for editorial-only review
 const booth=source("app/motion/voice-booth.tsx");
 assert.match(booth,/mediaDevices\.getUserMedia/);
 assert.match(booth,/recorder\.start\(200\)/);
