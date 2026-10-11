@@ -73,9 +73,21 @@ export function smooth(t){
 export function createCinematicProject({duration,mediaId=TAKE_ID,brand="promptence"}={}){
  if(brand!=="promptence"||!Number.isFinite(duration)||duration<32)
   fail("need a source take >=32s with verified Promptence footage");
- // Cover the final verified click as well, reserving 0.1s for decoder safety.
- const sceneSeconds=Math.floor((duration-.10)*4)/32;
- if(sceneSeconds<3.8)fail("source recording cannot cover all 8 native shots");
+ // Timecode each scene to the *actual authored actions*, not arbitrary equal cuts.
+ // Last two acts join two verified interactions each: both UI radio modes,
+ // then evidence navigation + how-it-works navigation.
+ const groups=[1,1,1,1,1,1,2,2];
+ const planned=PLAN.reduce((s,step)=>s+step.seconds,0);
+ const scale=Math.min(1,Math.floor((duration-.10)*10)/10/planned);
+ if(scale<.92)fail("recorded source too short for the complete real-click sequence");
+ let sourceTime=0;
+ const sceneTimes=groups.map((n,idx)=>{
+  const start=sourceTime;
+  const groupDuration=PLAN.slice(groups.slice(0,idx).reduce((a,b)=>a+b,0),
+    groups.slice(0,idx).reduce((a,b)=>a+b,0)+n).reduce((s,step)=>s+step.seconds,0)*scale;
+  sourceTime+=groupDuration;
+  return {start:Number(start.toFixed(4)),seconds:Number(groupDuration.toFixed(4))};
+ });
   const headlines=[
   ["BEFORE THEY FIND YOU","THEY ASK AI.","What happens when AI shapes the shortlist?"],
   ["THE FIRST MOVE","OPEN A REAL FREE CHECK.","Recorded browser navigation, not a mockup."],
@@ -90,8 +102,8 @@ export function createCinematicProject({duration,mediaId=TAKE_ID,brand="prompten
   title:"PROMPTENCE / INTERACTION CINEMA / REAL CLICKS",seed:2026101107,
   visual:{motion:.48,textScale:.9,contrast:.5,glow:.03},
   scenes:headlines.map(([eyebrow,headline,support],i)=>({
-   id:"scene-"+(i+1),kind:"screen",seconds:sceneSeconds,eyebrow,headline,support,
-   mediaId,mediaStart:Number((i*sceneSeconds).toFixed(4)),sourceLayout:"showcase",sourceZoomStart:1,sourceZoomEnd:1.035,
+   id:"scene-"+(i+1),kind:"screen",seconds:sceneTimes[i].seconds,eyebrow,headline,support,
+   mediaId,mediaStart:sceneTimes[i].start,sourceLayout:"showcase",sourceZoomStart:1,sourceZoomEnd:1.035,
    sourceFocusX:.5,sourceFocusY:.5,transition:"cut",camera:"locked",titleTreatment:"minimal",
    typographyScale:.83,voiceCue:headline
   }))};
