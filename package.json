@@ -46,7 +46,8 @@
     "motion:test-film-audio": "node --experimental-strip-types scripts/motion/test-film-audio-mix.mjs",
     "motion:test-commission": "node --experimental-strip-types scripts/motion/test-commission.mjs",
     "motion:test-editor-workspace": "node scripts/motion/test-editor-workspace.mjs",
-    "motion:test-release": "node scripts/motion/test-release-readiness.mjs"
+    "motion:test-release": "node scripts/motion/test-release-readiness.mjs",
+    "motion:test-plugin": "node scripts/motion/test-content-studio-plugin.mjs"
   },
   "dependencies": {
     "next": "16.3.3",
@@ -63,6 +64,7 @@
     "@types/react-dom": "19.2.2",
     "typescript": "7.0.2",
     "@types/pg": "8.11.10",
-    "@types/three": "0.186.0"
+    "@types/three": "0.186.0",
+    "@typescript/typescript6": "6.0.2"
   }
 }

@@ -1,0 +1,27 @@
+.desk{background:radial-gradient(ellipse at 100% 0,#2c504335,transparent 61%),#0f191b;
+ border:1px solid #406452;border-radius:13px;padding:17px 15px;color:#e7f5e8;
+ margin:18px 0;box-shadow:0 10px 22px #0004}
+.head{display:flex;justify-content:space-between;gap:8px;align-items:center;
+ font-size:10px;font-weight:900;letter-spacing:.1em;color:#90bca2}
+.head strong{border:1px solid #568769;border-radius:20px;padding:5px 8px;color:#d8f9df}
+.desk h3{font-size:23px;letter-spacing:-.06em;margin:15px 0 5px}
+.help,.guide{font-size:11px;line-height:1.65;color:#afc5b5;margin:9px 0}
+.timecard{display:grid;grid-template-columns:1fr 1fr;gap:10px;
+ margin:14px 0;border-top:1px solid #405649;border-bottom:1px solid #405649;padding:12px 0}
+.timecard div{display:grid;gap:6px}
+.timecard span{font-size:9px;letter-spacing:.07em;color:#92bea5;font-weight:800}
+.timecard b{font-size:18px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.timecard small{font-size:10px;font-weight:500;color:#a4bcae}
+.actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.actions button{font-size:10px;font-weight:850;letter-spacing:.01em;
+ min-height:43px;padding:10px 6px;background:#173527;color:#d6f5df;
+ border:1px solid #538967;border-radius:7px;cursor:pointer}
+.actions button:hover:not(:disabled){background:#285a3d}
+.actions button:disabled{opacity:.38;cursor:not-allowed}
+.actions .split{background:#51e39c;color:#061c12;border-color:#7cfbc1}
+.actions .undo{grid-column:1/-1;background:#252e2b;color:#b8d9c7;border-color:#58655c}
+.error{border-left:3px solid #ec8079;background:#422626;color:#f9d6cc;
+ border-radius:4px;padding:8px;font-size:11px;line-height:1.5}
+@media(max-width:480px){.desk{padding:13px 10px}.desk h3{font-size:20px}
+ .actions button{font-size:9px;min-height:42px}.timecard b{font-size:16px}}
+@media(prefers-reduced-motion:reduce){.desk *{animation:none!important;transition:none!important}}

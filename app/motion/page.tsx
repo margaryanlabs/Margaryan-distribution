@@ -2,10 +2,11 @@
 
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import {
-  BRAND_INFO, FORMAT_SIZE, PROMPTENCE_BEATS, durationOf, makeMotionPreset,
+  BRAND_INFO, clientBrandInfo, FORMAT_SIZE, PROMPTENCE_BEATS, durationOf, makeMotionPreset,
   sanitizeMotionProject, sceneAt,
   type MotionBrand, type MotionFormat, type MotionProject, type MotionScene
 } from "@/lib/motion/studio";
+import LocalFilmVaultPanel from "@/lib/motion/local-vault-panel";
 import { drawMotionFrame } from "@/lib/motion/render-engine";
 import { preloadMotionLogo } from "@/lib/motion/brand-assets";
 import { setLocalProductScreen, installOfflineScreen, hasProductScreen } from "@/lib/motion/screen-media";
@@ -72,6 +73,11 @@ export default function MotionStudioPage() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editorPanel,setEditorPanel]=useState<"create"|"media"|"scene"|"sound"|"look"|"review"|"deliver">("scene");
   const [featureOpen,setFeatureOpen]=useState(false);
+  useEffect(()=>{
+    if(window.location.hash.startsWith("#motion-sequence-v1=")||
+       window.location.hash==="#film-sequence")setFeatureOpen(true);
+  },[]);
+
   const [playing, setPlaying] = useState(false);
   const [playhead, setPlayhead] = useState(0);
   const [generating, setGenerating] = useState(false);
@@ -105,7 +111,7 @@ export default function MotionStudioPage() {
   const audioEdit = sanitizeAudioEdit(project.audio);
   const narrationWindow = voiceWindow(total,audioEdit,narrationSeconds);
   const selected = project.scenes[Math.min(selectedIndex, project.scenes.length - 1)] || project.scenes[0];
-  const info = BRAND_INFO[project.brand];
+  const info = clientBrandInfo(project);
   const provenance = PORTFOLIO[project.brand];
   const qa = auditMotionProject(project);
   // Comparison statistics are always tied to the exact scene edit; they cannot
@@ -746,6 +752,16 @@ export default function MotionStudioPage() {
       </div>
     </div>
     <div className={styles.notice} role="status">{notice}</div>
+    <LocalFilmVaultPanel project={project}
+      busy={exporting||generating||directorRepairing||visualReviewing}
+      onRestore={saved=>{
+        setPlaying(false);setVoiceover(null);setLicensedMusic(null);
+        updateProject(saved);setSelectedIndex(0);
+        timeRef.current=0;setPlayhead(0);
+        setFeatureOpen(false);setEditorPanel("scene");
+        setNotice("LOCAL FILM RESTORED: "+saved.title+". Verify client media and audio before delivery.");
+      }} />
+
     {featureOpen&&<div id="film-sequence" className={styles.featureWorkspace}>
       <div className={styles.featureBack}>
         <span>FEATURE FILM / CHAPTER ASSEMBLY</span>

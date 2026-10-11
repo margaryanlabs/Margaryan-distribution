@@ -32,7 +32,7 @@ export interface ChatOperatorPreview {
 
 const SCENE_FIELDS=["kind","eyebrow","headline","support","seconds","typographyScale",
   "titleTreatment","camera","transition","intensity","voiceCue","productBeat","mediaId","mediaStart","sourceLayout","sourceFocusX","sourceFocusY","sourceZoomStart","sourceZoomEnd","overlayMediaId","overlayCorner","overlaySize","overlayOpacity","overlayStart","overlayDuration"] as const;
-const PROJECT_FIELDS=["title","format","style","language","qualityMode","filmChrome","visual","audio"] as const;
+const PROJECT_FIELDS=["title","format","style","language","qualityMode","filmChrome","visual","audio","clientBrand"] as const;
 const allowedScene=new Set<string>(SCENE_FIELDS);
 const allowedProject=new Set<string>(PROJECT_FIELDS);
 const object=(value:unknown):value is Record<string,unknown> =>
@@ -84,10 +84,18 @@ function applyChanges(current:MotionProject,raw:Record<string,unknown>):ChatOper
       log.push("Shot "+(Number(index)+1)+": "+Object.keys(c.set).join(", "));
     }else if(c.target==="project"){
       ensureFields(c.set,allowedProject,"project");
-      // Merge nested audio/visual changes; don't silently reset unrelated faders.
+      if("clientBrand" in c.set && working.brand!=="labs")
+        throw Error("Only generic labs films can use clientBrand identity");
+      if("clientBrand" in c.set) {
+        if(!object(c.set.clientBrand) || !Object.keys(c.set.clientBrand).every(k=>
+          ["name","caption","accent"].includes(k)))
+          throw Error("Client brand patch permits name, caption and accent only");
+      }
+      // Merge nested audio/visual/brand fields; don't silently reset unrelated settings.
       const next={...working,...c.set,
         audio:object(c.set.audio)?{...working.audio,...c.set.audio}:working.audio,
-        visual:object(c.set.visual)?{...working.visual,...c.set.visual}:working.visual};
+        visual:object(c.set.visual)?{...working.visual,...c.set.visual}:working.visual,
+        clientBrand:object(c.set.clientBrand)?{...working.clientBrand,...c.set.clientBrand}:working.clientBrand};
       const sanitized=sanitizeMotionProject(next);
       for(const key of Object.keys(c.set)){
         const resulting=(sanitized as unknown as Record<string,unknown>)[key];
