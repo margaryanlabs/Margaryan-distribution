@@ -35,6 +35,7 @@ export default function ConnectPage() {
   const [checks,setChecks] = useState<Check[]>([]);
   const [demo,setDemo] = useState<string | null>(null);
   const [revised,setRevised] = useState<string | null>(null);
+  const [feature,setFeature] = useState<string | null>(null);
   const [copied,setCopied] = useState(false);
 
   // For remote acceptance tests: /connect?autotest=1 executes the same real
@@ -47,7 +48,7 @@ export default function ConnectPage() {
 
   async function diagnose() {
     if (busy) return;
-    setBusy(true);setChecks([]);setDemo(null);setRevised(null);
+    setBusy(true);setChecks([]);setDemo(null);setRevised(null);setFeature(null);
     const results: Check[] = [];
     function report(label:string, status:"pass"|"fail", detail:string) {
       results.push({label,status,detail});setChecks([...results]);
@@ -66,11 +67,9 @@ export default function ConnectPage() {
     if(!stopped) try {
       const answer=await rpc("tools/list",{},102);
       const names=(answer.tools as Array<{name:string}>|undefined)?.map(t=>t.name)||[];
-      if(!names.includes("create_motion_film") || !names.includes("revise_motion_film"))
-        throw Error("Film creation or revision tool missing");
-      if(names.includes("create_motion_feature_film"))
-        throw Error("Unreleased long-film tool should not be exposed");
-      report("TOOL DISCOVERY","pass","Create + Revise · "+names.length+" public tools");
+      if(!["create_motion_film","revise_motion_film","create_motion_feature_film"].every(n=>names.includes(n)))
+        throw Error("Short or long-form film tool missing");
+      report("TOOL DISCOVERY","pass","Create · Revise · Feature Film · "+names.length+" public tools");
     } catch (e) {report("TOOL DISCOVERY","fail",String(e));stopped=true;}
     if(!stopped) try {
       const listed=await rpc("resources/list",{},103);
@@ -111,6 +110,30 @@ export default function ConnectPage() {
       setRevised(revision.editorUrl);
       report("SCENE REVISION","pass","Shot 02 updated without generating a video file or exposing local media");
     } catch(e) {report("SCENE REVISION","fail",String(e));stopped=true;}
+    if(!stopped) try {
+      const output=await rpc("tools/call",{
+        name:"create_motion_feature_film",
+        arguments:{
+          title:"MARGARYAN / 120 SECOND FEATURE FILM",brand:"labs",format:"portrait",
+          language:"en",style:"cinematic",chapter_titles:["THE PROBLEM","THE SOLUTION"],
+          scenes:Array.from({length:16},(_,i)=>({
+            kind:i===0?"opener":i===15?"closer":"statement",
+            eyebrow:i<8?"ACT I":"ACT II",
+            headline:"THE IDEA IN MOTION / SHOT "+(i+1),
+            support:"Text and procedural motion, not generated photo/video assets.",
+            seconds:7.5
+          }))
+        }
+      },107);
+      if(output.isError)throw Error("Feature film tool returned an error");
+      const result=output.structuredContent as {editorUrl?:string;durationSeconds?:number;chapters?:number;videoFileCreated?:boolean};
+      if(result.durationSeconds!==120||result.chapters!==2||result.videoFileCreated!==false||
+         !result.editorUrl?.startsWith("https://studio.promptence.tech/motion?") ||
+         !result.editorUrl.includes("#motion-sequence-v1="))
+        throw Error("Feature film must return a 120s two-act REVIEW link (not an invented MP4)");
+      setFeature(result.editorUrl);
+      report("120S FEATURE FILM","pass","16 scenes · 2 acts · film proposal ready for review");
+    }catch(e){report("120S FEATURE FILM","fail",String(e));stopped=true;}
     try {
       const res=await fetch("/api/worker/private", {cache:"no-store"});
       if(res.status!==404)throw Error("Unexpected status "+res.status+" — private path should be absent");
@@ -134,7 +157,7 @@ export default function ConnectPage() {
         <h2>Install the creative tools</h2>
         <p>In ChatGPT, go to Plugins and add a custom MCP server if your plan and workspace allow it. Use this exact HTTPS endpoint.</p>
         <div className={styles.endpoint}><code>{ENDPOINT}</code><button onClick={async()=>{try{await navigator.clipboard.writeText(ENDPOINT);setCopied(true)}catch{setCopied(false)}}}>{copied?"COPIED":"COPY"}</button></div>
-        <p className={styles.muted}>This beta exposes two read-only film planning tools. It does not access your ChatGPT messages outside approved tool calls and does not store client footage on our server.</p>
+        <p className={styles.muted}>This beta exposes three stateless film-planning tools, including a 65–192s multi-chapter planner. It does not access your ChatGPT messages outside approved tool calls and does not store client footage on our server.</p>
         <div className={styles.commands}>
           <strong>Try asking ChatGPT:</strong>
           <p>“Create a 25-second premium motion-graphics video about my company in portrait format. Show a strong opening and a final CTA.”</p>
@@ -145,10 +168,10 @@ export default function ConnectPage() {
         <h2>Real-time system test</h2>
         <p>This diagnostic sends real JSON-RPC requests to our deployed MCP endpoint, creates a sample film draft and verifies editing works. It does not make AI API requests or render an MP4.</p>
         <button disabled={busy} className={styles.run} onClick={()=>void diagnose()}>{busy?"TESTING CONNECTION…":"RUN COMPLETE CONNECTION TEST ↗"}</button>
-        <p className={styles.muted}>Server-only proof: <Link href="/diagnostics" style={{color:"#c8ddf9",fontWeight:800}}>VIEW 7 LIVE PROTOCOL CHECKS ↗</Link>. This report does not depend on browser fetch permissions.</p>
+        <p className={styles.muted}>Server-only proof: <Link href="/diagnostics" style={{color:"#c8ddf9",fontWeight:800}}>VIEW 8 LIVE PROTOCOL CHECKS ↗</Link>. This report does not depend on browser fetch permissions.</p>
         <div className={styles.tally}>
           <span>{checks.length?pass+" PASS / "+fail+" FAIL":"NOT TESTED YET"}</span>
-          <span>{checks.length+"/6"}</span>
+          <span>{checks.length+"/7"}</span>
         </div>
         <div role="status" aria-live="polite" className={styles.checks}>
           {checks.map(x=><div key={x.label} className={styles.check} data-status={x.status}>
@@ -156,9 +179,10 @@ export default function ConnectPage() {
           </div>)}
           {!checks.length&&<span className={styles.muted}>Run the diagnostic to validate the production MCP endpoint.</span>}
         </div>
-        {(demo||revised)&&<div className={styles.buttons}>
+        {(demo||revised||feature)&&<div className={styles.buttons}>
           {demo&&<a target="_blank" rel="noopener noreferrer" href={demo}>OPEN DEMO FILM ↗</a>}
           {revised&&<a target="_blank" rel="noopener noreferrer" href={revised}>OPEN REVISED FILM ↗</a>}
+          {feature&&<a target="_blank" rel="noopener noreferrer" href={feature}>OPEN 120S FEATURE FILM ↗</a>}
         </div>}
       </section>
     </div>
