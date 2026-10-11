@@ -31,14 +31,14 @@ export const STUDIO_FILM_CHOICES=[
    category:"ИСТОРИЯ",format:"16:9",source:"Монтаж по главам",badge:"FEATURE FILM",
    desc:"Большая история бренда, объяснение технологии или презентация для партнёров. Несколько глав и единый фильм.",
    outcome:"Длинный фильм по главам",step:"Перейдите к сборке глав: сохраняйте каждую часть, просматривайте фильм и проверяйте мастер."},
-  {kind:"interaction",id:"06",title:"Кликающее демо",length:"32–34 сек",
-   category:"НОВАЯ ТЕХНОЛОГИЯ",format:"9:16",source:"Настоящие клики и ввод",badge:"REAL CLICKS",
-   desc:"Настоящий курсор нажимает кнопки Promptence, вводит данные и открывает разделы. Запись — через локальный Interaction Cinema, монтаж — в нашей студии.",
-   outcome:"Демонстрация реальных действий",step:"Создаём редактируемый проект с местом для оригинального кликающего видео. Для записи запустите локальный motion:interaction; готовый MP4 и .motion.json импортируйте в студию. Облачной записи без оператора пока нет."},
   {kind:"proof",id:"05",title:"Реальный продукт",length:"10 сек / тест",
    category:"ПРОВЕРИТЬ",format:"16:9",source:"Настоящий Promptence",badge:"SOURCE PROOF",
    desc:"Сначала проверим исходные кадры Promptence на реальном экране. Для короткого проверочного ролика.",
-   outcome:"Пилот с реальными кадрами",step:"Откроется отдельный Proof Director для Promptence. Нужны настоящие исходники."}
+   outcome:"Пилот с реальными кадрами",step:"Откроется отдельный Proof Director для Promptence. Нужны настоящие исходники."},
+  {kind:"interaction",id:"06",title:"Кликающее демо",length:"34 сек",
+   category:"НОВАЯ ТЕХНОЛОГИЯ",format:"9:16",source:"Настоящие клики и ввод",badge:"REAL CLICKS",
+   desc:"Настоящий курсор нажимает кнопки Promptence, вводит данные и открывает разделы. Запись — через локальный Interaction Cinema, монтаж — в нашей студии.",
+   outcome:"Демонстрация реальных действий",step:"Создаём редактируемый проект с местом для оригинального кликающего видео. Для записи запустите локальный motion:interaction; готовый MP4 и .motion.json импортируйте в студию. Облачной записи без оператора пока нет."}
 ] as const satisfies ReadonlyArray<{
   kind:StudioFilmKind;id:string;title:string;length:string;category:string;
   format:string;source:string;badge:string;desc:string;outcome:string;step:string;
@@ -48,6 +48,8 @@ export function checkStudioFilmChoice(raw:StudioFilmChoice):StudioFilmChoice{
   if(!BRAND_INFO[raw.brand])throw Error("Выберите бренд");
   if(!["portrait","landscape","square"].includes(raw.format))throw Error("Выберите формат видео");
   if(!["ru","en","hy"].includes(raw.language))throw Error("Выберите язык ролика");
+  if(raw.kind==="interaction"&&(raw.brand!=="promptence"||raw.format!=="portrait"))
+    throw Error("Interaction Cinema V1 работает только с Promptence в формате 9:16.");
   if(typeof raw.brief!=="string")throw Error("Опишите будущий фильм");
   const brief=raw.brief.replace(/[\u0000-\u001F\u007F]/g," ").replace(/\s+/g," ").trim().slice(0,650);
   return {...raw,brief};
