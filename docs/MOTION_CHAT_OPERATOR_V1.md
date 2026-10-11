@@ -105,9 +105,13 @@ Current operations:
 - Store, review, preview, approve/revoke, and delete local media copies.
 - Attach an approved PNG/JPEG/WebP to the current Cinematic screenshot shot.
 - Attach an approved recorded voice or licensed music file to the timeline.
-- Store and preview recorded video and SFX. True moving-video compositing is
-  currently done in the existing Quick Studio / Proof Director, not faked as
-  integrated Cinematic footage. SFX are not yet tied to editable cue points.
+- Transfer an approved real MP4/WebM/MOV from the library directly into
+  **Quick Studio Shot 01**. The destination decodes original video pixels;
+  remaining Quick shots still require their own approved media. No copy
+  is uploaded and there is no claim of generated video.
+- Store and preview SFX. True moving-video compositing remains in
+  Quick Studio / Proof Director, not faked as an existing Cinematic shot.
+  SFX are not yet tied to editable cue points.
 
 Limitations: 40 assets/browser, screenshots up to 12MB, video up to 100MB,
 narration up to 15MB, music up to 30MB. Origin quota, private browsing and
