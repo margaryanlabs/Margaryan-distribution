@@ -61,7 +61,7 @@ const page=readFileSync(new URL("../../app/motion/page.tsx",import.meta.url),"ut
 const quick=readFileSync(new URL("../../app/motion/quick-studio.tsx",import.meta.url),"utf8");
 const ui=readFileSync(new URL("../../app/motion/start-film.tsx",import.meta.url),"utf8");
 const css=readFileSync(new URL("../../app/motion/start-film.module.css",import.meta.url),"utf8");
-assert.match(page,/launcherOpen&&/);
+assert.match(page,/const \[launcherOpen,setLauncherOpen\]=useState\(false\)/);
 assert.match(page,/if\(launcherOpen\)return <MotionStart/);
 assert.match(page,/!window\.confirm\(/);
 assert.match(page,/prepareStudioFilm\(selected\)/);
