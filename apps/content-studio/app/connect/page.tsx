@@ -168,7 +168,7 @@ export default function ConnectPage() {
         <h2>Real-time system test</h2>
         <p>This diagnostic sends real JSON-RPC requests to our deployed MCP endpoint, creates a sample film draft and verifies editing works. It does not make AI API requests or render an MP4.</p>
         <button disabled={busy} className={styles.run} onClick={()=>void diagnose()}>{busy?"TESTING CONNECTION…":"RUN COMPLETE CONNECTION TEST ↗"}</button>
-        <p className={styles.muted}>Server-only proof: <Link href="/diagnostics" style={{color:"#c8ddf9",fontWeight:800}}>VIEW 8 LIVE PROTOCOL CHECKS ↗</Link>. This report does not depend on browser fetch permissions.</p>
+        <p className={styles.muted}>Server-only proof: <Link href="/diagnostics" style={{color:"#c8ddf9",fontWeight:800}}>VIEW 9 LIVE PROTOCOL CHECKS ↗</Link>. This report does not depend on browser fetch permissions.</p>
         <div className={styles.tally}>
           <span>{checks.length?pass+" PASS / "+fail+" FAIL":"NOT TESTED YET"}</span>
           <span>{checks.length+"/7"}</span>
