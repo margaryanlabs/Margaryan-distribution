@@ -666,3 +666,15 @@
 @media(prefers-reduced-motion:reduce){
  .editorRail button{transition:none}
 }
+
+
+/* Action paths stay visible in the right inspector, without digging to
+ * the bottom of the original short-film tool drawer. */
+.deliverIntro button{
+ cursor:pointer;border-radius:8px;min-height:43px;padding:12px 11px;
+ font-weight:850;font-size:10px;letter-spacing:.04em;
+}
+.deliverIntro .deliverPrimary{color:#10271d;background:#baf0d1;border:1px solid #baf0d1}
+.deliverIntro .deliverPrimary:disabled{cursor:not-allowed;opacity:.42}
+.deliverIntro .deliverSecondary{color:#bedccd;border:1px solid #4a7865;background:#204033}
+@media(prefers-reduced-motion:reduce){.editorRail button,.timeline button{transition:none}}
