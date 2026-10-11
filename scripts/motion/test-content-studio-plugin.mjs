@@ -235,6 +235,8 @@ assert.ok(body.text.includes('ui/initialize'));
 assert.ok(body.text.includes('ui/notifications/tool-result'));
 assert.ok(body.text.includes('/motion/chat-preview'));
 assert.ok(body._meta.ui.csp.frameDomains.includes("https://margaryan-distribution.vercel.app"));
+assert.deepEqual(body._meta["openai/widgetCSP"].redirect_domains,["https://margaryan-distribution.vercel.app"]);
+assert.ok(body.text.includes("window.openai.openExternal({href,redirectUrl:false})"));
 assert.equal(resource.json.result.contents.length,1);
 const badResource=await send({jsonrpc:"2.0",id:"bad-res",method:"resources/read",params:{uri:"ui://unknown"}});
 assert.equal(badResource.json.error.code,-32002);
