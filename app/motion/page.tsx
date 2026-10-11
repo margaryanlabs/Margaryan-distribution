@@ -27,6 +27,7 @@ import QuickStudio from "./quick-studio";
 import MultitrackEditor from "./multitrack-editor";
 import PrecisionCutDesk from "./precision-cut-desk";
 import ReleaseReadinessDesk from "./release-readiness-desk";
+import ReviewNotesDesk from "./review-notes-desk";
 import type { ReadinessPanel } from "@/lib/motion/release-readiness";
 import FilmSequenceDesk from "./film-sequence-desk";
 import VoiceBooth from "./voice-booth";
@@ -72,6 +73,23 @@ export default function MotionStudioPage() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editorPanel,setEditorPanel]=useState<"create"|"media"|"scene"|"sound"|"look"|"review"|"deliver">("scene");
   const [featureOpen,setFeatureOpen]=useState(false);
+  const [focusMode,setFocusMode]=useState(false);
+  const [inspectorWide,setInspectorWide]=useState(false);
+  const [shortcutHelp,setShortcutHelp]=useState(false);
+  useEffect(()=>{
+    try{
+      setFocusMode(localStorage.getItem("motion-editor-focus-v1")==="true");
+      setInspectorWide(localStorage.getItem("motion-inspector-wide-v1")==="true");
+    }
+    catch{/* Private browsing can disable storage; default full editor works. */}
+  },[]);
+  useEffect(()=>{
+    try{
+      localStorage.setItem("motion-editor-focus-v1",String(focusMode));
+      localStorage.setItem("motion-inspector-wide-v1",String(inspectorWide));
+    }
+    catch{/* Personal layout preference is optional. */}
+  },[focusMode,inspectorWide]);
   const [playing, setPlaying] = useState(false);
   const [playhead, setPlayhead] = useState(0);
   const [generating, setGenerating] = useState(false);
@@ -691,6 +709,43 @@ export default function MotionStudioPage() {
     window.addEventListener("keydown",handler);
     return()=>window.removeEventListener("keydown",handler);
   },[]);
+  useEffect(()=>{
+    const keys=(event:KeyboardEvent)=>{
+      if(mode!=="cinematic"||featureOpen||exporting||generating||
+        directorRepairing||visualReviewing||event.ctrlKey||event.metaKey||
+        event.altKey||event.defaultPrevented||event.isComposing)return;
+      const target=event.target as HTMLElement|null;
+      if(target?.closest('input,textarea,select,button,a,[contenteditable="true"],[role="dialog"]'))return;
+      if(event.key==="?"||event.key==="/"&&event.shiftKey){
+        event.preventDefault();setShortcutHelp(x=>!x);return;
+      }
+      if(event.key==="Escape"){
+        if(shortcutHelp){event.preventDefault();setShortcutHelp(false);}
+        else if(focusMode){event.preventDefault();setFocusMode(false);}
+        return;
+      }
+      if(event.code==="Space"){
+        event.preventDefault();
+        if(timeRef.current>=durationOf(latestProjectRef.current)){
+          timeRef.current=0;setPlayhead(0);
+        }
+        setPlaying(x=>!x);return;
+      }
+      if(event.key==="f"||event.key==="F"){
+        event.preventDefault();setFocusMode(x=>!x);return;
+      }
+      if(event.key==="ArrowLeft"||event.key==="ArrowRight"){
+        event.preventDefault();setPlaying(false);
+        const duration=durationOf(latestProjectRef.current);
+        const delta=(event.shiftKey?.1:1)*(event.key==="ArrowRight"?1:-1);
+        const next=Math.max(0,Math.min(duration,timeRef.current+delta));
+        timeRef.current=Number(next.toFixed(2));setPlayhead(timeRef.current);
+      }
+    };
+    window.addEventListener("keydown",keys);
+    return()=>window.removeEventListener("keydown",keys);
+  },[mode,featureOpen,exporting,generating,directorRepairing,visualReviewing,shortcutHelp,focusMode]);
+
   const modePicker=<nav className={styles.productionModes} aria-label="Production pipeline">
     <button type="button" data-selected={mode==="cinematic"} aria-pressed={mode==="cinematic"}
       onClick={()=>switchMode("cinematic")} disabled={exporting}>
@@ -743,7 +798,23 @@ export default function MotionStudioPage() {
           onClick={()=>{setPlaying(false);setFeatureOpen(v=>!v);}}
           aria-pressed={featureOpen}>◫ FEATURE FILM</button>
         <a href="/motion/commission">CLIENT PROJECTS ↗</a>
+        <button type="button" title="Editor shortcut reference" aria-expanded={shortcutHelp}
+          onClick={()=>setShortcutHelp(value=>!value)}>⌨ KEYS</button>
       </div>
+      {shortcutHelp&&<aside className={styles.shortcutSheet} aria-label="Motion editor keyboard shortcuts">
+        <div><strong>EDIT FASTER</strong>
+          <button type="button" aria-label="Close shortcuts" onClick={()=>setShortcutHelp(false)}>×</button></div>
+        <dl>
+          <dt>SPACE</dt><dd>Play / pause</dd>
+          <dt>← / →</dt><dd>Move playhead by 1 second</dd>
+          <dt>SHIFT + ← / →</dt><dd>Precise 0.1 second scrub</dd>
+          <dt>ALT + 1–7</dt><dd>Switch studio workspaces</dd>
+          <dt>F</dt><dd>Cinema monitor / editor</dd>
+          <dt>?</dt><dd>Show keyboard reference</dd>
+          <dt>ESC</dt><dd>Exit focus or close reference</dd>
+        </dl>
+        <small>Shortcuts do not run when typing in a field or using a button.</small>
+      </aside>}
     </div>
     <div className={styles.notice} role="status">{notice}</div>
     {featureOpen&&<div id="film-sequence" className={styles.featureWorkspace}>
@@ -760,7 +831,8 @@ export default function MotionStudioPage() {
         }}/>
     </div>}
     {!featureOpen&&
-    <div className={styles.workspace} id="motion-storyboard">
+    <div className={styles.workspace} id="motion-storyboard" data-focus={focusMode}
+      style={{"--inspector-width":inspectorWide?"440px":"344px"} as CSSProperties}>
       <nav className={styles.editorRail} aria-label="Editor workspaces">
         {([
           ["create","✦","CREATE","Concept and storyboard"],
@@ -776,7 +848,7 @@ export default function MotionStudioPage() {
           aria-label={label+" – "+desc+" (Alt+"+(i+1)+")"}
           title={desc+" · Alt+"+(i+1)}
           onClick={()=>{
-            setEditorPanel(panel);
+            setFocusMode(false);setEditorPanel(panel);
             if(window.matchMedia("(max-width: 850px)").matches)
               requestAnimationFrame(()=>document.getElementById("motion-inspector")?.scrollIntoView({behavior:"smooth",block:"start"}));
             else document.getElementById("motion-inspector-scroll")?.scrollTo({top:0});
@@ -796,7 +868,14 @@ export default function MotionStudioPage() {
               review:"Quality review",deliver:"Production delivery"
             })[editorPanel]}</strong>
           </div>
-          <small>ALT + {["create","media","scene","sound","look","review","deliver"].indexOf(editorPanel)+1}</small>
+          <div className={styles.inspectorHeaderTools}>
+            <small>ALT + {["create","media","scene","sound","look","review","deliver"].indexOf(editorPanel)+1}</small>
+            <button type="button" onClick={()=>setInspectorWide(value=>!value)}
+              aria-pressed={inspectorWide}
+              title={inspectorWide?"Switch to normal inspector width":"Widen inspector to read long scripts"}>
+              {inspectorWide?"↤ NARROW":"↔ WIDE"}
+            </button>
+          </div>
         </div>
         <div id="motion-inspector-scroll" className={styles.inspectorScroll}>
         {editorPanel==="deliver"&&<div className={styles.deliverIntro}>
@@ -1067,6 +1146,13 @@ export default function MotionStudioPage() {
               requestAnimationFrame(()=>document.getElementById("motion-inspector")?.scrollIntoView({block:"start",behavior:"smooth"}));
           }}
         />
+        <div id="motion-review-notes">
+          <ReviewNotesDesk project={project} playhead={playhead} activeIndex={activeIndex}
+            onNavigate={(index,seconds)=>{
+              setPlaying(false);setSelectedIndex(index);jump(seconds);setEditorPanel("scene");
+              document.getElementById("motion-inspector-scroll")?.scrollTo({top:0,behavior:"smooth"});
+            }}/>
+        </div>
         <div className={styles.qaPanel}>
           <div><strong>PRODUCTION PREFLIGHT</strong><b data-grade={qa.grade}>{qa.grade}</b></div>
           <button type="button" className={styles.polishButton} disabled={exporting}
@@ -1310,6 +1396,16 @@ export default function MotionStudioPage() {
         <div className={styles.stageTop}>
           <div><span>MONITOR / LIVE CANVAS</span><strong>{info.name}</strong></div>
           <div className={styles.stageTopTools}>
+            <button type="button" className={focusMode?styles.focusActive:""}
+              aria-pressed={focusMode} title="Expand the live film monitor · F"
+              onClick={()=>setFocusMode(value=>!value)}>
+              {focusMode?"▣ EDITOR VIEW":"⛶ CINEMA VIEW"}
+            </button>
+            <button type="button" title="Leave a timecoded director note"
+              onClick={()=>{setFocusMode(false);setEditorPanel("review");
+                requestAnimationFrame(()=>document.getElementById("motion-review-notes")?.scrollIntoView({
+                  block:"nearest",behavior:"smooth"
+                }));}}>✎ NOTE</button>
             <span className={styles.frameBadge}>{project.format==="portrait"?"9:16":project.format==="landscape"?"16:9":"1:1"}</span>
             <span className={styles.frameBadge}>{qa.blockers?qa.blockers+" QA BLOCKERS":"STRUCTURE READY"}</span>
             <button type="button" onClick={()=>setEditorPanel("deliver")}>EXPORT ↗</button>
