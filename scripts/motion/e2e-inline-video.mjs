@@ -35,11 +35,11 @@ try{
   page.on("pageerror",e=>issues.push(e.message));
   const response=await page.goto(base+"/motion/chat-preview",{waitUntil:"domcontentloaded",timeout:30_000});
   assert.equal(response?.status(),200,"first-party preview should be HTTP 200");
+  const exportButton=page.getByRole("button",{name:"↓ EXPORT WHOLE FILM"});
+  await exportButton.waitFor({timeout:20_000}); // Hydrated React listener is now mounted.
   await page.evaluate(projects=>window.postMessage({
     kind:"margaryan-motion-preview-v1",projects
   },window.location.origin),chapters);
-  const exportButton=page.getByRole("button",{name:"↓ EXPORT WHOLE FILM"});
-  await exportButton.waitFor({timeout:20_000});
   await page.waitForFunction(()=>{
     const input=document.querySelector('input[aria-label="Film playhead"]');
     return input&&Number(input.max)===10&&!input.disabled;
