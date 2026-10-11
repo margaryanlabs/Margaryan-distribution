@@ -7,6 +7,12 @@ import process from "node:process";
 
 const media=process.argv[2];
 const expectVoice=process.argv.includes("--require-audio");
+const durationFlag=process.argv.indexOf("--max-duration");
+const maxDuration=durationFlag<0?65:Number(process.argv[durationFlag+1]);
+if(!Number.isFinite(maxDuration)||maxDuration<2||maxDuration>515){
+  process.stderr.write("Invalid --max-duration (2–515 seconds)\\n");
+  process.exit(2);
+}
 if (!media){process.stderr.write("Usage: npm run motion:verify -- /path/to/video.mp4 [--require-audio]\n");process.exit(2);}
 try {
   if(statSync(media).size<100_000)throw new Error("Media file is unexpectedly small");
@@ -18,7 +24,7 @@ try {
   const duration=Number(info.format?.duration);
   const failures=[],warnings=[];
   if(!video)failures.push("No video stream");
-  if(!Number.isFinite(duration)||duration<2||duration>65)failures.push("Unexpected or unparseable duration");
+  if(!Number.isFinite(duration)||duration<2||duration>maxDuration)failures.push("Unexpected or unparseable duration (max "+maxDuration+"s)");
   if(video&&Math.min(video.width,video.height)<600)warnings.push("Video below target resolution");
   if(video&&video.pix_fmt&&!["yuv420p","yuvj420p"].includes(video.pix_fmt))warnings.push("Pixel format may not play on all mobile devices");
   if(video&&video.codec_name!=="h264")warnings.push("Final social MP4 ideally needs H.264 encoding");
