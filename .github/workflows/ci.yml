@@ -17,6 +17,12 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Motion Feature Film / 120s and multi-chapter H264 master dry-run
+        run: npm run motion:test-sequence
+      - name: Motion Browser Feature / 192s local Canvas workprint source boundary
+        run: npm run motion:test-film-browser
+      - name: Motion Local Film Sound / explicit approved human voice and licensed music
+        run: npm run motion:test-film-audio
       - name: Motion Precision Cut / chronological original video splits and non-destructive shot editing
         run: npm run motion:test-precision
       - name: Motion Advanced Editor / independent owner-approved picture in picture
