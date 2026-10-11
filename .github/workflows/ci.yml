@@ -17,6 +17,8 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Motion Film Commissions / secure public brief and honest conversion funnel
+        run: npm run motion:test-commission
       - name: Motion Feature Film / 120s and multi-chapter H264 master dry-run
         run: npm run motion:test-sequence
       - name: Motion Browser Feature / 192s local Canvas workprint source boundary
