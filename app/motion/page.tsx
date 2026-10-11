@@ -791,7 +791,7 @@ export default function MotionStudioPage() {
       setProject(ready);setBrief(selected.brief||defaultBrief);
       setLanguage(selected.language);
       setStartedKind(selected.kind);
-      setEditorPanel(selected.kind==="product"?"media":selected.kind==="feature"?"create":"scene");
+      setEditorPanel(selected.kind==="product"||selected.kind==="interaction"?"media":selected.kind==="feature"?"create":"scene");
       switchMode("cinematic");
       if(selected.kind==="feature")setFeatureOpen(true);
       setNotice(studioFilmInstruction(selected.kind));
@@ -889,11 +889,11 @@ export default function MotionStudioPage() {
     </div>
     <div className={styles.notice} role="status">{notice}</div>
     {startedKind&&<div className={styles.filmGuidance} aria-label="Следующий шаг производства">
-      <span>ВЫ СОЗДАЁТЕ / {startedKind==="campaign"?"КИНО-РЕКЛАМУ":startedKind==="product"?"ДЕМО ПРОДУКТА":startedKind==="feature"?"БОЛЬШОЙ ФИЛЬМ":"REELS"}</span>
+      <span>ВЫ СОЗДАЁТЕ / {startedKind==="campaign"?"КИНО-РЕКЛАМУ":startedKind==="product"?"ДЕМО ПРОДУКТА":startedKind==="interaction"?"КЛИКАЮЩЕЕ ДЕМО":startedKind==="feature"?"БОЛЬШОЙ ФИЛЬМ":"REELS"}</span>
       <p>{studioFilmInstruction(startedKind)}</p>
       {startedKind!=="feature"&&<button type="button"
-        onClick={()=>{setFeatureOpen(false);setEditorPanel(startedKind==="product"?"media":"scene");}}>
-        {startedKind==="product"?"ОТКРЫТЬ ИСХОДНИКИ ↗":"НАЧАТЬ МОНТАЖ ↗"}
+        onClick={()=>{setFeatureOpen(false);setEditorPanel(startedKind==="product"||startedKind==="interaction"?"media":"scene");}}>
+        {startedKind==="product"||startedKind==="interaction"?"ОТКРЫТЬ ИСХОДНИКИ ↗":"НАЧАТЬ МОНТАЖ ↗"}
       </button>}
     </div>}
     {featureOpen&&<div id="film-sequence" className={styles.featureWorkspace}>
