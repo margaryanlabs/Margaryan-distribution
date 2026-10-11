@@ -74,6 +74,7 @@ export function makeProductionPack(project: MotionProject) {
     language: project.language || "manual-review",
     format: project.format,
     qualityMode: project.qualityMode || "basic",
+    filmChrome: project.filmChrome || "brand",
     duration: durationOf(project),
     audioEdit: sanitizeAudioEdit(project.audio),
     shots: cues,

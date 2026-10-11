@@ -369,8 +369,15 @@ export function drawMotionFrame(ctx: CanvasRenderingContext2D, project: MotionPr
     editorialTransition(ctx,method,amount,W,H,accent,opacity=>
       drawShot(ctx,project,index+1,Math.max(.05,amount*transition),t,W,H,opacity));
   }
+  // Editorial film output must not inherit the recorder's debugging labels.
+  // CLEAN: no persistent frame furniture. BRAND: quiet wordmark on first/last
+  // shot only. EDITOR: full technical overlay for internal reviews.
+  const filmChrome=project.filmChrome||"brand";
+  if(filmChrome==="clean"||(filmChrome==="brand"&&index!==0&&index!==project.scenes.length-1)){
+    ctx.restore();return;
+  }
   const pad = H < 810 ? 82 : 88;
-  // Brand bars / metainformation are drawn above scene transitions.
+  // Minimal brand mark stays outside camera movement and scene cuts.
   const top = H < 810 ? 28 : 55;
   const mark = getLoadedMotionLogo(project.brand);
   if (mark) {
@@ -381,6 +388,9 @@ export function drawMotionFrame(ctx: CanvasRenderingContext2D, project: MotionPr
   ctx.fillStyle = "#d8e0e9"; ctx.font = "700 19px Arial, sans-serif";
   ctx.textBaseline = "middle"; ctx.textAlign = "left";
   ctx.fillText(BRAND_INFO[project.brand].name, pad + 65, top + 8);
+  if(filmChrome==="brand"){
+    ctx.restore();return;
+  }
   ctx.textAlign = "right"; ctx.fillStyle = "#8a96a3"; ctx.font = "700 13px Arial, sans-serif";
   ctx.fillText("MOTION ENGINE / " + String(index + 1).padStart(2,"0"), W - pad, top + 8);
   const footer = H - (H < 810 ? 65 : 103);

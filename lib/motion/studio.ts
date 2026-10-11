@@ -8,6 +8,8 @@ export type MotionCameraCue = "inherit" | "locked" | "push" | "pull" | "drift";
 export type MotionTransitionCue = "auto" | "dissolve" | "wipe" | "slash" | "cut" | "zoom" | "flash" | "slide" | "grid";
 export type MotionQualityMode = "basic" | "premium" | "signature";
 export type MotionTitleTreatment = "editorial" | "mask" | "kinetic" | "minimal";
+/** Film overlay style: no gratuitous editor debug text on shipped commercials. */
+export type MotionFilmChrome = "clean" | "brand" | "editor";
 /** Concept compositions, not fabricated provider screens or verified client results. */
 export type PromptenceBeat = "question" | "answer" | "gap" | "sources" | "diagnose" | "priority" | "approve" | "implement" | "remeasure" | "close";
 export const PROMPTENCE_BEATS: PromptenceBeat[] = ["question","answer","gap","sources","diagnose","priority","approve","implement","remeasure","close"];
@@ -80,6 +82,7 @@ export interface MotionProject {
   format: MotionFormat;
   style?: "cinematic" | "kinetic" | "technical";
   qualityMode?: MotionQualityMode;
+  filmChrome?: MotionFilmChrome;
   visual?: MotionVisualControls;
   /** Timecoded edit metadata only: voice/music files must be reattached after reload. */
   audio?: MotionAudioEdit;
@@ -286,8 +289,10 @@ export function sanitizeMotionProject(input: unknown): MotionProject {
   const language = ["en", "ru", "hy"].includes(String(obj.language)) ? obj.language as MotionProject["language"] : undefined;
   const qualityMode = ["basic","premium","signature"].includes(String(obj.qualityMode)) ? obj.qualityMode as MotionQualityMode : undefined;
   const visual=sanitizeVisual(obj.visual);
+  const filmChrome:MotionFilmChrome=["clean","brand","editor"].includes(String(obj.filmChrome))
+    ?obj.filmChrome as MotionFilmChrome:"brand";
   const signatureFilm = brand === "promptence" && obj.signatureFilm === "promptence-answer" ? "promptence-answer" as const : undefined;
-  return { version: 1, title: clean(obj.title, 100) || "UNTITLED MOTION", brand, format, style, seed, scenes, language, signatureFilm, qualityMode, visual, audio: sanitizeAudioEdit(obj.audio) };
+  return { version: 1, title: clean(obj.title, 100) || "UNTITLED MOTION", brand, format, style, seed, scenes, language, signatureFilm, qualityMode, filmChrome, visual, audio: sanitizeAudioEdit(obj.audio) };
 }
 
 export function durationOf(project: MotionProject) {

@@ -12,7 +12,7 @@ export type ChatScenePatch = {
 };
 export type ChatProjectPatch = {
   target:"project";
-  set: Partial<Pick<MotionProject,"title"|"format"|"style"|"language"|"qualityMode"|"visual"|"audio">>;
+  set: Partial<Pick<MotionProject,"title"|"format"|"style"|"language"|"qualityMode"|"filmChrome"|"visual"|"audio">>;
 };
 export type ChatMotionPatch = {
   protocol:typeof CHAT_PROTOCOL; action:"patch";
@@ -32,7 +32,7 @@ export interface ChatOperatorPreview {
 
 const SCENE_FIELDS=["kind","eyebrow","headline","support","seconds","typographyScale",
   "titleTreatment","camera","transition","intensity","voiceCue","productBeat","mediaId","mediaStart","sourceLayout","sourceFocusX","sourceFocusY","sourceZoomStart","sourceZoomEnd"] as const;
-const PROJECT_FIELDS=["title","format","style","language","qualityMode","visual","audio"] as const;
+const PROJECT_FIELDS=["title","format","style","language","qualityMode","filmChrome","visual","audio"] as const;
 const allowedScene=new Set<string>(SCENE_FIELDS);
 const allowedProject=new Set<string>(PROJECT_FIELDS);
 const object=(value:unknown):value is Record<string,unknown> =>

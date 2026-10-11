@@ -25,6 +25,7 @@ import { ensureSpatialRenderer, spatialStatus, spatialError } from "@/lib/motion
 import { createKeylessStoryboard, getLocalDirectorExamples, type MotionLanguage, type MotionStyle } from "@/lib/motion/director";
 import QuickStudio from "./quick-studio";
 import MultitrackEditor from "./multitrack-editor";
+import VoiceBooth from "./voice-booth";
 import OperatorDesk from "./operator-desk";
 import { getLocalMedia, mediaAsFile } from "@/lib/motion/local-media";
 import {
@@ -831,11 +832,27 @@ export default function MotionStudioPage() {
           </select>
         </label>
         <p className={styles.hint}>Quality modes change actual transition timing and selection; they do not claim to increase physical video resolution or guarantee advertising quality.</p>
+        <label className={styles.field}><span>FILM CHROME / BRAND VS DEBUG</span>
+          <select value={project.filmChrome||"brand"} disabled={exporting}
+            onChange={event=>updateProject({...project,
+              filmChrome:event.target.value as "clean"|"brand"|"editor"})}>
+            <option value="clean">Clean cinematic / nothing overlaid</option>
+            <option value="brand">Signature brand / quiet mark on first and last shot</option>
+            <option value="editor">Editorial review / internal technical overlay</option>
+          </select>
+        </label>
+        <p className={styles.hint}>Commercial exports no longer need to expose debug labels, clip counters or the Motion Engine footer. Use EDITOR only while reviewing.</p>
         <label className={styles.audioToggle}>
           <input type="checkbox" checked={soundEnabled} disabled={exporting} onChange={event => setSoundEnabled(event.target.checked)}/>
           ORIGINAL SYNTH SOUNDTRACK <strong>{soundEnabled ? "ON" : "OFF"}</strong>
         </label>
         <p className={styles.hint}>Optional original synthetic score is mixed below narration.</p>
+        <VoiceBooth project={project} busy={exporting||generating||directorRepairing}
+          onAccept={file=>{
+            setVoiceover(file);setPlaying(false);
+            setNotice("Genuine voice recorded and attached locally: "+file.name+
+              ". Check Voice timeline placement, final listening, and user permission before publishing.");
+          }}/>
         <label className={styles.voiceUpload}><span>NARRATION / YOUR MP3, WAV OR M4A</span>
           <input type="file" accept="audio/*" disabled={exporting} onChange={event=>{
             const file=event.target.files?.[0] || null;
