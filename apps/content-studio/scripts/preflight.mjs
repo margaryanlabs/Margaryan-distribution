@@ -111,6 +111,29 @@ assert.ok(first.text.includes("/motion/chat-preview"));
 assert.ok(first._meta.ui.csp.frameDomains.includes(new URL(origin).origin));
 assert.deepEqual(first._meta["openai/widgetCSP"].redirect_domains,[new URL(origin).origin]);
 assert.ok(first.text.includes("window.openai.openExternal({href,redirectUrl:false})"));
+
+assert.ok(first.text.includes('kind:"margaryan-motion-seek-v1"'),
+  "MCP Apps widget must let users inspect shots by jumping the real Canvas player");
+assert.ok(first.text.includes("window.openai.setWidgetState"),
+  "Widget must preserve safe UI-only selected-shot state when host supports it");
+const publicEditor=readFileSync(new URL("apps/content-studio/app/motion/page.tsx",root),"utf8");
+const publicCSS=readFileSync(new URL("apps/content-studio/app/motion/motion.module.css",root),"utf8");
+const child=readFileSync(new URL("apps/content-studio/app/motion/chat-preview/page.tsx",root),"utf8");
+assert.ok(publicEditor.includes("editorProjectBar")&&publicEditor.includes("editorRail")&&
+  publicEditor.includes("LocalFilmVaultPanel")&&publicEditor.includes("clientBrandInfo(project)"),
+  "V2 professional editor must retain seven workspaces, saved films and custom customer brand kit");
+assert.ok(publicEditor.includes('window.location.hash.startsWith("#motion-sequence-v1=")')&&
+  publicEditor.includes("setFeatureOpen(true)"),
+  "Critical: long-form ChatGPT film review links must automatically open Sequence Studio in Editor V2");
+assert.ok(publicCSS.includes(".editorRail")&&publicCSS.includes(".editorProjectBar"),
+  "New public Motion Studio must include latest V2 editor layout styles");
+assert.ok(!publicEditor.includes('href="/motion/commission"')&&
+  !publicEditor.includes('href="/smm"'),
+  "Isolated public Content Studio must not link to protected private Distribution routes");
+assert.ok(child.includes('incoming?.kind==="margaryan-motion-seek-v1"')&&
+  child.includes("projectRef.current=safe"),
+  "Nested video player must seek selected user scenes against the current, not stale, film");
+
 const script=/<script>([\s\S]*?)<\/script>/.exec(first.text)?.[1];
 assert.ok(script && script.includes("ui/initialize"));
 new vm.Script(script);
@@ -123,4 +146,4 @@ const longResult=await rpc("tools/call",{name:"create_motion_feature_film",argum
 }});
 assert.equal(longResult.structuredContent.durationSeconds,120);
 assert.ok(longResult.structuredContent.editorUrl.startsWith(origin+"/motion?"));
-console.log("Content Studio standalone release preflight: MCP discovery, output schemas, widget JS, short + 120s film, customer kit, local vault PASS");
+console.log("Content Studio standalone release preflight: MCP discovery, output schemas, widget JS, short + 120s film, customer kit, Editor V2 chapter links, selectable shots and local vault PASS");
