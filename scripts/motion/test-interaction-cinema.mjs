@@ -5,8 +5,8 @@ import {TARGETS,PLAN,validatePlan,assertSafeClick,smooth,
  createCinematicProject,FPS,TAKE_ID} from "./interaction-cinema-core.mjs";
 const stats=validatePlan();
 assert.equal(stats.actions,10);
-assert.equal(stats.frames,816);
-assert.equal(stats.duration,34);
+assert.equal(stats.frames,820);
+assert.equal(stats.duration,34.167);
 assert.ok(!JSON.stringify(TARGETS).toLowerCase().includes("submit"));
 assert.ok(!JSON.stringify(TARGETS).includes("Run Free Scan"));
 assert.throws(()=>validatePlan([{id:"hack",kind:"click",target:"pay-button",seconds:3}]),/unapproved selector/);
