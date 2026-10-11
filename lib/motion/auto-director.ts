@@ -64,7 +64,7 @@ export function measuredRepairDebt(warnings:string[],pass:boolean):number {
 }
 
 function bestVariety(kind:MotionSceneKind,previous:MotionSceneKind,following:MotionSceneKind,shot:number):MotionSceneKind {
-  if(kind==="screen"||kind==="closer")return kind;
+  if(kind==="screen"||kind==="spatial"||kind==="closer")return kind;
   const choices=VARIANT.filter(candidate=>candidate!==kind&&candidate!==previous&&candidate!==following);
   return choices[(shot+2)%Math.max(1,choices.length)]||"kinetic";
 }
@@ -124,7 +124,7 @@ export async function repairMotionProject(original:MotionProject):Promise<Direct
       const next=scenes[i+1]?.kind||"closer";
       const repeated=issues.repeated.has(i);
       const similarNeighbours=(i>0 && i<scenes.length-1 && prev===scene.kind && next===scene.kind);
-      if((repeated||similarNeighbours)&&scene.kind!=="screen"&&scene.kind!=="closer"){
+      if((repeated||similarNeighbours)&&scene.kind!=="screen"&&scene.kind!=="spatial"&&scene.kind!=="closer"){
         const kind=bestVariety(scene.kind,prev,next,i+iteration);
         if(kind!==scene.kind){
           batch.push({shot:i+1,field:"kind",from:scene.kind,to:kind,

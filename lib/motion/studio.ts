@@ -1,6 +1,6 @@
 export type MotionBrand = "veto" | "promptence" | "raios" | "labs" | "ingu" | "meqena" | "suren" | "veto_private" | "veto_sport" | "armat" | "tun" | "hay_engine" | "reality_engine";
 export type MotionFormat = "portrait" | "square" | "landscape";
-export type MotionSceneKind = "opener" | "statement" | "network" | "closer" | "kinetic" | "orbit" | "screen";
+export type MotionSceneKind = "opener" | "statement" | "network" | "closer" | "kinetic" | "orbit" | "screen" | "spatial";
 export type MotionCameraCue = "inherit" | "locked" | "push" | "pull" | "drift";
 export type MotionTransitionCue = "auto" | "dissolve" | "wipe" | "slash" | "cut";
 
@@ -199,7 +199,7 @@ export function sanitizeMotionProject(input: unknown): MotionProject {
   const clean = (value: unknown, max: number) => String(typeof value === "string" ? value : "").trim().slice(0, max);
   const scenes = sceneInput.map((raw, index) => {
     const s = raw && typeof raw === "object" ? raw as Record<string, unknown> : {};
-    const kind: MotionSceneKind = ["opener", "statement", "network", "closer", "kinetic", "orbit", "screen"].includes(String(s.kind)) ? s.kind as MotionSceneKind : "statement";
+    const kind: MotionSceneKind = ["opener", "statement", "network", "closer", "kinetic", "orbit", "screen", "spatial"].includes(String(s.kind)) ? s.kind as MotionSceneKind : "statement";
     const seconds = Number(s.seconds);
     return {
       id: "scene-" + (index + 1),

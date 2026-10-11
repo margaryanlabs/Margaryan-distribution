@@ -219,6 +219,19 @@ function promptenceCampaign(lang: Language, format: MotionFormat, style: MotionS
   });
 }
 
+/**
+ * Honor only explicit requests for true 3D. Cinematic briefs without "3D"
+ * do NOT incur a WebGL dependency or silently change signature campaigns.
+ */
+function applySpatialRequest(project:MotionProject,prompt:string):MotionProject {
+  if(!/(?:\b3d\b|\bwebgl\b|\bthree\s*\.?\s*js\b|3д|тр[её]хмер|երեքչափ)/iu.test(prompt))return project;
+  const target=Math.max(0,Math.min(project.scenes.length-2,Math.floor(project.scenes.length/2)));
+  const scenes=project.scenes.map((scene,index)=>index===target && scene.kind!=="screen"
+    ? {...scene,kind:"spatial" as const,camera:"push" as const,transition:"dissolve" as const,intensity:.62}
+    : scene);
+  return sanitizeMotionProject({...project,scenes});
+}
+
 export function createKeylessStoryboard(input: DirectorBrief): MotionProject {
   const { prompt, brand, format } = input;
   if (typeof prompt !== "string" || prompt.trim().length < 6 || prompt.length > 2000) {
@@ -234,9 +247,9 @@ export function createKeylessStoryboard(input: DirectorBrief): MotionProject {
   const style = input.style || (/(быстро|динамич|fast|energetic|kinetic)/i.test(prompt) ? "kinetic" :
     /(data|данн|цифр|аналити|terminal|технолог|code|dashboard)/i.test(prompt) ? "technical" : "cinematic");
   const directed = specialCampaign(brand,lang,format,style,hash);
-  if (directed) return honorRequestedTiming(directed,prompt);
+  if (directed) return applySpatialRequest(honorRequestedTiming(directed,prompt),prompt);
   if (brand === "promptence" && topic === "visibility") {
-    return honorRequestedTiming(promptenceCampaign(lang, format, style, hash),prompt);
+    return applySpatialRequest(honorRequestedTiming(promptenceCampaign(lang, format, style, hash),prompt),prompt);
   }
   const pace = style === "kinetic" ? 3 : style === "technical" ? 4.5 : 5;
   const styles: MotionSceneKind[] = style === "technical"
@@ -263,10 +276,10 @@ export function createKeylessStoryboard(input: DirectorBrief): MotionProject {
     support: supports[index].slice(0, 180),
     seconds: Math.max(2, Math.min(8, pace + (index === 0 ? -.7 : 0) + (index === 4 ? -.8 : 0) + ((hash >> (index * 3)) % 3) * .25))
   }));
-  return honorRequestedTiming(sanitizeMotionProject({
+  return applySpatialRequest(honorRequestedTiming(sanitizeMotionProject({
     version: 1, title: BRAND_INFO[brand].name + " / " + TOPIC_LABEL[lang][topic],
     brand, format, style, seed: hash, language: lang, scenes
-  }),prompt);
+  }),prompt),prompt);
 }
 
 export function getLocalDirectorExamples(brand: MotionBrand) {

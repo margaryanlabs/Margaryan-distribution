@@ -271,3 +271,23 @@
  .directorActions{grid-template-columns:repeat(3,minmax(0,1fr))}
  .productionDesk,.musicDesk{padding:14px 12px}
 }
+
+/* Offscreen Three.js cinema is opt-in per shot; unsupported GPUs remain 2D. */
+.spatialStatus{margin:18px 0 7px;padding:15px;border-radius:12px;
+ background:radial-gradient(ellipse at 95% 0%,#29414b44,transparent 75%),#111921;
+ border:1px solid #3d4a57;color:#d9e4ee}
+.spatialStatus[data-ready="true"]{border-color:#648d7e;
+ background:radial-gradient(ellipse at 95% 0%,#24493888,transparent 75%),#0d1a1b}
+.spatialStatus>div{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.spatialStatus strong{font-size:10px;letter-spacing:.095em}
+.spatialStatus span{font-size:9px;color:#90c4af;border-radius:5px;border:1px solid #365f51;
+ background:#12392d;padding:6px 8px;font-weight:850;letter-spacing:.1em}
+.spatialStatus p{font-size:11px;color:#b0c0c9;line-height:1.6;margin:8px 0}
+.spatialStatus small{display:block;font-size:10px;color:#93a6b1;line-height:1.5;overflow-wrap:anywhere;margin-top:8px}
+
+.spatialDemoButton{display:block;width:100%;margin:10px 0 12px;padding:13px 10px;
+ background:linear-gradient(145deg,#202d38,#13242b);color:#dcecf4;
+ border:1px solid #577a89;border-radius:9px;text-align:center;
+ font-size:10px;font-weight:800;letter-spacing:.1em;cursor:pointer}
+.spatialDemoButton:hover:not(:disabled){border-color:var(--brand-accent);background:#20343c}
+.spatialDemoButton:disabled{opacity:.4;cursor:not-allowed}

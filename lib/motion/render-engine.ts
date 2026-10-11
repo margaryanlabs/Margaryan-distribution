@@ -9,6 +9,7 @@ import { FILM_FONT, fitShotCopy } from "./typography";
 import { drawWorldRig, withSceneCamera } from "./camera-rig";
 import { drawPromptenceSignatureArt } from "./signature-art";
 import { drawProductScreen } from "./screen-media";
+import { drawSpatialFrame } from "./spatial-bridge";
 
 const TAU = Math.PI * 2;
 const clamp = (x: number, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -264,7 +265,14 @@ function drawShot(ctx: CanvasRenderingContext2D, project: MotionProject, index: 
       drawWorldRig(ctx,W,H,absoluteTime,accent,index,
         scene.kind==="opener"?"floor":scene.kind==="orbit"?"portal":"signal");
     }
-    if(project.signatureFilm==="promptence-answer"&&project.brand==="promptence"){
+    if(scene.kind==="spatial") {
+      // Time-addressable Three.js compositing (only on an explicitly selected shot).
+      // A missing renderer is not silently represented as genuine WebGL:
+      // export and offline mastering preflight must load it first.
+      if(!drawSpatialFrame(ctx,W,H,accent,absoluteTime,progress,index,scene,project.brand)) {
+        drawCinematicSet(ctx,project,scene,index,absoluteTime,progress,W,H);
+      }
+    } else if(project.signatureFilm==="promptence-answer"&&project.brand==="promptence"){
       // Flagship is deliberately a separate authored visual grammar. Do not
       // overlay a generic orbit/dashboard slideshow atop the bespoke shots.
       drawPromptenceSignatureArt(ctx,project,index,absoluteTime,progress,W,H);

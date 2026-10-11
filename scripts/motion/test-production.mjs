@@ -51,4 +51,13 @@ assert.equal(untrusted.scenes[0].camera,"inherit");
 assert.equal(untrusted.scenes[0].transition,"auto");
 assert.equal(untrusted.scenes[0].intensity,1);
 assert.equal(untrusted.scenes[0].voiceCue.length,300);
+const spatial = studio.sanitizeMotionProject({
+  ...raw,
+  scenes:[{...raw.scenes[0],kind:"spatial",camera:"push",intensity:.9}]
+});
+assert.equal(spatial.scenes[0].kind,"spatial");
+assert.equal(spatial.scenes[0].camera,"push");
+const spatialPack = pack.makeProductionPack(spatial);
+assert.equal(spatialPack.shots[0].visual,"spatial");
+assert.equal(spatialPack.shots[0].start,0);
 console.log("Motion production desk schema, shot timings, narration cues and sanitization: PASS");
