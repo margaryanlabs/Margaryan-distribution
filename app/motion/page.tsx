@@ -18,6 +18,7 @@ import { compareFilmWithReference, summarizeReferenceComparison, type ReferenceC
 import { createCaptionBundle } from "@/lib/motion/captions";
 import { rescaleProjectToSeconds } from "@/lib/motion/timing";
 import { createProceduralSoundtrack, type ProceduralAudioSession } from "@/lib/motion/sound-engine";
+import { makeProductionPack } from "@/lib/motion/production-pack";
 import { createKeylessStoryboard, getLocalDirectorExamples, type MotionLanguage, type MotionStyle } from "@/lib/motion/director";
 import QuickStudio from "./quick-studio";
 import styles from "./motion.module.css";
@@ -46,6 +47,9 @@ export default function MotionStudioPage() {
   const [language, setLanguage] = useState<MotionLanguage>("auto");
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [voiceover, setVoiceover] = useState<File | null>(null);
+  const [licensedMusic, setLicensedMusic] = useState<File | null>(null);
+  const [musicGain, setMusicGain] = useState(.5);
+  const [narrationGain, setNarrationGain] = useState(.82);
   const [narrationSeconds, setNarrationSeconds] = useState<number | null>(null);
   const [assetRevision, setAssetRevision] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -232,6 +236,25 @@ export default function MotionStudioPage() {
     updateProject({ ...project, scenes: project.scenes.filter((_, i) => i !== selectedIndex) });
     setSelectedIndex(0); jump(0); setPlaying(false);
   }
+  function moveScene(direction: -1 | 1) {
+    const destination = selectedIndex + direction;
+    if(destination<0 || destination>=project.scenes.length || exporting)return;
+    const scenes = [...project.scenes];
+    [scenes[selectedIndex],scenes[destination]]=[scenes[destination],scenes[selectedIndex]];
+    updateProject({...project,scenes});
+    setSelectedIndex(destination);setPlaying(false);
+    jump(scenes.slice(0,destination).reduce((total,shot)=>total+shot.seconds,0));
+    setNotice("Shot order updated. Timing, subtitles and transitions follow the new sequence.");
+  }
+  function duplicateScene() {
+    if(project.scenes.length>=8 || exporting)return;
+    const scenes=[...project.scenes];
+    scenes.splice(selectedIndex+1,0,{...selected,id:"scene-copy"});
+    updateProject({...project,scenes});
+    setSelectedIndex(selectedIndex+1);setPlaying(false);
+    jump(scenes.slice(0,selectedIndex+1).reduce((total,shot)=>total+shot.seconds,0));
+    setNotice("Shot duplicated — modify the copy to avoid repetitive visuals.");
+  }
   function generate() {
     if (generating || exporting) return;
     setGenerating(true);
@@ -329,7 +352,7 @@ export default function MotionStudioPage() {
       setNotice("Your browser does not support canvas recording. Use current desktop Chrome or Edge for export.");
       return;
     }
-    const types = (soundEnabled || Boolean(voiceover))
+    const types = (soundEnabled || Boolean(voiceover) || Boolean(licensedMusic))
       ? ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm", "video/mp4"]
       : ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"];
     const mimeType = types.find(type => MediaRecorder.isTypeSupported(type));
@@ -395,9 +418,12 @@ export default function MotionStudioPage() {
         cursor += scene.seconds;
       }
       stream = canvas.captureStream(30);
-      if (soundEnabled || voiceover) {
-        // Never silently deliver a silent marketing clip when narration was requested.
-        audioSession = await createProceduralSoundtrack(project, { voiceover, synth: soundEnabled });
+      if (soundEnabled || voiceover || licensedMusic) {
+        // Explicit operator-owned audio only. No synthetic narration is claimed.
+        audioSession = await createProceduralSoundtrack(project, {
+          voiceover, music: licensedMusic, synth: soundEnabled,
+          musicGain, narrationGain
+        });
         stream.addTrack(audioSession.track);
       }
       drawMotionFrame(ctx, project, 0, width, height);
@@ -424,7 +450,7 @@ export default function MotionStudioPage() {
       const ext = mimeType.includes("mp4") ? "mp4" : "webm";
       const blob = new Blob(chunks, { type: mimeType });
       downloadFile("margaryan-motion-" + project.brand + "-" + project.format + "." + ext, blob);
-      setNotice("Video rendered locally: " + ext.toUpperCase() + ", " + width + " × " + height + (audioSession && voiceover ? " + narration" : "") + (audioSession && soundEnabled ? " + synth soundtrack" : "") + ". No external upload.");
+      setNotice("Video rendered locally: " + ext.toUpperCase() + ", " + width + " × " + height + (audioSession && voiceover ? " + narration" : "") + (audioSession && soundEnabled ? " + synth soundtrack" : "") + (licensedMusic?" + licensed music":"") + ". No external upload.");
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Render failed");
     } finally {
@@ -587,6 +613,26 @@ export default function MotionStudioPage() {
               }catch(error){setNotice(error instanceof Error?error.message:"Voice timing cannot fit these scenes.");}
             }}>◷ FIT FILM TO NARRATION</button>}
         </>}
+        <section className={styles.musicDesk} aria-label="Local audio finishing">
+          <div className={styles.productionDeskHead}><strong>AUDIO FINISHING / LOCAL</strong><span>NO KEYS · NO UPLOADS</span></div>
+          <p>Use a recording you own or have permission to use. Music is mixed and faded under the voice; synthetic score remains optional.</p>
+          <label className={styles.voiceUpload}><span>LICENSED MUSIC / MP3, WAV, M4A · MAX 30MB</span>
+            <input type="file" accept="audio/*" disabled={exporting} onChange={event=>{
+              const file=event.target.files?.[0]||null;
+              event.currentTarget.value="";
+              if(file && file.size>30_000_000){setNotice("Music limit: 30 MB.");return;}
+              setLicensedMusic(file);setNotice(file?"Local licensed music selected: "+file.name:"Music removed.");
+            }}/>
+          </label>
+          {licensedMusic && <div className={styles.musicFile}><span>♫ {licensedMusic.name}</span><button type="button" disabled={exporting} onClick={()=>setLicensedMusic(null)}>REMOVE</button></div>}
+          <label className={styles.fader}>VOICE LEVEL <strong>{Math.round(narrationGain*100)}%</strong>
+            <input type="range" min="0" max="1.3" step=".05" value={narrationGain} onChange={event=>setNarrationGain(Number(event.target.value))}/>
+          </label>
+          <label className={styles.fader}>MUSIC LEVEL <strong>{Math.round(musicGain*100)}%</strong>
+            <input type="range" min="0" max="1" step=".05" value={musicGain} onChange={event=>setMusicGain(Number(event.target.value))}/>
+          </label>
+          <small>Audio clips are mixed into the browser export. For H.264/AAC mastering use the existing offline FFmpeg workflow with the original licensed files.</small>
+        </section>
         <section className={styles.referenceLab} aria-label="Reference film comparison">
           <div className={styles.referenceLabHead}>
             <strong>REFERENCE LAB / REAL FILM SIGNALS</strong>
@@ -670,6 +716,43 @@ export default function MotionStudioPage() {
             <option value="closer">Closing frame</option>
           </select>
         </label>
+        <section className={styles.productionDesk} aria-label="Per-shot camera and edit controls">
+          <div className={styles.productionDeskHead}><strong>DIRECTOR DESK / SHOT {String(selectedIndex+1).padStart(2,"0")}</strong><span>KEYFRAMED · KEYLESS</span></div>
+          <p>Direct the actual rendered scenery, not a decorative preview. Text and real product marks stay readable.</p>
+          <div className={styles.directorGrid}>
+            <label className={styles.field}><span>CAMERA MOVE</span>
+              <select value={selected.camera || "inherit"} onChange={event=>editScene("camera",event.target.value)}>
+                <option value="inherit">Original camera</option>
+                <option value="locked">Tripod / locked</option>
+                <option value="push">Push in</option>
+                <option value="pull">Pull out</option>
+                <option value="drift">Slow drift</option>
+              </select>
+            </label>
+            <label className={styles.field}><span>CUT / NEXT SHOT</span>
+              <select value={selected.transition || "auto"} onChange={event=>editScene("transition",event.target.value)}>
+                <option value="auto">Automatic</option>
+                <option value="cut">Hard cut</option>
+                <option value="dissolve">Cross dissolve</option>
+                <option value="wipe">Vertical wipe</option>
+                <option value="slash">Diagonal wipe</option>
+              </select>
+            </label>
+          </div>
+          <label className={styles.fader}>CAMERA INTENSITY <strong>{Math.round((selected.intensity ?? .5)*100)}%</strong>
+            <input type="range" min="0" max="1" step=".05" value={selected.intensity ?? .5}
+              onChange={event=>editScene("intensity",Number(event.target.value))}/>
+          </label>
+          <label className={styles.field}><span>VOICE DIRECTION / EDITORIAL CUE</span>
+            <textarea rows={3} maxLength={300} placeholder="What should the narrator say during this shot? No synthetic voice is created without a provider."
+              value={selected.voiceCue || ""} onChange={event=>editScene("voiceCue",event.target.value)}/>
+          </label>
+          <div className={styles.directorActions}>
+            <button type="button" disabled={selectedIndex===0||exporting} onClick={()=>moveScene(-1)}>← MOVE</button>
+            <button type="button" disabled={selectedIndex===project.scenes.length-1||exporting} onClick={()=>moveScene(1)}>MOVE →</button>
+            <button type="button" disabled={project.scenes.length>=8||exporting} onClick={duplicateScene}>+ DUPLICATE</button>
+          </div>
+        </section>
         <label className={styles.screenUpload}>
           <strong>REAL PRODUCT SCREEN / SOURCE FOOTAGE</strong>
           <span>{hasProductScreen(project.brand)
@@ -727,6 +810,16 @@ export default function MotionStudioPage() {
           <div className={styles.exportActions}>
             <label className={styles.importLabel}>Import JSON<input type="file" accept=".json,application/json" onChange={event => { void importJson(event.target.files?.[0]); event.currentTarget.value = ""; }}/></label>
             <button onClick={saveJson}>Save project</button>
+            <button type="button" onClick={()=>{
+              const pack=makeProductionPack(project);
+              downloadFile("motion-"+project.brand+"-production-pack.json",
+                new Blob([JSON.stringify(pack,null,2)],{type:"application/json"}));
+              downloadFile("motion-"+project.brand+"-voice-cues.txt",
+                new Blob([pack.shots.map(shot=>
+                  "["+timeLabel(shot.start)+" - "+timeLabel(shot.end)+"] SHOT "+shot.shot+": "+shot.narration
+                ).join("\n\n")],{type:"text/plain;charset=utf-8"}));
+              setNotice("Production pack exported: precise shot timings, creative cues, narration text and timing warnings. No voice generated.");
+            }}>DIRECTOR PACK ↓</button>
             <button onClick={()=>{
               const c=createCaptionBundle(project);
               downloadFile(project.brand+"-"+c.language+".srt",new Blob([c.srt],{type:"text/plain;charset=utf-8"}));

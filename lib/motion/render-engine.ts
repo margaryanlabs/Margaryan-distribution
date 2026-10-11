@@ -234,6 +234,21 @@ function renderText(
   ctx.restore();
 }
 
+/** Camera envelope only affects scenery; typography and approved logos stay screen-stable. */
+function applyDirectedCamera(ctx:CanvasRenderingContext2D, scene:MotionScene, progress:number, W:number, H:number) {
+  const intensity = Math.max(0, Math.min(1, scene.intensity ?? .5));
+  const eased = smooth(progress);
+  const motion = scene.camera || "inherit";
+  if(motion==="inherit"||motion==="locked"||intensity<=0)return;
+  const shift = W*.03*intensity;
+  const magnify = .10*intensity;
+  ctx.translate(W/2,H/2);
+  if(motion==="push")ctx.scale(1+magnify*eased,1+magnify*eased);
+  if(motion==="pull")ctx.scale(1+magnify*(1-eased),1+magnify*(1-eased));
+  if(motion==="drift")ctx.translate(shift*(eased-.5),shift*.35*Math.sin(progress*Math.PI));
+  ctx.translate(-W/2,-H/2);
+}
+
 function drawShot(ctx: CanvasRenderingContext2D, project: MotionProject, index: number, localTime: number, absoluteTime: number, W: number, H: number, alpha: number) {
   const scene = project.scenes[index];
   const accent = BRAND_INFO[project.brand].accent;
@@ -244,7 +259,7 @@ function drawShot(ctx: CanvasRenderingContext2D, project: MotionProject, index: 
   // A shot has its own optical staging, hero moment and tempo.
   // Product interfaces are deliberately selective rather than repeated behind
   // every headline, which made the previous film resemble a slide carousel.
-  withSceneCamera(ctx,W,H,progress,index,()=>{
+  const renderScenery=()=>{
     if(scene.kind==="opener"||scene.kind==="network"||scene.kind==="orbit"){
       drawWorldRig(ctx,W,H,absoluteTime,accent,index,
         scene.kind==="opener"?"floor":scene.kind==="orbit"?"portal":"signal");
@@ -262,6 +277,13 @@ function drawShot(ctx: CanvasRenderingContext2D, project: MotionProject, index: 
       }
       if (scene.kind === "screen") drawProductScreen(ctx,project.brand,W,H,absoluteTime,progress,accent);
     }
+  };
+  if(scene.camera==="locked")renderScenery();
+  else withSceneCamera(ctx,W,H,progress,index,()=>{
+    ctx.save();
+    applyDirectedCamera(ctx,scene,progress,W,H);
+    renderScenery();
+    ctx.restore();
   });
   // Text is outside the camera transform: never sacrifice glyph readability.
   renderText(ctx, scene, W, H, progress, accent, absoluteTime, project.style, project.language);
@@ -299,16 +321,18 @@ export function drawMotionFrame(ctx: CanvasRenderingContext2D, project: MotionPr
   ctx.setTransform(width / W, 0, 0, height / H, 0, 0);
   drawShot(ctx, project, index, local, t, W, H, 1);
   const transition = Math.min(.6, scene.seconds * .18);
-  if (local > scene.seconds - transition && index < project.scenes.length - 1) {
+  if (scene.transition!=="cut" && local > scene.seconds - transition && index < project.scenes.length - 1) {
     const amount = smooth((local - (scene.seconds - transition)) / transition);
+    const method=scene.transition && scene.transition!=="auto"
+      ? scene.transition : index%3===1?"wipe":index%3===2?"slash":"dissolve";
     // Alternating editorial transition grammar: soft cross-dissolve / directional
     // vertical wipe / diagonal iris. The source shot remains fully drawn below.
     ctx.save();
-    if (index % 3 === 1) {
+    if (method === "wipe") {
       const top = H * (1 - amount);
       ctx.beginPath();ctx.rect(0, top, W, H - top);ctx.clip();
       drawShot(ctx, project, index + 1, Math.max(.05, amount * transition), t, W, H, 1);
-    } else if (index % 3 === 2) {
+    } else if (method === "slash") {
       const span = W * 1.7;
       ctx.beginPath();ctx.moveTo(-W + amount * span,0);
       ctx.lineTo(amount * span,0);

@@ -1,6 +1,8 @@
 export type MotionBrand = "veto" | "promptence" | "raios" | "labs" | "ingu" | "meqena" | "suren" | "veto_private" | "veto_sport" | "armat" | "tun" | "hay_engine" | "reality_engine";
 export type MotionFormat = "portrait" | "square" | "landscape";
 export type MotionSceneKind = "opener" | "statement" | "network" | "closer" | "kinetic" | "orbit" | "screen";
+export type MotionCameraCue = "inherit" | "locked" | "push" | "pull" | "drift";
+export type MotionTransitionCue = "auto" | "dissolve" | "wipe" | "slash" | "cut";
 
 export interface MotionScene {
   id: string;
@@ -11,6 +13,12 @@ export interface MotionScene {
   seconds: number;
   /** Measured font-size multiplier, 0.72–1, never removes words. */
   typographyScale?: number;
+  /** Optional operator direction. No external AI, assets or render dependencies. */
+  camera?: MotionCameraCue;
+  transition?: MotionTransitionCue;
+  intensity?: number;
+  /** Editorial narration cue, not automatically generated or spoken. */
+  voiceCue?: string;
 }
 export interface MotionProject {
   version: 1;
@@ -200,7 +208,11 @@ export function sanitizeMotionProject(input: unknown): MotionProject {
       headline: clean(s.headline, 105) || "YOUR NEXT IDEA",
       support: clean(s.support, 180),
       seconds: Math.max(2, Math.min(8, Number.isFinite(seconds) ? seconds : 4)),
-      typographyScale: Math.max(.72, Math.min(1, Number.isFinite(Number(s.typographyScale)) && s.typographyScale !== undefined ? Number(s.typographyScale) : 1))
+      typographyScale: Math.max(.72, Math.min(1, Number.isFinite(Number(s.typographyScale)) && s.typographyScale !== undefined ? Number(s.typographyScale) : 1)),
+      camera: ["inherit","locked","push","pull","drift"].includes(String(s.camera)) ? s.camera as MotionCameraCue : "inherit",
+      transition: ["auto","dissolve","wipe","slash","cut"].includes(String(s.transition)) ? s.transition as MotionTransitionCue : "auto",
+      intensity: Math.max(0, Math.min(1, Number.isFinite(Number(s.intensity)) && s.intensity !== undefined ? Number(s.intensity) : .5)),
+      voiceCue: clean(s.voiceCue, 300)
     };
   });
   const style = ["cinematic", "kinetic", "technical"].includes(String(obj.style)) ? obj.style as MotionProject["style"] : "cinematic";

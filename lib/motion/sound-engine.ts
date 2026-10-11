@@ -11,7 +11,7 @@ export interface ProceduralAudioSession {
 const NOTES = [55, 65.41, 73.42, 82.41, 98.00, 110, 130.81];
 export async function createProceduralSoundtrack(
   project: MotionProject,
-  options: { voiceover?: File | null; synth?: boolean } = {}
+  options: { voiceover?: File | null; music?: File | null; synth?: boolean; musicGain?: number; narrationGain?: number } = {}
 ): Promise<ProceduralAudioSession> {
   if (typeof AudioContext === "undefined") throw new Error("Web Audio not supported.");
   const context = new AudioContext({ sampleRate: 44_100 });
@@ -38,9 +38,31 @@ export async function createProceduralSoundtrack(
       const voice = context.createBufferSource();
       voice.buffer = decoded;
       const voiceGain = context.createGain();
-      voiceGain.gain.setValueAtTime(0.82, context.currentTime);
+      voiceGain.gain.setValueAtTime(Math.max(0,Math.min(1.5,options.narrationGain ?? .82)), context.currentTime);
       voice.connect(voiceGain); voiceGain.connect(compressor);
       voice.start(start);
+    }
+    if(options.music) {
+      if(options.music.size>30_000_000)throw new Error("Licensed music must be under 30 MB");
+      if(!options.music.type.startsWith("audio/"))throw new Error("Music file must be an audio recording");
+      const recording=await context.decodeAudioData(await options.music.arrayBuffer());
+      if(recording.duration<.1)throw new Error("Music file has no usable sound.");
+      const source=context.createBufferSource();
+      source.buffer=recording;
+      source.loop=recording.duration<length;
+      const musicGain=context.createGain();
+      // Conservative narration side-chain: music never competes with spoken words.
+      const requested=Math.max(0,Math.min(1,options.musicGain ?? .5));
+      const level=requested*(options.voiceover?.11:.32);
+      musicGain.gain.setValueAtTime(0,context.currentTime);
+      musicGain.gain.setValueAtTime(0,start);
+      musicGain.gain.linearRampToValueAtTime(level,start+.22);
+      musicGain.gain.setValueAtTime(level,Math.max(start+.22,start+length-.5));
+      musicGain.gain.linearRampToValueAtTime(0,start+length);
+      source.connect(musicGain);
+      musicGain.connect(compressor);
+      source.start(start);
+      source.stop(start+length);
     }
     function oscillator(note: number, wave: OscillatorType, t: number, seconds: number, volume: number, slide = 0) {
       const node = context.createOscillator();
