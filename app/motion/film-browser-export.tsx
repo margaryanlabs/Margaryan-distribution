@@ -8,7 +8,7 @@ import {planBrowserFeature,type BrowserSegment} from "@/lib/motion/film-browser-
 import {prepareFilmAudio,validateSoundSource,type FilmBrowserAudio} from "@/lib/motion/film-audio-mix";
 import styles from "./film-browser-export.module.css";
 
-type Phase="idle"|"playing"|"recording"|"finishing";
+type Phase="idle"|"preparing"|"playing"|"recording"|"finishing";
 const FPS=24;
 // A 300-second 720p film at 2.2Mbps stays below the 120MB safety cap on most
 // browser encoders; actual device encoder bitrate is not guaranteed.
@@ -36,6 +36,7 @@ export default function FilmBrowserExport({chapters,busy,dirty}:{
   const stream=useRef<MediaStream|null>(null);
   const audio=useRef<FilmBrowserAudio|null>(null);
   const aborted=useRef(false);
+  const startLock=useRef(false);
   const pieces=useRef<Blob[]>([]);
   const lastUI=useRef(0);
   const [phase,setPhase]=useState<Phase>("idle");
@@ -75,7 +76,7 @@ export default function FilmBrowserExport({chapters,busy,dirty}:{
 
   function halt(reason?:string){
     if(raf.current!==null){cancelAnimationFrame(raf.current);raf.current=null;}
-    aborted.current=true;
+    aborted.current=true;startLock.current=false;
     if(recorder.current?.state==="recording")recorder.current.stop();
     else {stream.current?.getTracks().forEach(track=>track.stop());stream.current=null;}
     const stopAudio=audio.current;audio.current=null;
@@ -87,7 +88,7 @@ export default function FilmBrowserExport({chapters,busy,dirty}:{
   haltRef.current=halt;
   const previousChapters=useRef(chapters);
   useEffect(()=>{
-    if(previousChapters.current!==chapters&&raf.current!==null)
+    if(previousChapters.current!==chapters&&(raf.current!==null||startLock.current))
       haltRef.current("Saved chapters changed. Recording cancelled; start a fresh export after reviewing edits.");
     previousChapters.current=chapters;
   },[chapters]);
@@ -103,7 +104,7 @@ export default function FilmBrowserExport({chapters,busy,dirty}:{
   // Real-time browser capture requires foreground animation frames.
   useEffect(()=>{
     const listener=()=>{
-      if(document.visibilityState!=="visible"&&raf.current!==null)
+      if(document.visibilityState!=="visible"&&(raf.current!==null||startLock.current))
         haltRef.current("Export/preview interrupted: keep this tab visible while capturing video.");
     };
     document.addEventListener("visibilitychange",listener);
@@ -111,12 +112,15 @@ export default function FilmBrowserExport({chapters,busy,dirty}:{
   },[]);
 
   async function start(record:boolean){
-    if(!canStart||!bounds.ok||!canvas.current)return;
+    if(startLock.current||!canStart||!bounds.ok||!canvas.current)return;
     if(record&&!("captureStream" in canvas.current)){
       setMessage("Canvas stream recording is unsupported on this browser.");return;
     }
     const chosen=record?mime(hasAudio):"";
     if(record&&!chosen){setMessage("No supported MP4/WebM recorder on this device. Try offline Master.");return;}
+    startLock.current=true;
+    setPhase("preparing");
+    setMessage("PREPARING / decoding local audio and original film graphics…");
     try{
       aborted.current=false;
       pieces.current=[];
@@ -147,7 +151,7 @@ export default function FilmBrowserExport({chapters,busy,dirty}:{
           const blob=new Blob(data,{type:chosen});
           if(blob.size<1000||blob.size>120_000_000){
             setMessage("Browser film was empty or above 120MB. Export with the workstation Master.");
-            setPhase("idle");return;
+            setPhase("idle");startLock.current=false;return;
           }
           const name="motion-film-visual-workprint-"+Math.round(length)+"s."+type;
           const url=URL.createObjectURL(blob);
@@ -159,7 +163,7 @@ export default function FilmBrowserExport({chapters,busy,dirty}:{
           setMessage("FULL-FILM BROWSER WORKPRINT DOWNLOADED. "+type.toUpperCase()+
             (mixed?" / includes your approved local audio":" / silent visuals only")+
             ". Inspect video, runtime, licensed audio and synchronization before publishing.");
-          setPhase("idle");
+          setPhase("idle");startLock.current=false;
         };
         video.start(1000);
         await mixed?.start();
@@ -184,7 +188,7 @@ export default function FilmBrowserExport({chapters,busy,dirty}:{
           if(record&&videoRecorderIsRunning(recorder.current)){
             setPhase("finishing");recorder.current?.stop();
           }else{
-            setPhase("idle");
+            setPhase("idle");startLock.current=false;
             const finishedAudio=audio.current;audio.current=null;
             if(finishedAudio)void finishedAudio.close();
           }
