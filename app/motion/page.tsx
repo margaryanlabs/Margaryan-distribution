@@ -814,7 +814,8 @@ export default function MotionStudioPage() {
   if(launcherOpen)return <MotionStart initialBrand={project.brand}
     currentTitle={project.title} hasSavedDraft={hasSavedFilm}
     busy={exporting||generating||directorRepairing}
-    onStart={startSelectedFilm} onResume={closeFilmLauncher}/>;
+    onStart={startSelectedFilm} onResume={closeFilmLauncher}
+    onSaveCurrent={saveJson}/>;
   if(mode==="quick")return <main className={styles.root} style={{"--brand-accent":info.accent} as CSSProperties}>
     <header className={styles.header}>
       <div>
