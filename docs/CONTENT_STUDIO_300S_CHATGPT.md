@@ -36,6 +36,33 @@ scene copy is concise. The first-party inline widget now supports up
 to five chapters and 300 seconds, but individual act preview is not
 a complete multi-act export.
 
+## Inline ChatGPT full-film beta (11 October)
+
+The first-party MCP Apps widget now provides **one continuous Canvas film**
+throughout all 2–5 chapters, not a separate recording of just the first act.
+Chapter buttons scrub that same timeline, while **PLAY** and
+**EXPORT WHOLE FILM** run across the complete project (up to 300 seconds).
+No OpenAI video API is involved. The downloaded workprint is **silent**;
+add user-approved human narration, licensed music, overlays and original
+source footage in the separate Motion Studio editor for the master cut.
+
+The embedded player explicitly rejects arbitrary scene URLs, private media
+IDs, picture-in-picture files and unsupported GPU/spatial shots; it stops
+recording if its host is hidden and discards incomplete media when canceled.
+The user must keep the ChatGPT app visible for real-time MediaRecorder export.
+If the output is larger than the host's 25 MB file-transfer limit, the local
+video download is retained; optional SAVE TO CHATGPT may be unavailable.
+
+**QA:** A runnable `scripts/motion/e2e-inline-video.mjs` and focused GitHub
+workflow `motion-inline-e2e.yml` exercise actual Chromium capture of five
+different acts, download one video file, and independently inspect its
+stream, dimensions, duration and actual packet timestamps via FFprobe.
+This is a stronger acceptance requirement than a Vercel READY build, but
+**the actual full-film encoded-output test must PASS before production
+release**. The existing fast regression test executes the real widget's
+JavaScript in a mocked DOM and verifies that five chapters are forwarded
+together and chapter switches seek instead of replacing the film.
+
 The generic `labs` brand is intended for unsigned/custom projects
 pending verified customer assets. Promptence is just one preset.
 
