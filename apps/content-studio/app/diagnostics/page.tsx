@@ -49,10 +49,26 @@ async function run():Promise<Check[]> {
     checks.push(card("MCP APPS RESOURCE DISCOVERY",true,uri,r.milliseconds));
     try {
       const q=await call("resources/read",{uri},24);
-      const first=(q.result.contents as Array<{mimeType:string;text:string}>)[0];
+      const first=(q.result.contents as Array<{
+        mimeType:string;text:string;
+        _meta?:{
+          ui?:{domain?:string;csp?:{frameDomains?:string[]}};
+          "openai/widgetCSP"?:{redirect_domains?:string[]}
+        }
+      }>)[0];
       if(first.mimeType!=="text/html;profile=mcp-app"||!first.text.includes("ui/initialize")||!first.text.includes("/motion/chat-preview"))
         throw Error("Malformed HTML player");
       checks.push(card("MCP APPS PLAYER FETCH",true,first.text.length+" HTML characters",q.milliseconds));
+      const configuredOrigin="https://studio.promptence.tech";
+      const policy=first._meta;
+      const frameAllowed=policy?.ui?.csp?.frameDomains?.includes(configuredOrigin);
+      const editorAllowed=policy?.["openai/widgetCSP"]?.redirect_domains?.includes(configuredOrigin);
+      const hostHandler=first.text.includes('window.openai.openExternal({href,redirectUrl:false})');
+      const isolated=policy?.ui?.domain===configuredOrigin;
+      const navOk=Boolean(frameAllowed&&editorAllowed&&hostHandler&&isolated);
+      checks.push(card("WIDGET EXTERNAL NAVIGATION",navOk,navOk
+        ?"Owned domain, nested Canvas frame and approved ChatGPT openExternal editor navigation."
+        :"Missing dedicated origin, CSP frame domain or host-approved editor redirect.",0));
     }catch(e){checks.push(card("MCP APPS PLAYER FETCH",false,String(e),0));}
   }catch(e){checks.push(card("MCP APPS RESOURCE DISCOVERY",false,String(e),0));}
   try {
@@ -113,7 +129,7 @@ async function run():Promise<Check[]> {
 export default async function DiagnosticsPage(){
   const checks=await run();
   const good=checks.filter(x=>x.ok).length;
-  const full=checks.length===8&&good===8;
+  const full=checks.length===9&&good===9;
   return <main style={{background:"#090c10",color:"#eaf0f8",minHeight:"100vh",fontFamily:"system-ui,sans-serif",padding:"clamp(25px,7vw,85px) 24px"}}>
   <div style={{maxWidth:890,margin:"auto"}}>
   <Link href="/connect" style={{color:"#98abc5",textDecoration:"none",letterSpacing:".12em",fontSize:12,fontWeight:700}}>← CONTENT STUDIO / CONNECT</Link>
