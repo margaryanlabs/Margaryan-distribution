@@ -792,6 +792,13 @@ export default function MotionStudioPage() {
           <small>ALT + {["create","media","scene","sound","look","review","deliver"].indexOf(editorPanel)+1}</small>
         </div>
         <div className={styles.inspectorScroll}>
+        {editorPanel==="deliver"&&<div className={styles.deliverIntro}>
+          <strong>Ready for the final cut?</strong>
+          <p>Export your video from the delivery tray under the preview.
+            Run quality checks before using footage or music in a commercial.</p>
+          <div><span>{qa.blockers===0?"✓":"!"} Structure {qa.blockers===0?"ready":qa.blockers+" blockers"}</span>
+          <span>{project.scenes.length} shots / {timeLabel(total)}</span></div>
+        </div>}
         <div className={styles.panelSection} hidden={editorPanel!=="media"}>
         <OperatorDesk project={project} selectedIndex={selectedIndex}
           voiceFile={voiceover} musicFile={licensedMusic}
@@ -1070,6 +1077,20 @@ export default function MotionStudioPage() {
         </div>
         <div className={styles.panelSection} hidden={editorPanel!=="scene"}>
         <div className={styles.sectionHeader}><span>03 / SCENE INSPECTOR</span><strong>{String(selectedIndex + 1).padStart(2, "0")}</strong></div>
+        <div className={styles.quickSceneEdit}>
+          <label className={styles.field}><span>HEADLINE</span>
+            <textarea rows={2} value={selected.headline} maxLength={105}
+              onChange={event=>editScene("headline",event.target.value)}/>
+          </label>
+          <label className={styles.field}><span>SECOND LINE</span>
+            <textarea rows={2} value={selected.support} maxLength={180}
+              onChange={event=>editScene("support",event.target.value)}/>
+          </label>
+          <label className={styles.field}><span>SCENE DURATION · {selected.seconds.toFixed(1)} SEC</span>
+            <input type="range" min="2" max="8" step=".5"
+              value={selected.seconds} onChange={event=>editScene("seconds",Number(event.target.value))}/>
+          </label>
+        </div>
         <label className={styles.field}><span>VISUAL COMPOSITION</span>
           <select value={selected.kind} onChange={event => updateProject({...project,
             scenes:project.scenes.map((scene,i)=>i===selectedIndex
@@ -1238,11 +1259,7 @@ export default function MotionStudioPage() {
           <small>PNG / JPEG / WebP · max 12MB. A real capture only — not fabricated dashboard statistics. For reproducible offline MP4, add --screen screenshot.png.</small>
         </label>
         <label className={styles.field}><span>EYEBROW</span><input value={selected.eyebrow} maxLength={65} onChange={event => editScene("eyebrow", event.target.value)}/></label>
-        <label className={styles.field}><span>HEADLINE</span><textarea rows={2} value={selected.headline} maxLength={105} onChange={event => editScene("headline", event.target.value)}/></label>
-        <label className={styles.field}><span>SUPPORT LINE</span><textarea rows={2} value={selected.support} maxLength={180} onChange={event => editScene("support", event.target.value)}/></label>
-        <label className={styles.field}><span>DURATION · {selected.seconds.toFixed(1)} SEC</span>
-          <input type="range" min="2" max="8" step=".5" value={selected.seconds} onChange={event => editScene("seconds", Number(event.target.value))}/>
-        </label>
+        <p className={styles.editorTip}>Primary scene copy and duration are above. The controls below are for advanced camera and compositing.</p>
         <div className={styles.inlineActions}>
           <button onClick={addScene} disabled={project.scenes.length >= 8}>+ Add scene</button>
           <button onClick={removeScene} disabled={project.scenes.length <= 1}>Remove</button>
@@ -1257,8 +1274,14 @@ export default function MotionStudioPage() {
       </section>
 
       <section className={styles.stageSection} id="motion-editor" aria-label="Motion canvas and timeline">
-        <div className={styles.stageTop}><div><span>LIVE CANVAS</span><strong>{info.name}</strong></div>
-          <div><i/> {needsSpatial&&spatialStatus()==="ready"?"2D + WEBGL · THREE.JS / GSAP":"KEYLESS PROCEDURAL ENGINE"}</div></div>
+        <div className={styles.stageTop}>
+          <div><span>MONITOR / LIVE CANVAS</span><strong>{info.name}</strong></div>
+          <div className={styles.stageTopTools}>
+            <span className={styles.frameBadge}>{project.format==="portrait"?"9:16":project.format==="landscape"?"16:9":"1:1"}</span>
+            <span className={styles.frameBadge}>{qa.blockers?qa.blockers+" QA BLOCKERS":"STRUCTURE READY"}</span>
+            <button type="button" onClick={()=>setEditorPanel("deliver")}>EXPORT ↗</button>
+          </div>
+        </div>
         <div className={styles.stageShell}>
           <canvas ref={previewRef} className={styles.canvas} width={previewWidth} height={previewHeight}
             style={{ aspectRatio: String(formatSize.width) + " / " + String(formatSize.height) }}
@@ -1270,6 +1293,19 @@ export default function MotionStudioPage() {
           <input type="range" min="0" max={total} step=".05" value={playhead} aria-label="Scrub animation timeline" onChange={event => { setPlaying(false); jump(Number(event.target.value)); }}/>
           <span>{timeLabel(total)}</span>
         </div>
+        <div className={styles.sectionHeader}><span>04 / FRAME SEQUENCE</span><strong>{project.scenes.length} SHOTS</strong></div>
+        <div className={styles.timeline}>
+          {project.scenes.map((scene, index) => <button key={scene.id} type="button"
+            className={(index === selectedIndex ? styles.selectedShot + " " : "") + (index === activeIndex ? styles.currentShot : "")}
+            onClick={() => selectScene(index)}>
+            <span className={styles.shotNumber}>SHOT {String(index + 1).padStart(2, "0")} <i>{scene.seconds}s</i></span>
+            <strong>{scene.headline}</strong>
+            <small>{scene.kind}</small>
+          </button>)}
+        </div>
+        <details className={styles.advancedTimeline}>
+          <summary><span>◫ MULTITRACK & PRECISION CUT</span>
+            <small>Advanced / audio trim · split · reorder · undo</small></summary>
         <MultitrackEditor project={project} playhead={playhead} selectedIndex={selectedIndex}
           voice={voiceover} voiceSeconds={narrationSeconds}
           music={licensedMusic} musicSeconds={musicSeconds} playing={playing}
@@ -1289,17 +1325,8 @@ export default function MotionStudioPage() {
             setNotice(description+" Original video remains local. Check the next transition and export preflight.");
           }}
         />
-        <div className={styles.sectionHeader}><span>04 / FRAME SEQUENCE</span><strong>{project.scenes.length} SHOTS</strong></div>
-        <div className={styles.timeline}>
-          {project.scenes.map((scene, index) => <button key={scene.id} type="button"
-            className={(index === selectedIndex ? styles.selectedShot + " " : "") + (index === activeIndex ? styles.currentShot : "")}
-            onClick={() => selectScene(index)}>
-            <span className={styles.shotNumber}>SHOT {String(index + 1).padStart(2, "0")} <i>{scene.seconds}s</i></span>
-            <strong>{scene.headline}</strong>
-            <small>{scene.kind}</small>
-          </button>)}
-        </div>
-        <div className={styles.bottom}>
+        </details>
+        <div className={styles.bottom} hidden={editorPanel!=="deliver"}>
           <div><b>MAKE SOMETHING THAT MOVES PEOPLE.</b><p>Every frame is deterministic, locally editable and exported only on command.</p></div>
           <div className={styles.exportActions} id="motion-export">
             <label className={styles.importLabel}>Import JSON<input type="file" accept=".json,application/json" onChange={event => { void importJson(event.target.files?.[0]); event.currentTarget.value = ""; }}/></label>
@@ -1334,7 +1361,7 @@ export default function MotionStudioPage() {
             </button>
           </div>
         </div>
-        <p className={styles.footnote}>Spatial shots use actual WebGL geometry via Three.js and deterministic GSAP easing only when selected; rendering requires WebGL support. Local cinema staging and original MP4 soundtracks run without paid video APIs. Product screenshots are local-only and never stored in saved JSON. Source-verified marks are original SVGs; private GitHub sources are never exposed here. Browser EXPORT may produce WebM depending on support. For deterministic professional H.264/AAC MP4, use the offline <code>npm run motion:master</code> workflow in the repository; it needs a local computer with FFmpeg/Chromium. QA checks structure and sampled frames but cannot certify taste, factual claims or music licenses. Final creative review is still required.</p>
+        <p className={styles.footnote} hidden={editorPanel!=="deliver"}>Spatial shots use actual WebGL geometry via Three.js and deterministic GSAP easing only when selected; rendering requires WebGL support. Local cinema staging and original MP4 soundtracks run without paid video APIs. Product screenshots are local-only and never stored in saved JSON. Source-verified marks are original SVGs; private GitHub sources are never exposed here. Browser EXPORT may produce WebM depending on support. For deterministic professional H.264/AAC MP4, use the offline <code>npm run motion:master</code> workflow in the repository; it needs a local computer with FFmpeg/Chromium. QA checks structure and sampled frames but cannot certify taste, factual claims or music licenses. Final creative review is still required.</p>
       </section>
     </div>}
   </main>;
