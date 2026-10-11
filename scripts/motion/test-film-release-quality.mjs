@@ -7,7 +7,7 @@ import {criticalDirectorNotes,assertDirectorRelease,
   assertApprovedSourceManifest} from "./release-quality-gates.mjs";
 
 assert.equal(PROMPTENCE_SECTIONS.length,6);
-assert.equal(new Set(PROMPTENCE_SECTIONS.map(x=>x.assetId)).size,5);
+assert.equal(new Set(PROMPTENCE_SECTIONS.map(x=>x.assetId)).size,6);
 const goodFrame={overlayVisible:false,headingVisible:true,headingWidth:350,viewportWidth:540,pageTitle:"Promptence"};
 assert.equal(assertReadableFrame(goodFrame),true);
 assert.throws(()=>assertReadableFrame({...goodFrame,overlayVisible:true}),/onboarding/);
