@@ -9,7 +9,7 @@ import {
   type MotionProject
 } from "@/lib/motion/studio";
 
-type PreviewPacket = { kind: "margaryan-motion-preview-v1"; project: unknown };
+type PreviewPacket = { kind: "margaryan-motion-preview-v1"; project: unknown; seekToSeconds?:unknown };
 const isPacket = (input: unknown): input is PreviewPacket =>
   Boolean(input) && typeof input === "object" &&
   (input as PreviewPacket).kind === "margaryan-motion-preview-v1";
@@ -32,6 +32,7 @@ const download = (blob: Blob, filename: string) => {
 
 export default function ChatMotionPreviewPage() {
   const [project, setProject] = useState<MotionProject>(() => makeMotionPreset("labs"));
+  const projectRef=useRef(project);
   const [received, setReceived] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -108,7 +109,19 @@ export default function ChatMotionPreviewPage() {
     const listener = (e: MessageEvent<unknown>) => {
       // ChatGPT widget is our *direct* parent. Do not listen to arbitrary
       // adjacent frames, URLs or document messages.
-      if (e.source !== window.parent || !isPacket(e.data)) return;
+      if (e.source !== window.parent) return;
+      const incoming=e.data as {kind?:unknown;time?:unknown} | null;
+      if (incoming?.kind==="margaryan-motion-seek-v1") {
+        if(exportingRef.current || recordingRef.current)return;
+        const seconds=Number(incoming.time);
+        if(!Number.isFinite(seconds))return;
+        const t=Math.max(0,Math.min(durationOf(projectRef.current),seconds));
+        playbackRef.current=t;
+        setPlaying(false);
+        setSeek(t);
+        return;
+      }
+      if (!isPacket(e.data)) return;
       try {
         if(exportingRef.current)throw Error("Export in progress — finish it before replacing the film");
         const raw = e.data.project;
@@ -131,10 +144,14 @@ export default function ChatMotionPreviewPage() {
           setNarrationFile(null);setMusicFile(null);
         }
         projectIdentityRef.current=safe.title+"|"+safe.brand+"|"+String(safe.clientBrand?.name||"");
+        projectRef.current=safe;
         lastExportRef.current = null;
         setExportReady(false);
-        setPlaying(false); playbackRef.current = 0;
-        setSeek(0); setProject(safe); setReceived(true);
+        const requested=Number(e.data.seekToSeconds);
+        const initial=Number.isFinite(requested)?
+          Math.max(0,Math.min(durationOf(safe),requested)):0;
+        setPlaying(false); playbackRef.current=initial;
+        setSeek(initial); setProject(safe); setReceived(true);
         setNotice("Ready to preview / browser graphics only");
       } catch (err) {
         setNotice("Rejected untrusted film: " + (err instanceof Error ? err.message : String(err)));
@@ -205,7 +222,13 @@ export default function ChatMotionPreviewPage() {
     setLogoName(null);setLogoVersion(v=>v+1);
     setExportReady(false);lastExportRef.current=null;
   }
-  useEffect(() => {render(playbackRef.current);},[render,fullHD]);
+  // The host's clickable storyboard uses a seek notification instead of
+  // rebuilding a film. Draw it with the CURRENT React project, never the
+  // stale initial render closure retained by the postMessage listener.
+  useEffect(()=>{projectRef.current=project;},[project]);
+  useEffect(() => {
+    if(!playing && !recording) render(playbackRef.current);
+  },[seek,render,fullHD,playing,recording]);
 
   useEffect(() => {
     render(playbackRef.current);
