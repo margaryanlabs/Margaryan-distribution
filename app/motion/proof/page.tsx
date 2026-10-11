@@ -2,7 +2,7 @@
 
 import {useCallback,useEffect,useRef,useState} from "react";
 import {drawProofFrame,PROOF_SECONDS,type ProofMedia} from "@/lib/motion/proof-film";
-import {PROOF_DEFAULT_EDL,sanitizeProofEDL,proofSourceTime,type ProofEditDecision} from "@/lib/motion/proof-edl";
+import {PROOF_DEFAULT_EDL,sanitizeProofEDL,proofSourceTime,reviewProofEDL,proofEDLFile,parseProofEDLFile,type ProofEditDecision} from "@/lib/motion/proof-edl";
 import {getLoadedMotionLogo,preloadMotionLogo} from "@/lib/motion/brand-assets";
 import {createProofAudioSession,inspectProofAudio} from "@/lib/motion/proof-audio";
 import styles from "./proof.module.css";
@@ -12,6 +12,7 @@ type ProofBridge = Window & {
   __motionProofReady?: boolean;
   __motionProofSource?: "image" | "video";
   __motionProofConfigure?: (changes:Partial<ProofEditDecision>)=>ProofEditDecision;
+  __motionProofReview?: ()=>ReturnType<typeof reviewProofEDL>;
 };
 const IMAGE_TYPES=new Set(["image/png","image/jpeg","image/webp"]);
 const VIDEO_TYPES=new Set(["video/mp4","video/webm"]);
@@ -141,6 +142,7 @@ export default function ProofDirectorPage(){
     host.__motionProofReady=Boolean(source);
     host.__motionProofSource=source instanceof HTMLVideoElement?"video":"image";
     host.__motionProofConfigure=(changes)=>changeEDL(changes);
+    host.__motionProofReview=()=>reviewProofEDL(sourceRef.current instanceof HTMLVideoElement?sourceRef.current.duration:8,editRef.current);
     host.__motionProofFrame=async time=>{
       const src=sourceRef.current;
       if(!src)throw new Error("SOURCE GATE: approved screenshot missing");
@@ -151,7 +153,7 @@ export default function ProofDirectorPage(){
       drawProofFrame(ctx,src,logoRef.current,time,1080,1920,editRef.current);
       return frame.toDataURL("image/png").split(",")[1];
     };
-    return()=>{delete host.__motionProofFrame;delete host.__motionProofReady;delete host.__motionProofSource;delete host.__motionProofConfigure;};
+    return()=>{delete host.__motionProofFrame;delete host.__motionProofReady;delete host.__motionProofSource;delete host.__motionProofConfigure;delete host.__motionProofReview;};
   },[source]);
   useEffect(()=>{
     if(!playing||!source)return;
@@ -230,6 +232,26 @@ export default function ProofDirectorPage(){
     const src=sourceRef.current;
     if(src)void seekSourceFrame(src,t,showRaw,editRef.current).then(()=>paint(t)).catch(err=>setNotice(String(err)));
   }
+  function saveFilmEDL(){
+    const payload=JSON.stringify(proofEDLFile(editRef.current),null,2)+"\n";
+    const url=URL.createObjectURL(new Blob([payload],{type:"application/json"}));
+    const anchor=document.createElement("a");
+    anchor.href=url;anchor.download="promptence-proof-10s-director.motion.json";
+    document.body.appendChild(anchor);anchor.click();anchor.remove();
+    window.setTimeout(()=>URL.revokeObjectURL(url),30_000);
+    setNotice("Film edit decisions exported. Attach the same video recording to the offline master. The JSON contains no source media, accounts or private data.");
+  }
+  async function loadFilmEDL(e:React.ChangeEvent<HTMLInputElement>){
+    const file=e.target.files?.[0];
+    if(!file)return;
+    try{
+      if(file.size>10_000)throw Error("EDL file cannot exceed 10 KB");
+      const parsed=parseProofEDLFile(JSON.parse(await file.text()));
+      changeEDL(parsed);
+      setNotice("Source edit decisions restored. Review both real takes before exporting.");
+    }catch(error){setNotice("EDL rejected: "+(error instanceof Error?error.message:String(error)));}
+    e.target.value="";
+  }
   async function exportContactSheet(){
     const source=sourceRef.current;
     if(!source||exportingRef.current)return;
@@ -274,6 +296,11 @@ export default function ProofDirectorPage(){
   }
   async function exportPreview(){
     if(!sourceRef.current||exportingRef.current)return;
+    const input=sourceRef.current;
+    if(input instanceof HTMLVideoElement){
+      const result=reviewProofEDL(input.duration,editRef.current);
+      if(!result.pass){setNotice("SOURCE FOOTAGE GATE: "+result.problems.join(" "));return;}
+    }
     const temp=makeCanvas(540,960);
     const ctx=temp.getContext("2d",{alpha:false});
     if(!ctx){setNotice("Review canvas unavailable");return;}
@@ -414,6 +441,18 @@ export default function ProofDirectorPage(){
             <button type="button" onClick={()=>seek(Math.min(7.2,edit.cutAt+.35))} disabled={!source||exporting}>VIEW TAKE 02</button>
             <button type="button" onClick={()=>changeEDL(PROOF_DEFAULT_EDL)} disabled={!source||exporting}>RESET</button>
           </div>
+          <div className={styles.edlActions}>
+            <button type="button" onClick={saveFilmEDL} disabled={!source||exporting}>DOWNLOAD EDIT PROJECT ↓</button>
+            <label className={styles.edlImport}>LOAD SAVED EDIT PROJECT
+              <input type="file" accept=".json,application/json" disabled={!source||exporting} onChange={e=>void loadFilmEDL(e)}/>
+            </label>
+          </div>
+          {source instanceof HTMLVideoElement&&
+            <div className={reviewProofEDL(sourceDuration,edit).pass?styles.edlPass:styles.edlBlock} role="status">
+              {reviewProofEDL(sourceDuration,edit).pass
+                ?"SOURCE COVERAGE OK / BOTH TAKES HAVE ENOUGH ORIGINAL VIDEO"
+                :"SOURCE BLOCKED / "+reviewProofEDL(sourceDuration,edit).problems.join(" ")}
+            </div>}
           <p className={styles.hint}>For actual edits, import a real MP4/WebM. Still images remain a fallback, not proof of product interaction.</p>
         </div>
         <div className={styles.section}>
