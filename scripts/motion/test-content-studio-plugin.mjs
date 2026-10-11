@@ -93,16 +93,43 @@ assert.equal(manifest.expectedDurationSeconds,120);
 assert.deepEqual(manifest.chapters.map(x=>x.project.scenes.length),[8,8]);
 assert.equal(manifest.chapters[0].project.language,"en");
 assert.equal(manifest.chapters[1].title,"THE RESPONSE");
+const fiveActs={
+  ...featureBrief,
+  brand:"labs",
+  title:"MOTION LABS / ORIGINAL 5 MINUTE FILM",
+  chapter_titles:["HOOK","CONTEXT","DESIGN","MOVEMENT","FINAL"],
+  scenes:Array.from({length:40},(_,i)=>({
+    kind:i===0?"opener":i===39?"closer":"statement",
+    eyebrow:"ACT "+Math.ceil((i+1)/8),
+    headline:"SHOT "+(i+1),
+    support:"Original studio footage and user-approved graphics only.",
+    seconds:7.5
+  }))
+};
+const long=bridge.runContentStudioTool("create_motion_feature_film",fiveActs);
+assert.equal(long.durationSeconds,300);
+assert.equal(long.chapters,5);
+assert.equal(long.scenes,40);
+assert.equal(long.videoFileCreated,false);
+const longLink=long.editorUrl.split("#motion-sequence-v1=")[1];
+assert.ok(longLink.length>100 && longLink.length<=26000);
+const longFilm=JSON.parse(Buffer.from(longLink,"base64url").toString("utf8"));
+assert.equal(longFilm.expectedDurationSeconds,300);
+assert.deepEqual(longFilm.chapters.map(x=>x.project.scenes.length),[8,8,8,8,8]);
+assert.ok(longFilm.chapters.every(x=>x.project.scenes.every(shot=>!shot.mediaId&&!shot.overlayMediaId&&!shot.src)));
+assert.throws(()=>bridge.runContentStudioTool("create_motion_feature_film",{
+  ...fiveActs,scenes:fiveActs.scenes.map(s=>({...s,seconds:8}))
+}),/exceeds 300 seconds/);
 assert.ok(manifest.chapters.every(x=>x.project.scenes.every(y=>!y.mediaId)));
 assert.throws(()=>bridge.runContentStudioTool("create_motion_feature_film",{
   ...featureBrief,scenes:featureBrief.scenes.slice(0,8)
-}),/9–24/);
+}),/9–40/);
 assert.throws(()=>bridge.runContentStudioTool("create_motion_feature_film",{
   ...featureBrief,scenes:Array.from({length:9},(_,i)=>({...featureBrief.scenes[i],seconds:2}))
 }),/exceed 64/);
 assert.throws(()=>bridge.runContentStudioTool("create_motion_feature_film",{
-  ...featureBrief,scenes:featureBrief.scenes.concat(featureBrief.scenes.slice(0,9))
-}),/9–24/);
+  ...featureBrief,scenes:Array.from({length:41},(_,i)=>({...featureBrief.scenes[0],headline:"TAKE "+i}))
+}),/9–40/);
 assert.throws(()=>bridge.runContentStudioTool("create_motion_feature_film",{
   ...featureBrief,scenes:[{...featureBrief.scenes[0],seconds:19},...featureBrief.scenes.slice(1)]
 }),/2–8/);
@@ -142,4 +169,4 @@ assert.equal(blocked.response.status, 403);
 const featureTool=await send({ jsonrpc:"2.0",id:5,method:"tools/call",params:{name:"create_motion_feature_film",arguments:featureBrief} });
 assert.equal(featureTool.json.result.structuredContent.durationSeconds,120);
 assert.ok(featureTool.json.result.structuredContent.editorUrl.includes("#motion-sequence-v1="));
-console.log("Content Studio plugin: JSON-RPC, 3 tools, 120s/16-shot feature, safe handoff, patch guards PASS");
+console.log("Content Studio plugin: 3 tools, 120s+300s five-act films, packed safe link, manual approval, patch guards PASS");
