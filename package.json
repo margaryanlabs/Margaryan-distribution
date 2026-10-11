@@ -42,7 +42,8 @@
     "motion:test-plugin": "node scripts/motion/test-content-studio-plugin.mjs",
     "motion:test-sequence": "node scripts/motion/test-film-sequence.mjs",
     "motion:sequence": "node scripts/motion/render-sequence.mjs",
-    "motion:test-film-browser": "node --experimental-strip-types scripts/motion/test-film-browser-plan.mjs"
+    "motion:test-film-browser": "node --experimental-strip-types scripts/motion/test-film-browser-plan.mjs",
+    "motion:test-soundtrack": "node --experimental-strip-types scripts/motion/test-film-audio-mix.mjs"
   },
   "dependencies": {
     "next": "16.3.3",
