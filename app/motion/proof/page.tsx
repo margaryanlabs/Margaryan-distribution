@@ -56,6 +56,7 @@ export default function ProofDirectorPage(){
   const [logo,setLogo]=useState<HTMLImageElement|null>(null);
   const [seconds,setSeconds]=useState(0);
   const [playing,setPlaying]=useState(false);
+  const [showRaw,setShowRaw]=useState(false);
   const [exporting,setExporting]=useState(false);
   const [notice,setNotice]=useState("Upload a real, approved Promptence screenshot. Only actual screenshot pixels will enter the movie.");
   const canvas=useRef<HTMLCanvasElement>(null);
@@ -105,8 +106,17 @@ export default function ProofDirectorPage(){
     const target=canvas.current,src=sourceRef.current;
     if(!target||!src)return;
     const ctx=target.getContext("2d",{alpha:false});
-    if(ctx)drawProofFrame(ctx,src,logoRef.current,at,target.width,target.height);
-  },[]);
+    if(ctx){
+      if(showRaw){
+        ctx.fillStyle="#07110D";ctx.fillRect(0,0,target.width,target.height);
+        const sw=src instanceof HTMLVideoElement?src.videoWidth:src.naturalWidth;
+        const sh=src instanceof HTMLVideoElement?src.videoHeight:src.naturalHeight;
+        const scale=Math.min(target.width/sw,target.height/sh);
+        const w=sw*scale,h=sh*scale;
+        if(w>0&&h>0)ctx.drawImage(src,(target.width-w)/2,(target.height-h)/2,w,h);
+      } else drawProofFrame(ctx,src,logoRef.current,at,target.width,target.height);
+    }
+  },[showRaw]);
   useEffect(()=>{
     sourceRef.current=source;
     paint(latestSeconds.current);
@@ -198,6 +208,38 @@ export default function ProofDirectorPage(){
     const src=sourceRef.current;
     if(src)void seekSourceFrame(src,t).then(()=>paint(t)).catch(err=>setNotice(String(err)));
   }
+  async function exportContactSheet(){
+    const source=sourceRef.current;
+    if(!source||exportingRef.current)return;
+    setPlaying(false);setExporting(true);exportingRef.current=true;
+    try{
+      // 3x3 preview demonstrates movement over time, not mere MP4 metadata.
+      const shots=[.38,1.3,2.13,2.71,3.62,4.94,6.24,7.82,9.25];
+      const tile=makeCanvas(270,480);
+      const ctx=tile.getContext("2d",{alpha:false});
+      if(!ctx)throw Error("Cannot compose review contact sheet");
+      const sheet=makeCanvas(3*270,3*520);
+      const board=sheet.getContext("2d",{alpha:false});
+      if(!board)throw Error("Cannot create review grid");
+      board.fillStyle="#09130F";board.fillRect(0,0,sheet.width,sheet.height);
+      for(const [i,time] of shots.entries()){
+        await seekSourceFrame(source,time);
+        drawProofFrame(ctx,source,logoRef.current,time,270,480);
+        const x=(i%3)*270,y=Math.floor(i/3)*520;
+        board.drawImage(tile,x,y);
+        board.fillStyle="#0C2018";board.fillRect(x,y+480,270,40);
+        board.fillStyle="#C8EADA";board.font="700 17px Arial,sans-serif";
+        board.fillText("FRAME  "+String(i+1).padStart(2,"0")+" / "+time.toFixed(2)+"s",x+16,y+507);
+      }
+      const blob=await new Promise<Blob>((ok,bad)=>sheet.toBlob(v=>v?ok(v):bad(Error("Sheet export failed")),"image/png"));
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");a.href=url;a.download="promptence-10s-director-review-9-frames.png";
+      document.body.appendChild(a);a.click();a.remove();
+      window.setTimeout(()=>URL.revokeObjectURL(url),30000);
+      setNotice("Nine-frame review sheet created. Compare early, mid and closing frames critically. This is not an automated aesthetic certification.");
+    }catch(err){setNotice("Review sheet failed: "+(err instanceof Error?err.message:String(err)));}
+    finally{exportingRef.current=false;setExporting(false);}
+  }
   async function attachAudio(event:React.ChangeEvent<HTMLInputElement>,kind:"voice"|"music"){
     const file=event.target.files?.[0];
     if(!file)return;
@@ -285,6 +327,10 @@ export default function ProofDirectorPage(){
             <span>Add authentic product footage or a screenshot to preview the film.</span>
           </div>}
         </div>
+        <div className={styles.compare} role="group" aria-label="Compare genuine source footage with directed composition">
+          <button type="button" aria-pressed={!showRaw} onClick={()=>setShowRaw(false)} disabled={!source||exporting}>DIRECTED CUT</button>
+          <button type="button" aria-pressed={showRaw} onClick={()=>setShowRaw(true)} disabled={!source||exporting}>RAW SOURCE / BEFORE</button>
+        </div>
         <div className={styles.transport}>
           <button type="button" disabled={!source||exporting}
             onClick={()=>{if(seconds>=10){latestSeconds.current=0;setSeconds(0);}setPlaying(v=>!v);}}>
@@ -335,6 +381,7 @@ export default function ProofDirectorPage(){
           <span className={styles.overline}>04 / FILM GATE</span>
           <h2>Export a review — not an ad.</h2>
           <p>The 540×960 WebM review now includes your voice/music when supplied. If you imported footage, its actual decoded frames are used. A native 1080×1920 H.264/AAC master still requires the workstation exporter.</p>
+          <button className={styles.sheetButton} disabled={!source||exporting} onClick={()=>void exportContactSheet()}>REVIEW 9 KEY FRAMES ↗</button>
           <button className={styles.export} disabled={!source||exporting} onClick={exportPreview}>
             {exporting?"ENCODING…":"EXPORT 10s SILENT REVIEW ↗"}
           </button>
