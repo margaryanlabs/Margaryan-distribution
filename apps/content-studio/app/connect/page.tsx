@@ -186,6 +186,7 @@ export default function ConnectPage() {
         </div>}
       </section>
     </div>
+    <p style={{fontSize:12,color:"#a2b6d0"}}><strong>REAL WIDGET BRIDGE:</strong> <Link href="/host-lab" style={{fontWeight:800,color:"#d7e8ff"}}>RUN OUR MCP APPS HOST LAB ↗</Link>. Test create → embedded player → revise before installing. This is a simulated host, not ChatGPT.</p>
     <p style={{color:"#a9bad1",fontSize:12,margin:"23px 0"}}><strong style={{color:"#dce5f4"}}>VIDEO QUALITY PROOF:</strong> Before assuming MP4, WebM or soundtrack works on your device, use <Link href="/quality-lab" style={{color:"#d0e5ff",fontWeight:800}}>REAL VIDEO QA LAB ↗</Link> to record and decode an original 6-second film in your own browser.</p>
     <div className={styles.notice}><strong>What this test does not prove</strong> · Actual installation inside ChatGPT, nested iframe CSP permissions, successful video export on your device, and optional ChatGPT file upload require a real client acceptance test. No subscription or billing is active in this beta.</div>
     <footer><Link href="/motion">OPEN FULL MOTION STUDIO ↗</Link><span>PROCEDURAL MOTION / NOT PHOTOREAL AI VIDEO</span></footer>
