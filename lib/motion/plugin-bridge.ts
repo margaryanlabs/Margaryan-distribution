@@ -152,23 +152,23 @@ function validateScenes(source: unknown): MotionScene[] {
     return result;
   });
 }
-function publicEditorUrl(): string {
-  const url = process.env.CONTENT_STUDIO_PUBLIC_URL || "https://margaryan-distribution.vercel.app";
+function publicEditorUrl(requestOrigin?:string): string {
+  const url = process.env.CONTENT_STUDIO_PUBLIC_URL || requestOrigin || "https://margaryan-distribution.vercel.app";
   const parsed = new URL(url);
   if (parsed.protocol !== "https:" || parsed.username || parsed.password)
     throw Error("CONTENT_STUDIO_PUBLIC_URL must be an HTTPS origin");
   return parsed.origin;
 }
-function linkForPack(pack: ChatMotionPack): string {
+function linkForPack(pack: ChatMotionPack, requestOrigin?:string): string {
   // A fragment does not travel to the web server, analytics or Referrer.
   // It is NOT encryption: only send copy that the user agrees to open in
   // their own browser, then immediately strip the fragment after import.
   const encoded = Buffer.from(JSON.stringify(pack), "utf8").toString("base64url");
   if (encoded.length > 15_000) throw Error("Storyboard too large for a browser handoff");
-  return publicEditorUrl() + "/motion?mode=cinematic#motion-chat-v1=" + encoded;
+  return publicEditorUrl(requestOrigin) + "/motion?mode=cinematic#motion-chat-v1=" + encoded;
 }
 
-function createFeatureFilm(raw: Record<string,unknown>) {
+function createFeatureFilm(raw: Record<string,unknown>,requestOrigin?:string) {
   const title=checkString(raw.title,"title",100);
   const brand=oneOf(raw.brand,Object.keys(BRAND_INFO) as MotionProject["brand"][],"brand");
   const format=oneOf(raw.format,["portrait","square","landscape"] as const,"format");
@@ -213,15 +213,15 @@ function createFeatureFilm(raw: Record<string,unknown>) {
     durationSeconds:duration,
     filmType:"editable multi-chapter procedural motion graphics; not generated live-action footage",
     videoFileCreated:false,voiceFileCreated:false,requiresUserApproval:true,
-    editorUrl:publicEditorUrl()+"/motion?mode=cinematic#motion-sequence-v1="+encoded,
+    editorUrl:publicEditorUrl(requestOrigin)+"/motion?mode=cinematic#motion-sequence-v1="+encoded,
     nextStep:"Open the editor link, review the whole-film proposal in Sequence Studio, approve to save chapters, inspect each chapter, then export a manifest for local Chromium/FFmpeg mastering. This tool has NOT created an MP4."
   };
 }
 
-export function runContentStudioTool(name: string, raw: unknown) {
+export function runContentStudioTool(name: string, raw: unknown, requestOrigin?:string) {
   if(name==="create_motion_feature_film") {
     if(!record(raw))throw Error("Tool arguments must be an object");
-    return createFeatureFilm(raw);
+    return createFeatureFilm(raw,requestOrigin);
   }
   if (!record(raw)) throw Error("Tool arguments must be an object");
   let pack: ChatMotionPack;
@@ -278,7 +278,7 @@ export function runContentStudioTool(name: string, raw: unknown) {
     videoFileCreated: false,
     voiceFileCreated: false,
     requiresUserApproval: true,
-    editorUrl: linkForPack(pack),
+    editorUrl: linkForPack(pack,requestOrigin),
     chatPack: pack,
     previewProject: film, // Validated, media-free project for MCP Apps live Canvas widget.
     nextStep: "Open editorUrl, inspect the staged Chat Pack, press APPROVE, then preview and export the video in Motion Studio. Do not claim the video has been rendered yet."
