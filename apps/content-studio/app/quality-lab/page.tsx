@@ -63,12 +63,12 @@ export default function QualityLab(){
   const mediaRef=useRef<MediaRecorder|null>(null);
   const abort=useRef(false);
   const project=useRef<MotionProject>(makeTestFilm());
-  useEffect(()=>()=>{
+  useEffect(()=>{alive.current=true;abort.current=false;return ()=>{
     alive.current=false;abort.current=true;
     if(liveURL.current)URL.revokeObjectURL(liveURL.current);
     const recorder=mediaRef.current;
     try{if(recorder?.state==="recording")recorder.stop();}catch{/* best effort */}
-  },[]);
+  };},[]);
 
   const push=(label:string,status:Result["status"],detail:string)=>{
     if(alive.current)setResults(v=>[...v,{label,status,detail}]);
@@ -89,7 +89,7 @@ export default function QualityLab(){
       node.width=WIDTH;node.height=HEIGHT;
       const context=node.getContext("2d",{willReadFrequently:true});
       if(!context)throw Error("Canvas 2D is unavailable");
-      if(!window.MediaRecorder||!node.captureStream)throw Error("This browser has no canvas recording interface");
+      if(!("MediaRecorder" in window)||!node.captureStream)throw Error("This browser has no canvas recording interface");
       await preloadMotionLogo("labs");
       const film=project.current;
       drawMotionFrame(context,film,0.5,WIDTH,HEIGHT);
@@ -135,8 +135,8 @@ export default function QualityLab(){
           const elapsed=(now-begun)/1000;
           drawMotionFrame(context!,film,Math.min(elapsed,DURATION),WIDTH,HEIGHT);
           if(alive.current)setProgress(Math.round(Math.min(1,elapsed/DURATION)*100));
-          if(elapsed>=DURATION){resolve();return;}
           if(now>maximum){reject(Error("Real-time recording exceeded the browser time budget"));return;}
+          if(elapsed>=DURATION){resolve();return;}
           requestAnimationFrame(frame);
         }
         requestAnimationFrame(frame);
