@@ -1,19 +1,17 @@
 import path from "node:path";
 import type { NextConfig } from "next";
-// This is a separate, public-only application. The build imports motion
-// modules from the shared repo, but private CRM routes are never mounted.
+// Dedicated public app: only motion routes are mounted, not Distribution CRM.
 const nextConfig:NextConfig={
   poweredByHeader:false,
   reactStrictMode:true,
   outputFileTracingRoot:path.resolve(__dirname,"../.."),
-  // Motion's shared source sits outside this isolated app root; resolve its
-  // third-party packages from the standalone app's installed node_modules.
-  turbopack:{
-    root:path.resolve(__dirname,"../.."),
-    resolveAlias:{
-      three:path.resolve(__dirname,"node_modules/three"),
-      gsap:path.resolve(__dirname,"node_modules/gsap")
-    }
+  // Our Motion source lives in /lib/motion. Resolve its runtime dependencies
+  // from the standalone app installation instead of the repository root.
+  webpack(config){
+    config.resolve ??={};
+    const previous=config.resolve.modules||["node_modules"];
+    config.resolve.modules=[path.resolve(__dirname,"node_modules"),...previous];
+    return config;
   },
   async headers(){return [{source:"/(.*)",headers:[
     {key:"X-Content-Type-Options",value:"nosniff"},
