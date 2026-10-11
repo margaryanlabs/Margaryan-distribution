@@ -31,7 +31,8 @@
     "motion:test-proof-audio": "node scripts/motion/test-proof-audio.mjs",
     "motion:test-editorial": "node scripts/motion/test-editorial.mjs",
     "motion:test-proof-edl": "node --experimental-strip-types scripts/motion/test-proof-edl.mjs",
-    "motion:test-chat": "node scripts/motion/test-chat-operator.mjs"
+    "motion:test-chat": "node scripts/motion/test-chat-operator.mjs",
+    "motion:test-real-source": "node scripts/motion/test-real-source.mjs"
   },
   "dependencies": {
     "next": "16.3.3",

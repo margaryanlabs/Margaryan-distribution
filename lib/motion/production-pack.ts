@@ -12,6 +12,10 @@ export interface ProductionCue {
   visual: string;
   productBeat?: string;
   titleTreatment?: string;
+  mediaId?: string;
+  mediaStart?: number;
+  /** Exact operator-local source inpoint; source bytes are never packaged. */
+  sourceReviewRequired?: boolean;
   headline: string;
   camera: string;
   transition: string;
@@ -38,6 +42,9 @@ export function makeProductionPack(project: MotionProject) {
       visual: scene.kind,
       productBeat: scene.productBeat,
       titleTreatment: scene.titleTreatment,
+      mediaId: scene.mediaId,
+      mediaStart: scene.mediaStart,
+      sourceReviewRequired: scene.kind==="screen",
       headline: scene.headline,
       camera: scene.camera || "inherit",
       transition: scene.transition || "auto",
@@ -65,7 +72,7 @@ export function makeProductionPack(project: MotionProject) {
       "s vs "+(c.end-c.start).toFixed(1)+"s shot. Re-record, split or change timing."),
     caveats: [
       "Narration duration is estimated by word count. Spoken-word sync requires listening.",
-      "Imported audio and real product screenshots are browser-local, NOT included. Voice/music edit metadata is saved.",
+      "Imported audio and real product screenshots/videos are browser-local, NOT included. Source IDs and clip inpoints require locally reattached, approved assets.",
       "The ten Promptence product-story compositions are conceptual visual metaphors, not provider API results or real customer metrics.",
       "Check factual claims, on-screen typography, licensing and source provenance before publishing.",
       "No generative video, TTS provider, Claude/ChatGPT API or cloud renderer was called."

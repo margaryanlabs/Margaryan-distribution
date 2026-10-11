@@ -3,6 +3,7 @@ import { drawMotionFrame } from "./render-engine";
 import { preloadMotionLogo } from "./brand-assets";
 import { inspectFramePixels } from "./quality";
 import { fitShotCopy } from "./typography";
+import { prepareMotionSourceFrame, pauseMotionSourceVideos } from "./scene-source";
 
 export interface VisualReview {
   pass: boolean;
@@ -60,6 +61,7 @@ export async function reviewMotionVisuals(project: MotionProject): Promise<Visua
   }
   let lastPixels:Uint8ClampedArray | null = null;
   for(const [i,item] of samples.entries()){
+    await prepareMotionSourceFrame(project,item.time);
     drawMotionFrame(ctx,project,item.time,previewWidth,previewHeight);
     const data=ctx.getImageData(0,0,previewWidth,previewHeight);
     const integrity=inspectFramePixels(data.data,previewWidth,previewHeight);
@@ -87,6 +89,7 @@ export async function reviewMotionVisuals(project: MotionProject): Promise<Visua
     bg.textBaseline="top";
     bg.fillText(item.name+" · "+item.time.toFixed(1)+"s",x,y+previewHeight+8);
   }
+  pauseMotionSourceVideos();
   const blob=await new Promise<Blob>((resolve,reject)=>board.toBlob(b=>b?resolve(b):reject(new Error("Contact sheet export failed")),"image/png"));
   return {
     pass:!warnings.some(w=>/\/ TEXT:|blank|unavailable|transparency|low dynamic range|below minimum mobile readability/i.test(w)),

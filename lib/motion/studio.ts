@@ -27,6 +27,10 @@ export interface MotionScene {
   productBeat?: PromptenceBeat;
   /** Actual deterministic canvas typographic movement; no generated glyph images. */
   titleTreatment?: MotionTitleTreatment;
+  /** An approved browser-local file ID, never base64 content, URL or remote fetch. */
+  mediaId?: string;
+  /** Source inpoint in seconds for a genuine video clip, never beyond its duration. */
+  mediaStart?: number;
   intensity?: number;
   /** Editorial narration cue, not automatically generated or spoken. */
   voiceCue?: string;
@@ -261,6 +265,10 @@ export function sanitizeMotionProject(input: unknown): MotionProject {
         ? s.productBeat as PromptenceBeat : undefined,
       titleTreatment: ["editorial","mask","kinetic","minimal"].includes(String(s.titleTreatment))
         ? s.titleTreatment as MotionTitleTreatment : undefined,
+      mediaId:typeof s.mediaId==="string"&&/^[\w-]{6,100}$/.test(s.mediaId)
+        ?s.mediaId:undefined,
+      mediaStart:typeof s.mediaStart==="number"&&Number.isFinite(s.mediaStart)
+        ?Math.min(3600,Math.max(0,Number(s.mediaStart.toFixed(2)))):0,
       intensity: Math.max(0, Math.min(1, Number.isFinite(Number(s.intensity)) && s.intensity !== undefined ? Number(s.intensity) : .5)),
       voiceCue: clean(s.voiceCue, 300)
     };

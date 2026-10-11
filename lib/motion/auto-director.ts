@@ -162,7 +162,7 @@ export async function repairMotionProject(original:MotionProject):Promise<Direct
   for(const x of after.checks.filter(c=>c.severity==="block"||c.severity==="warn")){
     if(!remaining.includes(x.message))remaining.push(x.message);
   }
-  if(current.scenes.some(s=>s.kind==="screen")&&!hasProductScreen(current.brand)){
+  if(current.scenes.some(s=>s.kind==="screen"&&!s.mediaId)&&!hasProductScreen(current.brand)){
     remaining.push("Source screenshot missing: upload a real image to the active browser session.");
   }
   const improved=changes.length>0&&visual.warnings.length<initialRemaining;

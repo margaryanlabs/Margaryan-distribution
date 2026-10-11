@@ -26,6 +26,12 @@ import { createKeylessStoryboard, getLocalDirectorExamples, type MotionLanguage,
 import QuickStudio from "./quick-studio";
 import MultitrackEditor from "./multitrack-editor";
 import OperatorDesk from "./operator-desk";
+import { getLocalMedia, mediaAsFile } from "@/lib/motion/local-media";
+import {
+  getMotionSceneSource, registerMotionSceneSource, motionSourceIssues,
+  prepareMotionSourceFrame, pauseMotionSourceVideos, syncMotionSourcePlayback,
+  resetMotionPlaybackError, motionPlaybackError
+} from "@/lib/motion/scene-source";
 import styles from "./motion.module.css";
 
 const STORAGE_KEY = "margaryan-motion-studio-v1";
@@ -99,6 +105,26 @@ export default function MotionStudioPage() {
   // silently be treated as valid after changing a title, pacing or shot type.
   useEffect(()=>{latestProjectRef.current=project;setReferenceComparison(null);},[project]);
 
+  // Browser persistence stores asset files privately. Rehydrate approved
+  // per-scene footage after opening an existing JSON/Chat Pack project.
+  useEffect(()=>{
+    if(!hydrated)return;
+    let cancelled=false;
+    const ids=[...new Set(project.scenes.filter(x=>x.kind==="screen"&&x.mediaId).map(x=>x.mediaId!))];
+    void (async()=>{
+      for(const id of ids){
+        if(cancelled||getMotionSceneSource(id))continue;
+        const record=await getLocalMedia(id);
+        if(!record||!record.approved)continue;
+        await registerMotionSceneSource(id,mediaAsFile(record));
+        if(!cancelled)setAssetRevision(n=>n+1);
+      }
+    })().catch(error=>{
+      if(!cancelled)setNotice("LOCAL SOURCE: "+(error instanceof Error?error.message:String(error)));
+    });
+    return()=>{cancelled=true;};
+  },[hydrated,project.scenes]);
+
   useEffect(() => {
     if(!voiceover){setNarrationSeconds(null);return;}
     let active=true;
@@ -158,6 +184,7 @@ export default function MotionStudioPage() {
     type FrameHost = Window & {
       __motionFrame?: (input: FrameArgs) => Promise<string>;
       __motionInstallScreen?: (input: {brand:MotionBrand;mime:string;base64:string}) => Promise<void>;
+      __motionInstallSceneFile?: (id:string)=>Promise<void>;
       __motionReview?: (input: {project:unknown}) => Promise<{
         project:MotionProject;report:ReturnType<typeof serializeRepair>;contactSheetBase64:string;
       }>;
@@ -166,6 +193,11 @@ export default function MotionStudioPage() {
     const renderCanvas = document.createElement("canvas");
     let renderContext: CanvasRenderingContext2D | null = null;
     host.__motionInstallScreen = async (input) => { await installOfflineScreen(input.brand,input.mime,input.base64); };
+    host.__motionInstallSceneFile = async id=>{
+      const chosen=document.querySelector<HTMLInputElement>("#__motion-offline-media-input")?.files?.[0];
+      if(!chosen)throw Error("Offline media source missing: attach explicit local file.");
+      await registerMotionSceneSource(id,chosen);
+    };
     host.__motionReview = async input=>{
       const validated=sanitizeMotionProject(input.project);
       if(validated.scenes.some(scene=>scene.kind==="spatial"))await ensureSpatialRenderer();
@@ -186,7 +218,10 @@ export default function MotionStudioPage() {
       if(shot.scenes.some(scene=>scene.kind==="spatial"))await ensureSpatialRenderer();
       const dims = FORMAT_SIZE[shot.format];
       await preloadMotionLogo(shot.brand);
-      if(shot.scenes.some(scene=>scene.kind==="screen")&&!hasProductScreen(shot.brand))throw new Error("Source product screenshot is missing; add --screen in the offline master.");
+      if(shot.scenes.some(scene=>scene.kind==="screen"&&!scene.mediaId)&&!hasProductScreen(shot.brand))
+        throw new Error("Legacy source screenshot missing; add --screen to offline master.");
+      const missing=motionSourceIssues(shot);
+      if(missing.length)throw Error(missing.join("; "));
       if (renderCanvas.width !== dims.width || renderCanvas.height !== dims.height) {
         renderCanvas.width = dims.width; renderCanvas.height = dims.height;
         renderContext = null;
@@ -194,10 +229,12 @@ export default function MotionStudioPage() {
       if (!renderContext) renderContext = renderCanvas.getContext("2d", { alpha: false });
       if (!renderContext) throw new Error("Offline movie canvas is unavailable");
       const t = Number.isFinite(input.time) ? Math.max(0, Math.min(durationOf(shot), input.time)) : 0;
+      await prepareMotionSourceFrame(shot,t);
       drawMotionFrame(renderContext, shot, t, dims.width, dims.height);
       return renderCanvas.toDataURL("image/png").slice("data:image/png;base64,".length);
     };
-    return () => { delete host.__motionFrame; delete host.__motionInstallScreen; delete host.__motionReview; };
+    return () => { delete host.__motionFrame; delete host.__motionInstallScreen;
+      delete host.__motionInstallSceneFile; delete host.__motionReview; };
   }, []);
 
 
@@ -237,7 +274,11 @@ export default function MotionStudioPage() {
     if (playing) return;
     const canvas = previewRef.current;
     const ctx = canvas?.getContext("2d");
-    if (canvas && ctx) drawMotionFrame(ctx, project, timeRef.current, canvas.width, canvas.height);
+    if (canvas && ctx){
+      void prepareMotionSourceFrame(project,timeRef.current)
+        .then(()=>{if(!playing)drawMotionFrame(ctx,project,timeRef.current,canvas.width,canvas.height);})
+        .catch(error=>setNotice("PREVIEW SOURCE: "+(error instanceof Error?error.message:String(error))));
+    }
   }, [project, playing, playhead, assetRevision]);
 
   useEffect(() => {
@@ -282,6 +323,8 @@ export default function MotionStudioPage() {
       }
     }
     syncPreviewAudio(timeRef.current);
+    resetMotionPlaybackError();
+    syncMotionSourcePlayback(project,timeRef.current,true);
     function frame(now: number) {
       const step = Math.min(.1, (now - previous) / 1000);
       previous = now;
@@ -289,6 +332,7 @@ export default function MotionStudioPage() {
         timeRef.current = Math.min(total, timeRef.current + Math.max(0, step));
         if (timeRef.current >= total) setPlaying(false);
       }
+      syncMotionSourcePlayback(project,timeRef.current,true);
       if (canvas && ctx) drawMotionFrame(ctx, project, timeRef.current, canvas.width, canvas.height);
       if (now - lastUi > 120) {
         lastUi = now; setPlayhead(timeRef.current);
@@ -301,6 +345,7 @@ export default function MotionStudioPage() {
       cancelAnimationFrame(raf);
       voicePreviewRef.current?.pause();
       musicPreviewRef.current?.pause();
+      pauseMotionSourceVideos();
     };
   }, [project, playing, total, narrationGain, musicGain, voiceover, licensedMusic]);
 
@@ -500,6 +545,8 @@ export default function MotionStudioPage() {
       return;
     }
     try{
+      const sourceIssues=motionSourceIssues(project);
+      if(sourceIssues.length)throw Error(sourceIssues.join(" / "));
       const checked=await reviewMotionVisuals(project);
       if(!checked.pass){
         const revised=await repairMotionProject(project);
@@ -533,6 +580,7 @@ export default function MotionStudioPage() {
     let audioSession: ProceduralAudioSession | null = null;
     let raf = 0;
     let recorder: MediaRecorder | null = null;
+    resetMotionPlaybackError();
     try {
       await preloadMotionLogo(project.brand);
       if(needsSpatial)await ensureSpatialRenderer();
@@ -540,6 +588,7 @@ export default function MotionStudioPage() {
       let cursor = 0;
       for (const scene of project.scenes) {
         const candidate = cursor + scene.seconds * .5;
+        await prepareMotionSourceFrame(project,candidate);
         drawMotionFrame(ctx, project, candidate, width, height);
         const thumbnail = document.createElement("canvas");
         thumbnail.width = 180;
@@ -561,6 +610,7 @@ export default function MotionStudioPage() {
         });
         stream.addTrack(audioSession.track);
       }
+      await prepareMotionSourceFrame(project,0);
       drawMotionFrame(ctx, project, 0, width, height);
       recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8_000_000 });
       const chunks: BlobPart[] = [];
@@ -570,10 +620,13 @@ export default function MotionStudioPage() {
         currentRecorder.onerror = () => reject(new Error("Video encoder failed"));
         currentRecorder.onstop = () => resolve();
         currentRecorder.start(1000);
+        syncMotionSourcePlayback(project,0,true);
         const began = performance.now();
         function render(now: number) {
           if (currentRecorder.state !== "recording") return;
           const seconds = Math.min(total, (now - began) / 1000);
+          syncMotionSourcePlayback(project,seconds,true);
+          if(motionPlaybackError()){currentRecorder.stop();return;}
           if (ctx) drawMotionFrame(ctx, project, seconds, width, height);
           setExportProgress(Math.min(100, Math.round(seconds / total * 100)));
           if (seconds >= total) currentRecorder.stop();
@@ -581,6 +634,7 @@ export default function MotionStudioPage() {
         }
         raf = requestAnimationFrame(render);
       });
+      if(motionPlaybackError())throw Error("Real-source video export blocked: "+motionPlaybackError());
       if (!chunks.length) throw new Error("Recorder returned an empty video. Try a different browser.");
       const ext = mimeType.includes("mp4") ? "mp4" : "webm";
       const blob = new Blob(chunks, { type: mimeType });
@@ -592,6 +646,7 @@ export default function MotionStudioPage() {
       cancelAnimationFrame(raf);
       if (recorder && recorder.state !== "inactive") recorder.stop();
       stream?.getTracks().forEach(track => track.stop());
+      pauseMotionSourceVideos();
       if (audioSession) await audioSession.close();
       setExporting(false);
     }
@@ -670,6 +725,15 @@ export default function MotionStudioPage() {
             setPlaying(false);setSelectedIndex(0);jump(0);setProject(draft);
             setSoundEnabled(true);
             setNotice("CREATED FROM ZERO: editable brand storyboard and local original synth soundtrack. No media, API key, neural video generation or fake evidence was required.");
+          }}
+          onSceneMedia={async (mediaId,file)=>{
+            const loaded=await registerMotionSceneSource(mediaId,file);
+            updateProject({...project,scenes:project.scenes.map((scene,index)=>
+              index===selectedIndex?{...scene,kind:"screen",mediaId,mediaStart:0,productBeat:undefined}:scene)});
+            setAssetRevision(n=>n+1);
+            setPlaying(false);
+            setNotice((loaded.type==="video"?"REAL VIDEO":"REAL SOURCE IMAGE")+" linked to shot "+(selectedIndex+1)+
+              ". Check source coverage and original frame authenticity before publishing.");
           }}
           onScreenshot={async file=>{
             await setLocalProductScreen(project.brand,file);
@@ -964,6 +1028,24 @@ export default function MotionStudioPage() {
             <button type="button" disabled={project.scenes.length>=8||exporting} onClick={duplicateScene}>+ DUPLICATE</button>
           </div>
         </section>
+        {selected.kind==="screen"&&selected.mediaId&&<div className={styles.sourceInspector}>
+          <strong>SHOT SOURCE / APPROVED LOCAL MATERIAL</strong>
+          <p>{getMotionSceneSource(selected.mediaId)?.filename||"Source not loaded in this browser"}
+            {" · "}{getMotionSceneSource(selected.mediaId)?.type==="video"?"MOVING VIDEO":"STILL IMAGE"}
+          </p>
+          {getMotionSceneSource(selected.mediaId)?.type==="video"&&<label className={styles.field}>
+            <span>TRUE VIDEO INPOINT / {(selected.mediaStart||0).toFixed(2)} SEC</span>
+            <input type="range" min="0"
+              max={Math.max(0,(getMotionSceneSource(selected.mediaId)?.duration||0)-selected.seconds-.15)}
+              step=".05" value={selected.mediaStart||0} disabled={exporting}
+              onChange={event=>editScene("mediaStart",Number(event.target.value))}/>
+            <small>Decoder uses real source frames. A short clip blocks export rather than freezing its last frame.</small>
+          </label>}
+          <button type="button" disabled={exporting} onClick={()=>{
+            updateProject({...project,scenes:project.scenes.map((shot,index)=>
+              index===selectedIndex?{...shot,mediaId:undefined,mediaStart:0}:shot)});
+          }}>DETACH FROM SHOT</button>
+        </div>}
         <label className={styles.screenUpload}>
           <strong>REAL PRODUCT SCREEN / SOURCE FOOTAGE</strong>
           <span>{hasProductScreen(project.brand)

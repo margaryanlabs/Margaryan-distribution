@@ -1,6 +1,7 @@
 import { BRAND_INFO, durationOf, sanitizeMotionProject, type MotionProject } from "./studio";
 import { PORTFOLIO } from "./portfolio";
 import { hasProductScreen } from "./screen-media";
+import { getMotionSceneSource, motionSourceIssues } from "./scene-source";
 export type MotionSeverity = "block" | "warn" | "info";
 export interface MotionQAItem { id: string; severity: MotionSeverity; message: string }
 export interface MotionQAReport {
@@ -36,8 +37,10 @@ export function auditMotionProject(project: MotionProject): MotionQAReport {
   if(productBeats.length && new Set(productBeats).size < productBeats.length)
     issue("story.repetitive-product-art","warn","Duplicate product beat compositions: review shot variety before export.");
   for (const [i,s] of project.scenes.entries()) {
-    if(s.kind==="screen"&&!hasProductScreen(project.brand))issue("screen.missing."+i,"block","Source screenshot missing for scene "+(i+1)+". Upload a real product screenshot before export.");
-    if(s.kind==="screen"&&hasProductScreen(project.brand))issue("screen.review."+i,"warn","Product screenshot is user-provided; visually verify provenance, sensitive information and rights before publishing.");
+    if(s.kind==="screen"&&!s.mediaId&&!hasProductScreen(project.brand))
+      issue("screen.missing."+i,"block","Source screenshot missing for scene "+(i+1)+". Upload a real product screenshot before export.");
+    if(s.kind==="screen"&&(s.mediaId?getMotionSceneSource(s.mediaId):hasProductScreen(project.brand)))
+      issue("screen.review."+i,"warn","Real user-provided source: visually verify provenance, sensitive information, original data and rights before publishing.");
     if (!s.headline.trim()) issue("copy.blank."+i,"block","Scene "+(i+1)+" has no headline.");
     if(s.productBeat && project.brand!=="promptence")
       issue("beat.brand."+i,"block","Product story art is only source-validated for Promptence.");
@@ -60,6 +63,8 @@ export function auditMotionProject(project: MotionProject): MotionQAReport {
   }
   issue("legal.evidence","info","Synthetic UI graphics do not establish actual customer results. Review claims manually.");
   issue("export.codec","info","Browser WebM recording is device-dependent; verify exported MP4 / audio externally.");
+  for(const [i,message] of motionSourceIssues(project).entries())
+    issue("source.coverage."+i,"block",message);
   const blockers=checks.filter(c=>c.severity==="block").length;
   const warnings=checks.filter(c=>c.severity==="warn").length;
   return {
