@@ -57,3 +57,57 @@ export function createPromptenceSignature(language:Language="en",format:MotionFo
     style:"cinematic",language,seed:8675309,scenes
   });
 }
+
+
+/**
+ * Promptence 2026 campaign / 36.5s / 8-shot author's cut.
+ * An independent selectable cut: the original 33.8s signature remains intact.
+ * The identical signatureFilm metadata activates the existing original Motion OS
+ * source-honest bespoke canvas compositions. No invented customer metrics.
+ */
+const CAMPAIGN_WORDS: Record<Language, readonly Copy[]> = {
+  en: [
+    ["01 / THE SHIFT", "THE FRONT PAGE HAS CHANGED.", "Discovery is becoming a conversation."],
+    ["02 / BUYER INTENT", "YOUR CUSTOMER ASKS AI.", "What enters the answer?"],
+    ["03 / THE BLIND SPOT", "WHAT IF THEY NEVER SEE YOU?", "Your brand may be missing from the conversation."],
+    ["04 / THE OPPORTUNITY", "MAKE THE INVISIBLE VISIBLE.", "Observe answers. Trace sources. Find the signal."],
+    ["05 / THE INTELLIGENCE", "DISCOVER. MEASURE. DIAGNOSE.", "A workflow built around observable evidence."],
+    ["06 / THE ACTION", "FROM SIGNAL TO ACTION.", "Prioritize. Review. Verify."],
+    ["07 / THE EVIDENCE", "MEASURE AGAIN. KNOW WHAT CHANGED.", "Before and after. Without the guesswork."],
+    ["08 / INTRODUCING", "BE PRESENT IN THE ANSWER.", "Understand your AI visibility. promptence.tech"]
+  ],
+  ru: [
+    ["01 / ПЕРЕМЕНЫ", "ПЕРВАЯ СТРАНИЦА ИЗМЕНИЛАСЬ.", "Поиск всё чаще превращается в диалог."],
+    ["02 / ВОПРОС ПОКУПАТЕЛЯ", "КЛИЕНТ СПРАШИВАЕТ ИИ.", "Какие бренды он увидит в ответе?"],
+    ["03 / СЛЕПАЯ ЗОНА", "А ЕСЛИ ВАС НЕ УВИДЯТ?", "Ваш бренд могут не упомянуть."],
+    ["04 / ВОЗМОЖНОСТЬ", "СДЕЛАЙ НЕВИДИМОЕ ВИДИМЫМ.", "Изучай ответы. Отслеживай источники."],
+    ["05 / АНАЛИТИКА", "НАЙДИ. ИЗМЕРЬ. ОБЪЯСНИ.", "Решения на основе наблюдаемых данных."],
+    ["06 / ДЕЙСТВИЯ", "ОТ СИГНАЛА К ДЕЙСТВИЮ.", "Определи приоритеты. Проверь изменения."],
+    ["07 / ДОКАЗАТЕЛЬСТВА", "ИЗМЕРЬ ЕЩЁ РАЗ.", "Сравни до и после. Без гарантий позиций."],
+    ["08 / PROMPTENCE", "СТАНЬ ЧАСТЬЮ ОТВЕТА.", "Исследуй видимость бренда в ИИ. promptence.tech"]
+  ],
+  hy: [
+    ["01 / ՓՈՓՈԽՈՒԹՅՈՒՆ", "ԱՌԱՋԻՆ ԷՋԸ ՓՈԽՎԵԼ Է։", "Որոնումը վերածվում է երկխոսության։"],
+    ["02 / ԳՆՈՐԴԻ ՀԱՐՑԸ", "ՀԱՃԱԽՈՐԴԸ ՀԱՐՑՆՈՒՄ Է AI-ԻՆ։", "Ի՞նչ է հայտնվում պատասխանում։"],
+    ["03 / ՉՆԿԱՏՎՈՂ ԽՆԴԻՐ", "ԻՍԿ ԵԹԵ ՁԵԶ ՉՆԿԱՏԵ՞Ն։", "Ձեր բրենդը կարող է չհիշատակվել։"],
+    ["04 / ՀՆԱՐԱՎՈՐՈՒԹՅՈՒՆ", "ՏԵՍԱՆԵԼԻ ԴԱՐՁՐԵՔ ԱՆՏԵՍԱՆԵԼԻՆ։", "Ուսումնասիրեք պատասխաններն ու աղբյուրները։"],
+    ["05 / ՉԱՓՈՒՄ", "ՀԱՅՏՆԱԲԵՐԵԼ։ ՉԱՓԵԼ։ ՎԵՐԼՈՒԾԵԼ։", "Դիտարկումների վրա հիմնված ընթացակարգ։"],
+    ["06 / ԳՈՐԾՈՂՈՒԹՅՈՒՆ", "ՏՎՅԱԼԻՑ ԴԵՊԻ ԳՈՐԾՈՂՈՒԹՅՈՒՆ։", "Սահմանեք առաջնահերթությունները։ Ստուգեք։"],
+    ["07 / ԱՊԱՑՈՒՅՑ", "ՉԱՓԵՔ ԿՐԿԻՆ։", "Համեմատեք առաջ և հետո։ Առանց երաշխիքների։"],
+    ["08 / PROMPTENCE", "ԵՂԵՔ AI-Ի ՊԱՏԱՍԽԱՆՈՒՄ։", "Բացահայտեք ձեր տեսանելիությունը։ promptence.tech"]
+  ]
+};
+const CAMPAIGN_DURATIONS = [4.3, 4.2, 4.4, 4.5, 4.9, 4.7, 4.3, 5.2];
+export function createPromptenceCampaign(language: Language = "en", format: MotionFormat = "portrait"): MotionProject {
+  return sanitizeMotionProject({
+    version: 1,
+    title: "PROMPTENCE / 2026 DIRECTOR'S CUT / THE ANSWER IS THE NEW FRONT PAGE",
+    brand: "promptence", format, style: "cinematic", language,
+    signatureFilm: "promptence-answer", seed: 20261011,
+    scenes: CAMPAIGN_WORDS[language].map(([eyebrow, headline, support], i) => ({
+      id: "scene-" + (i + 1), kind: KINDS[i], eyebrow, headline, support,
+      seconds: CAMPAIGN_DURATIONS[i],
+      typographyScale: language === "hy" ? .82 : language === "ru" ? .89 : .92
+    }))
+  });
+}
