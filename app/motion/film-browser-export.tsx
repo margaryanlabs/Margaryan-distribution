@@ -31,6 +31,7 @@ export default function FilmBrowserExport({chapters,busy,dirty}:{
   const stream=useRef<MediaStream|null>(null);
   const aborted=useRef(false);
   const pieces=useRef<Blob[]>([]);
+  const lastUI=useRef(0);
   const [phase,setPhase]=useState<Phase>("idle");
   const [position,setPosition]=useState(0);
   const [message,setMessage]=useState("Local browser workprint / graphics only, without soundtrack.");
@@ -93,7 +94,7 @@ export default function FilmBrowserExport({chapters,busy,dirty}:{
       aborted.current=false;
       pieces.current=[];
       if(raf.current!==null)cancelAnimationFrame(raf.current);
-      setPosition(0);
+      setPosition(0);lastUI.current=0;
       await preloadMotionLogo(bounds.brand);
       if(!canvas.current||aborted.current)return;
       paint(0);
@@ -138,7 +139,9 @@ export default function FilmBrowserExport({chapters,busy,dirty}:{
         if(aborted.current)return;
         const t=Math.min(length,Math.max(0,(now-started)/1000));
         try{paint(t);}catch(e){halt("Canvas render stopped: "+(e instanceof Error?e.message:"unknown error"));return;}
-        setPosition(t);
+        if(now-lastUI.current>220 || t>=length){
+          setPosition(t);lastUI.current=now;
+        }
         if(t>=length){
           raf.current=null;
           if(record&&videoRecorderIsRunning(recorder.current)){
