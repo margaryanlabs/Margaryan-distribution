@@ -61,6 +61,7 @@
     "@types/react-dom": "19.2.2",
     "typescript": "7.0.2",
     "@types/pg": "8.11.10",
-    "@types/three": "0.186.0"
+    "@types/three": "0.186.0",
+    "@typescript/typescript6": "6.0.2"
   }
 }
