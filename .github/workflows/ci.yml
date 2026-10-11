@@ -31,6 +31,8 @@ jobs:
         run: npm run motion:test-real-source
       - name: Content Studio MCP / 3 tools, feature films and inline UI contract
         run: npm run motion:test-plugin
+      - name: Motion full-feature browser export / source honesty and timing
+        run: npm run motion:test-film-browser
       - name: Motion Sequence / real 120s demo and long-film dry run
         run: npm run motion:test-sequence
       - name: Motion Chat Operator / create, patch and visual-asset safety
