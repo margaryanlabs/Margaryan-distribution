@@ -12,6 +12,11 @@ import {tmpdir} from "node:os";
 import {join} from "node:path";
 
 const base=process.env.MOTION_E2E_BASE_URL||"http://127.0.0.1:3000";
+const expectedSeconds=Number(process.env.MOTION_E2E_SECONDS||10);
+if(![10,120,300].includes(expectedSeconds))throw Error("MOTION_E2E_SECONDS must be 10, 120 or 300");
+const scenesPerAct=expectedSeconds===10?1:8;
+const shotSeconds=expectedSeconds===10?2:expectedSeconds===120?3:7.5;
+const fifthActOffset=expectedSeconds*4/5+.1;
 const playwright=await import("playwright");
 const browser=await playwright.chromium.launch({
   headless:true,args:["--autoplay-policy=no-user-gesture-required"]
@@ -21,13 +26,13 @@ const issues=[];
 const chapters=Array.from({length:5},(_,i)=>({
   version:1,title:"ACT "+(i+1),brand:"labs",format:"portrait",
   language:"en",style:"cinematic",qualityMode:"premium",
-  scenes:[{
-    id:"scene-1",kind:i===0?"opener":i===4?"closer":"statement",
+  scenes:Array.from({length:scenesPerAct},(_,j)=>({
+    id:"scene-"+(j+1),kind:i===0&&j===0?"opener":i===4&&j===scenesPerAct-1?"closer":"statement",
     eyebrow:"CHAPTER "+(i+1),
-    headline:"ORIGINAL CHAPTER "+(i+1),
+    headline:"ORIGINAL CHAPTER "+(i+1)+" SHOT "+(j+1),
     support:"Real source-independent Canvas proof — chapter "+(i+1),
-    seconds:2
-  }]
+    seconds:shotSeconds
+  }))
 }));
 try{
   const context=await browser.newContext({acceptDownloads:true,viewport:{width:450,height:820}});
@@ -41,26 +46,28 @@ try{
   await page.evaluate(projects=>window.postMessage({
     kind:"margaryan-motion-preview-v1",projects
   },window.location.origin),chapters);
+  await page.evaluate(seconds=>{window.__motionExpectedSeconds=seconds;},expectedSeconds);
   await page.waitForFunction(()=>{
     const input=document.querySelector('input[aria-label="Film playhead"]');
-    return input&&Number(input.max)===10&&!input.disabled;
+    return input&&Number(input.max)===window.__motionExpectedSeconds&&!input.disabled;
   },undefined,{timeout:20_000});
   assert.ok(await page.getByText(/5 ACTS/).count(),"one film with five acts");
   // A chapter seek may be issued by the parent MCP widget without replacing
   // the film; the export later resets the playhead to the first act.
-  await page.evaluate(()=>window.postMessage({kind:"margaryan-motion-seek-v1",seconds:8.1},"*"));
+  await page.evaluate(seconds=>window.postMessage({kind:"margaryan-motion-seek-v1",seconds},"*"),fifthActOffset);
+  await page.evaluate(seconds=>{window.__motionFifthActOffset=seconds;},fifthActOffset);
   await page.waitForFunction(()=>{
     const el=document.querySelector('input[aria-label="Film playhead"]');
-    return el&&Math.abs(Number(el.value)-8.1)<.1;
+    return el&&Math.abs(Number(el.value)-window.__motionFifthActOffset)<.1;
   },undefined,{timeout:4_000});
   const canvas=page.locator("canvas");
   assert.equal(await canvas.getAttribute("width"),"720");
   assert.equal(await canvas.getAttribute("height"),"1280");
-  const downloadPromise=page.waitForEvent("download",{timeout:60_000});
+  const downloadPromise=page.waitForEvent("download",{timeout:(expectedSeconds+50)*1000});
   await exportButton.click();
   const downloaded=await downloadPromise;
   const filename=downloaded.suggestedFilename();
-  assert.match(filename,/^margaryan-content-studio-labs-10s\.(webm|mp4)$/);
+  assert.match(filename,new RegExp("^margaryan-content-studio-labs-"+expectedSeconds+"s\\.(webm|mp4)$"));
   const path=join(directory,filename);
   await downloaded.saveAs(path);
   const details=await stat(path);
@@ -85,11 +92,11 @@ try{
     .map(x=>Number(x.pts_time)).filter(Number.isFinite);
   assert.ok(times.length>=35,"at least 35 actual encoded video packets");
   const last=Math.max(...times);
-  assert.ok(last>=9&&last<=14,
-    "expected 10s continuous five-act recording; actual last video timestamp "+last);
+  assert.ok(last>=expectedSeconds-1&&last<=expectedSeconds+5,
+    "expected "+expectedSeconds+"s continuous five-act recording; actual last video timestamp "+last);
   assert.deepEqual(issues,[],"preview should have no uncaught browser errors");
   console.log("MOTION CHATGPT E2E PASS",JSON.stringify({
-    chapters:5,expectedSeconds:10,actualLastFrameSeconds:last,
+    chapters:5,expectedSeconds,actualLastFrameSeconds:last,
     width:video.width,height:video.height,codec:video.codec_name,
     fileBytes:details.size,format:filename.split(".").pop()
   }));
