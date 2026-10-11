@@ -1,6 +1,7 @@
 "use client";
 import { useCallback,useEffect,useRef,useState } from "react";
 import type { MotionProject } from "@/lib/motion/studio";
+import { inspectVoiceSignal, type VoiceSignalReview } from "@/lib/motion/voice-quality";
 import { durationOf } from "@/lib/motion/studio";
 import styles from "./voice-booth.module.css";
 
@@ -24,6 +25,9 @@ export default function VoiceBooth({project,busy,onAccept}:Props){
   const [url,setURL]=useState<string|null>(null);
   const [seconds,setSeconds]=useState(0);
   const [level,setLevel]=useState(0);
+  const [quality,setQuality]=useState<VoiceSignalReview|null>(null);
+  const [qualityPending,setQualityPending]=useState(false);
+  const [qualityNote,setQualityNote]=useState("Record or upload a real narration. Silent recordings are not approved.");
   const [monitor,setMonitor]=useState(true);
   const rec=useRef<MediaRecorder|null>(null);
   const stream=useRef<MediaStream|null>(null);
@@ -47,10 +51,30 @@ export default function VoiceBooth({project,busy,onAccept}:Props){
     return()=>{active.current=false;stop();};
   },[stop]);
   useEffect(()=>{
-    if(!clip){setURL(null);return;}
+    if(!clip){setURL(null);setQuality(null);return;}
     const source=URL.createObjectURL(clip);
     setURL(source);
     return()=>URL.revokeObjectURL(source);
+  },[clip]);
+  useEffect(()=>{
+    if(!clip){setQualityPending(false);return;}
+    let activeReview=true;
+    setQualityPending(true);setQuality(null);
+    void (async()=>{
+      if(!window.AudioContext)throw Error("AudioContext unsupported");
+      const ctx=new AudioContext();
+      try{
+        const decoded=await ctx.decodeAudioData(await clip.arrayBuffer());
+        const result=inspectVoiceSignal(decoded);
+        if(activeReview){setQuality(result);setQualityNote(result.notes.length?result.notes.join(" · "):
+          "Voice peaks and average level fall within broad technical ranges. Listen for room echo, noise and diction.");}
+      }finally{await ctx.close().catch(()=>undefined);}
+    })().catch(error=>{
+      if(activeReview){setQuality(null);setQualityNote("Browser cannot measure this recording's audio samples ("+
+        (error instanceof Error?error.message:String(error))+
+        "). Listen manually before attaching; decoding compatibility varies by browser.");}
+    }).finally(()=>{if(activeReview)setQualityPending(false);});
+    return()=>{activeReview=false;};
   },[clip]);
   const duration=durationOf(project);
   const maxRecord=Math.min(120,Math.max(8,Math.ceil(duration)+12));
@@ -127,7 +151,7 @@ export default function VoiceBooth({project,busy,onAccept}:Props){
     }
   };
   const take=()=>{
-    if(!clip||busy)return;
+    if(!clip||busy||qualityPending||quality?.state==="blocked")return;
     onAccept(clip);
     setMessage("Real recorded voice attached to film. Check Voice track timing and listen before final export.");
   };
@@ -156,10 +180,19 @@ export default function VoiceBooth({project,busy,onAccept}:Props){
       {state!=="recording"&&<button disabled={busy} type="button" className={styles.record}
         onClick={()=>void start()}>{state==="review"?"● RECORD NEW TAKE":"● START RECORDING"}</button>}
       {state==="recording"&&<button type="button" className={styles.stop} onClick={()=>stop()}>■ STOP RECORDING</button>}
-      {clip&&state==="review"&&<button type="button" disabled={busy} onClick={take}>✓ ATTACH HUMAN VOICE</button>}
+      {clip&&state==="review"&&<button type="button"
+        disabled={busy||qualityPending||quality?.state==="blocked"} onClick={take}>
+        ✓ ATTACH HUMAN VOICE
+      </button>}
       {clip&&state==="review"&&<button type="button" onClick={saveTake}>↓ SAVE ORIGINAL TAKE</button>}
     </div>
     {url&&state==="review"&&<audio className={styles.audio} src={url} controls preload="metadata" />}
+    {clip&&state==="review"&&<div className={styles.signal} data-state={quality?.state||"unverified"}>
+      <strong>LOCAL AUDIO INSPECTION / {qualityPending?"ANALYSING":quality?.state.toUpperCase()||"MANUAL REVIEW"}</strong>
+      {quality&&<small>PEAK {(quality.peak*100).toFixed(1)}% · RMS {(quality.rms*100).toFixed(1)}%
+        · CLIPPED {quality.clippedPercent.toFixed(2)}% · {quality.duration.toFixed(1)} SEC</small>}
+      <p>{qualityPending?"Reading real microphone samples locally…":qualityNote}</p>
+    </div>}
     <label className={styles.monitor}><input type="checkbox" checked={monitor}
       disabled={state==="recording"} onChange={e=>setMonitor(e.target.checked)}/>
       Show live microphone input meter</label>
