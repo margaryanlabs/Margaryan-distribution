@@ -111,7 +111,10 @@ export default function MotionStudioPage() {
   useEffect(()=>{
     if(!hydrated)return;
     let cancelled=false;
-    const ids=[...new Set(project.scenes.filter(x=>x.kind==="screen"&&x.mediaId).map(x=>x.mediaId!))];
+    const ids=[...new Set(project.scenes.flatMap(x=>[
+      ...(x.kind==="screen"&&x.mediaId?[x.mediaId]:[]),
+      ...(x.overlayMediaId?[x.overlayMediaId]:[])
+    ]))];
     void (async()=>{
       for(const id of ids){
         if(cancelled||getMotionSceneSource(id))continue;
@@ -729,6 +732,16 @@ export default function MotionStudioPage() {
             setSoundEnabled(true);
             setNotice("CREATED FROM ZERO: editable brand storyboard and local original synth soundtrack. No media, API key, neural video generation or fake evidence was required.");
           }}
+          onImageOverlay={async (mediaId,file)=>{
+            const decoded=await registerMotionSceneSource(mediaId,file);
+            if(decoded.type!=="image")throw Error("A separate overlay must be a genuine still image");
+            updateProject({...project,scenes:project.scenes.map((scene,index)=>
+              index===selectedIndex?{...scene,overlayMediaId:mediaId,
+                overlayCorner:"bottom-right",overlayStart:0,
+                overlayDuration:scene.seconds,overlayOpacity:.95,overlaySize:.3}:scene)});
+            setAssetRevision(n=>n+1);setPlaying(false);
+            setNotice("Approved picture-in-picture image attached to shot "+(selectedIndex+1)+". Review size, position and evidence.");
+          }}
           onSceneMedia={async (mediaId,file)=>{
             const loaded=await registerMotionSceneSource(mediaId,file);
             updateProject({...project,scenes:project.scenes.map((scene,index)=>
@@ -1089,6 +1102,40 @@ export default function MotionStudioPage() {
               index===selectedIndex?{...shot,mediaId:undefined,mediaStart:0}:shot)});
           }}>DETACH FROM SHOT</button>
         </div>}
+        <div className={styles.sourceInspector}>
+          <strong>ADVANCED EDIT / INDEPENDENT IMAGE LAYER</strong>
+          <p>Optional second original image, independently positioned above the designed background. Add one in MEDIA LIBRARY. Genuine PNG/JPEG/WebP only.</p>
+          {selected.overlayMediaId&&<>
+            <p>{getMotionSceneSource(selected.overlayMediaId)?.filename||"Overlay source not loaded in this browser"}</p>
+            <label className={styles.field}><span>LAYER POSITION</span>
+              <select value={selected.overlayCorner||"bottom-right"} disabled={exporting}
+                onChange={event=>editScene("overlayCorner",event.target.value)}>
+                <option value="bottom-right">Bottom right</option>
+                <option value="bottom-left">Bottom left</option>
+                <option value="top-right">Top right</option>
+                <option value="top-left">Top left</option>
+              </select>
+            </label>
+            {([
+              ["overlaySize","LAYER SIZE",.16,.48,.01],
+              ["overlayOpacity","LAYER OPACITY",.2,1,.05],
+              ["overlayStart","START IN SHOT / SECONDS",0,Math.max(0,selected.seconds-.25),.05],
+              ["overlayDuration","LAYER DURATION / SECONDS",.25,
+                Math.max(.25,selected.seconds-(selected.overlayStart||0)),.05]
+            ] as Array<[keyof MotionScene,string,number,number,number]>).map(([field,label,min,max,step])=>
+              <label className={styles.field} key={field}>
+                <span>{label} / {Number(selected[field]??0).toFixed(2)}</span>
+                <input type="range" min={min} max={max} step={step} disabled={exporting}
+                  value={Math.max(min,Math.min(max,Number(selected[field]??min)))}
+                  onChange={event=>editScene(field,Number(event.target.value))}/>
+              </label>)}
+            <button type="button" disabled={exporting} onClick={()=>
+              updateProject({...project,scenes:project.scenes.map((shot,index)=>
+                index===selectedIndex?{...shot,overlayMediaId:undefined}:shot)})}>
+              REMOVE SECOND IMAGE LAYER
+            </button>
+          </>}
+        </div>
         <label className={styles.screenUpload}>
           <strong>REAL PRODUCT SCREEN / SOURCE FOOTAGE</strong>
           <span>{hasProductScreen(project.brand)
