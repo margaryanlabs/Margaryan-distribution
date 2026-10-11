@@ -2,6 +2,16 @@ name: Motion ChatGPT Real Video QA
 
 on:
   workflow_dispatch:
+    inputs:
+      runtime_seconds:
+        description: "Film duration to encode and inspect: 10s smoke, 120s, or 300s"
+        required: true
+        default: "10"
+        type: choice
+        options:
+          - "10"
+          - "120"
+          - "300"
   pull_request:
     branches: [main]
     paths:
@@ -22,6 +32,7 @@ jobs:
     env:
       EXECUTION_ENABLED: "false"
       MOTION_E2E_BASE_URL: "http://127.0.0.1:3000"
+      MOTION_E2E_SECONDS: ${{ inputs.runtime_seconds || '10' }}
     steps:
       - name: Checkout reviewed commit
         uses: actions/checkout@v4
