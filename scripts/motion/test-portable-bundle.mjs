@@ -20,6 +20,8 @@ const load=(path,deps={})=>{
         ?["makeMotionPreset","sanitizeMotionProject","durationOf","sceneAt"]
         :path.endsWith("timeline-edit.ts")
           ?["sanitizeAudioEdit","voiceWindow","shotSpans","DEFAULT_AUDIO_EDIT"]
+          :path.endsWith("image-overlay.ts")
+          ?["sanitizeOverlayDirection","overlayIsVisible","overlayEnvelope","overlayGeometry","OVERLAY_CORNERS"]
           :["sanitizeSourceDirection","sourceCrop","sourceStage","sourceZoom","DEFAULT_SOURCE_DIRECTION"];
   return new Function("__deps",js+"\nreturn {"+names.join(",")+"};")(deps);
 };
@@ -44,9 +46,13 @@ await assert.rejects(()=>zip.readMotionZip(new Blob([broken])),/checksum/i);
 
 const timeline=load("lib/motion/timeline-edit.ts");
 const source=load("lib/motion/source-composition.ts");
+const overlay=load("lib/motion/image-overlay.ts");
 const studio=load("lib/motion/studio.ts",{
-  "./timeline-edit":timeline,"./source-composition":source
+  "./timeline-edit":timeline,"./source-composition":source,"./image-overlay":overlay
 });
+assert.equal(overlay.sanitizeOverlayDirection({overlaySize:2},4).overlaySize,.48);
+assert.equal(overlay.overlayIsVisible(overlay.sanitizeOverlayDirection({},4),2),true);
+assert.equal(overlay.overlayIsVisible(overlay.sanitizeOverlayDirection({overlayStart:1,overlayDuration:1},4),.3),false);
 const owned=new Map(),approved=new Set(),deleted=[];
 let serial=0;
 const local={
@@ -75,17 +81,30 @@ const project=studio.sanitizeMotionProject({...original,scenes:[
  {...original.scenes[0],kind:"screen",mediaId:id,mediaStart:1.1,
   sourceLayout:"theater"},...original.scenes.slice(1)
 ],filmChrome:"clean"});
+const overlayId="original-overlay-png-1";
+const overlayBytes="ORIGINAL-OWNER-APPROVED-IMAGE".repeat(60);
+const photo=textFile("approved-real-ui.png",overlayBytes,"image/png");
+owned.set(overlayId,{id:overlayId,name:photo.name,brand:"promptence",role:"image",mime:photo.type,
+ size:photo.size,blob:photo,created:0,approved:true});
+project.scenes[0].overlayMediaId=overlayId;
+project.scenes[0].overlayStart=.4;
+project.scenes[0].overlayDuration=2.0;
+project.scenes[0].overlayCorner="top-left";
 const voice=textFile("human-voice.wav","WAVE-ORIGINAL-DATA".repeat(20),"audio/wav");
 const music=textFile("licensed-score.wav","LICENSED-MUSIC-BYTES".repeat(20),"audio/wav");
 const archive=await bundle.createMotionBundle(project,voice,music);
 const review=await bundle.inspectMotionBundle(archive);
-assert.equal(review.assets,1);assert.equal(review.hasVoice,true);
+assert.equal(review.assets,2);assert.equal(review.hasVoice,true);
 assert.equal(review.hasMusic,true);assert.equal(review.shots,project.scenes.length);
 assert.equal(review.seconds,studio.durationOf(project));
 await assert.rejects(()=>bundle.restoreMotionBundle(archive,false),/Confirm/);
 const restored=await bundle.restoreMotionBundle(archive,true);
-assert.equal(restored.restoredIds.length,1);
+assert.equal(restored.restoredIds.length,2);
 assert.notEqual(restored.project.scenes[0].mediaId,id);
+assert.notEqual(restored.project.scenes[0].overlayMediaId,overlayId);
+assert.equal(restored.project.scenes[0].overlayCorner,"top-left");
+assert.equal(restored.project.scenes[0].overlayDuration,2);
+assert.equal(await owned.get(restored.project.scenes[0].overlayMediaId).blob.text(),overlayBytes);
 assert.equal(restored.project.scenes[0].sourceLayout,"theater");
 assert.equal(restored.project.filmChrome,"clean");
 assert.equal(await restored.voice.text(),await voice.text());
@@ -103,4 +122,4 @@ await assert.rejects(()=>bundle.createMotionBundle(missing,null,null),/approved/
 const bogus=await zip.makeMotionZip([{name:"manifest.json",
  body:new Blob([JSON.stringify({format:bundle.BUNDLE_KIND,version:1,project,assets:[]})])}]);
 await assert.rejects(()=>bundle.inspectMotionBundle(bogus),/Missing project source/);
-console.log("Motion private portable film: ZIP CRC, hard safety limits, genuine video/voice/music roundtrip, explicit consent, asset-id remap and fail-closed missing media PASS");
+console.log("Motion private portable film: ZIP CRC, genuine main-video plus independent image overlay, voice/music, consent, ID remap and missing-media gates PASS");

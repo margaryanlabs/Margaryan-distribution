@@ -28,6 +28,7 @@ type Props={
   onApplyProject:(next:MotionProject,reason:string)=>void;
   onScreenshot:(file:File)=>Promise<void>;
   onSceneMedia:(mediaId:string,file:File)=>Promise<void>;
+  onImageOverlay:(mediaId:string,file:File)=>Promise<void>;
   onVoice:(file:File)=>void;
   onMusic:(file:File)=>void;
   onCreateBlank:()=>void;
@@ -46,7 +47,7 @@ async function copy(value:string){
   await navigator.clipboard.writeText(value);
 }
 export default function OperatorDesk({
-  project,selectedIndex,busy,voiceFile,musicFile,onApplyProject,onScreenshot,onSceneMedia,onVoice,onMusic,onCreateBlank,onOpenQuick
+  project,selectedIndex,busy,voiceFile,musicFile,onApplyProject,onScreenshot,onSceneMedia,onImageOverlay,onVoice,onMusic,onCreateBlank,onOpenQuick
 }:Props){
   const [tab,setTab]=useState<"chat"|"media"|"grade"|"bundle">("chat");
   const [bundleBusy,setBundleBusy]=useState(false);
@@ -132,6 +133,20 @@ export default function OperatorDesk({
       await refresh();
       setTab("media");setNotice(chosen.length+" file(s) saved in this browser only. Review ownership and mark each one APPROVED before using it.");
     }catch(e){setNotice("LOCAL MEDIA: "+(e instanceof Error?e.message:String(e)));}
+    finally{setLoading(false);}
+  };
+  const useOverlay=async(asset:LocalMediaRecord)=>{
+    if(!asset.approved){setNotice("Approve source rights before adding picture-in-picture.");return;}
+    if(!["screenshot","image","logo"].includes(asset.role)){
+      setNotice("Advanced image overlay accepts only original still PNG, JPEG and WebP, not video.");return;
+    }
+    if(busy||loading)return;
+    setLoading(true);
+    try{
+      await onImageOverlay(asset.id,mediaAsFile(asset));
+      setNotice("Independent approved image layer attached to shot "+(selectedIndex+1)+
+        ". Adjust overlay corner, size, opacity and in/out in the Scene Inspector.");
+    }catch(e){setNotice("OVERLAY: "+(e instanceof Error?e.message:String(e)));}
     finally{setLoading(false);}
   };
   const useAsset=async(asset:LocalMediaRecord)=>{
@@ -305,6 +320,10 @@ export default function OperatorDesk({
                 item.role==="voice"?"ATTACH VOICE":item.role==="music"?"ATTACH SCORE":
                 item.role==="video"?"USE AS MOVING VIDEO SHOT":"PREVIEW ONLY"}
             </button>
+            {["screenshot","image","logo"].includes(item.role)&&<button type="button"
+              disabled={loading||busy||!item.approved} onClick={()=>void useOverlay(item)}>
+              + ADD SECOND IMAGE LAYER
+            </button>}
             {item.role==="video"&&<button type="button" disabled={loading||busy||!item.approved}
               onClick={()=>onOpenQuick(item.id)}>OPEN IN QUICK STUDIO</button>}
             <button type="button" disabled={loading||busy} onClick={()=>{void removeLocalMedia(item.id)

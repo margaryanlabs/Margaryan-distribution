@@ -9,7 +9,7 @@ import { makeMotionZip,readMotionZip, type MotionZipEntry } from "./zip-store";
  * GitHub chat channel. Chat Packs stay text-only, excluding actual source bytes.
  */
 export const BUNDLE_KIND="margaryan-motion-portable-v1";
-const MAX_MANIFEST=60_000,MAX_MEDIA=10;
+const MAX_MANIFEST=60_000,MAX_MEDIA=18;
 type TrackRole="source"|"voice"|"music";
 export interface BundleEntry {
   kind:TrackRole;
@@ -58,7 +58,10 @@ function validateManifest(value:unknown,files:Map<string,Blob>):BundleManifest{
   if(project.scenes.some(s=>s.kind==="screen"&&!s.mediaId))
     throw Error("Legacy screen without an approved local asset cannot be restored from this pack");
   const assets=raw.assets as BundleEntry[];
-  const referenced=new Set<string>(project.scenes.filter(s=>s.kind==="screen"&&s.mediaId).map(s=>s.mediaId!));
+  const referenced=new Set<string>(project.scenes.flatMap(s=>[
+    ...(s.kind==="screen"&&s.mediaId?[s.mediaId]:[]),
+    ...(s.overlayMediaId?[s.overlayMediaId]:[])
+  ]));
   const found=new Set<string>(),entries=new Set(["manifest.json"]);
   for(const asset of assets){
     if(!asset||typeof asset!=="object")throw Error("Invalid asset in portable manifest");
@@ -70,6 +73,9 @@ function validateManifest(value:unknown,files:Map<string,Blob>):BundleManifest{
     if(asset.kind==="source"){
       if(found.has(asset.sourceId)||!referenced.has(asset.sourceId))
         throw Error("Unreferenced or duplicate source media: "+asset.name);
+      if(project.scenes.some(s=>s.overlayMediaId===asset.sourceId)&&
+         !["image","screenshot","logo"].includes(asset.role))
+        throw Error("Picture-in-picture overlay must use an original still image");
       found.add(asset.sourceId);
     }
     if(asset.kind!=="source"&&assets.filter(x=>x.kind===asset.kind).length!==1)
@@ -91,16 +97,21 @@ export async function createMotionBundle(
 ):Promise<Blob>{
   const project=sanitizeMotionProject(projectInput);
   const items:BundleEntry[]=[],contents:MotionZipEntry[]=[];
-  const ids=[...new Set(project.scenes.filter(s=>s.kind==="screen"&&s.mediaId).map(s=>s.mediaId!))];
+  const ids=[...new Set(project.scenes.flatMap(s=>[
+    ...(s.kind==="screen"&&s.mediaId?[s.mediaId]:[]),
+    ...(s.overlayMediaId?[s.overlayMediaId]:[])
+  ]))];
   if(project.scenes.some(s=>s.kind==="screen"&&!s.mediaId))
     throw Error("This film has a legacy brand-wide screenshot. Attach it in Media Library to a specific shot first.");
-  if(ids.length>8)throw Error("More than eight local source files");
+  if(ids.length>16)throw Error("More than sixteen local source files");
   for(const id of ids){
     const record=await getLocalMedia(id);
     if(!record||!record.approved||record.brand!==project.brand)
       throw Error("Source "+id+" needs an approved local media file before portable export");
     if(!["screenshot","image","logo","video"].includes(record.role))
       throw Error("Unsupported shot media role");
+    if(project.scenes.some(scene=>scene.overlayMediaId===id)&&record.role==="video")
+      throw Error("The independent image overlay cannot contain video footage");
     const entry:BundleEntry={kind:"source",sourceId:id,name:record.name,mime:record.mime,
       role:record.role,size:record.size,path:"assets/"+id+".bin"};
     checkEntry(entry);items.push(entry);
@@ -158,10 +169,15 @@ export async function restoreMotionBundle(file:Blob,confirmedRights:boolean):Pro
       else music=source;
     }
     const updated=sanitizeMotionProject({...manifest.project,
-      scenes:manifest.project.scenes.map(scene=>
-        scene.mediaId?{...scene,mediaId:remap.get(scene.mediaId)}:scene)});
+      scenes:manifest.project.scenes.map(scene=>({
+        ...scene,
+        mediaId:scene.mediaId?remap.get(scene.mediaId):undefined,
+        overlayMediaId:scene.overlayMediaId?remap.get(scene.overlayMediaId):undefined
+      }))});
     if(updated.scenes.some(scene=>scene.kind==="screen"&&!scene.mediaId))
       throw Error("Asset remapping failed; project was not restored");
+    if(updated.scenes.some((scene,index)=>manifest.project.scenes[index].overlayMediaId&&!scene.overlayMediaId))
+      throw Error("Overlay media remapping failed; project was not restored");
     return{project:updated,voice,music,restoredIds};
   }catch(error){
     await Promise.allSettled(restoredIds.map(id=>removeLocalMedia(id)));

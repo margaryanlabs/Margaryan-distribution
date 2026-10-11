@@ -66,3 +66,14 @@
  .head h3{font-size:21px}
  .ruler>span{font-size:8px}
 }
+
+/* Independent original-image track, not a synthetic video proxy. */
+.overlayTrack{background:linear-gradient(105deg,#151e22,#17251f)}
+.overlayClip{position:absolute;top:18%;height:65%;z-index:2;overflow:hidden;
+ border:1px solid #89cbb0;border-radius:5px;color:#d9ffed;
+ background:linear-gradient(100deg,#2d7858,#173b31);
+ font-size:9px;font-weight:800;letter-spacing:.04em;white-space:nowrap;
+ padding:1px 5px;text-align:left;cursor:pointer;box-shadow:0 2px 6px #0006}
+.overlayClip[data-selected=true]{outline:2px solid #b1ffd5;outline-offset:1px}
+.overlayClip:hover{background:#327d5e}
+@media(max-width:600px){.overlayClip{font-size:8px;padding:2px}}
