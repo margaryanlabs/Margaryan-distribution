@@ -802,3 +802,40 @@
  font-weight:850;min-height:31px;padding:7px 10px;cursor:pointer}
 .inspectorHeaderTools button[aria-pressed="true"]{background:#bdebd1;color:#123124}
 @media(max-width:1210px){.inspectorHeaderTools button{display:none}}
+
+
+/* Output-first production entry bridges real tools with ordinary language.
+ * It never alters the original rendering engine or sells imaginary AI media. */
+.headerRight .headerNewFilm{display:inline-flex;align-items:center;justify-content:center;
+ padding:11px 14px;min-height:42px;border-radius:8px;border:1px solid #b9ebcd;
+ background:#c3f0d5;color:#092516;font-size:10px;font-weight:900;cursor:pointer;
+ letter-spacing:.01em;white-space:nowrap}
+.barUtilities .barNewFilm{border-color:#8abd9c;background:#bfe9ce;color:#10281b;
+ font-size:10px;font-weight:900}
+.quickEntryBar,.filmGuidance{
+ max-width:1760px;margin:11px auto 16px;border-radius:13px;
+ background:linear-gradient(130deg,#19372b,#142824 62%,#101d1d);
+ border:1px solid #5b8069;padding:16px 18px;
+ display:flex;align-items:center;justify-content:space-between;gap:16px
+}
+.quickEntryBar>div{display:grid;gap:7px}
+.quickEntryBar span,.filmGuidance>span{font-size:9px;color:#addac1;
+ font-weight:900;letter-spacing:.08em}
+.quickEntryBar strong{font-size:16px;line-height:1.2;letter-spacing:-.03em;color:#e5faec}
+.quickEntryBar small{font-size:10px;color:#9bb8a6;line-height:1.5}
+.quickEntryBar button,.filmGuidance button{flex:none;border:1px solid #a4d7b7;
+ border-radius:8px;background:#c0ecd0;color:#102619;padding:12px 15px;
+ font-size:10px;font-weight:900;cursor:pointer;min-height:42px}
+.filmGuidance{padding:12px 15px;gap:12px;align-items:center}
+.filmGuidance>span{white-space:nowrap}
+.filmGuidance p{flex:1;min-width:0;font-size:10px;line-height:1.55;color:#bed3c4;margin:0}
+@media(max-width:850px){
+ .quickEntryBar,.filmGuidance{flex-direction:column;align-items:stretch;gap:10px}
+ .quickEntryBar button,.filmGuidance button{width:100%}
+ .headerRight .headerNewFilm{font-size:9px}
+}
+@media(max-width:540px){
+ .quickEntryBar,.filmGuidance{padding:12px}
+ .filmGuidance>span{white-space:normal}
+ .filmGuidance p{font-size:10px}
+}
