@@ -55,9 +55,12 @@ const FEATURE_FILM_OUTPUT_SCHEMA = {
 export const CONTENT_STUDIO_TOOLS = [
   {
     name: "create_motion_film",
+    title: "Create Motion Film",
     description: "Create an editable 1–8 shot motion-graphics video storyboard from scenes authored in ChatGPT. Returns a one-click Motion Studio draft link. The video is rendered/exported in the editor, NOT by this tool. Do not claim photorealistic AI video, generated voice, or completed MP4.",
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-    _meta: { ui: { resourceUri: CONTENT_STUDIO_WIDGET_URI }, "openai/outputTemplate": CONTENT_STUDIO_WIDGET_URI },
+    _meta: { ui: { resourceUri: CONTENT_STUDIO_WIDGET_URI }, "openai/outputTemplate": CONTENT_STUDIO_WIDGET_URI,
+      "openai/toolInvocation/invoking": "Directing your motion film…",
+      "openai/toolInvocation/invoked": "Editable film is ready to inspect" },
     outputSchema: SHORT_FILM_OUTPUT_SCHEMA,
     inputSchema: {
       type: "object",
@@ -95,9 +98,12 @@ export const CONTENT_STUDIO_TOOLS = [
   },
   {
     name: "revise_motion_film",
+    title: "Revise Existing Motion Film",
     description: "Prepare a safe, reviewed patch to an existing Motion Studio film, including editable scene copy and generic labs clientBrand name, caption and accent. Use the exact current project; never auto-publish, attach local media or silently replace another film.",
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
-    _meta: { ui: { resourceUri: CONTENT_STUDIO_WIDGET_URI }, "openai/outputTemplate": CONTENT_STUDIO_WIDGET_URI },
+    _meta: { ui: { resourceUri: CONTENT_STUDIO_WIDGET_URI }, "openai/outputTemplate": CONTENT_STUDIO_WIDGET_URI,
+      "openai/toolInvocation/invoking": "Applying scene revisions…",
+      "openai/toolInvocation/invoked": "Revised storyboard ready for review" },
     outputSchema: SHORT_FILM_OUTPUT_SCHEMA,
     inputSchema: {
       type: "object",
@@ -122,8 +128,13 @@ export const CONTENT_STUDIO_TOOLS = [
   },
   {
     name: "create_motion_feature_film",
+    title: "Create Multi-Chapter Feature Film",
     description: "Create a 65–192 second long-form editorial motion film from 9–24 original scenes authored by ChatGPT. Auto-groups shots into 2–3 independently editable chapters. Returns a client-side URL-fragment Sequence Studio review link (NOT ENCRYPTED; avoid sensitive data), NOT a finished MP4. No OpenAI API, cloud video generation, voice or media uploads.",
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    _meta: {
+      "openai/toolInvocation/invoking": "Planning a multi-chapter motion film…",
+      "openai/toolInvocation/invoked": "Film chapters ready for editor approval"
+    },
     outputSchema: FEATURE_FILM_OUTPUT_SCHEMA,
     inputSchema: {
       type: "object", additionalProperties: false,
