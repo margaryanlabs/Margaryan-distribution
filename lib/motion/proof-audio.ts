@@ -6,12 +6,12 @@
 export interface ProofAudioSession {
   track:MediaStreamTrack;
   duration:number;
+  start:()=>void;
   stop:()=>Promise<void>;
 }
 const MOVIE_SECONDS=10;
 const MAX_VOICE_BYTES=30_000_000;
 const MAX_MUSIC_BYTES=50_000_000;
-const finite=(value:number,min:number,max:number)=>Math.min(max,Math.max(min,value));
 export async function inspectProofAudio(file:File,kind:"voice"|"music"){
   if(!file.type.startsWith("audio/"))throw Error("Select a browser-supported audio file");
   const maximum=kind==="voice"?MAX_VOICE_BYTES:MAX_MUSIC_BYTES;
@@ -61,26 +61,33 @@ export async function createProofAudioSession(
     compressor.attack.value=.006;
     compressor.release.value=.19;
     compressor.connect(destination);
-    const now=context.currentTime+.05;
+    const prepared:Array<{player:AudioBufferSourceNode;volume:GainNode;level:number;kind:"voice"|"music"}>=[];
     streams.forEach(({kind,buffer})=>{
       const player=context.createBufferSource();
       player.buffer=buffer;
       const volume=context.createGain();
       const level=kind==="voice"?.93:(voiceFile?.11:.35);
-      volume.gain.setValueAtTime(0,now);
-      volume.gain.linearRampToValueAtTime(level,now+(kind==="voice"?.035:.22));
-      volume.gain.setValueAtTime(level,now+Math.max(.1,seconds-.52));
-      volume.gain.linearRampToValueAtTime(0,now+seconds);
       player.loop=kind==="music"&&buffer.duration<seconds;
       player.connect(volume);volume.connect(compressor);
-      player.start(now);
-      player.stop(now+seconds+.1);
+      prepared.push({player,volume,level,kind});
       active.push(player);
     });
     const track=destination.stream.getAudioTracks()[0];
     if(!track)throw Error("Browser has no mixable audio track");
-    let closed=false;
-    return {track,duration:seconds,stop:async()=>{
+    let closed=false,started=false;
+    return {track,duration:seconds,start:()=>{
+      if(closed||started)return;
+      started=true;
+      const now=context.currentTime+.015;
+      for(const {player,volume,level,kind} of prepared){
+        volume.gain.setValueAtTime(0,now);
+        volume.gain.linearRampToValueAtTime(level,now+(kind==="voice"?.035:.22));
+        volume.gain.setValueAtTime(level,now+Math.max(.26,seconds-.52));
+        volume.gain.linearRampToValueAtTime(0,now+seconds);
+        player.start(now);
+        player.stop(now+seconds+.1);
+      }
+    },stop:async()=>{
       if(closed)return;
       closed=true;
       for(const node of active)try{node.stop();}catch{}
