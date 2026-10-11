@@ -726,6 +726,20 @@ export default function MotionStudioPage() {
       <a href="#motion-export"><span>04 / DELIVER</span><strong>EXPORT</strong><small>FRAME QC · MP4 MASTER ↗</small></a>
     </nav>
     <div className={styles.notice} role="status">{notice}</div>
+    <LocalFilmVaultPanel
+      project={project}
+      busy={exporting||generating||directorRepairing||visualReviewing}
+      onRestore={saved=>{
+        setPlaying(false);
+        setVoiceover(null);
+        setLicensedMusic(null);
+        updateProject(saved);
+        setSelectedIndex(0);
+        timeRef.current=0;
+        setPlayhead(0);
+        setNotice("LOCAL FILM RESTORED: "+saved.title+". Check approved local media before export.");
+      }}
+    />
     <div id="film-sequence" className={styles.featureWorkspace}>
       <FilmSequenceDesk project={project}
         busy={exporting||generating||directorRepairing||visualReviewing}
