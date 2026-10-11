@@ -71,3 +71,16 @@
  .tabRow button{font-size:8px}
 }
 @media(prefers-reduced-motion:reduce){.shell *{transition:none!important;animation:none!important}}
+
+/* Optional no-agent GitHub-published public film handoff from this chat. */
+.publicChatChannel{padding:14px;margin:2px 0 8px;border:1px solid #598e69;border-radius:10px;
+ background:radial-gradient(ellipse at 100% 0,#4b9b6344,transparent 55%),#132e23;
+ display:grid;gap:10px}
+.publicChatChannel>div{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:space-between}
+.publicChatChannel strong{font-size:11px;color:#b2fad0;letter-spacing:.07em}
+.publicChatChannel small{font-size:9px;color:#a8d1b8;line-height:1.55}
+.publicChatChannel p{margin:0;color:#c6e1d0;font-size:11px;line-height:1.65}
+.publicChatChannel button{width:100%;background:#4ee6a1;color:#082117;border:1px solid #71f8b2;
+ font-size:11px;font-weight:900;padding:12px 9px;border-radius:7px;cursor:pointer}
+.publicChatChannel button:hover:not(:disabled){background:#9efbc4}
+.publicChatChannel button:disabled{opacity:.45;cursor:not-allowed}

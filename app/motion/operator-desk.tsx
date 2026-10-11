@@ -44,6 +44,7 @@ export default function OperatorDesk({
 }:Props){
   const [tab,setTab]=useState<"chat"|"media"|"grade">("chat");
   const [source,setSource]=useState("");
+  const [inboxLoading,setInboxLoading]=useState(false);
   const [preview,setPreview]=useState<ChatOperatorPreview|null>(null);
   const [notice,setNotice]=useState("No API key or autonomous agent. Paste a Motion Chat Pack generated in ChatGPT and approve it.");
   const [undo,setUndo]=useState<MotionProject|null>(null);
@@ -69,6 +70,29 @@ export default function OperatorDesk({
     return()=>URL.revokeObjectURL(url);
   },[selected]);
   useEffect(()=>{setPreview(null);},[source,project]);
+  async function loadPublicChatCut(){
+    if(busy||inboxLoading)return;
+    setInboxLoading(true);setPreview(null);
+    try{
+      // Public static build artifact updated through the connected GitHub
+      // project by ChatGPT's authorized repository edits. No agent/API key
+      // or media file access in the browser. Never use for private projects.
+      const reply=await fetch("/motion/chat-ops/latest-public.json",{
+        method:"GET",cache:"no-store",credentials:"same-origin"
+      });
+      if(!reply.ok)throw Error("No published public Chat cut (HTTP "+reply.status+").");
+      const raw=await reply.text();
+      if(raw.length>100_000)throw Error("Published pack exceeds 100KB limit");
+      const payload=JSON.parse(raw);
+      // Validate *before* adding remote-authored project to the editor.
+      const candidate=previewChatMotionPack(payload,project);
+      setSource(JSON.stringify(payload,null,2));
+      setNotice("NEW PUBLIC CHAT CUT LOADED: "+candidate.next.title+
+        " / "+candidate.next.scenes.length+" shots. Review the JSON, press INSPECT, then approve before applying. This public cut is not an unpublished private draft.");
+    }catch(error){
+      setNotice("PUBLIC CHAT CHANNEL: "+(error instanceof Error?error.message:String(error)));
+    }finally{setInboxLoading(false);}
+  }
   function stagePack(){
     try{
       if(source.length<10||source.length>100_000)throw Error("Motion Chat Pack must be 10–100,000 characters");
@@ -134,6 +158,14 @@ export default function OperatorDesk({
         onClick={()=>setTab(name)}>{name==="chat"?"01 / CHAT PACK":name==="media"?"02 / MEDIA LIBRARY":"03 / VISUAL GRADE"}</button>)}
     </div>
     {tab==="chat"&&<div className={styles.contents}>
+      <div className={styles.publicChatChannel}>
+        <div><strong>CHATGPT → GITHUB → MOTION</strong><small>PUBLIC FILM CHANNEL / NO EXTRA AGENT</small></div>
+        <p>Ask me in ChatGPT to publish an approved, public-facing brand storyboard. I can commit its JSON to this repository with your connected GitHub access. Motion then loads that cut from its own website — no manual JSON copying required. Always inspect and approve before applying.</p>
+        <button type="button" onClick={()=>void loadPublicChatCut()} disabled={busy||inboxLoading}>
+          {inboxLoading?"READING PUBLIC CHAT CUT…":"↓ LOAD LATEST PUBLIC CHAT CUT"}
+        </button>
+        <small>Never publish private scripts, client metrics, credentials or original media here. The JSON is served publicly; source files stay in your browser.</small>
+      </div>
       <div className={styles.actionGrid}>
         <button type="button" disabled={busy} onClick={onCreateBlank}>◈ BUILD WITHOUT MATERIALS</button>
         <button type="button" onClick={()=>{void copy(JSON.stringify(createChatMotionPack(project),null,2))
@@ -145,7 +177,7 @@ export default function OperatorDesk({
         }),null,2)).then(()=>setNotice("Scene-specific patch template copied. Ask ChatGPT to modify its set fields."))
           .catch(e=>setNotice(String(e)));}}>COPY SHOT PATCH TEMPLATE</button>
       </div>
-      <p className={styles.hint}>Paste the current Chat Pack in ChatGPT with your instructions. I return either a complete <code>create</code> film or a targeted <code>patch</code>. No API calls or agent. Paste the result below. Media files cannot travel inside JSON.</p>
+      <p className={styles.hint}>For private edits, paste the current Chat Pack in ChatGPT with your instructions. I return either a complete <code>create</code> film or a targeted <code>patch</code>. No API calls or agent. Paste the result below. Media files cannot travel inside JSON.</p>
       <label className={styles.label}>PASTE MOTION CHAT PACK / JSON
         <textarea spellCheck={false} rows={7} value={source}
           onChange={e=>setSource(e.target.value)}
