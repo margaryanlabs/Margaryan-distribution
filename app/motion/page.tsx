@@ -25,6 +25,7 @@ import { ensureSpatialRenderer, spatialStatus, spatialError } from "@/lib/motion
 import { createKeylessStoryboard, getLocalDirectorExamples, type MotionLanguage, type MotionStyle } from "@/lib/motion/director";
 import QuickStudio from "./quick-studio";
 import MultitrackEditor from "./multitrack-editor";
+import OperatorDesk from "./operator-desk";
 import styles from "./motion.module.css";
 
 const STORAGE_KEY = "margaryan-motion-studio-v1";
@@ -656,6 +657,31 @@ export default function MotionStudioPage() {
 
     <div className={styles.workspace}>
       <section className={styles.sidebar} aria-label="Creative director controls">
+        <OperatorDesk project={project} selectedIndex={selectedIndex}
+          busy={exporting||generating||directorRepairing||visualReviewing}
+          onApplyProject={(next,reason)=>{
+            setPlaying(false);updateProject(next);setSelectedIndex(0);jump(0);
+            setNotice(reason+". Changes are local and editable; approved materials stay on this device.");
+          }}
+          onCreateBlank={()=>{
+            const draft=project.brand==="promptence"
+              ?createPromptenceProductStory(project.language||"ru",project.format)
+              :makeMotionPreset(project.brand,project.format);
+            setPlaying(false);setSelectedIndex(0);jump(0);setProject(draft);
+            setSoundEnabled(true);
+            setNotice("CREATED FROM ZERO: editable brand storyboard and local original synth soundtrack. No media, API key, neural video generation or fake evidence was required.");
+          }}
+          onScreenshot={async file=>{
+            await setLocalProductScreen(project.brand,file);
+            setAssetRevision(value=>value+1);
+            updateProject({...project,scenes:project.scenes.map((scene,index)=>
+              index===selectedIndex?{...scene,kind:"screen",productBeat:undefined}:scene)});
+            setNotice("Approved source image assigned to shot "+(selectedIndex+1)+
+              ". Check visual crop. Local file is not contained in JSON or portable to another device.");
+          }}
+          onVoice={file=>{setVoiceover(file);setNotice("Local recorded voice attached; review narration placement in Edit Suite.");}}
+          onMusic={file=>{setLicensedMusic(file);setNotice("Local licensed music attached; review volume and fades.");}}
+        />
         <div className={styles.sectionHeader}><span>01 / CREATIVE BRIEF</span><strong>LOCAL DIRECTOR</strong></div>
         <label className={styles.field}><span>PRODUCT / BRAND</span>
           <select value={project.brand} onChange={event => loadBrand(event.target.value as MotionBrand)}>
