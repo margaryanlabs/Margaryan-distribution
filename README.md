@@ -222,3 +222,9 @@ npm run dev
 External side effects are disabled by default with `EXECUTION_ENABLED=false`.
 
 Realtime voice runs separately in `voice-gateway` because Twilio Media Streams use a long-lived WebSocket connection.
+
+## Motion PRO / Film Sequence Studio
+
+Motion Cinematic Studio now includes a chapter-based feature-film workspace: up to eight independently editable 1–8-shot chapters (up to 512 seconds total). Save/load/review chapters in the browser, export a portable film sequence JSON, and render a genuine H.264 MP4 locally by reusing the existing source-honest Chromium/FFmpeg Motion Master per chapter. No OpenAI API key, fabricated source clips or server-only GPU service.
+
+See [Film Sequence Studio workflow and workstation QA](docs/MOTION_PRO_FILM_SEQUENCE.md). Contract/dry-run test: `npm run motion:test-sequence`; operator render: `npm run motion:sequence -- film.motion-sequence.json ./out/film.mp4`.
