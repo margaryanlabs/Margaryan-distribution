@@ -24,6 +24,7 @@ type Props={
   onVoice:(file:File)=>void;
   onMusic:(file:File)=>void;
   onCreateBlank:()=>void;
+  onOpenQuick:(assetId:string)=>void;
 };
 const ROLES:MediaRole[]=["screenshot","image","logo","video","voice","music","sfx"];
 const fmt=(n:number)=>n>1e6?(n/1e6).toFixed(1)+"MB":Math.round(n/1000)+"KB";
@@ -38,7 +39,7 @@ async function copy(value:string){
   await navigator.clipboard.writeText(value);
 }
 export default function OperatorDesk({
-  project,selectedIndex,busy,onApplyProject,onScreenshot,onVoice,onMusic,onCreateBlank
+  project,selectedIndex,busy,onApplyProject,onScreenshot,onVoice,onMusic,onCreateBlank,onOpenQuick
 }:Props){
   const [tab,setTab]=useState<"chat"|"media"|"grade">("chat");
   const [source,setSource]=useState("");
@@ -111,10 +112,11 @@ export default function OperatorDesk({
         onVoice(file);setNotice("Recorded voice attached to current film. Check length and start offset in the timeline.");
       }else if(asset.role==="music"){
         onMusic(file);setNotice("Licensed score attached. Listen to final audio mix before publishing.");
+      }else if(asset.role==="video"){
+        onOpenQuick(asset.id);
+        setNotice("Approved video handed off locally to Quick Studio. Motion OS will attach genuine source frames to its first shot.");
       }else{
-        setNotice(asset.role==="video"
-          ?"Video remains available for local preview. Use QUICK STUDIO or PROOF DIRECTOR for true moving footage; Cinematic cannot yet map this video directly to a shot."
-          :"Sound effects are stored for review; a dedicated sound-effects track is not connected yet.");
+        setNotice("Sound effects are stored for review; a dedicated sound-effects track is not connected yet.");
       }
     }catch(e){setNotice(e instanceof Error?e.message:String(e));}
     finally{setLoading(false);}
@@ -214,7 +216,8 @@ export default function OperatorDesk({
           <div className={styles.buttons}>
             <button type="button" disabled={loading||busy||!item.approved} onClick={()=>void useAsset(item)}>
               {["screenshot","image","logo"].includes(item.role)?"USE AS SOURCE SCREEN":
-                item.role==="voice"?"ATTACH VOICE":item.role==="music"?"ATTACH SCORE":"PREVIEW ONLY"}
+                item.role==="voice"?"ATTACH VOICE":item.role==="music"?"ATTACH SCORE":
+                item.role==="video"?"OPEN IN QUICK STUDIO ↗":"PREVIEW ONLY"}
             </button>
             <button type="button" disabled={loading||busy} onClick={()=>{void removeLocalMedia(item.id)
               .then(()=>{setSelectedAsset(null);return refresh();})
@@ -222,7 +225,7 @@ export default function OperatorDesk({
           </div>
         </div>}
       </article>)}</div>}
-      <p className={styles.hint}>For real <b>moving video</b>, use Quick Studio or Proof Director. Cinematic Studio currently accepts a real still image per brand and voice/music tracks; it does not silently pretend a stored MP4 is part of its output.</p>
+      <p className={styles.hint}>Approved moving video can be handed off directly to the <b>first Quick Studio shot</b>. Cinematic Studio still accepts a real still image per brand and voice/music tracks; it does not silently pretend a stored MP4 is part of its output.</p>
     </div>}
     {tab==="grade"&&<div className={styles.contents}>
       <p className={styles.hint}>Film-wide controls modify rendered Canvas frames and saved project JSON. Start with restrained changes. They work on legacy scenes too.</p>
