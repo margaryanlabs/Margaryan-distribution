@@ -5,7 +5,7 @@ import type {MotionProject} from "./studio";
  * No media pretending, no remote URLs, no licensed/microphone audio.
  * The Chromium/FFmpeg workstation Master supports real source media.
  */
-export const MAX_BROWSER_FILM_SECONDS=192;
+export const MAX_BROWSER_FILM_SECONDS=300;
 export type BrowserSegment={project:MotionProject;start:number;end:number};
 export type BrowserSequencePlan={
   brand:MotionProject["brand"];
@@ -30,6 +30,7 @@ export function planBrowserFeature(projects:MotionProject[]):BrowserSequencePlan
       throw Error("Signature-film art needs the full workstation Master");
     let chapterSeconds=0;
     for(const shot of project.scenes){
+      if(shot.kind==="spatial")throw Error("Real GPU spatial scenes require the workstation Master for guaranteed frames");
       if(shot.kind==="screen"||shot.mediaId||shot.overlayMediaId)
         throw Error("Real source footage/image overlay needs the workstation Master with approved files");
       if(!Number.isFinite(shot.seconds)||shot.seconds<2||shot.seconds>8)
@@ -41,6 +42,6 @@ export function planBrowserFeature(projects:MotionProject[]):BrowserSequencePlan
     duration+=chapterSeconds;
   }
   if(duration>MAX_BROWSER_FILM_SECONDS+.01)
-    throw Error("Browser export is limited to 192s. Use the workstation Master for longer films");
+    throw Error("Browser export is limited to 300s. Use the workstation Master for longer films");
   return {segments,total:Number(duration.toFixed(3)),brand,format};
 }
