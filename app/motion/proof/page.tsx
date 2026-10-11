@@ -244,6 +244,9 @@ export default function ProofDirectorPage(){
         await sourceRef.current.play();
       }
       recorder.start(250);
+      // Start audio only after the source video is ready and the recorder
+      // actually starts. Creating it earlier caused unwanted leading silence.
+      mixedAudio?.start();
       raf=requestAnimationFrame(frame);
       await finished.finally(()=>cancelAnimationFrame(raf));
       if(sourceRef.current instanceof HTMLVideoElement)sourceRef.current.pause();
