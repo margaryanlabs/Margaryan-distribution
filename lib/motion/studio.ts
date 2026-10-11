@@ -87,6 +87,8 @@ export interface MotionProject {
   version: 1;
   title: string;
   brand: MotionBrand;
+  /** User-authored textual brand identity, no logo files or remote fetches. Used only with labs template. */
+  clientBrand?: { name: string; caption: string; accent: string };
   format: MotionFormat;
   style?: "cinematic" | "kinetic" | "technical";
   qualityMode?: MotionQualityMode;
@@ -116,6 +118,32 @@ export const BRAND_INFO: Record<MotionBrand, { name: string; accent: string; sof
   hay_engine: { name: "HAY ENGINE", accent: "#D9FF63", soft: "#F4F5F6", caption: "ARMENIAN-FIRST LANGUAGE & CREATOR OS" },
   reality_engine: { name: "REALITY ENGINE", accent: "#91A8BC", soft: "#DDE9F3", caption: "SCENARIO-BASED DECISION INTELLIGENCE" }
 };
+
+/**
+ * Local-only brand-kit: no remote logos, user files, billing or unsafe CSS
+ * values. Restrict white-label to "labs" so official product brands cannot
+ * be spoofed or silently overwritten by a customer plugin request.
+ */
+function cleanClientIdentity(input: unknown) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return undefined;
+  const src = input as Record<string, unknown>;
+  const safe = (value:unknown,max:number)=>
+    (typeof value==="string"?value:"").replace(/[\u0000-\u001f\u007f]/gu,"").trim().slice(0,max);
+  const name=safe(src.name,36);
+  if (!name) return undefined;
+  const caption=safe(src.caption,65);
+  const raw=typeof src.accent==="string"?src.accent.trim():"";
+  const accent=/^#[0-9a-fA-F]{6}$/.test(raw)?raw.toUpperCase():"#C4D9F4";
+  // High visibility over Motion's dark cinema backgrounds.
+  const channels=[1,3,5].map(i=>parseInt(accent.slice(i,i+2),16));
+  const perceived=(channels[0]*.2126+channels[1]*.7152+channels[2]*.0722)/255;
+  return {name,caption,accent:perceived<.35?"#C4D9F4":accent};
+}
+export function clientBrandInfo(project: MotionProject) {
+  const base=BRAND_INFO[project.brand];
+  const custom=project.brand==="labs"?cleanClientIdentity(project.clientBrand):undefined;
+  return custom?{...base,name:custom.name,caption:custom.caption||base.caption,accent:custom.accent}:base;
+}
 
 export const FORMAT_SIZE: Record<MotionFormat, { width: number; height: number }> = {
   portrait: { width: 1080, height: 1920 },
@@ -303,7 +331,8 @@ export function sanitizeMotionProject(input: unknown): MotionProject {
   const filmChrome:MotionFilmChrome=["clean","brand","editor"].includes(String(obj.filmChrome))
     ?obj.filmChrome as MotionFilmChrome:"brand";
   const signatureFilm = brand === "promptence" && obj.signatureFilm === "promptence-answer" ? "promptence-answer" as const : undefined;
-  return { version: 1, title: clean(obj.title, 100) || "UNTITLED MOTION", brand, format, style, seed, scenes, language, signatureFilm, qualityMode, filmChrome, visual, audio: sanitizeAudioEdit(obj.audio) };
+  const clientBrand=brand==="labs"?cleanClientIdentity(obj.clientBrand):undefined;
+  return { version: 1, title: clean(obj.title, 100) || "UNTITLED MOTION", brand, clientBrand, format, style, seed, scenes, language, signatureFilm, qualityMode, filmChrome, visual, audio: sanitizeAudioEdit(obj.audio) };
 }
 
 export function durationOf(project: MotionProject) {
