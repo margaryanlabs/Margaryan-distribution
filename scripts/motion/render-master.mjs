@@ -132,7 +132,7 @@ try {
         "-show_entries","stream=width,height","-of","json",resolve(sourceMap[scene.mediaId])]);
       if(info.status!==0)throw Error("RELEASE BLOCKED: cannot probe original source geometry.");
       const actual=JSON.parse(info.stdout).streams?.[0];
-      const W=dims[0],H=dims[1],layout=scene.sourceLayout||"card";
+      const W=1080,H=1080*dims[1]/dims[0],layout=scene.sourceLayout||"card";
       const landscape=H<810,square=H>=810&&H<1250;
       let sw=W,sh=H;
       if(layout==="theater"){sw=W*(landscape?.46:.82);sh=H*(landscape?.78:square?.31:.25);}
