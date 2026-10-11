@@ -35,7 +35,7 @@ export const TARGETS=Object.freeze({
 const fail=s=>{throw Error("INTERACTION BLOCKED: "+s);};
 export function validatePlan(plan=PLAN){
  if(!Array.isArray(plan)||!plan.length||plan.length>20)fail("invalid shot plan");
- let total=0; const seen=new Set();
+ let total=0,frameTotal=0; const seen=new Set();
  for(const step of plan){
   if(!step||typeof step.id!=="string"||seen.has(step.id))fail("duplicate or invalid action ID");
   seen.add(step.id);
@@ -49,10 +49,10 @@ export function validatePlan(plan=PLAN){
       /[\r\n\t]/.test(step.text))fail("unapproved input");
   }
   if(step.kind==="click"&&!["anchor","button"].includes(target.kind))fail("unsafe click target");
-  total+=step.seconds;
+  total+=step.seconds;frameTotal+=Math.round(step.seconds*FPS);
  }
  if(total>64||total<8)fail("film duration outside Motion bounds");
- return {actions:plan.length,duration:Number(total.toFixed(3)),fps:FPS,frames:Math.round(total*FPS)};
+ return {actions:plan.length,duration:Number((frameTotal/FPS).toFixed(3)),fps:FPS,frames:frameTotal};
 }
 export function assertSafeClick(target,observation){
  if(!target||target.kind==="input"||target.kind==="heading")fail("not a clickable read-only control");
