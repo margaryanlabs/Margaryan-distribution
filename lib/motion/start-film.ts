@@ -44,7 +44,7 @@ export function checkStudioFilmChoice(raw:StudioFilmChoice):StudioFilmChoice{
   if(!["portrait","landscape","square"].includes(raw.format))throw Error("Выберите формат видео");
   if(!["ru","en","hy"].includes(raw.language))throw Error("Выберите язык ролика");
   if(typeof raw.brief!=="string")throw Error("Опишите будущий фильм");
-  const brief=raw.brief.replace(/[\u0000-\u001F\u007F]/g," ").trim().slice(0,650);
+  const brief=raw.brief.replace(/[\u0000-\u001F\u007F]/g," ").replace(/\s+/g," ").trim().slice(0,650);
   return {...raw,brief};
 }
 /** Brand-safe, editable storyboard — no synthesized footage, AI-provider
