@@ -26,7 +26,8 @@
     "motion:feature": "node scripts/motion/create-feature-film.mjs",
     "motion:proof": "node scripts/motion/render-proof.mjs",
     "motion:test-proof": "node scripts/motion/test-proof.mjs",
-    "motion:capture-video": "node scripts/motion/capture-promptence-video.mjs"
+    "motion:capture-video": "node scripts/motion/capture-promptence-video.mjs",
+    "motion:test-proof-audio": "node scripts/motion/test-proof-audio.mjs"
   },
   "dependencies": {
     "next": "16.3.3",
