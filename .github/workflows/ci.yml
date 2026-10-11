@@ -17,6 +17,8 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Motion Chat Operator / create, patch and visual-asset safety
+        run: npm run motion:test-chat
       - name: Motion editorial story / RU EN HY / cinematic transitions
         run: npm run motion:test-editorial
       - name: Motion Production Desk schema and cue contract

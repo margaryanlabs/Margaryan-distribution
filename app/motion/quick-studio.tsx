@@ -9,6 +9,7 @@ import {
   type QuickLanguage, type QuickProject
 } from "@/lib/motion/quick-project";
 import { drawQuickFrame, quickSourceStatus, type QuickMediaAsset } from "@/lib/motion/quick-render";
+import { getLocalMedia, mediaAsFile } from "@/lib/motion/local-media";
 import styles from "./quick-studio.module.css";
 
 const KEY="margaryan-motion-quick-project-v1";
@@ -99,6 +100,35 @@ export default function QuickStudio() {
     catch{setNotice("Browser storage could not save the storyboard; export project JSON.");}
     void preloadMotionLogo(project.brand).then(()=>setAssetsRevision(n=>n+1));
   },[project,loaded]);
+  // Explicit one-shot handoff of an approved local video from the Cinematic
+  // Media Library. No upload, hidden cross-origin fetch or autonomous import.
+  useEffect(()=>{
+    if(!loaded)return;
+    const key="motion-quick-pending-asset-v1";
+    const id=window.localStorage.getItem(key);
+    if(!id)return;
+    window.localStorage.removeItem(key);
+    let active=true;
+    void (async()=>{
+      const record=await getLocalMedia(id);
+      if(!record||!record.approved||record.role!=="video")throw Error("The selected video was removed or has not been approved.");
+      const decoded=await mediaFromFile(mediaAsFile(record));
+      if(!active){cleanMedia(decoded);return;}
+      const current=projectRef.current;
+      const next=current.brand===record.brand?current:
+        createQuickProject(record.brand,current.language,current.format);
+      pauseVideos();
+      assets.current.forEach(cleanMedia);assets.current.clear();
+      projectRef.current=next;setProject(next);
+      setSelected(0);currentFrame.current=0;setPosition(0);
+      assets.current.set(next.shots[0].id,decoded);
+      setAssetsRevision(n=>n+1);
+      setNotice("Approved video loaded from your local Media Library into Shot 01: "+record.name+
+        ". Verify the actual source frames; other shots still need their own approved media.");
+    })().catch(e=>{if(active)setNotice("MEDIA HANDOFF: "+(e instanceof Error?e.message:String(e)));});
+    return()=>{active=false;};
+  },[loaded]);
+
   useEffect(()=>{
     document.fonts.load('800 30px "Noto Sans Armenian"',"ՀԱՅԵՐԵՆ")
       .then(found=>setFontLoaded(found.length>0)).catch(()=>setFontLoaded(false));
