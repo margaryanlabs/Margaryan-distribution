@@ -2,6 +2,7 @@
 
 import {useCallback,useEffect,useRef,useState} from "react";
 import {drawProofFrame,PROOF_SECONDS,type ProofMedia} from "@/lib/motion/proof-film";
+import {PROOF_DEFAULT_EDL,sanitizeProofEDL,proofSourceTime,reviewProofEDL,proofEDLFile,parseProofEDLFile,type ProofEditDecision} from "@/lib/motion/proof-edl";
 import {getLoadedMotionLogo,preloadMotionLogo} from "@/lib/motion/brand-assets";
 import {createProofAudioSession,inspectProofAudio} from "@/lib/motion/proof-audio";
 import styles from "./proof.module.css";
@@ -10,6 +11,8 @@ type ProofBridge = Window & {
   __motionProofFrame?: (time:number)=>Promise<string>;
   __motionProofReady?: boolean;
   __motionProofSource?: "image" | "video";
+  __motionProofConfigure?: (changes:Partial<ProofEditDecision>)=>ProofEditDecision;
+  __motionProofReview?: ()=>ReturnType<typeof reviewProofEDL>;
 };
 const IMAGE_TYPES=new Set(["image/png","image/jpeg","image/webp"]);
 const VIDEO_TYPES=new Set(["video/mp4","video/webm"]);
@@ -17,10 +20,10 @@ const VIDEO_TYPES=new Set(["video/mp4","video/webm"]);
 /** Seek the actual browser-decoded video frame for its exact film time.
  * Called before deterministic offline frame export and during timeline scrubbing.
  * Browser preview during playback uses direct video.play for smooth decode. */
-async function seekSourceFrame(media:ProofMedia,seconds:number,force=false):Promise<void>{
+async function seekSourceFrame(media:ProofMedia,seconds:number,force=false,edl:ProofEditDecision=PROOF_DEFAULT_EDL):Promise<void>{
   if(!(media instanceof HTMLVideoElement)||(seconds>=7.55&&!force))return;
   const end=Math.max(.01,media.duration-.11);
-  const target=Math.min(Math.max(0,seconds),end);
+  const target=Math.min(proofSourceTime(seconds,media.duration,edl),end);
   if(media.readyState>=2&&Math.abs(media.currentTime-target)<.006)return;
   await new Promise<void>((resolve,reject)=>{
     let finished=false;
@@ -57,6 +60,9 @@ export default function ProofDirectorPage(){
   const [seconds,setSeconds]=useState(0);
   const [playing,setPlaying]=useState(false);
   const [showRaw,setShowRaw]=useState(false);
+  const [edit,setEdit]=useState<ProofEditDecision>(PROOF_DEFAULT_EDL);
+  const editRef=useRef<ProofEditDecision>(PROOF_DEFAULT_EDL);
+  const [sourceDuration,setSourceDuration]=useState(8);
   const [exporting,setExporting]=useState(false);
   const [notice,setNotice]=useState("Upload a real, approved Promptence screenshot. Only actual screenshot pixels will enter the movie.");
   const canvas=useRef<HTMLCanvasElement>(null);
@@ -114,9 +120,17 @@ export default function ProofDirectorPage(){
         const scale=Math.min(target.width/sw,target.height/sh);
         const w=sw*scale,h=sh*scale;
         if(w>0&&h>0)ctx.drawImage(src,(target.width-w)/2,(target.height-h)/2,w,h);
-      } else drawProofFrame(ctx,src,logoRef.current,at,target.width,target.height);
+      } else drawProofFrame(ctx,src,logoRef.current,at,target.width,target.height,editRef.current);
     }
   },[showRaw]);
+  function changeEDL(changes:Partial<ProofEditDecision>){
+    const video=sourceRef.current;
+    const next=sanitizeProofEDL({...editRef.current,...changes},video instanceof HTMLVideoElement?video.duration:8);
+    editRef.current=next;setEdit(next);
+    if(video instanceof HTMLVideoElement)void seekSourceFrame(video,latestSeconds.current,showRaw,next).then(()=>paint(latestSeconds.current)).catch(err=>setNotice(String(err)));
+    else paint(latestSeconds.current);
+    return next;
+  }
   useEffect(()=>{
     sourceRef.current=source;
     paint(latestSeconds.current);
@@ -127,23 +141,25 @@ export default function ProofDirectorPage(){
     const host=window as ProofBridge;
     host.__motionProofReady=Boolean(source);
     host.__motionProofSource=source instanceof HTMLVideoElement?"video":"image";
+    host.__motionProofConfigure=(changes)=>changeEDL(changes);
+    host.__motionProofReview=()=>reviewProofEDL(sourceRef.current instanceof HTMLVideoElement?sourceRef.current.duration:8,editRef.current);
     host.__motionProofFrame=async time=>{
       const src=sourceRef.current;
       if(!src)throw new Error("SOURCE GATE: approved screenshot missing");
       const frame=makeCanvas(1080,1920);
       const ctx=frame.getContext("2d",{alpha:false});
       if(!ctx)throw new Error("Canvas unavailable");
-      await seekSourceFrame(src,time);
-      drawProofFrame(ctx,src,logoRef.current,time,1080,1920);
+      await seekSourceFrame(src,time,false,editRef.current);
+      drawProofFrame(ctx,src,logoRef.current,time,1080,1920,editRef.current);
       return frame.toDataURL("image/png").split(",")[1];
     };
-    return()=>{delete host.__motionProofFrame;delete host.__motionProofReady;delete host.__motionProofSource;};
+    return()=>{delete host.__motionProofFrame;delete host.__motionProofReady;delete host.__motionProofSource;delete host.__motionProofConfigure;delete host.__motionProofReview;};
   },[source]);
   useEffect(()=>{
     if(!playing||!source)return;
     let active=true;
     if(source instanceof HTMLVideoElement){
-      source.currentTime=Math.min(latestSeconds.current,Math.max(0,source.duration-.11));
+      source.currentTime=proofSourceTime(latestSeconds.current,source.duration,editRef.current);
       void source.play().catch(()=>setNotice("Unable to play local clip; try pressing Play again."));
     }
     playingFrom.current=performance.now();
@@ -154,6 +170,10 @@ export default function ProofDirectorPage(){
       if(p>=PROOF_SECONDS){
         latestSeconds.current=PROOF_SECONDS;setSeconds(PROOF_SECONDS);
         paint(PROOF_SECONDS);setPlaying(false);return;
+      }
+      if(source instanceof HTMLVideoElement&&p<7.55){
+        const desired=proofSourceTime(p,source.duration,editRef.current);
+        if(Math.abs(source.currentTime-desired)>.35)source.currentTime=desired;
       }
       latestSeconds.current=p;setSeconds(p);paint(p);
       previewFrame.current=requestAnimationFrame(tick);
@@ -198,6 +218,10 @@ export default function ProofDirectorPage(){
       const old=localVideoUrl.current;localVideoUrl.current=keepUrl?url:null;
       if(old)URL.revokeObjectURL(old);
       sourceRef.current=decoded;setSource(decoded);setSourceName(file.name);
+      const length=decoded instanceof HTMLVideoElement?decoded.duration:8;
+      setSourceDuration(length);
+      const options=sanitizeProofEDL({...PROOF_DEFAULT_EDL,secondIn:Math.max(0,Math.min(length-2,Math.floor(length*.5)))},length);
+      editRef.current=options;setEdit(options);
       latestSeconds.current=0;setSeconds(0);
       setNotice(isVideo?"REAL VIDEO loaded locally. Timeline uses actual decoded frames; no synthetic UI or customer results.":"Real screenshot loaded. Verify provenance and remove sensitive information.");
     }catch(err){setNotice("Source rejected: "+(err instanceof Error?err.message:String(err)));}
@@ -206,7 +230,27 @@ export default function ProofDirectorPage(){
   function seek(t:number){
     setPlaying(false);latestSeconds.current=t;setSeconds(t);
     const src=sourceRef.current;
-    if(src)void seekSourceFrame(src,t,showRaw).then(()=>paint(t)).catch(err=>setNotice(String(err)));
+    if(src)void seekSourceFrame(src,t,showRaw,editRef.current).then(()=>paint(t)).catch(err=>setNotice(String(err)));
+  }
+  function saveFilmEDL(){
+    const payload=JSON.stringify(proofEDLFile(editRef.current),null,2)+"\n";
+    const url=URL.createObjectURL(new Blob([payload],{type:"application/json"}));
+    const anchor=document.createElement("a");
+    anchor.href=url;anchor.download="promptence-proof-10s-director.motion.json";
+    document.body.appendChild(anchor);anchor.click();anchor.remove();
+    window.setTimeout(()=>URL.revokeObjectURL(url),30_000);
+    setNotice("Film edit decisions exported. Attach the same video recording to the offline master. The JSON contains no source media, accounts or private data.");
+  }
+  async function loadFilmEDL(e:React.ChangeEvent<HTMLInputElement>){
+    const file=e.target.files?.[0];
+    if(!file)return;
+    try{
+      if(file.size>10_000)throw Error("EDL file cannot exceed 10 KB");
+      const parsed=parseProofEDLFile(JSON.parse(await file.text()));
+      changeEDL(parsed);
+      setNotice("Source edit decisions restored. Review both real takes before exporting.");
+    }catch(error){setNotice("EDL rejected: "+(error instanceof Error?error.message:String(error)));}
+    e.target.value="";
   }
   async function exportContactSheet(){
     const source=sourceRef.current;
@@ -223,8 +267,8 @@ export default function ProofDirectorPage(){
       if(!board)throw Error("Cannot create review grid");
       board.fillStyle="#09130F";board.fillRect(0,0,sheet.width,sheet.height);
       for(const [i,time] of shots.entries()){
-        await seekSourceFrame(source,time);
-        drawProofFrame(ctx,source,logoRef.current,time,270,480);
+        await seekSourceFrame(source,time,false,editRef.current);
+        drawProofFrame(ctx,source,logoRef.current,time,270,480,editRef.current);
         const x=(i%3)*270,y=Math.floor(i/3)*520;
         board.drawImage(tile,x,y);
         board.fillStyle="#0C2018";board.fillRect(x,y+480,270,40);
@@ -252,6 +296,11 @@ export default function ProofDirectorPage(){
   }
   async function exportPreview(){
     if(!sourceRef.current||exportingRef.current)return;
+    const input=sourceRef.current;
+    if(input instanceof HTMLVideoElement){
+      const result=reviewProofEDL(input.duration,editRef.current);
+      if(!result.pass){setNotice("SOURCE FOOTAGE GATE: "+result.problems.join(" "));return;}
+    }
     const temp=makeCanvas(540,960);
     const ctx=temp.getContext("2d",{alpha:false});
     if(!ctx){setNotice("Review canvas unavailable");return;}
@@ -277,12 +326,17 @@ export default function ProofDirectorPage(){
         if(stopped)return;
         if(!start)start=now;
         const t=Math.min(PROOF_SECONDS,(now-start)/1000);
-        drawProofFrame(ctx,sourceRef.current!,logoRef.current,t,temp.width,temp.height);
+        const clip=sourceRef.current;
+        if(clip instanceof HTMLVideoElement&&t<7.55){
+          const wanted=proofSourceTime(t,clip.duration,editRef.current);
+          if(Math.abs(clip.currentTime-wanted)>.3)clip.currentTime=wanted;
+        }
+        drawProofFrame(ctx,sourceRef.current!,logoRef.current,t,temp.width,temp.height,editRef.current);
         if(t>=PROOF_SECONDS){stopped=true;recorder.stop();}
         else raf=requestAnimationFrame(frame);
       };
       if(sourceRef.current instanceof HTMLVideoElement){
-        sourceRef.current.currentTime=0;
+        sourceRef.current.currentTime=proofSourceTime(0,sourceRef.current.duration,editRef.current);
         await sourceRef.current.play();
       }
       recorder.start(250);
@@ -314,7 +368,7 @@ export default function ProofDirectorPage(){
       <div><a className={styles.back} href="/motion?mode=cinematic">← MOTION OS</a>
         <p className={styles.kicker}>MARGARYAN LABS / SOURCE-FIRST FILM PRODUCTION</p>
         <h1>Proof <em>Director.</em></h1>
-        <p className={styles.intro}>One ten-second scene that has to earn the right to become a three-minute film. Real Promptence pixels, deliberate camera direction and zero fabricated UI.</p>
+        <p className={styles.intro}>One ten-second film built from real product footage. Two actual source inpoints, a deliberate cut, editable camera framing and zero fabricated UI.</p>
       </div>
       <div className={styles.mast}><b>00:10</b><span>PROOF OF DIRECTION</span><span>PORTRAIT · 9:16</span></div>
     </header>
@@ -354,17 +408,65 @@ export default function ProofDirectorPage(){
           {sourceName&&<small className={styles.source}>LOCAL SOURCE / {sourceName}</small>}
         </div>
         <div className={styles.section}>
-          <span className={styles.overline}>02 / AUTHORED CAMERA</span>
+          <span className={styles.overline}>02 / REAL FOOTAGE EDIT DECISIONS</span>
+          <h2>Cut between actual moments.</h2>
+          <p>Unlike a slideshow, the film now takes two separate pieces of your original recording. Pick the real source moments and the edit point. No AI answers or analytics are invented.</p>
+          <div className={styles.edlRuler}>
+            <span>00:00 / HOOK</span><span>00:{edit.cutAt.toFixed(2)} / CUT</span><span>00:10 / END</span>
+          </div>
+          <label className={styles.edlControl}>
+            <span><b>TAKE 01 · SOURCE START</b><strong>{edit.firstIn.toFixed(2)}s</strong></span>
+            <input type="range" min="0" max={Math.max(0,sourceDuration-1)} step=".1"
+              disabled={!source || !(source instanceof HTMLVideoElement) || exporting}
+              value={edit.firstIn} onChange={e=>changeEDL({firstIn:Number(e.target.value)})}/>
+          </label>
+          <label className={styles.edlControl}>
+            <span><b>TAKE 02 · SOURCE START</b><strong>{edit.secondIn.toFixed(2)}s</strong></span>
+            <input type="range" min="0" max={Math.max(0,sourceDuration-1)} step=".1"
+              disabled={!source || !(source instanceof HTMLVideoElement) || exporting}
+              value={edit.secondIn} onChange={e=>changeEDL({secondIn:Number(e.target.value)})}/>
+          </label>
+          <label className={styles.edlControl}>
+            <span><b>CUT ON FILM TIMELINE</b><strong>{edit.cutAt.toFixed(2)}s</strong></span>
+            <input type="range" min="3.5" max="6.5" step=".05" disabled={!source||exporting}
+              value={edit.cutAt} onChange={e=>changeEDL({cutAt:Number(e.target.value)})}/>
+          </label>
+          <label className={styles.edlControl}>
+            <span><b>CAMERA FRAMING</b><strong>{edit.zoom.toFixed(2)}×</strong></span>
+            <input type="range" min=".82" max="1.18" step=".02" disabled={!source||exporting}
+              value={edit.zoom} onChange={e=>changeEDL({zoom:Number(e.target.value)})}/>
+          </label>
+          <div className={styles.edlActions}>
+            <button type="button" onClick={()=>seek(3.2)} disabled={!source||exporting}>VIEW TAKE 01</button>
+            <button type="button" onClick={()=>seek(Math.min(7.2,edit.cutAt+.35))} disabled={!source||exporting}>VIEW TAKE 02</button>
+            <button type="button" onClick={()=>changeEDL(PROOF_DEFAULT_EDL)} disabled={!source||exporting}>RESET</button>
+          </div>
+          <div className={styles.edlActions}>
+            <button type="button" onClick={saveFilmEDL} disabled={!source||exporting}>DOWNLOAD EDIT PROJECT ↓</button>
+            <label className={styles.edlImport}>LOAD SAVED EDIT PROJECT
+              <input type="file" accept=".json,application/json" disabled={!source||exporting} onChange={e=>void loadFilmEDL(e)}/>
+            </label>
+          </div>
+          {source && source instanceof HTMLVideoElement &&
+            <div className={reviewProofEDL(sourceDuration,edit).pass?styles.edlPass:styles.edlBlock} role="status">
+              {reviewProofEDL(sourceDuration,edit).pass
+                ?"SOURCE COVERAGE OK / BOTH TAKES HAVE ENOUGH ORIGINAL VIDEO"
+                :"SOURCE BLOCKED / "+reviewProofEDL(sourceDuration,edit).problems.join(" ")}
+            </div>}
+          <p className={styles.hint}>For actual edits, import a real MP4/WebM. Still images remain a fallback, not proof of product interaction.</p>
+        </div>
+        <div className={styles.section}>
+          <span className={styles.overline}>03 / AUTHORED CAMERA</span>
           <h2>Three intentional beats.</h2>
           <div className={styles.beats}>
             <button onClick={()=>seek(.35)} disabled={!source}>00:00 – 00:02 <b>Problem / dark editorial</b></button>
-            <button onClick={()=>seek(3.3)} disabled={!source}>00:02 – 00:07 <b>Real image / travelling camera</b></button>
+            <button onClick={()=>seek(3.3)} disabled={!source}>00:02 – 00:07 <b>Two real takes / deliberate edit</b></button>
             <button onClick={()=>seek(8.2)} disabled={!source}>00:07 – 00:10 <b>Official mark / clear invitation</b></button>
           </div>
           <p>Every preview frame is drawn for its exact time. No pre-rendered PNG slideshow, random green HUD elements, fictitious rankings or client results.</p>
         </div>
         <div className={styles.section}>
-          <span className={styles.overline}>03 / RECORDING & MUSIC</span>
+          <span className={styles.overline}>04 / RECORDING & MUSIC</span>
           <h2>No more robotic voices.</h2>
           <p>Add a real voice recording or a licensed, owner-approved AI voice file (natural timing; max 9.8s). You can also add a licensed music file. Both remain in this browser tab, synchronized with the shot preview and mixed into the WebM review export.</p>
           <label className={styles.upload}><span>VOICEOVER / WAV · MP3 · M4A</span>
@@ -378,7 +480,7 @@ export default function ProofDirectorPage(){
           <p className={styles.hint}>Sound source remains entirely local. No voice cloning, robot TTS or automatic speech acceleration. Listen on headphones before approving.</p>
         </div>
         <div className={styles.section}>
-          <span className={styles.overline}>04 / FILM GATE</span>
+          <span className={styles.overline}>05 / FILM GATE</span>
           <h2>Export a review — not an ad.</h2>
           <p>The 540×960 WebM review now includes your voice/music when supplied. If you imported footage, its actual decoded frames are used. A native 1080×1920 H.264/AAC master still requires the workstation exporter.</p>
           <button className={styles.sheetButton} disabled={!source||exporting} onClick={()=>void exportContactSheet()}>REVIEW 9 KEY FRAMES ↗</button>

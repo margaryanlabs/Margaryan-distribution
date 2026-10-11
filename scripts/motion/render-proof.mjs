@@ -18,13 +18,27 @@ import process from "node:process";
 const args=process.argv.slice(2),o={};
 for(let i=0;i<args.length;i++){
  const k=args[i];
- if(!["--screen","--video","--out","--voice","--music","--url","--fps"].includes(k))throw Error("Unknown argument: "+k);
+ if(!["--screen","--video","--out","--voice","--music","--url","--fps","--first-in","--second-in","--cut-at","--zoom","--edl"].includes(k))throw Error("Unknown argument: "+k);
  const v=args[++i];if(!v||v.startsWith("--"))throw Error("Missing value for "+k);
  o[k.slice(2)]=v;
 }
 if(Boolean(o.screen)===Boolean(o.video))throw Error("SOURCE GATE: supply exactly one approved --screen IMAGE or --video MP4/WEBM");
 const source=resolve(o.video||o.screen);
 const isVideo=Boolean(o.video);
+if(o.edl&&["first-in","second-in","cut-at","zoom"].some(key=>o[key]!==undefined))
+ throw Error("Choose --edl PROJECT.json OR manual --first-in/--second-in/--cut-at/--zoom; not both.");
+let importedEDL=null;
+if(o.edl){
+ const metadata=await stat(resolve(o.edl));
+ if(!metadata.isFile()||metadata.size>10000||metadata.size<25)throw Error("Invalid EDL: must be a small JSON edit-decision file");
+ const data=JSON.parse(await readFile(resolve(o.edl),"utf8"));
+ if(data.version!==1||data.kind!=="margaryan-motion-source-edl"||data.durationSeconds!==10)
+   throw Error("Invalid EDL type/version. Export a 10s Motion OS proof project.");
+ for(const key of ["firstIn","secondIn","cutAt","zoom"]){
+   if(typeof data[key]!=="number"||!Number.isFinite(data[key]))throw Error("Non-finite or missing EDL field: "+key);
+ }
+ importedEDL=data;
+}
 const out=resolve(o.out||"out/promptence-proof-10s.mp4");
 if(extname(out).toLowerCase()!==".mp4")throw Error("Output must end .mp4");
 const host=new URL(o.url||"http://127.0.0.1:3000/motion/proof");
@@ -73,6 +87,16 @@ try{
  await page.locator('[data-testid="proof-source-input"]').setInputFiles(source);
  await page.waitForFunction(expected=>window.__motionProofReady===true&&window.__motionProofSource===expected,isVideo?"video":"image",{timeout:40000});
  await page.evaluate(()=>document.fonts.ready);
+ const filmEDL=await page.evaluate(changes=>window.__motionProofConfigure(changes),importedEDL||{
+   firstIn:o["first-in"]===undefined?0:Number(o["first-in"]),
+   secondIn:o["second-in"]===undefined?4:Number(o["second-in"]),
+   cutAt:o["cut-at"]===undefined?4.55:Number(o["cut-at"]),
+   zoom:o.zoom===undefined?1:Number(o.zoom)
+ });
+ if(!filmEDL||!Number.isFinite(filmEDL.cutAt))throw Error("Film edit decision list not applied");
+ const sourceCoverage=await page.evaluate(()=>window.__motionProofReview());
+ if(isVideo&&(!sourceCoverage||!sourceCoverage.pass))
+   throw Error("Real source video cannot cover both selected takes: "+JSON.stringify(sourceCoverage?.problems||[]));
  if(errors.length)throw Error("Studio page errors: "+errors.join("; "));
  const audio=[o.voice?{path:resolve(o.voice),volume:1}:null,o.music?{path:resolve(o.music),volume:o.voice?.18:.75}:null].filter(Boolean);
  const ff=["-y","-hide_banner","-loglevel","error","-f","image2pipe","-framerate",String(fps),
@@ -121,7 +145,7 @@ try{
   "-frames:v","1",prefix+"-contact-sheet.png"],120000);
  await writeFile(prefix+".proof-report.json",JSON.stringify({
    engine:"SOURCE-FIRST PROOF DIRECTOR",duration:d,width:video.width,height:video.height,
-   fps,sourceFile:source,sourceType:isVideo?'actual-browser-video':'owner-supplied-screenshot',voiceProvided:Boolean(o.voice),musicProvided:Boolean(o.music),audioMaster:"licensed-source-only / loudnorm dialogue -16 LUFS target / no time stretch",
+   fps,editDecisions:filmEDL,sourceCoverage,sourceFile:source,sourceType:isVideo?'actual-browser-video':'owner-supplied-screenshot',voiceProvided:Boolean(o.voice),musicProvided:Boolean(o.music),audioMaster:"licensed-source-only / loudnorm dialogue -16 LUFS target / no time stretch",
    contactSheetCreated:sheet.status===0,sourceReviewRequired:true,humanCreativeApprovalRequired:true,
    note:"Codec and source-authenticity gates cannot judge cinematic quality or voice performance."
  },null,2)+"\n");

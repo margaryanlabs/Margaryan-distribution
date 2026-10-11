@@ -10,6 +10,7 @@
  * Source may be a screenshot of an approved public Promptence page. It must
  * be visually reviewed against that page before publication. No external fetch.
  */
+import {PROOF_DEFAULT_EDL,proofShotAt,type ProofEditDecision} from "./proof-edl";
 export type ProofMedia = HTMLImageElement | HTMLVideoElement;
 export const PROOF_SECONDS = 10;
 function dimensions(media:ProofMedia){return media instanceof HTMLVideoElement ? {width:media.videoWidth,height:media.videoHeight,ready:media.readyState>=2}:{width:media.naturalWidth,height:media.naturalHeight,ready:media.complete};}
@@ -63,18 +64,23 @@ function sourcePlane(
   const {width:sourceWidth,height:sourceHeight}=dimensions(source);
   const aspect=sourceWidth/sourceHeight;
   const planeAspect=w/h;
-  let iw=w,ih=h;
-  if(aspect>planeAspect)ih=w/aspect;
-  else iw=h*aspect;
+  // Material geometry uses the genuine media ratio. The previous renderer
+  // put a narrow 9:16 phone screen into a landscape card, creating huge blank
+  // areas that visually looked like a cheap slideshow.
+  const fw=aspect>planeAspect?w:h*aspect;
+  const fh=fw/aspect;
+  const iw=fw,ih=fh;
+  const scaleOfCard=fw/w;
+  if(!Number.isFinite(scaleOfCard)||!Number.isFinite(fh))return;
   ctx.translate(x+w/2,y+h/2);
   ctx.rotate(angle);
   ctx.scale(zoom,zoom);
   ctx.shadowColor="#02100B8C";ctx.shadowBlur=78;ctx.shadowOffsetY=45;
   ctx.fillStyle="#EFF2EB";
-  ctx.beginPath();ctx.roundRect(-w/2-11,-h/2-11,w+22,h+22,24);ctx.fill();
+  ctx.beginPath();ctx.roundRect(-iw/2-11,-ih/2-11,iw+22,ih+22,24);ctx.fill();
   ctx.shadowBlur=0;ctx.shadowOffsetY=0;
-  ctx.save();clipRound(ctx,-w/2,-h/2,w,h,16);
-  ctx.fillStyle="#07110D";ctx.fillRect(-w/2,-h/2,w,h);
+  ctx.save();clipRound(ctx,-iw/2,-ih/2,iw,ih,16);
+  ctx.fillStyle="#07110D";ctx.fillRect(-iw/2,-ih/2,iw,ih);
   // Scale the complete image into the surface without changing its content.
   ctx.drawImage(source,-iw/2,-ih/2,iw,ih);
   ctx.restore();
@@ -83,9 +89,9 @@ function sourcePlane(
   gleam.addColorStop(0,"rgba(255,255,255,"+(exposure*.20)+")");
   gleam.addColorStop(.35,"rgba(255,255,255,0)");
   gleam.addColorStop(1,"rgba(255,255,255,"+(exposure*.07)+")");
-  ctx.fillStyle=gleam;ctx.beginPath();ctx.roundRect(-w/2,-h/2,w,h,16);ctx.fill();
+  ctx.fillStyle=gleam;ctx.beginPath();ctx.roundRect(-iw/2,-ih/2,iw,ih,16);ctx.fill();
   ctx.strokeStyle="#FFFFFF90";ctx.lineWidth=1.5;
-  ctx.beginPath();ctx.roundRect(-w/2,-h/2,w,h,16);ctx.stroke();
+  ctx.beginPath();ctx.roundRect(-iw/2,-ih/2,iw,ih,16);ctx.stroke();
   ctx.restore();
 }
 function drawOpening(ctx:CanvasRenderingContext2D,source:ProofMedia,t:number,W:number,H:number) {
@@ -114,20 +120,24 @@ function drawOpening(ctx:CanvasRenderingContext2D,source:ProofMedia,t:number,W:n
   line(ctx,77,613,77+mix(0,420,between(t,.48,1.75)),613,MINT,3);
   ctx.restore();
 }
-function drawEvidence(ctx:CanvasRenderingContext2D,source:ProofMedia,t:number,W:number,H:number) {
+function drawEvidence(ctx:CanvasRenderingContext2D,source:ProofMedia,t:number,W:number,H:number,edl:ProofEditDecision) {
   bg(ctx,W,H,true);
   const enter=between(t,2.1,2.75);
   const journey=between(t,3.0,7.15);
   // Lens-directed travelling shot of the authentic screenshot.
   // The actual screenshot never morphs into fake model result data.
-  const track=out(journey);
+  const isSecond=t>=edl.cutAt;
+  const local=isSecond ? out((t-edl.cutAt)/Math.max(.4,7.55-edl.cutAt)) : out((t-2.42)/Math.max(.5,edl.cutAt-2.42));
   const portrait=dimensions(source).width/dimensions(source).height<.85;
-  const screenX=mix(portrait?155:170,portrait?105:52,track);
-  const screenY=mix(portrait?490:660,portrait?390:485,track);
-  const scale=mix(.77,1.05,track);
+  const screenX=isSecond?mix(portrait?135:95,portrait?20:45,local):mix(portrait?245:170,portrait?130:70,local);
+  const screenY=isSecond?mix(portrait?450:580,portrait?565:485,local):mix(portrait?605:660,portrait?505:485,local);
+  // Editorial hard cut at the real video edit point: 2 purposeful camera
+  // setups instead of one endless 5-second Ken Burns zoom.
+  const scale=edl.zoom*(isSecond?mix(.97,1.14,local):mix(.74,1.01,local));
   ctx.save();ctx.globalAlpha*=enter;
   bloom(ctx,420,830,1000,.85);
-  sourcePlane(ctx,source,screenX,screenY,portrait?805:900,portrait?1200:800,mix(-.115,.025,journey),scale,.48);
+  sourcePlane(ctx,source,screenX,screenY,portrait?850:900,portrait?1420:800,
+    isSecond?mix(.015,-.03,local):mix(-.115,.012,local),scale,.48);
   ctx.restore();
   const topY=260;
   ctx.save();
@@ -145,7 +155,7 @@ function drawEvidence(ctx:CanvasRenderingContext2D,source:ProofMedia,t:number,W:
     107,1585,48,IVORY,740);
   text(ctx,"Observe  →  Diagnose  →  Verify",107,1641,29,MINT,640);
   ctx.restore();
-  text(ctx,source instanceof HTMLVideoElement?"REAL VIDEO SOURCE / REVIEW REQUIRED":"SOURCE SCREENSHOT / REVIEW REQUIRED",73,1807,21,"#2E624F",700);
+  text(ctx,source instanceof HTMLVideoElement ? (isSecond?"AUTHENTIC SOURCE / CUT 02":"AUTHENTIC SOURCE / CUT 01") : "SOURCE SCREENSHOT / REVIEW REQUIRED",73,1807,21,"#2E624F",700);
 }
 function drawClosure(
   ctx:CanvasRenderingContext2D,logo:HTMLImageElement|null,t:number,W:number,H:number
@@ -177,7 +187,8 @@ function drawClosure(
 export function drawProofFrame(
   ctx:CanvasRenderingContext2D,source:ProofMedia,
   logo:HTMLImageElement|null,seconds:number,
-  width=PROOF_NATIVE_WIDTH,height=PROOF_NATIVE_HEIGHT
+  width=PROOF_NATIVE_WIDTH,height=PROOF_NATIVE_HEIGHT,
+  options:ProofEditDecision=PROOF_DEFAULT_EDL
 ) {
   const media=dimensions(source);
   if(!media.ready||!media.width||!media.height)throw new Error("Decoded approved product screenshot or video is required");
@@ -185,7 +196,7 @@ export function drawProofFrame(
   const W=PROOF_NATIVE_WIDTH,H=PROOF_NATIVE_HEIGHT;
   ctx.save();ctx.setTransform(width/W,0,0,height/H,0,0);
   if(t<2.42)drawOpening(ctx,source,t,W,H);
-  else if(t<7.55)drawEvidence(ctx,source,t,W,H);
+  else if(t<7.55)drawEvidence(ctx,source,t,W,H,options);
   else drawClosure(ctx,logo,t,W,H);
   // Film-wide crop-safe typography; no persistent progress bar,
   // fake camera metadata or repeating HUD overlays on every shot.
