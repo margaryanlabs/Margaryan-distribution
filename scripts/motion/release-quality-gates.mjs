@@ -14,6 +14,22 @@ export function assertDirectorRelease(report){
   if(critical.length)throw Error("RELEASE BLOCKED: unresolved director warnings: "+critical.slice(0,4).join(" | "));
   return true;
 }
+/**
+ * Fraction of original pixels retained by a cover crop. Landscape UI in a
+ * tiny portrait-height card can silently discard >65% of its content.
+ */
+export function visibleSourceFraction(sourceW,sourceH,stageW,stageH){
+  if(![sourceW,sourceH,stageW,stageH].every(x=>Number.isFinite(x)&&x>0))
+    throw Error("RELEASE BLOCKED: source or stage geometry is invalid.");
+  const source=sourceW/sourceH,stage=stageW/stageH;
+  return Math.min(source/stage,stage/source);
+}
+export function assertSourceFraming(sourceW,sourceH,stageW,stageH,label,minimum=.65){
+  const visible=visibleSourceFraction(sourceW,sourceH,stageW,stageH);
+  if(visible<minimum)throw Error("RELEASE BLOCKED: "+label+
+    " cover-crops the authentic UI to "+Math.round(visible*100)+"% of its original area.");
+  return Number(visible.toFixed(3));
+}
 export function assertApprovedSourceManifest(manifest,sourceIDs,shaById,brand){
   if(!manifest||manifest.version!==1||manifest.brand!==brand)
     throw Error("RELEASE BLOCKED: signed-off source manifest missing or for the wrong brand.");
