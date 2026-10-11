@@ -798,7 +798,15 @@ export default function MotionStudioPage() {
             Run quality checks before using footage or music in a commercial.</p>
           <div><span>{qa.blockers===0?"✓":"!"} Structure {qa.blockers===0?"ready":qa.blockers+" blockers"}</span>
           <span>{project.scenes.length} shots / {timeLabel(total)}</span></div>
-        </div>}
+          <button type="button" className={styles.deliverPrimary}
+            disabled={exporting||generating} onClick={()=>void exportVideo()}>
+            {exporting?"RENDERING "+exportProgress+"%":qa.pass?"RUN QA & EXPORT VIDEO ↗":"REVIEW QA BLOCKERS ↗"}
+          </button>
+          <button type="button" className={styles.deliverSecondary}
+            onClick={saveJson}>↓ SAVE EDITABLE PROJECT</button>
+          <button type="button" className={styles.deliverSecondary}
+            onClick={()=>setEditorPanel("review")}>◈ OPEN FRAME & EVIDENCE REVIEW</button>
+        </div>
         <div className={styles.panelSection} hidden={editorPanel!=="media"}>
         <OperatorDesk project={project} selectedIndex={selectedIndex}
           voiceFile={voiceover} musicFile={licensedMusic}
@@ -1298,7 +1306,7 @@ export default function MotionStudioPage() {
         <div className={styles.timeline}>
           {project.scenes.map((scene, index) => <button key={scene.id} type="button"
             className={(index === selectedIndex ? styles.selectedShot + " " : "") + (index === activeIndex ? styles.currentShot : "")}
-            onClick={() => selectScene(index)}>
+            onClick={() => {selectScene(index);setEditorPanel("scene");}}>
             <span className={styles.shotNumber}>SHOT {String(index + 1).padStart(2, "0")} <i>{scene.seconds}s</i></span>
             <strong>{scene.headline}</strong>
             <small>{scene.kind}</small>
