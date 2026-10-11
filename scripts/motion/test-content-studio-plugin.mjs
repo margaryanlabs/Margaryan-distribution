@@ -169,4 +169,68 @@ assert.equal(blocked.response.status, 403);
 const featureTool=await send({ jsonrpc:"2.0",id:5,method:"tools/call",params:{name:"create_motion_feature_film",arguments:featureBrief} });
 assert.equal(featureTool.json.result.structuredContent.durationSeconds,120);
 assert.ok(featureTool.json.result.structuredContent.editorUrl.includes("#motion-sequence-v1="));
-console.log("Content Studio plugin: 3 tools, 120s+300s five-act films, packed safe link, manual approval, patch guards PASS");
+
+// Execute the actual MCP Apps inline widget script against a minimal DOM.
+// A 5-act 300s film MUST be transferred to the child as one continuous
+// sequence; changing chapter tabs must seek in that film, not send an act
+// that would export only 60 seconds.
+const parentOrigin="https://motion.example.test";
+const fiveActResult=bridge.runContentStudioTool("create_motion_feature_film",fiveActs,parentOrigin);
+const markup=widget.motionStudioWidgetHtml(parentOrigin);
+const source=markup.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+assert.ok(source,"inline ChatGPT Apps HTML script present");
+assert.doesNotThrow(()=>new Function(source),"inline widget script parses");
+function fakeNode(){
+  return {
+    textContent:"",hidden:false,href:"",src:"",children:[],handlers:{},attributes:{},
+    addEventListener(type,fn){this.handlers[type]=fn;},
+    replaceChildren(...nodes){this.children=nodes;},
+    append(...nodes){this.children.push(...nodes);},
+    appendChild(node){this.children.push(node);},
+    querySelectorAll(name){return name==="button"?this.children:[];},
+    setAttribute(name,value){this.attributes[name]=value;}
+  };
+}
+const elements=Object.fromEntries(["player","shots","title","subtitle","status","openEditor","chapterNav"].map(id=>[id,fakeNode()]));
+const fromChild=[];
+elements.player.contentWindow={postMessage(packet,origin){fromChild.push({packet,origin});}};
+const documentMock={
+  getElementById(id){assert.ok(elements[id]);return elements[id];},
+  createElement(){return fakeNode();}
+};
+const listeners={};
+const windowMock={
+  parent:{postMessage(){}},
+  openai:{toolOutput:fiveActResult},
+  addEventListener(type,fn){listeners[type]=fn;}
+};
+const harmlessTimeout=()=>0; // Do not retain unresolved MCP initialize timers.
+new Function("document","window","setTimeout","URL","TextDecoder","atob",source)(
+  documentMock,windowMock,harmlessTimeout,URL,TextDecoder,atob
+);
+assert.equal(elements.chapterNav.children.length,5);
+assert.equal(elements.openEditor.hidden,false);
+assert.equal(elements.shots.children.length,41);
+elements.player.handlers.load();
+assert.equal(fromChild.length,1);
+assert.equal(fromChild[0].origin,parentOrigin);
+assert.equal(fromChild[0].packet.kind,"margaryan-motion-preview-v1");
+assert.equal(fromChild[0].packet.projects.length,5);
+assert.equal(fromChild[0].packet.projects.reduce((n,c)=>n+c.scenes.length,0),40);
+elements.chapterNav.children[4].handlers.click();
+assert.equal(fromChild.at(-1).packet.kind,"margaryan-motion-seek-v1");
+assert.equal(fromChild.at(-1).packet.seconds,240);
+assert.equal(fromChild.filter(x=>x.packet.kind==="margaryan-motion-preview-v1").length,1,
+  "switching acts must not reload a partial film");
+assert.match(elements.status.textContent,/FULL FILM READY/);
+assert.match(elements.subtitle.textContent,/300.0 SEC/);
+const childPreview=readFileSync(new URL("../../app/motion/chat-preview/page.tsx",import.meta.url),"utf8");
+assert.ok(childPreview.includes("planBrowserFeature(chapters)"));
+assert.ok(childPreview.includes("setChapters(safe)"));
+assert.ok(childPreview.includes("margaryan-motion-seek-v1"));
+assert.ok(childPreview.includes("↓ EXPORT WHOLE FILM"));
+assert.throws(()=>bridge.runContentStudioTool("create_motion_feature_film",{
+  ...featureBrief,scenes:featureBrief.scenes.map((s,i)=>i===2?{...s,kind:"spatial"}:s)
+}),/Invalid scene kind/);
+
+console.log("Content Studio plugin: 3 tools, 120s+300s five-act films, packed safe link, manual approval, chapter-native player, full-film export and safe patch guards PASS");
