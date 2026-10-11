@@ -447,7 +447,7 @@ export default function ProofDirectorPage(){
               <input type="file" accept=".json,application/json" disabled={!source||exporting} onChange={e=>void loadFilmEDL(e)}/>
             </label>
           </div>
-          {source instanceof HTMLVideoElement&&
+          {source && source instanceof HTMLVideoElement &&
             <div className={reviewProofEDL(sourceDuration,edit).pass?styles.edlPass:styles.edlBlock} role="status">
               {reviewProofEDL(sourceDuration,edit).pass
                 ?"SOURCE COVERAGE OK / BOTH TAKES HAVE ENOUGH ORIGINAL VIDEO"
