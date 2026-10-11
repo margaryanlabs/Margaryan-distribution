@@ -1,5 +1,5 @@
 import {
-  BRAND_INFO, durationOf, sceneAt, sanitizeVisual,
+  BRAND_INFO, clientBrandInfo, durationOf, sceneAt, sanitizeVisual,
   type MotionProject, type MotionScene
 } from "./studio";
 import { drawProductComposition } from "./product-compositions";
@@ -270,7 +270,7 @@ function applyDirectedCamera(ctx:CanvasRenderingContext2D, scene:MotionScene, pr
 
 function drawShot(ctx: CanvasRenderingContext2D, project: MotionProject, index: number, localTime: number, absoluteTime: number, W: number, H: number, alpha: number) {
   const scene = project.scenes[index];
-  const accent = BRAND_INFO[project.brand].accent;
+  const accent = clientBrandInfo(project).accent;
   const progress = clamp(localTime / scene.seconds);
   const seed = (project.seed || 0) + index * 197;
   const grade=sanitizeVisual(project.visual);
@@ -386,7 +386,7 @@ export function drawMotionFrame(ctx: CanvasRenderingContext2D, project: MotionPr
   const total = durationOf(project);
   const t = clamp(time, 0, total);
   const { scene, local, index } = sceneAt(project, t);
-  const accent = BRAND_INFO[project.brand].accent;
+  const accent = clientBrandInfo(project).accent;
   ctx.save();
   ctx.setTransform(width / W, 0, 0, height / H, 0, 0);
   drawShot(ctx, project, index, local, t, W, H, 1);
@@ -407,7 +407,9 @@ export function drawMotionFrame(ctx: CanvasRenderingContext2D, project: MotionPr
   const pad = H < 810 ? 82 : 88;
   // Minimal brand mark stays outside camera movement and scene cuts.
   const top = H < 810 ? 28 : 55;
-  const mark = getLoadedMotionLogo(project.brand);
+  // User-owned text brands must never display the generic Margaryan logo.
+  const isClientBrand=project.brand==="labs"&&Boolean(project.clientBrand?.name);
+  const mark = isClientBrand?undefined:getLoadedMotionLogo(project.brand);
   if (mark) {
     const scale = Math.min(54 / mark.naturalWidth, 54 / mark.naturalHeight);
     ctx.drawImage(mark, pad, top - 18 + (54 - mark.naturalHeight * scale)/2, mark.naturalWidth*scale, mark.naturalHeight*scale);
@@ -415,7 +417,7 @@ export function drawMotionFrame(ctx: CanvasRenderingContext2D, project: MotionPr
   else { ctx.fillStyle = accent; ctx.fillRect(pad, top + 3, 43, 6); }
   ctx.fillStyle = "#d8e0e9"; ctx.font = "700 19px Arial, sans-serif";
   ctx.textBaseline = "middle"; ctx.textAlign = "left";
-  ctx.fillText(BRAND_INFO[project.brand].name, pad + 65, top + 8);
+  ctx.fillText(clientBrandInfo(project).name, pad + 65, top + 8);
   if(filmChrome==="brand"){
     ctx.restore();return;
   }
@@ -423,8 +425,8 @@ export function drawMotionFrame(ctx: CanvasRenderingContext2D, project: MotionPr
   ctx.fillText("MOTION ENGINE / " + String(index + 1).padStart(2,"0"), W - pad, top + 8);
   const footer = H - (H < 810 ? 65 : 103);
   ctx.textAlign = "left"; ctx.fillStyle = "#a1a8b4"; ctx.font = "600 13px Arial, sans-serif";
-  ctx.fillText(BRAND_INFO[project.brand].caption, pad, footer - 15);
-  ctx.textAlign = "right"; ctx.fillText("MARGARYAN / MOTION", W - pad, footer - 15);
+  ctx.fillText(clientBrandInfo(project).caption, pad, footer - 15);
+  ctx.textAlign = "right"; ctx.fillText(isClientBrand?clientBrandInfo(project).name:"MARGARYAN / MOTION", W - pad, footer - 15);
   ctx.fillStyle = "#ffffff32"; ctx.fillRect(pad, footer + 9, W - 2 * pad, 3);
   ctx.fillStyle = accent; ctx.fillRect(pad, footer + 9, (W - 2 * pad) * clamp(t / Math.max(.01, total)), 3);
   ctx.restore();
