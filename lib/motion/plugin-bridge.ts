@@ -54,6 +54,7 @@ export const CONTENT_STUDIO_TOOLS = [
     name: "revise_motion_film",
     description: "Prepare a safe, reviewed patch to a currently open Motion Studio film, using its original full project JSON. Return a draft link, NEVER auto-publish or auto-overwrite the project.",
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    _meta: { ui: { resourceUri: CONTENT_STUDIO_WIDGET_URI }, "openai/outputTemplate": CONTENT_STUDIO_WIDGET_URI },
     inputSchema: {
       type: "object",
       additionalProperties: false,
