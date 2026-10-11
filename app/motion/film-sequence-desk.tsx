@@ -78,6 +78,7 @@ export default function FilmSequenceDesk({
   const [ready,setReady]=useState(false);
   const [chapters,setChapters]=useState<Chapter[]>([]);
   const [inbound,setInbound]=useState<FilmDraft|null>(null);
+  const [inboundSource,setInboundSource]=useState<"chatgpt"|"example"|null>(null);
   const [selected,setSelected]=useState<number|null>(null);
   const [title,setTitle]=useState("NEW MOTION FILM");
   const [chapterTitle,setChapterTitle]=useState("");
@@ -107,7 +108,7 @@ export default function FilmSequenceDesk({
     window.history.replaceState(window.history.state,"",window.location.pathname+window.location.search);
     try{
       const received=fromChatLink(fragment);
-      setInbound(received);
+      setInbound(received);setInboundSource("chatgpt");
       setNotice("ChatGPT sent a "+received.chapters.length+"-chapter film. Inspect the proposal before replacing any local chapters.");
     }catch(e){
       setInbound(null);
@@ -127,8 +128,8 @@ export default function FilmSequenceDesk({
     setTitle(inbound.title);
     setChapters(inbound.chapters);
     setSelected(null);
-    setInbound(null);
-    setNotice("ChatGPT film approved and saved locally. Choose a chapter to inspect actual frames before rendering.");
+    setInbound(null);setInboundSource(null);
+    setNotice("Film proposal approved and saved locally. Choose a chapter to inspect actual frames before rendering.");
   }
   function toManifest(){
     const sum=chapters.reduce((s,c)=>s+durationOf(c.project),0);
@@ -195,6 +196,16 @@ export default function FilmSequenceDesk({
       setNotice("Imported "+parsed.chapters.length+" chapters; choose LOAD to edit an individual chapter.");
     }catch(e){setNotice(e instanceof Error?e.message:"Invalid film sequence");}
   }
+  function startOriginalFilm(){
+    if(busy)return;
+    if(chapters.length&&!window.confirm("Start an independent Margaryan Labs film? This clears saved chapters; export your film first."))return;
+    if(dirty&&!window.confirm("The active chapter has unsaved edits. Replace it with an original film?"))return;
+    const next=makeMotionPreset("labs",project.format);
+    onLoadProject(next,"Started original Margaryan Labs film — independent from Promptence");
+    setChapters([]);setSelected(null);setInbound(null);setInboundSource(null);
+    setChapterTitle("");setTitle("MARGARYAN MOTION / ORIGINAL FILM");
+    setNotice("Motion Studio is independent software, not a Promptence domain feature. Edit original scenes and save your chapters.");
+  }
   async function openDemo(minutes:2|5=2){
     if(busy)return;
     try{
@@ -205,7 +216,7 @@ export default function FilmSequenceDesk({
       const text=await response.text();
       if(text.length>(minutes===5?40_000:20_000))throw Error("Film demo is unexpectedly large");
       const draft=decodeManifest(JSON.parse(text));
-      setInbound(draft);
+      setInbound(draft);setInboundSource("example");
       setNotice("Source-honest "+(minutes*60)+"-second Promptence editorial storyboard staged. Review all chapters before approving. A concept film is not yet a mastered MP4.");
     }catch(e){setNotice("FILM DEMO: "+(e instanceof Error?e.message:"Could not load demo"));}
   }
@@ -237,11 +248,12 @@ export default function FilmSequenceDesk({
       <div>
         <span>NO CHAPTERS SAVED YET</span>
         <h4>One story. Several acts.</h4>
-        <p>Start with the approved 120-second Promptence storyboard, or create an original first chapter in the Creative Brief editor below. Each chapter keeps its own scenes and can be revised before delivery.</p>
+        <p>Motion Studio is a separate video product. Start an original Margaryan Labs film, or open a clearly labeled Promptence brand example. Promptence is an example brand, not the video platform or its hosting domain.</p>
       </div>
       <div className={styles.starterActions}>
-        <button type="button" disabled={busy} onClick={()=>void openDemo(2)}>✦ OPEN 120s EXAMPLE</button>
-        <button type="button" disabled={busy} onClick={()=>void openDemo(5)}>▶ OPEN 300s DIRECTOR'S CUT</button>
+        <button type="button" disabled={busy} onClick={startOriginalFilm}>✦ START ORIGINAL MOTION FILM</button>
+        <button type="button" disabled={busy} onClick={()=>void openDemo(2)}>PROMPTENCE BRAND DEMO / 120s</button>
+        <button type="button" disabled={busy} onClick={()=>void openDemo(5)}>PROMPTENCE BRAND DEMO / 300s</button>
         <a href="#motion-storyboard">START WITH A BLANK CHAPTER ↘</a>
       </div>
       <small>Examples are original motion graphics only. They contain no fabricated AI results or customer data.</small>
@@ -252,7 +264,7 @@ export default function FilmSequenceDesk({
       <span><strong>{chapters.length?origin?.format.toUpperCase():"—"}</strong><small>FILM FORMAT</small></span>
     </div>
     {inbound&&<div className={styles.incoming} aria-label="Review film proposed by ChatGPT">
-      <b>CHATGPT → FILM / REVIEW REQUIRED</b>
+      <b>{inboundSource==="example"?"BRAND EXAMPLE → FILM / REVIEW REQUIRED":"CHATGPT → FILM / REVIEW REQUIRED"}</b>
       <h4>{inbound.title}</h4>
       <p>{inbound.chapters.length} chapters · {inbound.chapters.reduce((sum,c)=>sum+c.project.scenes.length,0)} scenes · {seconds(inbound.chapters.reduce((sum,c)=>sum+durationOf(c.project),0))} · {inbound.brand.toUpperCase()}</p>
       <div className={styles.incomingChapters}>{inbound.chapters.map((chapter,i)=><span key={i}>{String(i+1).padStart(2,"0")} · {chapter.title}</span>)}</div>
@@ -309,8 +321,9 @@ export default function FilmSequenceDesk({
         <input type="file" accept=".json,application/json" disabled={busy}
           onChange={e=>{const f=e.target.files?.[0];e.target.value="";void importFilm(f);}}/>
       </label>
-      <button type="button" onClick={()=>{void openDemo(2)}} disabled={busy}>✦ TRY 120s DEMO</button>
-      <button type="button" onClick={()=>{void openDemo(5)}} disabled={busy}>▶ TRY 300s FILM</button>
+      <button type="button" onClick={startOriginalFilm} disabled={busy}>＋ ORIGINAL / LABS</button>
+      <button type="button" onClick={()=>{void openDemo(2)}} disabled={busy}>PROMPTENCE EXAMPLE / 120s</button>
+      <button type="button" onClick={()=>{void openDemo(5)}} disabled={busy}>PROMPTENCE EXAMPLE / 300s</button>
       <button type="button" onClick={resetFilm} disabled={busy||!chapters.length}>RESET SEQUENCE</button>
     </div>
     <p className={styles.notice} role="status">{notice}</p>
