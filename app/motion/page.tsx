@@ -26,6 +26,12 @@ import { createKeylessStoryboard, getLocalDirectorExamples, type MotionLanguage,
 import QuickStudio from "./quick-studio";
 import MultitrackEditor from "./multitrack-editor";
 import OperatorDesk from "./operator-desk";
+import { getLocalMedia, mediaAsFile } from "@/lib/motion/local-media";
+import {
+  getMotionSceneSource, registerMotionSceneSource, motionSourceIssues,
+  prepareMotionSourceFrame, pauseMotionSourceVideos, syncMotionSourcePlayback,
+  motionProjectHasRealVideo
+} from "@/lib/motion/scene-source";
 import styles from "./motion.module.css";
 
 const STORAGE_KEY = "margaryan-motion-studio-v1";
@@ -158,6 +164,7 @@ export default function MotionStudioPage() {
     type FrameHost = Window & {
       __motionFrame?: (input: FrameArgs) => Promise<string>;
       __motionInstallScreen?: (input: {brand:MotionBrand;mime:string;base64:string}) => Promise<void>;
+      __motionInstallSceneFile?: (id:string)=>Promise<void>;
       __motionReview?: (input: {project:unknown}) => Promise<{
         project:MotionProject;report:ReturnType<typeof serializeRepair>;contactSheetBase64:string;
       }>;
@@ -166,6 +173,11 @@ export default function MotionStudioPage() {
     const renderCanvas = document.createElement("canvas");
     let renderContext: CanvasRenderingContext2D | null = null;
     host.__motionInstallScreen = async (input) => { await installOfflineScreen(input.brand,input.mime,input.base64); };
+    host.__motionInstallSceneFile = async id=>{
+      const chosen=document.querySelector<HTMLInputElement>("#__motion-offline-media-input")?.files?.[0];
+      if(!chosen)throw Error("Offline media source missing: attach explicit local file.");
+      await registerMotionSceneSource(id,chosen);
+    };
     host.__motionReview = async input=>{
       const validated=sanitizeMotionProject(input.project);
       if(validated.scenes.some(scene=>scene.kind==="spatial"))await ensureSpatialRenderer();
@@ -186,7 +198,10 @@ export default function MotionStudioPage() {
       if(shot.scenes.some(scene=>scene.kind==="spatial"))await ensureSpatialRenderer();
       const dims = FORMAT_SIZE[shot.format];
       await preloadMotionLogo(shot.brand);
-      if(shot.scenes.some(scene=>scene.kind==="screen")&&!hasProductScreen(shot.brand))throw new Error("Source product screenshot is missing; add --screen in the offline master.");
+      if(shot.scenes.some(scene=>scene.kind==="screen"&&!scene.mediaId)&&!hasProductScreen(shot.brand))
+        throw new Error("Legacy source screenshot missing; add --screen to offline master.");
+      const missing=motionSourceIssues(shot);
+      if(missing.length)throw Error(missing.join("; "));
       if (renderCanvas.width !== dims.width || renderCanvas.height !== dims.height) {
         renderCanvas.width = dims.width; renderCanvas.height = dims.height;
         renderContext = null;
@@ -194,10 +209,12 @@ export default function MotionStudioPage() {
       if (!renderContext) renderContext = renderCanvas.getContext("2d", { alpha: false });
       if (!renderContext) throw new Error("Offline movie canvas is unavailable");
       const t = Number.isFinite(input.time) ? Math.max(0, Math.min(durationOf(shot), input.time)) : 0;
+      await prepareMotionSourceFrame(shot,t);
       drawMotionFrame(renderContext, shot, t, dims.width, dims.height);
       return renderCanvas.toDataURL("image/png").slice("data:image/png;base64,".length);
     };
-    return () => { delete host.__motionFrame; delete host.__motionInstallScreen; delete host.__motionReview; };
+    return () => { delete host.__motionFrame; delete host.__motionInstallScreen;
+      delete host.__motionInstallSceneFile; delete host.__motionReview; };
   }, []);
 
 
