@@ -25,3 +25,27 @@ Use the connected Margaryan Content Studio MCP tools for user requests to produc
 
 ## Product boundaries
 Public beta tools are stateless and free to call. They do not authenticate customers, verify subscriptions or store projects. Monetization, OAuth, tenant branding and inside-ChatGPT video playback remain separate planned work. No unattended publication.
+
+## Feature films (ChatGPT → Film Sequence Studio)
+
+For a 65–192-second motion-graphics concept film, do not cram the brief into
+eight extra-long shots. Plan an editorial arc with **9–24 individually authored
+scenes**, each 2–8 seconds, then use `create_motion_feature_film`. A 120s film
+can contain 16 scenes of 7.5s, grouped into two titled chapters.
+
+Tool output returns a `motion-sequence-v1` manifest via a one-click
+`editorUrl` link. The user opens the link in a Motion Studio deployment
+that includes Sequence Studio (the importer is in PR #57), reviews the whole
+film, chooses APPROVE, then selects and refines each chapter.
+
+This link must not include client secrets or private media: the URL fragment
+hides the payload from the HTTP request but is NOT encryption. A 26k fragment
+size limit avoids unusably huge links. For films beyond the 3-chapter tool
+limit, use Sequence Studio's local chapter editor/manifest instead.
+
+Never claim the feature tool returns a playable MP4. Rendering a multi-chapter
+MP4 requires the explicit, operator-local `npm run motion:sequence` workflow
+with Chromium and FFmpeg, followed by human audiovisual review. If Sequence
+Studio is not deployed or the MCP endpoint is not available to the customer,
+give accurate manual JSON/film-manifest steps instead of a broken connector
+claim.
