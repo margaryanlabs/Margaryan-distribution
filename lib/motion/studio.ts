@@ -1,5 +1,6 @@
 import { sanitizeAudioEdit } from "./timeline-edit";
 import { sanitizeSourceDirection, type SourceDirection } from "./source-composition";
+import { sanitizeOverlayDirection, type OverlayDirection } from "./image-overlay";
 
 export type MotionBrand = "veto" | "promptence" | "raios" | "labs" | "ingu" | "meqena" | "suren" | "veto_private" | "veto_sport" | "armat" | "tun" | "hay_engine" | "reality_engine";
 export type MotionFormat = "portrait" | "square" | "landscape";
@@ -40,6 +41,13 @@ export interface MotionScene {
   sourceFocusY?: number;
   sourceZoomStart?: number;
   sourceZoomEnd?: number;
+  /** Second genuine photographic layer. Only approved PNG/JPEG/WebP. */
+  overlayMediaId?: string;
+  overlayCorner?: OverlayDirection["overlayCorner"];
+  overlaySize?: number;
+  overlayOpacity?: number;
+  overlayStart?: number;
+  overlayDuration?: number;
   intensity?: number;
   /** Editorial narration cue, not automatically generated or spoken. */
   voiceCue?: string;
@@ -280,6 +288,9 @@ export function sanitizeMotionProject(input: unknown): MotionProject {
       mediaStart:typeof s.mediaStart==="number"&&Number.isFinite(s.mediaStart)
         ?Math.min(3600,Math.max(0,Number(s.mediaStart.toFixed(2)))):0,
       ...sanitizeSourceDirection(s),
+      overlayMediaId:typeof s.overlayMediaId==="string"&&/^[\\w-]{6,100}$/.test(s.overlayMediaId)
+        ?s.overlayMediaId:undefined,
+      ...sanitizeOverlayDirection(s,Math.max(2,Math.min(8,Number.isFinite(seconds)?seconds:4))),
       intensity: Math.max(0, Math.min(1, Number.isFinite(Number(s.intensity)) && s.intensity !== undefined ? Number(s.intensity) : .5)),
       voiceCue: clean(s.voiceCue, 300)
     };
