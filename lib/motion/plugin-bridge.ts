@@ -11,8 +11,8 @@ import {
  * Motion renderer runs in the user's browser. No OpenAI API, storage, uploads,
  * fictional footage, or server-side video inference happens here.
  */
-export const CONTENT_STUDIO_VERSION = "0.2.0";
-export const CONTENT_STUDIO_WIDGET_URI = "ui://margaryan-content-studio/film-v2.html";
+export const CONTENT_STUDIO_VERSION = "0.3.0";
+export const CONTENT_STUDIO_WIDGET_URI = "ui://margaryan-content-studio/film-v3.html";
 export const CONTENT_STUDIO_TOOLS = [
   {
     name: "create_motion_film",
