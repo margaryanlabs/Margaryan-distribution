@@ -18,8 +18,8 @@ export function validateSoundSource(file:Pick<File,"name"|"size"|"type">,label:F
     throw Error(label+": selected file is not a supported audio container");
 }
 export function soundtrackConfig(seconds:number,hasVoice:boolean,hasMusic:boolean,rights:boolean){
-  if(!Number.isFinite(seconds)||seconds<2||seconds>192)
-    throw Error("Browser soundtrack duration must be 2–192 seconds");
+  if(!Number.isFinite(seconds)||seconds<2||seconds>300)
+    throw Error("Browser soundtrack duration must be 2–300 seconds");
   if((hasVoice||hasMusic)&&!rights)
     throw Error("Approve media ownership/licensing before recording with voice or music");
   return {seconds,hasVoice,hasMusic,
