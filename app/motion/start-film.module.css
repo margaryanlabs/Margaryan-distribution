@@ -247,3 +247,14 @@
  .artOrb{right:-78%}
  .step strong{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
+
+/* Never bury the user's existing edit: always offer a private export before
+ * confirming replacement with a new direction. */
+.resumeActions{margin-top:28px;display:flex;flex-direction:column;
+ gap:8px;align-items:stretch;width:min(100%,560px)}
+.resumeActions .resume{margin-top:0;max-width:none}
+.backup{display:inline-flex;align-items:center;justify-content:center;min-height:40px;
+ border:1px solid #466558;border-radius:9px;background:#14251e;
+ color:#add6ba;font-size:10px;font-weight:850;letter-spacing:.015em;cursor:pointer}
+.backup:hover{background:#1d3b2c;border-color:#81b499}
+.backup:disabled{opacity:.45;cursor:not-allowed}
