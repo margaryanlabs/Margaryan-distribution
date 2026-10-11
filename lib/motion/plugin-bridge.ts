@@ -87,7 +87,10 @@ export const CONTENT_STUDIO_TOOLS = [
       type: "object", additionalProperties: false,
       properties: {
         title: { type: "string", minLength: 1, maxLength: 100 },
-        brand: { type: "string", enum: Object.keys(BRAND_INFO), description: "Use labs for unverified third-party brands; real client brand kits are not yet supported." },
+        brand: { type: "string", enum: Object.keys(BRAND_INFO), description: "Use labs for customers and pass a permitted client_brand_name and client_brand_accent for text-based white label." },
+        client_brand_name: {type:"string",minLength:1,maxLength:36,description:"Brand display name (permission required), only for brand=labs"},
+        client_brand_caption: {type:"string",maxLength:65,description:"Client tagline visible on chapter graphics"},
+        client_brand_accent: {type:"string",pattern:"^#[0-9A-Fa-f]{6}$",description:"Client color; contrast-safe if too dark"},
         format: { type: "string", enum: ["portrait", "square", "landscape"] },
         language: { type: "string", enum: ["ru", "en", "hy"] },
         style: { type: "string", enum: ["cinematic", "kinetic", "technical"] },
@@ -128,6 +131,20 @@ function oneOf<T extends string>(v: unknown, options: readonly T[], label: strin
   if (typeof v !== "string" || !options.includes(v as T))
     throw Error("Invalid " + label + ": " + String(v));
   return v as T;
+}
+function parseClientBrand(raw:Record<string,unknown>,brand:MotionProject["brand"]):MotionProject["clientBrand"]{
+  const hasClient=raw.client_brand_name!==undefined || raw.client_brand_caption!==undefined ||
+    raw.client_brand_accent!==undefined;
+  if(hasClient&&brand!=="labs")throw Error("Client brand kit only supported with brand=labs");
+  if(hasClient&&raw.client_brand_name===undefined)throw Error("client_brand_name required for client brand kit");
+  if(!hasClient)return undefined;
+  const clientBrand={
+    name:checkString(raw.client_brand_name,"client_brand_name",36),
+    caption:checkString(raw.client_brand_caption,"client_brand_caption",65,true),
+    accent:raw.client_brand_accent===undefined?"#C4D9F4":checkString(raw.client_brand_accent,"client_brand_accent",7)
+  };
+  if(!/^#[0-9a-fA-F]{6}$/.test(clientBrand.accent))throw Error("client_brand_accent must be #RRGGBB");
+  return clientBrand;
 }
 function validateScenes(source: unknown): MotionScene[] {
   if (!Array.isArray(source) || source.length < 1 || source.length > 8)
@@ -175,6 +192,7 @@ function linkForPack(pack: ChatMotionPack): string {
 function createFeatureFilm(raw: Record<string,unknown>) {
   const title=checkString(raw.title,"title",100);
   const brand=oneOf(raw.brand,Object.keys(BRAND_INFO) as MotionProject["brand"][],"brand");
+  const clientBrand=parseClientBrand(raw,brand);
   const format=oneOf(raw.format,["portrait","square","landscape"] as const,"format");
   const language=oneOf(raw.language,["ru","en","hy"] as const,"language");
   const style=raw.style===undefined?"cinematic":oneOf(raw.style,["cinematic","kinetic","technical"] as const,"style");
@@ -192,7 +210,7 @@ function createFeatureFilm(raw: Record<string,unknown>) {
     const localScenes=validateScenes(raw.scenes.slice(i*8,(i+1)*8));
     const chapterTitle=chapterTitles?.[i]?.trim()||("ACT "+String(i+1).padStart(2,"0"));
     const project=sanitizeMotionProject({
-      version:1,title: title+" / "+chapterTitle,brand,format,language,style,
+      version:1,title: title+" / "+chapterTitle,brand,clientBrand,format,language,style,
       qualityMode:"signature",scenes:localScenes
     });
     if(project.scenes.length!==localScenes.length)
@@ -234,18 +252,7 @@ export function runContentStudioTool(name: string, raw: unknown) {
   if (name === "create_motion_film") {
     const brand = oneOf(raw.brand, Object.keys(BRAND_INFO) as MotionProject["brand"][], "brand");
     const scenes = validateScenes(raw.scenes);
-    const hasClient = raw.client_brand_name !== undefined || raw.client_brand_accent !== undefined ||
-      raw.client_brand_caption !== undefined;
-    if (hasClient && brand !== "labs") throw Error("Client brand kit only supported with brand=labs");
-    if(hasClient && raw.client_brand_name === undefined) throw Error("client_brand_name required for client brand kit");
-    const clientBrand=hasClient?{
-      name:checkString(raw.client_brand_name,"client_brand_name",36),
-      caption:checkString(raw.client_brand_caption,"client_brand_caption",65,true),
-      accent:raw.client_brand_accent === undefined ? "#C4D9F4" :
-        checkString(raw.client_brand_accent, "client_brand_accent", 7)
-    }:undefined;
-    if(clientBrand && !/^#[0-9a-fA-F]{6}$/.test(clientBrand.accent))
-      throw Error("client_brand_accent must be #RRGGBB");
+    const clientBrand=parseClientBrand(raw,brand);
     const draft: MotionProject = {
       version: 1,
       title: checkString(raw.title, "title", 100),
