@@ -24,7 +24,8 @@
     "motion:signature": "node scripts/motion/create-signature.mjs",
     "motion:feature": "node scripts/motion/create-feature-film.mjs",
     "motion:proof": "node scripts/motion/render-proof.mjs",
-    "motion:test-proof": "node scripts/motion/test-proof.mjs"
+    "motion:test-proof": "node scripts/motion/test-proof.mjs",
+    "motion:capture-video": "node scripts/motion/capture-promptence-video.mjs"
   },
   "dependencies": {
     "next": "16.3.3",
