@@ -11,12 +11,14 @@ import {
  * Motion renderer runs in the user's browser. No OpenAI API, storage, uploads,
  * fictional footage, or server-side video inference happens here.
  */
-export const CONTENT_STUDIO_VERSION = "0.1.0";
+export const CONTENT_STUDIO_VERSION = "0.2.0";
+export const CONTENT_STUDIO_WIDGET_URI = "ui://margaryan-content-studio/film-v2.html";
 export const CONTENT_STUDIO_TOOLS = [
   {
     name: "create_motion_film",
     description: "Create an editable 1–8 shot motion-graphics video storyboard from scenes authored in ChatGPT. Returns a one-click Motion Studio draft link. The video is rendered/exported in the editor, NOT by this tool. Do not claim photorealistic AI video, generated voice, or completed MP4.",
     annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
+    _meta: { ui: { resourceUri: CONTENT_STUDIO_WIDGET_URI }, "openai/outputTemplate": CONTENT_STUDIO_WIDGET_URI },
     inputSchema: {
       type: "object",
       additionalProperties: false,
@@ -190,6 +192,7 @@ export function runContentStudioTool(name: string, raw: unknown) {
     requiresUserApproval: true,
     editorUrl: linkForPack(pack),
     chatPack: pack,
+    previewProject: film, // Validated, media-free project for MCP Apps live Canvas widget.
     nextStep: "Open editorUrl, inspect the staged Chat Pack, press APPROVE, then preview and export the video in Motion Studio. Do not claim the video has been rendered yet."
   };
 }
