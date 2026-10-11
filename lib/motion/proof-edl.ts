@@ -49,3 +49,42 @@ export function proofShotAt(filmTime:number,opts:ProofEditDecision){
   return filmTime<2.42?"HOOK":filmTime<opts.cutAt?"OBSERVE":
     filmTime<7.55?"VERIFY":"CLOSE";
 }
+
+/** Render acceptance blocker, not a bogus aesthetic score. A genuine clip
+ * must cover BOTH source takes completely, without secretly freezing the
+ * last frame and calling it a smooth cinematic camera movement. */
+export function reviewProofEDL(sourceDuration:number,options:ProofEditDecision){
+  const problems:string[]=[];
+  if(!Number.isFinite(sourceDuration)||sourceDuration<8)
+    problems.push("A real source recording must be at least 8 seconds.");
+  const o=sanitizeProofEDL(options,sourceDuration);
+  const firstEnd=o.firstIn+o.cutAt-.15;
+  const secondEnd=o.secondIn+Math.max(0,7.55-o.cutAt);
+  const lastUsable=sourceDuration-.12;
+  if(firstEnd>lastUsable+.001)
+    problems.push("Take 01 reaches beyond the end of the source file. Choose an earlier start.");
+  if(secondEnd>lastUsable+.001)
+    problems.push("Take 02 reaches beyond the end of the source file. Choose an earlier second in-point.");
+  return {
+    pass:problems.length===0,problems,
+    takes:[
+      {name:"TAKE 01",start:o.firstIn,end:firstEnd},
+      {name:"TAKE 02",start:o.secondIn,end:secondEnd}
+    ]
+  };
+}
+export function proofEDLFile(options:ProofEditDecision){
+  return {version:1,kind:"margaryan-motion-source-edl",durationSeconds:10,
+    ...sanitizeProofEDL(options,300)};
+}
+export function parseProofEDLFile(value:unknown):ProofEditDecision{
+  if(!value||typeof value!=="object")throw Error("Missing EDL object");
+  const raw=value as Partial<ProofEditDecision>&{version?:number;kind?:string;durationSeconds?:number};
+  if(raw.version!==1||raw.kind!=="margaryan-motion-source-edl"||raw.durationSeconds!==10)
+    throw Error("Invalid Motion OS edit-decision file. Expected v1 10-second source film.");
+  for(const key of ["firstIn","secondIn","cutAt","zoom"] as const){
+    if(typeof raw[key]!=="number"||!Number.isFinite(raw[key]))
+      throw Error("EDL requires a finite number for "+key);
+  }
+  return sanitizeProofEDL(raw,300);
+}
