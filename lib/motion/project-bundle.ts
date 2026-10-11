@@ -58,7 +58,7 @@ function validateManifest(value:unknown,files:Map<string,Blob>):BundleManifest{
   if(project.scenes.some(s=>s.kind==="screen"&&!s.mediaId))
     throw Error("Legacy screen without an approved local asset cannot be restored from this pack");
   const assets=raw.assets as BundleEntry[];
-  const referenced=new Set(project.scenes.filter(s=>s.kind==="screen"&&s.mediaId).map(s=>s.mediaId));
+  const referenced=new Set<string>(project.scenes.filter(s=>s.kind==="screen"&&s.mediaId).map(s=>s.mediaId!));
   const found=new Set<string>(),entries=new Set(["manifest.json"]);
   for(const asset of assets){
     if(!asset||typeof asset!=="object")throw Error("Invalid asset in portable manifest");
