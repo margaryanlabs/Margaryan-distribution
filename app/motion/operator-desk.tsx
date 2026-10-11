@@ -98,6 +98,10 @@ export default function OperatorDesk({
       if(!raw||typeof raw!=="object"||(raw as Record<string,unknown>).protocol!=="motion-chat-v1")
         throw Error("Unsupported Chat Pack protocol");
       setTab("chat");setPreview(null);setSource(JSON.stringify(raw,null,2));
+      // Editor V2 hides Chat Operator inside its media tab; remember one
+      // successful handoff even if a child effect runs before the parent.
+      try{window.sessionStorage.setItem("motion-short-handoff-unread","1");}catch{}
+      window.dispatchEvent(new Event("motion-short-handoff"));
       setNotice("CHATGPT DRAFT RECEIVED. Press INSPECT / PREVIEW and APPROVE. No recording or project changes were made.");
     }catch(e){setNotice("CHATGPT DRAFT REJECTED: "+(e instanceof Error?e.message:String(e)));}
   },[]);
