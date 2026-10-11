@@ -88,7 +88,7 @@ export function createCinematicProject({duration,mediaId=TAKE_ID,brand="prompten
   visual:{motion:.48,textScale:.9,contrast:.5,glow:.03},
   scenes:headlines.map(([eyebrow,headline,support],i)=>({
    id:"scene-"+(i+1),kind:"screen",seconds:4,eyebrow,headline,support,
-   mediaId,mediaStart:i*4,sourceLayout:"theater",sourceZoomStart:1,sourceZoomEnd:1.035,
+   mediaId,mediaStart:i*4,sourceLayout:"showcase",sourceZoomStart:1,sourceZoomEnd:1.035,
    sourceFocusX:.5,sourceFocusY:.5,transition:"cut",camera:"locked",titleTreatment:"minimal",
    typographyScale:.83,voiceCue:headline
   }))};
