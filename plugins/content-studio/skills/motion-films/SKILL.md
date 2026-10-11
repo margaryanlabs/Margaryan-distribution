@@ -18,13 +18,14 @@ Use the connected Margaryan Content Studio MCP tools for user requests to produc
 ## Workflow
 1. Design a concrete storyboard from the user's prompt, following supplied references, typography and tone.
 2. Call create_motion_film with all scenes and their timing. ChatGPT does the language/model work in the chat; the tool does not call a paid OpenAI API.
-3. Return the secure fragment-only editor URL from the tool to the user. Tell them to click INSPECT and then APPROVE. Do not claim an MP4 already exists.
-4. On revisions, ask for or reuse the exact current MotionProject pack; call revise_motion_film with scoped changes. Do not edit mediaId or claim to access local media.
-5. User reviews the preview and exports inside the existing Motion Studio. Original video, music and voice files require user-approved local media and appropriate rights.
-6. Never claim unbounded free generation: ChatGPT plan usage limits, browser performance, storage and optional hosting still apply.
+3. When MCP Apps UI is supported, show the interactive first-party live Canvas preview in ChatGPT: PLAY, scrub shots and use EXPORT VIDEO on a supported browser. Download codecs vary (MP4 or WebM) and the preview is motion graphics without generated music/voice.
+4. Offer the private fragment-only full editor link for full scene/asset controls. In Motion Studio click INSPECT and then APPROVE. Do not claim an MP4 exists before the user actually exports a file.
+5. On revisions, ask for or reuse the exact current MotionProject pack; call revise_motion_film with scoped changes. Do not edit mediaId or claim to access local media.
+6. User reviews the preview and exports inside the existing Motion Studio. Original video, music and voice files require user-approved local media and appropriate rights.
+7. Never claim unbounded free generation: ChatGPT plan usage limits, browser performance, storage and optional hosting still apply.
 
 ## Product boundaries
-Public beta tools are stateless and free to call. They do not authenticate customers, verify subscriptions or store projects. Monetization, OAuth, tenant branding and inside-ChatGPT video playback remain separate planned work. No unattended publication.
+Public beta tools are stateless and free to call. They do not authenticate customers, verify subscriptions or store projects. Monetization, OAuth and tenant branding remain separate planned work. An MCP Apps nested first-party canvas preview exists in the current branch, but has not been installed and tested on ChatGPT's actual client and requires a public owned domain plus iframe/CSP review. No unattended publication.
 
 ## Feature films (ChatGPT → Film Sequence Studio)
 
@@ -49,3 +50,6 @@ with Chromium and FFmpeg, followed by human audiovisual review. If Sequence
 Studio is not deployed or the MCP endpoint is not available to the customer,
 give accurate manual JSON/film-manifest steps instead of a broken connector
 claim.
+
+## Longer projects
+When the separately developed Motion Pro Sequence Studio is deployed and reachable, create_motion_feature_film can draft a 65–192 second 9–24 shot, multi-chapter production. Do not claim its generated link works until Sequence Studio is merged, deployed and tested; its full MP4 assembly remains an operator-local workflow, not ChatGPT inline export.
