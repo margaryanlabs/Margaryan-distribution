@@ -117,3 +117,26 @@ After a successful browser export, the user can explicitly click SAVE TO CHATGPT
 5. Click SAVE TO CHATGPT. Verify the success confirmation and that the file appears in the user's ChatGPT file library only if this host offers uploadFile.
 6. Test denied/unsupported upload, private media rejected, 25MB cutoff, origin spoof, concurrent export prevention and mid-recording revision handling.
 7. Only then take PR #55 out of draft and prepare review/privacy/terms/paid pilot.
+
+
+## Isolated public deployment — 11 October 2026
+
+**Live beta host:** https://studio.promptence.tech (owned and Vercel-verified subdomain).
+**Public MCP endpoint:** https://studio.promptence.tech/api/mcp.
+**Isolated Vercel project:** margaryan-content-studio-public / prj_GRCETzrQqTOQKIuFwnLNqG4aBvmX.
+**Production build:** READY at commit 8fd5c93862f58d4e21aa24c1172ed0203bc7c3c6.
+
+The standalone Next application is built from apps/content-studio. Its routes contain ONLY Motion Studio and stateless MCP/motion handlers. It does not mount Distribution CRM, worker, leads, LinkedIn or private API endpoints. The original Margaryan Distribution keeps its Vercel SSO protections unchanged. The standalone app protects previews but allows production custom-domain access.
+
+For safety, the public MCP server advertises only create_motion_film and revise_motion_film. The experimental long-form feature-film tool remains in the shared internal code but is not exposed until PR #57 is deployed and its Sequence Studio route is functional on this isolated host.
+
+The public Vercel project ignores automatic builds from unrelated branches, preventing later main branch changes from replacing this provisional beta before the feature branch is integrated. Before a normal release, change the project's production branch/ignore rule after main is stable.
+
+### What is STILL unverified
+
+- Real ChatGPT custom-MCP connection and tools discovery from a user's actual plan.
+- MCP Apps nested iframe, streaming compatibility and SAVE TO CHATGPT file upload with a real ChatGPT host.
+- Runtime browser audiovisual QA on Chrome, Android and low-RAM devices.
+- Public marketplace review, approved data/privacy policies, billing and commercial accounts.
+
+A Vercel READY build establishes compilation and route packaging. It is not proof that the installed plugin works in ChatGPT. Connect it first through ChatGPT Plugins → Add custom MCP server using the HTTPS endpoint above.
