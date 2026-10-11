@@ -82,6 +82,25 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
   }
   player.addEventListener("load", () => { ready = true; sendToPlayer(); });
   player.src = origin + "/motion/chat-preview";
+  // ChatGPT opens links through the host-approved external navigation API.
+  // Normal links may be blocked or silently ignored in its sandbox.
+  editor.addEventListener("click", async event => {
+    const href = editor.href;
+    if (!latest || !href.startsWith(origin + "/motion?")) {
+      event.preventDefault();
+      return;
+    }
+    if (window.openai && typeof window.openai.openExternal === "function") {
+      event.preventDefault();
+      try {
+        await window.openai.openExternal({href,redirectUrl:false});
+      } catch(err) {
+        status.textContent = "External editor could not be opened: " +
+          String(err && err.message || err).slice(0,110);
+      }
+    }
+    // Ordinary browser host: <a target=_blank rel=noopener> handles it.
+  });
   // A user explicitly clicks SAVE TO CHATGPT in the nested film player.
   // Only browser-rendered exports can reach this bridge, never arbitrary URLs.
   let uploadBusy = false;
@@ -155,7 +174,7 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
     });
   }
   rpc("ui/initialize", {
-    appInfo:{name:"margaryan-content-studio",version:"0.3.0"},
+    appInfo:{name:"margaryan-content-studio",version:"0.5.0"},
     appCapabilities:{},
     protocolVersion:"2026-01-26"
   }).then(()=>{
