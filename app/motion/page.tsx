@@ -620,6 +620,7 @@ export default function MotionStudioPage() {
         currentRecorder.onerror = () => reject(new Error("Video encoder failed"));
         currentRecorder.onstop = () => resolve();
         currentRecorder.start(1000);
+        audioSession?.start();
         syncMotionSourcePlayback(project,0,true);
         const began = performance.now();
         function render(now: number) {
