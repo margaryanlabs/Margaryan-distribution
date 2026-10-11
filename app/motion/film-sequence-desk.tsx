@@ -7,6 +7,19 @@ import styles from "./film-sequence-desk.module.css";
 type Chapter={id:string;title:string;project:MotionProject};
 const STORAGE="margaryan-motion-film-sequence-v1";
 const MAX=8;
+const CHAT_FRAGMENT="#motion-sequence-v1=";
+const LINK_LIMIT=26_000;
+type FilmDraft=ReturnType<typeof decodeManifest>;
+function fromChatLink(fragment:string):FilmDraft {
+  if(fragment.length<12||fragment.length>LINK_LIMIT||!/^[A-Za-z0-9_-]+$/.test(fragment))
+    throw Error("ChatGPT film link is invalid or too long; use film JSON instead");
+  const b64=fragment.replace(/-/g,"+").replace(/_/g,"/")+"=".repeat((4-fragment.length%4)%4);
+  const binary=atob(b64);
+  if(binary.length>20_000)throw Error("ChatGPT film draft exceeds 20KB limit");
+  const bytes=Uint8Array.from(binary,ch=>ch.charCodeAt(0));
+  const raw=JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(bytes));
+  return decodeManifest(raw);
+}
 function seconds(n:number){return Math.floor(n/60)+":"+String(Math.floor(n%60)).padStart(2,"0");}
 function safeChapter(raw:unknown,index:number):Chapter{
   if(!raw||typeof raw!=="object")throw Error("Chapter must be an object");
@@ -63,6 +76,7 @@ export default function FilmSequenceDesk({
 }){
   const [ready,setReady]=useState(false);
   const [chapters,setChapters]=useState<Chapter[]>([]);
+  const [inbound,setInbound]=useState<FilmDraft|null>(null);
   const [selected,setSelected]=useState<number|null>(null);
   const [title,setTitle]=useState("NEW MOTION FILM");
   const [chapterTitle,setChapterTitle]=useState("");
@@ -86,12 +100,34 @@ export default function FilmSequenceDesk({
     // Film drafts only; original media bytes remain in the user's local media library.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[chapters,title,ready]);
+  useEffect(()=>{
+    if(!ready || !window.location.hash.startsWith(CHAT_FRAGMENT))return;
+    const fragment=window.location.hash.slice(CHAT_FRAGMENT.length);
+    window.history.replaceState(window.history.state,"",window.location.pathname+window.location.search);
+    try{
+      const received=fromChatLink(fragment);
+      setInbound(received);
+      setNotice("ChatGPT sent a "+received.chapters.length+"-chapter film. Inspect the proposal before replacing any local chapters.");
+    }catch(e){
+      setInbound(null);
+      setNotice("CHATGPT FILM LINK REJECTED: "+(e instanceof Error?e.message:"invalid draft"));
+    }
+  },[ready]);
   const length=useMemo(()=>chapters.reduce((s,c)=>s+durationOf(c.project),0),[chapters]);
   const shots=useMemo(()=>chapters.reduce((s,c)=>s+c.project.scenes.length,0),[chapters]);
   const origin=chapters[0]?.project;
   const different=Boolean(origin&&(origin.brand!==project.brand||origin.format!==project.format));
   const dirty=selected!==null&&chapters[selected]?
     JSON.stringify(chapters[selected].project)!==JSON.stringify(sanitizeMotionProject(project)):false;
+  function approveIncoming(){
+    if(!inbound||busy)return;
+    if(dirty&&!window.confirm("The current chapter has unsaved edits. Replace the saved film anyway?"))return;
+    setTitle(inbound.title);
+    setChapters(inbound.chapters);
+    setSelected(null);
+    setInbound(null);
+    setNotice("ChatGPT film approved and saved locally. Choose a chapter to inspect actual frames before rendering.");
+  }
   function toManifest(){
     const sum=chapters.reduce((s,c)=>s+durationOf(c.project),0);
     return {
@@ -180,9 +216,32 @@ export default function FilmSequenceDesk({
       <span><strong>{shots}</strong><small>EDITABLE SHOTS</small></span>
       <span><strong>{chapters.length?origin?.format.toUpperCase():"—"}</strong><small>FILM FORMAT</small></span>
     </div>
+    {inbound&&<div className={styles.incoming} aria-label="Review film proposed by ChatGPT">
+      <b>CHATGPT → FILM / REVIEW REQUIRED</b>
+      <h4>{inbound.title}</h4>
+      <p>{inbound.chapters.length} chapters · {inbound.chapters.reduce((sum,c)=>sum+c.project.scenes.length,0)} scenes · {seconds(inbound.chapters.reduce((sum,c)=>sum+durationOf(c.project),0))} · {inbound.brand.toUpperCase()}</p>
+      <div className={styles.incomingChapters}>{inbound.chapters.map((chapter,i)=><span key={i}>{String(i+1).padStart(2,"0")} · {chapter.title}</span>)}</div>
+      <small>Approving replaces only the saved film sequence in this browser. It never sends media, launches rendering or overwrites the current chapter automatically.</small>
+      <div className={styles.incomingActions}>
+        <button type="button" disabled={busy} onClick={approveIncoming}>APPROVE & SAVE FILM</button>
+        <button type="button" onClick={()=>{setInbound(null);setNotice("Incoming ChatGPT film dismissed; the local film was not changed.");}}>DISCARD</button>
+      </div>
+    </div>}
     <label className={styles.field}>FILM TITLE
       <input maxLength={100} value={title} onChange={e=>setTitle(e.target.value)}/>
     </label>
+    {chapters.length>0&&<div className={styles.fullTimeline} aria-label="Entire film visual timeline">
+      <div className={styles.timelineHead}><span>MASTER TIMELINE / ALL SCENES</span><b>{seconds(length)}</b></div>
+      <div className={styles.chapterTimeline}>
+        {chapters.map((part,i)=><button key={part.id} type="button" title={part.title+" / "+seconds(durationOf(part.project))}
+          aria-label={"Jump to "+part.title} onClick={()=>loadChapter(i)} disabled={busy}
+          data-current={selected===i} style={{width:(durationOf(part.project)/length*100)+"%"}}>
+          {part.project.scenes.map((s,k)=><i key={k} title={s.headline}
+            style={{width:(s.seconds/durationOf(part.project)*100)+"%"}}/>)}
+        </button>)}
+      </div>
+      <div className={styles.timelineRuler}><span>00:00</span><span>{seconds(length/2)}</span><span>{seconds(length)}</span></div>
+    </div>}
     {chapters.length>0&&<div className={styles.chapters}>
       {chapters.map((c,i)=><div className={styles.chapter} key={c.id} data-current={selected===i}>
         <span className={styles.number}>{String(i+1).padStart(2,"0")}</span>
