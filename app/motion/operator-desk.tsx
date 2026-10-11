@@ -81,6 +81,26 @@ export default function OperatorDesk({
     return()=>URL.revokeObjectURL(url);
   },[selected]);
   useEffect(()=>{setPreview(null);},[source,project]);
+  // Same-origin ChatGPT storyboard handoff. The fragment is never sent to
+  // the server, removed immediately, and NEVER auto-applied to this project.
+  useEffect(()=>{
+    const prefix="#motion-chat-v1=";
+    if(!window.location.hash.startsWith(prefix))return;
+    const encoded=window.location.hash.slice(prefix.length);
+    window.history.replaceState(window.history.state,"",window.location.pathname+window.location.search);
+    try{
+      if(encoded.length<10||encoded.length>15000||!/^[A-Za-z0-9_-]+$/.test(encoded))
+        throw Error("Invalid or oversized ChatGPT film link");
+      const binary=atob(encoded.replace(/-/g,"+").replace(/_/g,"/")+"=".repeat((4-encoded.length%4)%4));
+      if(binary.length>12000)throw Error("Film Chat Pack is too large");
+      const decoded=new TextDecoder("utf-8",{fatal:true}).decode(Uint8Array.from(binary,c=>c.charCodeAt(0)));
+      const raw:unknown=JSON.parse(decoded);
+      if(!raw||typeof raw!=="object"||(raw as Record<string,unknown>).protocol!=="motion-chat-v1")
+        throw Error("Unsupported Chat Pack protocol");
+      setTab("chat");setPreview(null);setSource(JSON.stringify(raw,null,2));
+      setNotice("CHATGPT DRAFT RECEIVED. Press INSPECT / PREVIEW and APPROVE. No recording or project changes were made.");
+    }catch(e){setNotice("CHATGPT DRAFT REJECTED: "+(e instanceof Error?e.message:String(e)));}
+  },[]);
   async function loadPublicChatCut(){
     if(busy||inboxLoading)return;
     setInboxLoading(true);setPreview(null);
@@ -238,6 +258,10 @@ export default function OperatorDesk({
       </div>
       <div className={styles.actionGrid}>
         <button type="button" disabled={busy} onClick={onCreateBlank}>◈ BUILD WITHOUT MATERIALS</button>
+        <button type="button" onClick={()=>{
+          const url=new URL("/api/mcp",window.location.origin).toString();
+          void copy(url).then(()=>setNotice("MCP endpoint copied. External ChatGPT apps require a publicly reachable HTTPS host; protected Vercel previews cannot connect.")).catch(e=>setNotice(String(e)));
+        }}>↗ COPY CHATGPT MCP ENDPOINT</button>
         <button type="button" onClick={()=>{void copy(JSON.stringify(createChatMotionPack(project),null,2))
           .then(()=>setNotice("Full Motion Chat Pack copied. Paste it into our ChatGPT conversation so I can edit your existing project."))
           .catch(e=>setNotice(String(e)));}}>COPY FULL PROJECT ↗</button>
