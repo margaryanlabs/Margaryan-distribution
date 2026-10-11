@@ -341,7 +341,7 @@ export default function ProofDirectorPage(){
       <div><a className={styles.back} href="/motion?mode=cinematic">← MOTION OS</a>
         <p className={styles.kicker}>MARGARYAN LABS / SOURCE-FIRST FILM PRODUCTION</p>
         <h1>Proof <em>Director.</em></h1>
-        <p className={styles.intro}>One ten-second scene that has to earn the right to become a three-minute film. Real Promptence pixels, deliberate camera direction and zero fabricated UI.</p>
+        <p className={styles.intro}>One ten-second film built from real product footage. Two actual source inpoints, a deliberate cut, editable camera framing and zero fabricated UI.</p>
       </div>
       <div className={styles.mast}><b>00:10</b><span>PROOF OF DIRECTION</span><span>PORTRAIT · 9:16</span></div>
     </header>
@@ -381,17 +381,53 @@ export default function ProofDirectorPage(){
           {sourceName&&<small className={styles.source}>LOCAL SOURCE / {sourceName}</small>}
         </div>
         <div className={styles.section}>
-          <span className={styles.overline}>02 / AUTHORED CAMERA</span>
+          <span className={styles.overline}>02 / REAL FOOTAGE EDIT DECISIONS</span>
+          <h2>Cut between actual moments.</h2>
+          <p>Unlike a slideshow, the film now takes two separate pieces of your original recording. Pick the real source moments and the edit point. No AI answers or analytics are invented.</p>
+          <div className={styles.edlRuler}>
+            <span>00:00 / HOOK</span><span>00:{edit.cutAt.toFixed(2)} / CUT</span><span>00:10 / END</span>
+          </div>
+          <label className={styles.edlControl}>
+            <span><b>TAKE 01 · SOURCE START</b><strong>{edit.firstIn.toFixed(2)}s</strong></span>
+            <input type="range" min="0" max={Math.max(0,sourceDuration-1)} step=".1"
+              disabled={!(source instanceof HTMLVideoElement)||exporting}
+              value={edit.firstIn} onChange={e=>changeEDL({firstIn:Number(e.target.value)})}/>
+          </label>
+          <label className={styles.edlControl}>
+            <span><b>TAKE 02 · SOURCE START</b><strong>{edit.secondIn.toFixed(2)}s</strong></span>
+            <input type="range" min="0" max={Math.max(0,sourceDuration-1)} step=".1"
+              disabled={!(source instanceof HTMLVideoElement)||exporting}
+              value={edit.secondIn} onChange={e=>changeEDL({secondIn:Number(e.target.value)})}/>
+          </label>
+          <label className={styles.edlControl}>
+            <span><b>CUT ON FILM TIMELINE</b><strong>{edit.cutAt.toFixed(2)}s</strong></span>
+            <input type="range" min="3.5" max="6.5" step=".05" disabled={!source||exporting}
+              value={edit.cutAt} onChange={e=>changeEDL({cutAt:Number(e.target.value)})}/>
+          </label>
+          <label className={styles.edlControl}>
+            <span><b>CAMERA FRAMING</b><strong>{edit.zoom.toFixed(2)}×</strong></span>
+            <input type="range" min=".82" max="1.18" step=".02" disabled={!source||exporting}
+              value={edit.zoom} onChange={e=>changeEDL({zoom:Number(e.target.value)})}/>
+          </label>
+          <div className={styles.edlActions}>
+            <button type="button" onClick={()=>seek(3.2)} disabled={!source||exporting}>VIEW TAKE 01</button>
+            <button type="button" onClick={()=>seek(Math.min(7.2,edit.cutAt+.35))} disabled={!source||exporting}>VIEW TAKE 02</button>
+            <button type="button" onClick={()=>changeEDL(PROOF_DEFAULT_EDL)} disabled={!source||exporting}>RESET</button>
+          </div>
+          <p className={styles.hint}>For actual edits, import a real MP4/WebM. Still images remain a fallback, not proof of product interaction.</p>
+        </div>
+        <div className={styles.section}>
+          <span className={styles.overline}>03 / AUTHORED CAMERA</span>
           <h2>Three intentional beats.</h2>
           <div className={styles.beats}>
             <button onClick={()=>seek(.35)} disabled={!source}>00:00 – 00:02 <b>Problem / dark editorial</b></button>
-            <button onClick={()=>seek(3.3)} disabled={!source}>00:02 – 00:07 <b>Real image / travelling camera</b></button>
+            <button onClick={()=>seek(3.3)} disabled={!source}>00:02 – 00:07 <b>Two real takes / deliberate edit</b></button>
             <button onClick={()=>seek(8.2)} disabled={!source}>00:07 – 00:10 <b>Official mark / clear invitation</b></button>
           </div>
           <p>Every preview frame is drawn for its exact time. No pre-rendered PNG slideshow, random green HUD elements, fictitious rankings or client results.</p>
         </div>
         <div className={styles.section}>
-          <span className={styles.overline}>03 / RECORDING & MUSIC</span>
+          <span className={styles.overline}>04 / RECORDING & MUSIC</span>
           <h2>No more robotic voices.</h2>
           <p>Add a real voice recording or a licensed, owner-approved AI voice file (natural timing; max 9.8s). You can also add a licensed music file. Both remain in this browser tab, synchronized with the shot preview and mixed into the WebM review export.</p>
           <label className={styles.upload}><span>VOICEOVER / WAV · MP3 · M4A</span>
@@ -405,7 +441,7 @@ export default function ProofDirectorPage(){
           <p className={styles.hint}>Sound source remains entirely local. No voice cloning, robot TTS or automatic speech acceleration. Listen on headphones before approving.</p>
         </div>
         <div className={styles.section}>
-          <span className={styles.overline}>04 / FILM GATE</span>
+          <span className={styles.overline}>05 / FILM GATE</span>
           <h2>Export a review — not an ad.</h2>
           <p>The 540×960 WebM review now includes your voice/music when supplied. If you imported footage, its actual decoded frames are used. A native 1080×1920 H.264/AAC master still requires the workstation exporter.</p>
           <button className={styles.sheetButton} disabled={!source||exporting} onClick={()=>void exportContactSheet()}>REVIEW 9 KEY FRAMES ↗</button>
