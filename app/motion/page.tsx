@@ -13,7 +13,7 @@ import { PORTFOLIO, PORTFOLIO_BRANDS } from "@/lib/motion/portfolio";
 import { auditMotionProject, inspectFramePixels, autoPolishMotionProject } from "@/lib/motion/quality";
 import { reviewMotionVisuals } from "@/lib/motion/visual-review";
 import { repairMotionProject, serializeRepair } from "@/lib/motion/auto-director";
-import { createPromptenceSignature } from "@/lib/motion/signature-promptence";
+import { createPromptenceSignature, createPromptenceCampaign } from "@/lib/motion/signature-promptence";
 import { compareFilmWithReference, summarizeReferenceComparison, type ReferenceComparison } from "@/lib/motion/reference-lab";
 import { createCaptionBundle } from "@/lib/motion/captions";
 import { rescaleProjectToSeconds } from "@/lib/motion/timing";
@@ -284,6 +284,19 @@ export default function MotionStudioPage() {
       " seconds / "+lang.toUpperCase()+". This is a conceptual film. No fabricated AI provider answers or brand performance data.");
   }
 
+  function loadPromptenceCampaign():void {
+    if(generating||exporting||directorRepairing)return;
+    const lang=language==="auto"
+      ?(/\p{Script=Armenian}/u.test(brief)?"hy":/\p{Script=Cyrillic}/u.test(brief)?"ru":"en")
+      :language;
+    const cut=createPromptenceCampaign(lang,project.format);
+    setPlaying(false);jump(0);setSelectedIndex(0);
+    setProject(cut);
+    setBrief("PROMPTENCE / 2026 DIRECTOR'S CUT — THE ANSWER IS THE NEW FRONT PAGE");
+    setNotice("2026 DIRECTOR'S CUT LOADED: 8 authored shots / "+durationOf(cut).toFixed(1)+
+      " seconds / "+lang.toUpperCase()+". Concept interface only. Download/export in Cinematic mode. No fake customer results.");
+  }
+
   async function runAutoDirector():Promise<void> {
     if(directorRepairing||visualReviewing||referenceComparing||exporting||generating)return;
     setDirectorRepairing(true);
@@ -525,7 +538,9 @@ export default function MotionStudioPage() {
           <strong>THE ANSWER IS<br/>THE NEW FRONT PAGE.</strong>
           <p>One deliberate narrative: buyer question → the missing brand → observable evidence → prioritized action → remeasurement.</p>
           <button type="button" disabled={generating||exporting||directorRepairing}
-            onClick={loadPromptenceSignature}>▶ LOAD SIGNATURE FILM / 33.8 SEC</button>
+            onClick={loadPromptenceSignature}>▶ LOAD ORIGINAL / 33.8 SEC</button>
+          <button type="button" disabled={generating||exporting||directorRepairing}
+            onClick={loadPromptenceCampaign}>▶ PROMPTENCE CAMPAIGN / 36.5 SEC</button>
           <small>Original film grammar and approved Promptence SVG. Illustrative data motifs are never real provider results.</small>
         </div>
 
