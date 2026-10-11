@@ -692,9 +692,9 @@ export default function MotionStudioPage() {
   if(mode==="quick")return <main className={styles.root} style={{"--brand-accent":info.accent} as CSSProperties}>
     <header className={styles.header}>
       <div>
-        <p className={styles.kicker}>MARGARYAN LABS / CREATIVE PRODUCTION / TWO VERIFIED WORKFLOWS</p>
-        <h1>Motion <em>OS.</em></h1>
-        <p className={styles.deck}>One brand library. Two independent film-production pipelines. No hidden switch to external rendering.</p>
+        <p className={styles.kicker}>MARGARYAN LABS / CINEMA & POSTPRODUCTION / QUICK STUDIO</p>
+        <h1>Motion <em>Studio.</em></h1>
+        <p className={styles.deck}>Real footage, original screenshots and local publishing. Build short cuts here, or switch to Cinematic for chapter-based feature films and editorial control.</p>
       </div>
       <div className={styles.headerRight}><span className={styles.liveDot}/> QUICK / LOCAL MEDIA</div>
     </header>
