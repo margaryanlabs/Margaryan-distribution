@@ -229,6 +229,16 @@ assert.ok(childPreview.includes("planBrowserFeature(chapters)"));
 assert.ok(childPreview.includes("setChapters(safe)"));
 assert.ok(childPreview.includes("margaryan-motion-seek-v1"));
 assert.ok(childPreview.includes("↓ EXPORT WHOLE FILM"));
+const editorPage=readFileSync(new URL("../../app/motion/page.tsx",import.meta.url),"utf8");
+const operatorDesk=readFileSync(new URL("../../app/motion/operator-desk.tsx",import.meta.url),"utf8");
+assert.ok(editorPage.includes('hash.startsWith("#motion-sequence-v1=")'),
+  "feature deep link must expand the new Editor V2 chapter panel");
+assert.ok(editorPage.includes('hash.startsWith("#motion-chat-v1=")'),
+  "short-film deep link must route to media/chat panel");
+assert.ok(editorPage.includes('setEditorPanel("media")'));
+assert.ok(editorPage.includes('sessionStorage.getItem("motion-short-handoff-unread")'));
+assert.ok(operatorDesk.includes('window.dispatchEvent(new Event("motion-short-handoff"))'));
+assert.ok(operatorDesk.includes('window.sessionStorage.setItem("motion-short-handoff-unread","1")'));
 assert.throws(()=>bridge.runContentStudioTool("create_motion_feature_film",{
   ...featureBrief,scenes:featureBrief.scenes.map((s,i)=>i===2?{...s,kind:"spatial"}:s)
 }),/Invalid scene kind/);
