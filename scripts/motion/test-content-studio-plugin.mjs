@@ -57,6 +57,49 @@ assert.throws(() => bridge.runContentStudioTool("revise_motion_film", {
   current_project: created.chatPack.project,
   changes: [{ target: "scene", index: 0, set: { headline: "НЕ ПРОСТО УЖИН." } }]
 }), /changes nothing/);
+// Feature film is assembled by ChatGPT in one call without external LLM/video API.
+const featureBrief={
+  title:"PROMPTENCE / THE ANSWER IS CHANGING",
+  brand:"promptence",format:"portrait",language:"en",style:"cinematic",
+  chapter_titles:["THE SHIFT","THE RESPONSE"],
+  scenes:Array.from({length:16},(_,i)=>({
+    kind:i===0?"opener":i===15?"closer":"statement",
+    eyebrow:"ACT "+(i<8?"I":"II"),
+    headline:"A NEW SEARCH MOMENT "+(i+1),
+    support:"Concept storyboard only: no invented customer evidence.",
+    seconds:7.5,
+    voiceCue:"Narration script for scene "+(i+1)
+  }))
+};
+const feature=bridge.runContentStudioTool("create_motion_feature_film",featureBrief);
+assert.equal(feature.durationSeconds,120);
+assert.equal(feature.chapters,2);
+assert.equal(feature.scenes,16);
+assert.equal(feature.videoFileCreated,false);
+assert.equal(feature.voiceFileCreated,false);
+assert.equal(feature.requiresUserApproval,true);
+const fragmentSequence=feature.editorUrl.split("#motion-sequence-v1=")[1];
+assert.ok(fragmentSequence && fragmentSequence.length>100);
+const manifest=JSON.parse(Buffer.from(fragmentSequence,"base64url").toString("utf8"));
+assert.equal(manifest.type,"motion-sequence-v1");
+assert.equal(manifest.chapters.length,2);
+assert.equal(manifest.expectedDurationSeconds,120);
+assert.deepEqual(manifest.chapters.map(x=>x.project.scenes.length),[8,8]);
+assert.equal(manifest.chapters[0].project.language,"en");
+assert.equal(manifest.chapters[1].title,"THE RESPONSE");
+assert.ok(manifest.chapters.every(x=>x.project.scenes.every(y=>!y.mediaId)));
+assert.throws(()=>bridge.runContentStudioTool("create_motion_feature_film",{
+  ...featureBrief,scenes:featureBrief.scenes.slice(0,8)
+}),/9–24/);
+assert.throws(()=>bridge.runContentStudioTool("create_motion_feature_film",{
+  ...featureBrief,scenes:Array.from({length:9},(_,i)=>({...featureBrief.scenes[i],seconds:2}))
+}),/exceed 64/);
+assert.throws(()=>bridge.runContentStudioTool("create_motion_feature_film",{
+  ...featureBrief,scenes:featureBrief.scenes.concat(featureBrief.scenes.slice(0,9))
+}),/9–24/);
+assert.throws(()=>bridge.runContentStudioTool("create_motion_feature_film",{
+  ...featureBrief,scenes:[{...featureBrief.scenes[0],seconds:19},...featureBrief.scenes.slice(1)]
+}),/2–8/);
 async function send(payload, origin) {
   const response = await route.POST(new Request("https://margaryan-distribution.vercel.app/api/mcp", {
     method: "POST",
@@ -68,10 +111,13 @@ async function send(payload, origin) {
 const init = await send({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18" } });
 assert.equal(init.json.result.serverInfo.name, "margaryan-content-studio");
 const listed = await send({ jsonrpc: "2.0", id: "tools", method: "tools/list" });
-assert.equal(listed.json.result.tools.length, 2);
+assert.equal(listed.json.result.tools.length, 3);
 const tool = await send({ jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "create_motion_film", arguments: data } });
 assert.equal(tool.json.result.structuredContent.videoFileCreated, false);
 assert.equal(tool.json.result.structuredContent.scenes, 3);
 const blocked = await send({ jsonrpc: "2.0", id: 4, method: "tools/list" }, "https://evil.example");
 assert.equal(blocked.response.status, 403);
-console.log("Content Studio plugin: JSON-RPC, 2 tools, safe handoff, patch guards and validation PASS");
+const featureTool=await send({ jsonrpc:"2.0",id:5,method:"tools/call",params:{name:"create_motion_feature_film",arguments:featureBrief} });
+assert.equal(featureTool.json.result.structuredContent.durationSeconds,120);
+assert.ok(featureTool.json.result.structuredContent.editorUrl.includes("#motion-sequence-v1="));
+console.log("Content Studio plugin: JSON-RPC, 3 tools, 120s/16-shot feature, safe handoff, patch guards PASS");
