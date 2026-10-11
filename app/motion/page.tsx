@@ -74,15 +74,22 @@ export default function MotionStudioPage() {
   const [editorPanel,setEditorPanel]=useState<"create"|"media"|"scene"|"sound"|"look"|"review"|"deliver">("scene");
   const [featureOpen,setFeatureOpen]=useState(false);
   const [focusMode,setFocusMode]=useState(false);
+  const [inspectorWide,setInspectorWide]=useState(false);
   const [shortcutHelp,setShortcutHelp]=useState(false);
   useEffect(()=>{
-    try{setFocusMode(localStorage.getItem("motion-editor-focus-v1")==="true");}
+    try{
+      setFocusMode(localStorage.getItem("motion-editor-focus-v1")==="true");
+      setInspectorWide(localStorage.getItem("motion-inspector-wide-v1")==="true");
+    }
     catch{/* Private browsing can disable storage; default full editor works. */}
   },[]);
   useEffect(()=>{
-    try{localStorage.setItem("motion-editor-focus-v1",String(focusMode));}
+    try{
+      localStorage.setItem("motion-editor-focus-v1",String(focusMode));
+      localStorage.setItem("motion-inspector-wide-v1",String(inspectorWide));
+    }
     catch{/* Personal layout preference is optional. */}
-  },[focusMode]);
+  },[focusMode,inspectorWide]);
   const [playing, setPlaying] = useState(false);
   const [playhead, setPlayhead] = useState(0);
   const [generating, setGenerating] = useState(false);
@@ -824,7 +831,8 @@ export default function MotionStudioPage() {
         }}/>
     </div>}
     {!featureOpen&&
-    <div className={styles.workspace} id="motion-storyboard" data-focus={focusMode}>
+    <div className={styles.workspace} id="motion-storyboard" data-focus={focusMode}
+      style={{"--inspector-width":inspectorWide?"440px":"344px"} as CSSProperties}>
       <nav className={styles.editorRail} aria-label="Editor workspaces">
         {([
           ["create","✦","CREATE","Concept and storyboard"],
@@ -860,7 +868,14 @@ export default function MotionStudioPage() {
               review:"Quality review",deliver:"Production delivery"
             })[editorPanel]}</strong>
           </div>
-          <small>ALT + {["create","media","scene","sound","look","review","deliver"].indexOf(editorPanel)+1}</small>
+          <div className={styles.inspectorHeaderTools}>
+            <small>ALT + {["create","media","scene","sound","look","review","deliver"].indexOf(editorPanel)+1}</small>
+            <button type="button" onClick={()=>setInspectorWide(value=>!value)}
+              aria-pressed={inspectorWide}
+              title={inspectorWide?"Switch to normal inspector width":"Widen inspector to read long scripts"}>
+              {inspectorWide?"↤ NARROW":"↔ WIDE"}
+            </button>
+          </div>
         </div>
         <div id="motion-inspector-scroll" className={styles.inspectorScroll}>
         {editorPanel==="deliver"&&<div className={styles.deliverIntro}>
