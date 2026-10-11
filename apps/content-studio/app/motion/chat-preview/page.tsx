@@ -94,6 +94,16 @@ export default function ChatMotionPreviewPage() {
     }
   }, [project,logoAnchor,logoVersion]);
 
+  // The public homepage links straight to this player. Give visitors a
+  // genuine keyless sample instead of a disabled, empty waiting state.
+  // Inside ChatGPT, wait for the actual authorized MCP tool output.
+  useEffect(()=>{
+    if(window.parent===window){
+      setReceived(true);
+      setNotice("Public local demo ready — play and export this REAL 18-second Motion film. For your own script, connect ChatGPT or open the full editor.");
+    }
+  },[]);
+
   useEffect(() => {
     const listener = (e: MessageEvent<unknown>) => {
       // ChatGPT widget is our *direct* parent. Do not listen to arbitrary
