@@ -2,7 +2,7 @@
 import {useEffect,useMemo,useState} from "react";
 import type {MotionProject} from "@/lib/motion/studio";
 import {
- addReviewMarker,markerSceneIndex,parseReviewMarkers,reviewMarkersAsText,
+ addReviewMarker,markerSceneIndex,markerFilmTime,parseReviewMarkers,reviewMarkersAsText,
  reviewProjectStorageKey,updateReviewMarkerStatus,type ReviewMarker,type MarkerPriority
 } from "@/lib/motion/review-markers";
 import styles from "./review-notes-desk.module.css";
@@ -46,9 +46,11 @@ export default function ReviewNotesDesk({project,playhead,activeIndex,onNavigate
    if(!activeScene)return;
    try{
      const id=crypto.randomUUID();
+     const start=project.scenes.slice(0,activeIndex).reduce((a,x)=>a+x.seconds,0);
      setNotes(old=>addReviewMarker(old,{
        id,sceneId:activeScene.id,shotIndex:activeIndex,
        atSeconds:Math.min(project.scenes.reduce((a,x)=>a+x.seconds,0),Math.max(0,playhead)),
+       localSeconds:Math.max(0,Math.min(activeScene.seconds-.05,playhead-start)),
        text:draft,priority
      }));
      setDraft("");setMessage("Private marker added at "+clock(playhead)+". No client approval was recorded.");
@@ -105,15 +107,16 @@ export default function ReviewNotesDesk({project,playhead,activeIndex,onNavigate
          "No open notes. Reopen any resolved item with SHOW ALL."}</p>
      :(showAll?notes:open).map(note=>{
        const current=markerSceneIndex(note,project.scenes);
+       const liveTime=markerFilmTime(note,project.scenes);
        return <article key={note.id} className={styles.note} data-priority={note.priority}>
          <div className={styles.noteMeta}>
-           <span>{clock(note.atSeconds)} · {current===null?"SHOT UNLINKED":"SHOT "+(current+1)}</span>
+           <span>{liveTime===null?"ORPHAN":clock(liveTime)} · {current===null?"SHOT UNLINKED":"SHOT "+(current+1)}</span>
            <b>{note.status.toUpperCase()} / {note.priority.toUpperCase()}</b>
          </div>
          <p>{note.text}</p>
          <div className={styles.actions}>
            <button type="button" disabled={current===null}
-             onClick={()=>{if(current!==null)onNavigate(current,note.atSeconds);}}>
+             onClick={()=>{if(current!==null&&liveTime!==null)onNavigate(current,liveTime);}}>
              ↳ GO TO FRAME
            </button>
            <button type="button" onClick={()=>setNotes(old=>updateReviewMarkerStatus(
