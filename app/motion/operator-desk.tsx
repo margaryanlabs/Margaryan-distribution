@@ -244,6 +244,10 @@ export default function OperatorDesk({
       </div>
       <div className={styles.actionGrid}>
         <button type="button" disabled={busy} onClick={onCreateBlank}>◈ BUILD WITHOUT MATERIALS</button>
+        <button type="button" onClick={()=>{
+          const url=new URL("/api/mcp",window.location.origin).toString();
+          void copy(url).then(()=>setNotice("ChatGPT MCP URL copied. Add it as a custom ChatGPT app if eligible. External access needs an unprotected HTTPS domain; a Vercel-protected preview is not sufficient.")).catch(e=>setNotice(String(e)));
+        }}>↗ CONNECT CHATGPT / COPY MCP URL</button>
         <button type="button" onClick={()=>{void copy(JSON.stringify(createChatMotionPack(project),null,2))
           .then(()=>setNotice("Full Motion Chat Pack copied. Paste it into our ChatGPT conversation so I can edit your existing project."))
           .catch(e=>setNotice(String(e)));}}>COPY FULL PROJECT ↗</button>
