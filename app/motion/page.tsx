@@ -811,7 +811,7 @@ export default function MotionStudioPage() {
             onClick={saveJson}>↓ SAVE EDITABLE PROJECT</button>
           <button type="button" className={styles.deliverSecondary}
             onClick={()=>setEditorPanel("review")}>◈ OPEN FRAME & EVIDENCE REVIEW</button>
-        </div>
+        </div>}
         <div className={styles.panelSection} hidden={editorPanel!=="media"}>
         <OperatorDesk project={project} selectedIndex={selectedIndex}
           voiceFile={voiceover} musicFile={licensedMusic}
