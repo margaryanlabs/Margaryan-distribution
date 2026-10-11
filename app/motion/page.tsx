@@ -773,13 +773,18 @@ export default function MotionStudioPage() {
           aria-current={editorPanel===panel?"page":undefined}
           aria-label={label+" – "+desc+" (Alt+"+(i+1)+")"}
           title={desc+" · Alt+"+(i+1)}
-          onClick={()=>setEditorPanel(panel)}>
+          onClick={()=>{
+            setEditorPanel(panel);
+            if(window.matchMedia("(max-width: 850px)").matches)
+              requestAnimationFrame(()=>document.getElementById("motion-inspector")?.scrollIntoView({behavior:"smooth",block:"start"}));
+            else document.getElementById("motion-inspector-scroll")?.scrollTo({top:0});
+          }}>
             <span className={styles.railIcon} aria-hidden="true">{icon}</span>
             <span className={styles.railLabel}>{label}</span>
           </button>)}
         <div className={styles.railFoot} title="Film assets remain in this browser">PRIVATE<br/>LOCAL</div>
       </nav>
-      <section className={styles.sidebar} aria-label="Creative director inspector">
+      <section className={styles.sidebar} id="motion-inspector" aria-label="Creative director inspector">
         <div className={styles.inspectorHeader}>
           <div><span>INSPECTOR / {editorPanel.toUpperCase()}</span>
             <strong>{({
@@ -791,7 +796,7 @@ export default function MotionStudioPage() {
           </div>
           <small>ALT + {["create","media","scene","sound","look","review","deliver"].indexOf(editorPanel)+1}</small>
         </div>
-        <div className={styles.inspectorScroll}>
+        <div id="motion-inspector-scroll" className={styles.inspectorScroll}>
         {editorPanel==="deliver"&&<div className={styles.deliverIntro}>
           <strong>Ready for the final cut?</strong>
           <p>Export your video from the delivery tray under the preview.
