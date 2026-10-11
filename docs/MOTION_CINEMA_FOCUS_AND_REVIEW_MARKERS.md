@@ -46,7 +46,10 @@ mean an advertisement is ready to be sold or distributed.
 - Type a human observation, required edit or **blocking** issue.
 - Each note receives an absolute timecode, unique private identifier,
   the scene identifier, author-selected priority and open/resolved state.
-- **GO TO FRAME** selects the recorded shot and seeks to the timestamp.
+- **GO TO FRAME** selects the recorded shot and seeks to its current
+  timestamp. Markers use original-shot identity plus the offset inside
+  that shot, so notes move with a shot when scenes are reordered, and are
+  clamped safely if a shot is trimmed.
 - Mark a note resolved or reopen it; this does not imply that a license,
   factual claim or final master has been approved.
 - **SHOW ALL**, **SHOW OPEN**, remove, and export a plain-text director's
