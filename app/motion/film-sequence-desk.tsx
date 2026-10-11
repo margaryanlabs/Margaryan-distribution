@@ -3,6 +3,7 @@
 import {useEffect,useMemo,useState} from "react";
 import {durationOf,makeMotionPreset,sanitizeMotionProject,type MotionProject} from "@/lib/motion/studio";
 import styles from "./film-sequence-desk.module.css";
+import FilmBrowserExport from "./film-browser-export";
 
 type Chapter={id:string;title:string;project:MotionProject};
 const STORAGE="margaryan-motion-film-sequence-v1";
@@ -115,6 +116,7 @@ export default function FilmSequenceDesk({
   },[ready]);
   const length=useMemo(()=>chapters.reduce((s,c)=>s+durationOf(c.project),0),[chapters]);
   const shots=useMemo(()=>chapters.reduce((s,c)=>s+c.project.scenes.length,0),[chapters]);
+  const savedProjects=useMemo(()=>chapters.map(c=>c.project),[chapters]);
   const origin=chapters[0]?.project;
   const different=Boolean(origin&&(origin.brand!==project.brand||origin.format!==project.format));
   const dirty=selected!==null&&chapters[selected]?
@@ -265,6 +267,7 @@ export default function FilmSequenceDesk({
         <button type="button" disabled={busy} aria-label={"Delete "+c.title} onClick={()=>removeChapter(i)}>×</button>
       </div>)}
     </div>}
+    {chapters.length>0&&<FilmBrowserExport chapters={savedProjects} busy={busy} dirty={dirty}/>}
     {different&&<p className={styles.warning}>CURRENT CHAPTER BRAND OR FORMAT DIFFERS FROM THE SAVED FILM. Change it back or start a new sequence.</p>}
     {dirty&&<p className={styles.warning}>UNSAVED CHANGES IN CURRENT CHAPTER — press SAVE ACTIVE CHAPTER before switching.</p>}
     <label className={styles.field}>CHAPTER TITLE
@@ -285,6 +288,6 @@ export default function FilmSequenceDesk({
       <button type="button" onClick={resetFilm} disabled={busy||!chapters.length}>RESET SEQUENCE</button>
     </div>
     <p className={styles.notice} role="status">{notice}</p>
-    <p className={styles.footnote}>Feature films are mastered with <code>npm run motion:sequence</code> on a workstation with Chromium and FFmpeg. This browser panel edits/saves the chapters; it does not pretend to render a multi-minute cloud MP4. No OpenAI API needed. Keep private footage and client information out of public Chat Packs.</p>
+    <p className={styles.footnote}>Feature films are mastered with <code>npm run motion:sequence</code> on a workstation with Chromium and FFmpeg. The browser exports a genuine silent visual workprint (<=192s) from our Canvas Engine; soundtrack, real footage and broadcast-quality full MP4 mastering remain part of the local Chromium/FFmpeg workflow. No OpenAI API needed. Keep private footage and client information out of public Chat Packs.</p>
   </section>;
 }
