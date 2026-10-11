@@ -263,31 +263,45 @@ const playerFrame={
 };
 const player={
   contentWindow:playerFrame,
-  addEventListener(){},
+  events:{},
+  addEventListener(kind,cb){this.events[kind]=cb;},
   src:""
 };
+const sceneButtons=[];
 const controls=new Map();
 const element=(id)=>{
   if(id==="player")return player;
   if(!controls.has(id))controls.set(id,{
-    textContent:"",hidden:false,href:"",
-    replaceChildren(){},appendChild(){}
+    textContent:"",hidden:false,href:"",value:"",
+    events:{},
+    addEventListener(kind,cb){this.events[kind]=cb;},
+    replaceChildren(){if(id==="shots")sceneButtons.length=0;},
+    appendChild(){},
+    querySelectorAll(kind){assert.equal(kind,".shot");return sceneButtons;}
   });
   return controls.get(id);
 };
 const listeners=[];
 const uploads=[];
 const hostParent={postMessage(){}};
+const selected=[];
 const windowMock={
   parent:hostParent,
   openai:{
-    async uploadFile(file,opts){uploads.push({name:file.name,size:file.size,type:file.type,opts});return {fileId:"file_test_motion"};}
+    async uploadFile(file,opts){uploads.push({name:file.name,size:file.size,type:file.type,opts});return {fileId:"file_test_motion"};},
+    setWidgetState(value){selected.push(value);}
   },
   addEventListener(name,callback){if(name==="message")listeners.push(callback);}
 };
 const frame=vm.createContext({
   window:windowMock,
-  document:{getElementById:element,createElement:()=>({textContent:"",className:"",append(){}})},
+  document:{getElementById:element,createElement:(tag)=>{
+    const node={textContent:"",className:"",type:"",events:{},attributes:{},
+      append(){},setAttribute(k,v){this.attributes[k]=v;},
+      addEventListener(k,cb){this.events[k]=cb;}};
+    if(tag==="button")sceneButtons.push(node);
+    return node;
+  }},
   setTimeout(){},
   File,
   ArrayBuffer,
@@ -295,6 +309,26 @@ const frame=vm.createContext({
 });
 new vm.Script(script).runInContext(frame);
 const dispatch=(source,origin,data)=>listeners.forEach(fn=>fn({source,origin,data}));
+
+assert.equal(sceneButtons.length,0,"Widget must await real tool results before creating shot controls");
+player.events.load();
+dispatch(hostParent,"https://chatgpt.com",{
+  jsonrpc:"2.0",method:"ui/notifications/tool-result",params:{structuredContent:created}
+});
+assert.equal(sceneButtons.length,3,"Three accessible live scene buttons should appear");
+assert.equal(sceneButtons[0].attributes["aria-pressed"],"true");
+assert.ok(sceneButtons[1].events.click,"Second scene must respond to user selection");
+sceneButtons[1].events.click();
+assert.equal(playerFrame.lastReply.kind,"margaryan-motion-seek-v1");
+assert.ok(playerFrame.lastReply.time>created.previewProject.scenes[0].seconds);
+assert.equal(sceneButtons[1].attributes["aria-pressed"],"true");
+assert.equal(sceneButtons[0].attributes["aria-pressed"],"false");
+assert.equal(selected.at(-1).selectedShot,1,"Shot index stored as UI-only ChatGPT widget state");
+controls.get("editPrompt").value="Make the scene more cinematic and use a shorter headline";
+controls.get("askEdit").events.click();
+assert.ok(controls.get("status").textContent.includes("require an installed ChatGPT host"),
+  "No real ChatGPT host must never pretend the AI edited the video");
+
 dispatch(playerFrame,"https://evil.example",{
   kind:"margaryan-motion-export-file-v1",
   fileName:"fake.mp4",mimeType:"video/mp4",bytes:new ArrayBuffer(512)
