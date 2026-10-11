@@ -1,4 +1,4 @@
-import type { MotionScene } from "./studio";
+import type { MotionBrand, MotionScene } from "./studio";
 
 /**
  * The existing time-addressable 2D renderer stays the source of truth.
@@ -13,7 +13,8 @@ export type SpatialFrameRenderer = (
   time: number,
   progress: number,
   index: number,
-  scene: MotionScene
+  scene: MotionScene,
+  brand: MotionBrand
 ) => void;
 
 let activeRenderer: SpatialFrameRenderer | null = null;
@@ -26,10 +27,10 @@ export function spatialStatus(): "unloaded" | "loading" | "ready" | "unavailable
 export function spatialError(): string | null { return errorMessage; }
 export function drawSpatialFrame(
   ctx:CanvasRenderingContext2D,w:number,h:number,accent:string,time:number,
-  progress:number,index:number,scene:MotionScene
+  progress:number,index:number,scene:MotionScene,brand:MotionBrand
 ):boolean {
   if(!activeRenderer)return false;
-  activeRenderer(ctx,w,h,accent,time,progress,index,scene);
+  activeRenderer(ctx,w,h,accent,time,progress,index,scene,brand);
   return true;
 }
 export async function ensureSpatialRenderer():Promise<void> {
