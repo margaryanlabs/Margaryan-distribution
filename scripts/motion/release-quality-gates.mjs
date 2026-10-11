@@ -1,3 +1,4 @@
+import {PLAN as APPROVED_PUBLIC_INTERACTION_PLAN} from "./interaction-cinema-core.mjs";
 /**
  * Strict pre-publication operator contract for Motion Studio's offline master.
  * This intentionally never calls a generative service or certifies aesthetics.
@@ -46,14 +47,17 @@ export function assertApprovedInteractionManifest(manifest,sourceIDs,shaById,bra
     !manifest.originalVideo||!/^[a-f0-9]{64}$/i.test(manifest.originalVideo.sha256||"")||
     shaById?.[manifest.mediaId]!==manifest.originalVideo.sha256)
    throw Error("RELEASE BLOCKED: browser interaction MP4 does not match reviewed original bytes.");
- if(!Number.isFinite(manifest.duration)||manifest.duration<8||manifest.duration>64||
+ if(manifest.firstVisitOnboardingHandled?.checked!==true||
+    !Number.isFinite(manifest.duration)||manifest.duration<8||manifest.duration>64||
     !Number.isInteger(manifest.frames)||manifest.frames<24*8||!Array.isArray(manifest.events)||
-    manifest.events.length<4)
-   throw Error("RELEASE BLOCKED: missing original timecoded UI interactions.");
+    manifest.events.length!==APPROVED_PUBLIC_INTERACTION_PLAN.length)
+   throw Error("RELEASE BLOCKED: missing original verified read-only UI choreography.");
  const ids=new Set();
  let prev=-1;
- for(const e of manifest.events){
-   if(!e||typeof e.action!=="string"||ids.has(e.action)||
+ for(const [index,e] of manifest.events.entries()){
+   const allowed=APPROVED_PUBLIC_INTERACTION_PLAN[index];
+   if(!e||e.action!==allowed.id||e.kind!==allowed.kind||e.target!==allowed.target||
+      typeof e.action!=="string"||ids.has(e.action)||
       !["click","type","focus"].includes(e.kind)||
       !Number.isFinite(e.timestampSeconds)||e.timestampSeconds<0||
       e.timestampSeconds>manifest.duration||e.timestampSeconds<=prev||
