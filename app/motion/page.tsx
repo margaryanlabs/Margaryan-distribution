@@ -759,7 +759,40 @@ export default function MotionStudioPage() {
     </div>}
     {!featureOpen&&
     <div className={styles.workspace} id="motion-storyboard">
-      <section className={styles.sidebar} aria-label="Creative director controls">
+      <nav className={styles.editorRail} aria-label="Editor workspaces">
+        {([
+          ["create","✦","CREATE","Concept and storyboard"],
+          ["media","▧","ASSETS","Original video and Chat Pack"],
+          ["scene","◈","SCENE","Selected shot properties"],
+          ["sound","♫","AUDIO","Human voice and score"],
+          ["look","◐","LOOK","Format and film presentation"],
+          ["review","◇","REVIEW","Evidence and visual quality"],
+          ["deliver","↥","EXPORT","Delivery and project files"]
+        ] as const).map(([panel,icon,label,desc],i)=><button key={panel} type="button"
+          className={editorPanel===panel?styles.railCurrent:""}
+          aria-current={editorPanel===panel?"page":undefined}
+          aria-label={label+" – "+desc+" (Alt+"+(i+1)+")"}
+          title={desc+" · Alt+"+(i+1)}
+          onClick={()=>setEditorPanel(panel)}>
+            <span className={styles.railIcon} aria-hidden="true">{icon}</span>
+            <span className={styles.railLabel}>{label}</span>
+          </button>)}
+        <div className={styles.railFoot} title="Film assets remain in this browser">PRIVATE<br/>LOCAL</div>
+      </nav>
+      <section className={styles.sidebar} aria-label="Creative director inspector">
+        <div className={styles.inspectorHeader}>
+          <div><span>INSPECTOR / {editorPanel.toUpperCase()}</span>
+            <strong>{({
+              create:"Creative brief",media:"Source library",
+              scene:"Shot "+String(selectedIndex+1).padStart(2,"0")+" / "+project.scenes.length,
+              sound:"Audio studio",look:"Film presentation",
+              review:"Quality review",deliver:"Production delivery"
+            })[editorPanel]}</strong>
+          </div>
+          <small>ALT + {["create","media","scene","sound","look","review","deliver"].indexOf(editorPanel)+1}</small>
+        </div>
+        <div className={styles.inspectorScroll}>
+        <div className={styles.panelSection} hidden={editorPanel!=="media"}>
         <OperatorDesk project={project} selectedIndex={selectedIndex}
           voiceFile={voiceover} musicFile={licensedMusic}
           busy={exporting||generating||directorRepairing||visualReviewing}
@@ -809,6 +842,8 @@ export default function MotionStudioPage() {
             switchMode("quick");
           }}
         />
+        </div>
+        <div className={styles.panelSection} hidden={editorPanel!=="create"}>
         <div className={styles.sectionHeader}><span>01 / CREATIVE BRIEF</span><strong>LOCAL DIRECTOR</strong></div>
         <label className={styles.field}><span>PRODUCT / BRAND</span>
           <select value={project.brand} onChange={event => loadBrand(event.target.value as MotionBrand)}>
@@ -869,7 +904,8 @@ export default function MotionStudioPage() {
           <small>Original film grammar and approved Promptence SVG. Illustrative data motifs are never real provider results.</small>
         </div>
 
-        <div className={styles.divider}/>
+        </div>
+        <div className={styles.panelSection} hidden={editorPanel!=="look"}>
         <div className={styles.sectionHeader}><span>02 / FORMAT</span><strong>OUTPUT</strong></div>
         <div className={styles.segment}>
           {FORMATS.map(format => <button key={format} type="button" aria-pressed={project.format === format} className={project.format === format ? styles.active : ""} onClick={() => updateProject({ ...project, format })}>
@@ -899,6 +935,8 @@ export default function MotionStudioPage() {
           </select>
         </label>
         <p className={styles.hint}>Commercial exports no longer need to expose debug labels, clip counters or the Motion Engine footer. Use EDITOR only while reviewing.</p>
+        </div>
+        <div className={styles.panelSection} hidden={editorPanel!=="sound"}>
         <label className={styles.audioToggle}>
           <input type="checkbox" checked={soundEnabled} disabled={exporting} onChange={event => setSoundEnabled(event.target.checked)}/>
           ORIGINAL SYNTH SOUNDTRACK <strong>{soundEnabled ? "ON" : "OFF"}</strong>
@@ -956,6 +994,8 @@ export default function MotionStudioPage() {
           </label>
           <small>Audio clips are mixed into the browser export. For H.264/AAC mastering use the existing offline FFmpeg workflow with the original licensed files.</small>
         </section>
+        </div>
+        <div className={styles.panelSection} hidden={editorPanel!=="review"}>
         <section className={styles.referenceLab} aria-label="Reference film comparison">
           <div className={styles.referenceLabHead}>
             <strong>REFERENCE LAB / REAL FILM SIGNALS</strong>
@@ -1027,7 +1067,8 @@ export default function MotionStudioPage() {
           <p>{qa.scenes} shots · {qa.seconds.toFixed(1)}s · {qa.warnings} reviews · {qa.blockers} blockers</p>
           {qa.checks.filter(c=>c.severity!=="info").slice(0,4).map(c=><small key={c.id}>• {c.message}</small>)}
         </div>
-        <div className={styles.divider}/>
+        </div>
+        <div className={styles.panelSection} hidden={editorPanel!=="scene"}>
         <div className={styles.sectionHeader}><span>03 / SCENE INSPECTOR</span><strong>{String(selectedIndex + 1).padStart(2, "0")}</strong></div>
         <label className={styles.field}><span>VISUAL COMPOSITION</span>
           <select value={selected.kind} onChange={event => updateProject({...project,
@@ -1212,6 +1253,7 @@ export default function MotionStudioPage() {
           {needsSpatial&&spatialError()&&<small>{spatialError()}</small>}
           <small>Free library, not text-to-video AI. No cloud GPU, voice cloning or API key. Legacy 2D shots remain unchanged.</small>
         </div>
+        </div>
       </section>
 
       <section className={styles.stageSection} id="motion-editor" aria-label="Motion canvas and timeline">
@@ -1294,6 +1336,6 @@ export default function MotionStudioPage() {
         </div>
         <p className={styles.footnote}>Spatial shots use actual WebGL geometry via Three.js and deterministic GSAP easing only when selected; rendering requires WebGL support. Local cinema staging and original MP4 soundtracks run without paid video APIs. Product screenshots are local-only and never stored in saved JSON. Source-verified marks are original SVGs; private GitHub sources are never exposed here. Browser EXPORT may produce WebM depending on support. For deterministic professional H.264/AAC MP4, use the offline <code>npm run motion:master</code> workflow in the repository; it needs a local computer with FFmpeg/Chromium. QA checks structure and sampled frames but cannot certify taste, factual claims or music licenses. Final creative review is still required.</p>
       </section>
-    </div>
+    </div>}
   </main>;
 }
