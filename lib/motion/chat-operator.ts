@@ -8,7 +8,7 @@ export const CHAT_PROTOCOL = "motion-chat-v1" as const;
 export type ChatScenePatch = {
   target: "scene"; index: number;
   set: Partial<Pick<MotionScene,"kind"|"eyebrow"|"headline"|"support"|"seconds"|
-    "typographyScale"|"titleTreatment"|"camera"|"transition"|"intensity"|"voiceCue"|"productBeat"|"mediaId"|"mediaStart"|"sourceLayout"|"sourceFocusX"|"sourceFocusY"|"sourceZoomStart"|"sourceZoomEnd">>;
+    "typographyScale"|"titleTreatment"|"camera"|"transition"|"intensity"|"voiceCue"|"productBeat"|"mediaId"|"mediaStart"|"sourceLayout"|"sourceFocusX"|"sourceFocusY"|"sourceZoomStart"|"sourceZoomEnd"|"overlayMediaId"|"overlayCorner"|"overlaySize"|"overlayOpacity"|"overlayStart"|"overlayDuration">>;
 };
 export type ChatProjectPatch = {
   target:"project";
@@ -31,7 +31,7 @@ export interface ChatOperatorPreview {
 }
 
 const SCENE_FIELDS=["kind","eyebrow","headline","support","seconds","typographyScale",
-  "titleTreatment","camera","transition","intensity","voiceCue","productBeat","mediaId","mediaStart","sourceLayout","sourceFocusX","sourceFocusY","sourceZoomStart","sourceZoomEnd"] as const;
+  "titleTreatment","camera","transition","intensity","voiceCue","productBeat","mediaId","mediaStart","sourceLayout","sourceFocusX","sourceFocusY","sourceZoomStart","sourceZoomEnd","overlayMediaId","overlayCorner","overlaySize","overlayOpacity","overlayStart","overlayDuration"] as const;
 const PROJECT_FIELDS=["title","format","style","language","qualityMode","filmChrome","visual","audio"] as const;
 const allowedScene=new Set<string>(SCENE_FIELDS);
 const allowedProject=new Set<string>(PROJECT_FIELDS);
