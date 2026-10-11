@@ -174,8 +174,7 @@ export async function restoreMotionBundle(file:Blob,confirmedRights:boolean):Pro
         mediaId:scene.mediaId?remap.get(scene.mediaId):undefined,
         overlayMediaId:scene.overlayMediaId?remap.get(scene.overlayMediaId):undefined
       }))});
-    if(updated.scenes.some(scene=>(scene.kind==="screen"&&!scene.mediaId)||
-      (scene.overlayMediaId&&!remap.has(scene.overlayMediaId))))
+    if(updated.scenes.some(scene=>scene.kind==="screen"&&!scene.mediaId))
       throw Error("Asset remapping failed; project was not restored");
     if(updated.scenes.some((scene,index)=>manifest.project.scenes[index].overlayMediaId&&!scene.overlayMediaId))
       throw Error("Overlay media remapping failed; project was not restored");
