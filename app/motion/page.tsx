@@ -70,6 +70,32 @@ export default function MotionStudioPage() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editorPanel,setEditorPanel]=useState<"create"|"media"|"scene"|"sound"|"look"|"review"|"deliver">("scene");
   const [featureOpen,setFeatureOpen]=useState(false);
+  // Both ChatGPT deep links must surface the correct workspace in Editor V2.
+  // Feature handoff is staged by the Film Sequence Desk; short Chat Packs are
+  // inspected inside the Media/Chat Operator panel. No automatic approval.
+  useEffect(()=>{
+    const routeHandoff=()=>{
+      const hash=window.location.hash;
+      if(hash.startsWith("#motion-sequence-v1=")){
+        setPlaying(false);setFeatureOpen(true);return;
+      }
+      let wasImported=false;
+      try{
+        wasImported=window.sessionStorage.getItem("motion-short-handoff-unread")==="1";
+        if(wasImported)window.sessionStorage.removeItem("motion-short-handoff-unread");
+      }catch{}
+      if(hash.startsWith("#motion-chat-v1=")||wasImported){
+        setPlaying(false);setFeatureOpen(false);setEditorPanel("media");
+      }
+    };
+    window.addEventListener("hashchange",routeHandoff);
+    window.addEventListener("motion-short-handoff",routeHandoff);
+    routeHandoff();
+    return()=>{
+      window.removeEventListener("hashchange",routeHandoff);
+      window.removeEventListener("motion-short-handoff",routeHandoff);
+    };
+  },[]);
   const [playing, setPlaying] = useState(false);
   const [playhead, setPlayhead] = useState(0);
   const [generating, setGenerating] = useState(false);
