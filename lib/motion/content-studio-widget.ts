@@ -38,7 +38,7 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
 <div class="shots" id="shots"><h2>SHOT LIST / DIRECTOR</h2><p class="note">Ask ChatGPT to create a motion film. Its actual Canvas preview will appear here.</p></div></div>
 <div id="chapterNav" class="chapterNav" hidden aria-label="Preview feature film chapters"></div>
 <div class="actions"><a id="openEditor" class="btn" href="#" target="_blank" rel="noopener noreferrer" hidden>OPEN FULL EDITOR ↗</a><span class="note" id="status" role="status">Preview only; video has not been exported.</span></div>
-<p class="note">This player uses browser motion graphics, not AI-generated live-action footage. Export is a device-local video recording; format depends on browser support. User media is not uploaded.</p>
+<p class="note">All chapters play and record in one continuous 720p silent film. Recording takes real time (up to five minutes) and requires a visible tab. For licensed music, human narration, or your own video assets, open the full editor. This is not photorealistic AI text-to-video.</p>
 </main><script>
 (() => {
   "use strict";
@@ -60,13 +60,15 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
   function featurePreview(index) {
     if (!featureChapters || !featureChapters[index]) return;
     const chapter = featureChapters[index];
-    latest = {previewProject:chapter.project};
+    // Keep one continuous film loaded. Chapter tabs are seek targets, not
+    // separate single-act exports.
+    const offset=featureChapters.slice(0,index).reduce((n,c)=>n+c.project.scenes.reduce((v,shot)=>v+shot.seconds,0),0);
     chapterNav.querySelectorAll("button").forEach((button, i) => {
       button.setAttribute("aria-current",String(i===index));
     });
-    status.textContent = "PREVIEW ONLY — ACT " + (index+1) + "/" + featureChapters.length +
-      ". In-frame export only records this act; complete MP4 requires full Motion editor/workstation.";
-    sendToPlayer();
+    status.textContent = "FULL FILM READY — ACT " + (index+1) + "/" + featureChapters.length +
+      ". PLAY and EXPORT record every chapter continuously. Silent browser workprint; use full editor for human voice, music or source footage.";
+    if(ready&&player.contentWindow)player.contentWindow.postMessage({kind:"margaryan-motion-seek-v1",seconds:offset},origin);
   }
   function setResult(envelope) {
     const data = envelope && envelope.structuredContent ? envelope.structuredContent : envelope;
@@ -147,8 +149,10 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
       const small=document.createElement("small");small.textContent=safe(shot.kind);
       div.append(number,strong,small);shots.appendChild(div);
     });
-    if (featureChapters) featurePreview(0);
-    else {
+    if (featureChapters) {
+      latest={previewProjects:featureChapters.map(x=>x.project)};
+      sendToPlayer();featurePreview(0);
+    }else {
       latest={previewProject:film};
       status.textContent="Editable motion draft. Preview/export uses browser graphics and may not include audio.";
       sendToPlayer();
@@ -156,7 +160,9 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
   }
   function sendToPlayer() {
     if (!ready || !latest || !player.contentWindow) return;
-    player.contentWindow.postMessage({kind:"margaryan-motion-preview-v1",project:latest.previewProject},origin);
+    player.contentWindow.postMessage(latest.previewProjects
+      ? {kind:"margaryan-motion-preview-v1",projects:latest.previewProjects}
+      : {kind:"margaryan-motion-preview-v1",project:latest.previewProject},origin);
   }
   player.addEventListener("load", () => { ready = true; sendToPlayer(); });
   player.src = origin + "/motion/chat-preview";
