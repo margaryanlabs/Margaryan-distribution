@@ -109,6 +109,8 @@ const first=(await rpc("resources/read",{uri:resource.uri})).contents[0];
 assert.equal(first.mimeType,"text/html;profile=mcp-app");
 assert.ok(first.text.includes("/motion/chat-preview"));
 assert.ok(first._meta.ui.csp.frameDomains.includes(new URL(origin).origin));
+assert.deepEqual(first._meta["openai/widgetCSP"].redirect_domains,[new URL(origin).origin]);
+assert.ok(first.text.includes("window.openai.openExternal({href,redirectUrl:false})"));
 const script=/<script>([\s\S]*?)<\/script>/.exec(first.text)?.[1];
 assert.ok(script && script.includes("ui/initialize"));
 new vm.Script(script);
