@@ -41,6 +41,8 @@ export function auditMotionProject(project: MotionProject): MotionQAReport {
       issue("screen.missing."+i,"block","Source screenshot missing for scene "+(i+1)+". Upload a real product screenshot before export.");
     if(s.kind==="screen"&&(s.mediaId?getMotionSceneSource(s.mediaId):hasProductScreen(project.brand)))
       issue("screen.review."+i,"warn","Real user-provided source: visually verify provenance, sensitive information, original data and rights before publishing.");
+    if(s.overlayMediaId)
+      issue("overlay.review."+i,"warn","Independent approved image overlay: check source rights, legibility and whether it obscures headline or evidence.");
     if (!s.headline.trim()) issue("copy.blank."+i,"block","Scene "+(i+1)+" has no headline.");
     if(s.productBeat && project.brand!=="promptence")
       issue("beat.brand."+i,"block","Product story art is only source-validated for Promptence.");
