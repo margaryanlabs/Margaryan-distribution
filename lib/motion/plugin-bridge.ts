@@ -24,7 +24,10 @@ export const CONTENT_STUDIO_TOOLS = [
       additionalProperties: false,
       properties: {
         title: { type: "string", minLength: 1, maxLength: 100 },
-        brand: { type: "string", enum: Object.keys(BRAND_INFO), description: "Use labs for an external client's concept film. Custom white-label branding is not yet supported." },
+        brand: { type: "string", enum: Object.keys(BRAND_INFO), description: "Use labs for an external client film. Specify client_brand_name to display its own approved name/colors." },
+        client_brand_name: {type:"string",minLength:1,maxLength:36,description:"Client's permitted display name; requires brand=labs. No logo or screenshot is generated."},
+        client_brand_caption: {type:"string",maxLength:65,description:"Optional client tagline displayed on film chrome."},
+        client_brand_accent: {type:"string",pattern:"^#[0-9A-Fa-f]{6}$",description:"Accessible client accent hex, e.g. #ABCDEF; too-dark colors safely fall back."},
         format: { type: "string", enum: ["portrait", "square", "landscape"] },
         language: { type: "string", enum: ["ru", "en", "hy"] },
         style: { type: "string", enum: ["cinematic", "kinetic", "technical"] },
@@ -231,10 +234,23 @@ export function runContentStudioTool(name: string, raw: unknown) {
   if (name === "create_motion_film") {
     const brand = oneOf(raw.brand, Object.keys(BRAND_INFO) as MotionProject["brand"][], "brand");
     const scenes = validateScenes(raw.scenes);
+    const hasClient = raw.client_brand_name !== undefined || raw.client_brand_accent !== undefined ||
+      raw.client_brand_caption !== undefined;
+    if (hasClient && brand !== "labs") throw Error("Client brand kit only supported with brand=labs");
+    if(hasClient && raw.client_brand_name === undefined) throw Error("client_brand_name required for client brand kit");
+    const clientBrand=hasClient?{
+      name:checkString(raw.client_brand_name,"client_brand_name",36),
+      caption:checkString(raw.client_brand_caption,"client_brand_caption",65,true),
+      accent:raw.client_brand_accent === undefined ? "#C4D9F4" :
+        oneOf(raw.client_brand_accent, [raw.client_brand_accent] as string[], "client_brand_accent")
+    }:undefined;
+    if(clientBrand && !/^#[0-9a-fA-F]{6}$/.test(clientBrand.accent))
+      throw Error("client_brand_accent must be #RRGGBB");
     const draft: MotionProject = {
       version: 1,
       title: checkString(raw.title, "title", 100),
       brand,
+      clientBrand,
       format: oneOf(raw.format, ["portrait", "square", "landscape"] as const, "format"),
       language: oneOf(raw.language, ["ru", "en", "hy"] as const, "language"),
       style: raw.style === undefined ? "cinematic" : oneOf(raw.style, ["cinematic", "kinetic", "technical"] as const, "style"),
