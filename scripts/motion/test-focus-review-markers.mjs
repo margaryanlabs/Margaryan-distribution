@@ -64,4 +64,8 @@ assert.match(page,/event\.target as HTMLElement\|null/);
 assert.match(page,/review-notes/);
 assert.match(css,/\.workspace\[data-focus="true"\]/);
 assert.match(css,/\.shortcutSheet/);
+assert.match(page,/inspectorWide\?"440px":"344px"/);
+assert.match(page,/motion-inspector-wide-v1/);
+assert.match(page,/aria-pressed=\{inspectorWide\}/);
+assert.match(css,/var\(--inspector-width,344px\)/);
 console.log("Motion Focus + Notes PASS: 60 bounded local markers, human-only status, safe export, shot orphan protection, keyboard-safe cinema view.");
