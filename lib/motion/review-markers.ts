@@ -9,6 +9,8 @@ export interface ReviewMarker{
   sceneId:string;
   shotIndex:number;
   atSeconds:number;
+  /** Offset inside the original unique shot, used after reorders/trims. */
+  localSeconds?:number;
   text:string;
   priority:MarkerPriority;
   status:MarkerStatus;
@@ -37,7 +39,10 @@ export function sanitizeReviewMarker(input:unknown):ReviewMarker|null{
   if(!text)return null;
   return{
     id:raw.id,sceneId:raw.sceneId,shotIndex:raw.shotIndex as number,
-    atSeconds:Number(raw.atSeconds.toFixed(2)),text,
+    atSeconds:Number(raw.atSeconds.toFixed(2)),
+    ...(typeof raw.localSeconds==="number"&&Number.isFinite(raw.localSeconds)&&
+      raw.localSeconds>=0&&raw.localSeconds<=8
+      ?{localSeconds:Number(raw.localSeconds.toFixed(2))}:{}),text,
     priority:raw.priority as MarkerPriority,
     status:raw.status as MarkerStatus,
     createdAt:Math.max(0,Math.min(Date.now()+60_000,raw.createdAt))
@@ -77,8 +82,20 @@ export function markerSceneIndex(
   if(matches.length===1)return matches[0];
   return null;
 }
+/** Current film timestamp follows a unique shot after shot-order changes. */
+export function markerFilmTime(
+  marker:ReviewMarker,scenes:ReadonlyArray<{id:string;seconds:number}>
+):number|null{
+  const index=markerSceneIndex(marker,scenes);
+  if(index===null)return null;
+  if(marker.localSeconds===undefined)return marker.atSeconds;
+  const start=scenes.slice(0,index).reduce((sum,scene)=>sum+scene.seconds,0);
+  const selected=scenes[index];
+  return Number((start+Math.max(0,Math.min(selected.seconds-.05,
+    marker.localSeconds))).toFixed(2));
+}
 export function reviewMarkersAsText(
-  title:string,markers:ReviewMarker[],scenes:ReadonlyArray<{id:string}>
+  title:string,markers:ReviewMarker[],scenes:ReadonlyArray<{id:string;seconds:number}>
 ):string{
   const entries=[
     "MARGARYAN MOTION STUDIO / HUMAN REVIEW NOTES",
@@ -92,9 +109,10 @@ export function reviewMarkersAsText(
     ordering[a.priority]-ordering[b.priority]||a.atSeconds-b.atSeconds
   )){
     const current=markerSceneIndex(marker,scenes);
+    const currentTime=markerFilmTime(marker,scenes);
     entries.push("["+marker.status.toUpperCase()+"] ["+marker.priority.toUpperCase()+"] "+
       (current===null?"SHOT UNLINKED":"SHOT "+(current+1))+" / "+
-      marker.atSeconds.toFixed(2)+"s — "+marker.text);
+      (currentTime===null?"ORPHAN":currentTime.toFixed(2)+"s")+" — "+marker.text);
   }
   return entries.join("\n")+"\n";
 }
