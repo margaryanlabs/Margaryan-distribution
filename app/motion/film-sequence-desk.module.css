@@ -49,3 +49,28 @@
   .chapter {gap:5px;padding:8px}
   .chapter button {padding:6px}
 }
+
+/* ChatGPT sends an editable private draft, not a rendered film. Approve explicitly. */
+.incoming {margin:18px 0;padding:16px;border:1px solid rgba(163,195,239,.43);border-radius:14px;background:linear-gradient(125deg,rgba(49,75,109,.42),rgba(16,23,33,.9))}
+.incoming > b {display:block;font-size:10px;color:#9bb9e0;letter-spacing:.12em;margin:0 0 8px}
+.incoming h4 {margin:0;font-size:19px;line-height:1.2;letter-spacing:-.035em}
+.incoming p {color:#c0cbd8;font-size:11px}
+.incoming > small {display:block;color:#8798b0;font-size:10px;line-height:1.6;margin-top:14px}
+.incomingChapters {display:flex;flex-wrap:wrap;gap:6px}
+.incomingChapters span {border:1px solid rgba(182,203,232,.2);background:rgba(185,205,235,.07);border-radius:7px;padding:7px 9px;font-size:10px;max-width:100%;overflow-wrap:anywhere}
+.incomingActions {display:grid;grid-template-columns:2fr 1fr;gap:7px;margin-top:14px}
+.incomingActions button {border-radius:10px;min-height:39px;background:#dee9fa;color:#0d1a29;border:0;font-size:10px;font-weight:850;cursor:pointer}
+.incomingActions button:last-child {background:#243143;color:#dae3ef;border:1px solid rgba(170,185,208,.15)}
+.incomingActions button:disabled {opacity:.5}
+.fullTimeline {margin:12px 0 20px;padding:11px 12px 9px;background:rgba(10,16,25,.76);border:1px solid rgba(184,202,229,.13);border-radius:11px}
+.timelineHead {display:flex;align-items:center;justify-content:space-between;color:#92a6c3;font-size:9px;letter-spacing:.06em;margin-bottom:10px}
+.timelineHead b {font-size:12px;color:#f0f4f9}
+.chapterTimeline {height:45px;display:flex;gap:2px;overflow:hidden;border-radius:7px}
+.chapterTimeline button {border:1px solid rgba(211,225,248,.14);border-radius:5px;overflow:hidden;display:flex;min-width:0;padding:0;background:rgba(111,143,182,.16);cursor:pointer;transition:background .15s}
+.chapterTimeline button:hover {background:rgba(155,181,215,.32)}
+.chapterTimeline button[data-current="true"] {outline:2px solid #bbd2f4;outline-offset:-2px}
+.chapterTimeline button:disabled {cursor:default;opacity:.65}
+.chapterTimeline button i {height:100%;min-width:0;display:block;border-right:1px solid rgba(3,10,20,.4);background:linear-gradient(145deg,rgba(144,179,229,.48),rgba(73,108,154,.12))}
+.chapterTimeline button i:nth-child(even) {background:linear-gradient(145deg,rgba(158,182,219,.3),rgba(41,74,115,.12))}
+.timelineRuler {display:flex;justify-content:space-between;font-size:9px;color:#6f8199;margin-top:7px;font-variant-numeric:tabular-nums}
+@media (max-width:470px){.incomingActions{grid-template-columns:1fr}}
