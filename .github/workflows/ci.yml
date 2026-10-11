@@ -21,6 +21,8 @@ jobs:
         run: npm run motion:test-chat-channel
       - name: Motion local source video / frame-timing and no-freeze preflight
         run: npm run motion:test-real-source
+      - name: Motion ChatGPT MCP / safe handoff and JSON-RPC contract
+        run: npm run motion:test-mcp
       - name: Motion Chat Operator / create, patch and visual-asset safety
         run: npm run motion:test-chat
       - name: Motion editorial story / RU EN HY / cinematic transitions
