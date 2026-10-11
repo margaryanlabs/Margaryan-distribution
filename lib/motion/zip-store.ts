@@ -40,13 +40,13 @@ export async function makeMotionZip(entries:MotionZipEntry[]):Promise<Blob>{
     u32(c,16,checksum);u32(c,20,item.body.size);u32(c,24,item.body.size);
     u16(c,28,name.length);u32(c,42,offset);center.set(name,46);
     centers.push(center);centralBytes+=center.length;
-    chunks.push(local,item.body);offset+=local.length+item.body.size;
+    chunks.push(local.buffer as ArrayBuffer,item.body);offset+=local.length+item.body.size;
     if(offset+centralBytes+22>MAX_ZIP_BYTES)throw Error("Portable pack exceeds 128MB limit. Use fewer source clips.");
   }
   const end=new Uint8Array(22),e=new DataView(end.buffer);
   u32(e,0,SIG_END);u16(e,8,entries.length);u16(e,10,entries.length);
   u32(e,12,centralBytes);u32(e,16,offset);
-  const archive=new Blob([...chunks,...centers,end],{type:"application/zip"});
+  const archive=new Blob([...chunks,...centers.map(c=>c.buffer as ArrayBuffer),end.buffer as ArrayBuffer],{type:"application/zip"});
   if(archive.size>MAX_ZIP_BYTES)throw Error("Portable pack is too big for safe browser transfer");
   return archive;
 }
