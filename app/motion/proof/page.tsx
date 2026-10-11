@@ -1,20 +1,48 @@
 "use client";
 
 import {useCallback,useEffect,useRef,useState} from "react";
-import {drawProofFrame,PROOF_SECONDS} from "@/lib/motion/proof-film";
+import {drawProofFrame,PROOF_SECONDS,type ProofMedia} from "@/lib/motion/proof-film";
 import {getLoadedMotionLogo,preloadMotionLogo} from "@/lib/motion/brand-assets";
 import styles from "./proof.module.css";
 
 type ProofBridge = Window & {
   __motionProofFrame?: (time:number)=>Promise<string>;
   __motionProofReady?: boolean;
+  __motionProofSource?: "image" | "video";
 };
-const TYPES=new Set(["image/png","image/jpeg","image/webp"]);
+const IMAGE_TYPES=new Set(["image/png","image/jpeg","image/webp"]);
+const VIDEO_TYPES=new Set(["video/mp4","video/webm"]);
+
+/** Seek the actual browser-decoded video frame for its exact film time.
+ * Called before deterministic offline frame export and during timeline scrubbing.
+ * Browser preview during playback uses direct video.play for smooth decode. */
+async function seekSourceFrame(media:ProofMedia,seconds:number):Promise<void>{
+  if(!(media instanceof HTMLVideoElement)||seconds>=7.55)return;
+  const end=Math.max(.01,media.duration-.11);
+  const target=Math.min(Math.max(0,seconds),end);
+  if(media.readyState>=2&&Math.abs(media.currentTime-target)<.006)return;
+  await new Promise<void>((resolve,reject)=>{
+    let finished=false;
+    const done=(error?:Error)=>{
+      if(finished)return;finished=true;
+      clearTimeout(timer);
+      media.removeEventListener("seeked",onSeek);
+      media.removeEventListener("error",onError);
+      if(error)reject(error);else resolve();
+    };
+    const onSeek=()=>done();
+    const onError=()=>done(new Error("Cannot decode local video"));
+    const timer=setTimeout(()=>done(new Error("Video seek timed out")),12000);
+    media.addEventListener("seeked",onSeek);
+    media.addEventListener("error",onError);
+    try{media.currentTime=target;}catch(err){done(err instanceof Error?err:new Error(String(err)));}
+  });
+}
 const makeCanvas=(width:number,height:number)=>{
   const c=document.createElement("canvas");c.width=width;c.height=height;return c;
 };
 export default function ProofDirectorPage(){
-  const [source,setSource]=useState<HTMLImageElement|null>(null);
+  const [source,setSource]=useState<ProofMedia|null>(null);
   const [sourceName,setSourceName]=useState("");
   const [logo,setLogo]=useState<HTMLImageElement|null>(null);
   const [seconds,setSeconds]=useState(0);
@@ -25,7 +53,9 @@ export default function ProofDirectorPage(){
   const previewFrame=useRef(0);
   const playingFrom=useRef(0);
   const playBase=useRef(0);
-  const sourceRef=useRef<HTMLImageElement|null>(null);
+  const sourceRef=useRef<ProofMedia|null>(null);
+  const localVideoUrl=useRef<string|null>(null);
+  useEffect(()=>()=>{if(localVideoUrl.current)URL.revokeObjectURL(localVideoUrl.current);},[]);
   const logoRef=useRef<HTMLImageElement|null>(null);
   const latestSeconds=useRef(0);
   const exportingRef=useRef(false);
@@ -51,20 +81,26 @@ export default function ProofDirectorPage(){
     // It consumes exactly the image the operator explicitly uploaded here.
     const host=window as ProofBridge;
     host.__motionProofReady=Boolean(source);
+    host.__motionProofSource=source instanceof HTMLVideoElement?"video":"image";
     host.__motionProofFrame=async time=>{
       const src=sourceRef.current;
       if(!src)throw new Error("SOURCE GATE: approved screenshot missing");
       const frame=makeCanvas(1080,1920);
       const ctx=frame.getContext("2d",{alpha:false});
       if(!ctx)throw new Error("Canvas unavailable");
+      await seekSourceFrame(src,time);
       drawProofFrame(ctx,src,logoRef.current,time,1080,1920);
       return frame.toDataURL("image/png").split(",")[1];
     };
-    return()=>{delete host.__motionProofFrame;delete host.__motionProofReady;};
+    return()=>{delete host.__motionProofFrame;delete host.__motionProofReady;delete host.__motionProofSource;};
   },[source]);
   useEffect(()=>{
     if(!playing||!source)return;
     let active=true;
+    if(source instanceof HTMLVideoElement){
+      source.currentTime=Math.min(latestSeconds.current,Math.max(0,source.duration-.11));
+      void source.play().catch(()=>setNotice("Unable to play local clip; try pressing Play again."));
+    }
     playingFrom.current=performance.now();
     playBase.current=latestSeconds.current;
     const tick=()=>{
@@ -78,30 +114,54 @@ export default function ProofDirectorPage(){
       previewFrame.current=requestAnimationFrame(tick);
     };
     previewFrame.current=requestAnimationFrame(tick);
-    return()=>{active=false;cancelAnimationFrame(previewFrame.current);};
+    return()=>{active=false;cancelAnimationFrame(previewFrame.current);if(source instanceof HTMLVideoElement)source.pause();};
   },[playing,source,paint]);
 
   async function attach(e:React.ChangeEvent<HTMLInputElement>){
     const file=e.target.files?.[0];
     if(!file)return;
-    if(!TYPES.has(file.type)||file.size<100||file.size>12_000_000){
-      setNotice("Use a real PNG/JPEG/WebP screenshot smaller than 12 MB.");return;
+    const isImage=IMAGE_TYPES.has(file.type);
+    const isVideo=VIDEO_TYPES.has(file.type);
+    if(!isImage&&!isVideo){setNotice("Use PNG/JPEG/WebP or a browser-compatible MP4/WebM.");return;}
+    if(file.size<100||file.size>(isVideo?180_000_000:12_000_000)){
+      setNotice(isVideo?"Video must be under 180 MB.":"Image must be under 12 MB.");return;
     }
     setPlaying(false);
     const url=URL.createObjectURL(file);
+    let keepUrl=false;
     try{
-      const image=new Image();image.src=url;await image.decode();
-      if(image.naturalWidth<800||image.naturalHeight<500||image.naturalWidth>8000||image.naturalHeight>8000){
-        throw Error("Screenshot must be 800×500 to 8000×8000 px");
+      let decoded:ProofMedia;
+      if(isVideo){
+        const video=document.createElement("video");
+        video.preload="auto";video.muted=true;video.playsInline=true;
+        const available=new Promise<void>((resolve,reject)=>{
+          video.addEventListener("loadeddata",()=>resolve(),{once:true});
+          video.addEventListener("error",()=>reject(new Error("Video codec not supported by browser")),{once:true});
+        });
+        video.src=url;
+        await Promise.race([available,new Promise<never>((_,reject)=>setTimeout(()=>reject(new Error("Video did not load")),20000))]);
+        if(!Number.isFinite(video.duration)||video.duration<8||video.duration>300)throw Error("Real footage must be 8–300 seconds.");
+        if(video.videoWidth<720||video.videoHeight<480)throw Error("Source video must have at least 720×480 resolution.");
+        decoded=video;keepUrl=true;
+      }else{
+        const image=new Image();image.src=url;await image.decode();
+        if(image.naturalWidth<800||image.naturalHeight<500||image.naturalWidth>8000||image.naturalHeight>8000)
+          throw Error("Screenshot must be 800×500 to 8000×8000 px");
+        decoded=image;
       }
-      sourceRef.current=image;setSource(image);setSourceName(file.name);
+      if(sourceRef.current instanceof HTMLVideoElement)sourceRef.current.pause();
+      const old=localVideoUrl.current;localVideoUrl.current=keepUrl?url:null;
+      if(old)URL.revokeObjectURL(old);
+      sourceRef.current=decoded;setSource(decoded);setSourceName(file.name);
       latestSeconds.current=0;setSeconds(0);
-      setNotice("Local image loaded. Review provenance and remove any personal/customer information before publishing. Source stays in this browser tab.");
-    }catch(err){setNotice("Cannot decode image: "+(err instanceof Error?err.message:String(err)));}
-    finally{URL.revokeObjectURL(url);}
+      setNotice(isVideo?"REAL VIDEO loaded locally. Timeline uses actual decoded frames; no synthetic UI or customer results.":"Real screenshot loaded. Verify provenance and remove sensitive information.");
+    }catch(err){setNotice("Source rejected: "+(err instanceof Error?err.message:String(err)));}
+    finally{if(!keepUrl)URL.revokeObjectURL(url);}
   }
   function seek(t:number){
-    setPlaying(false);latestSeconds.current=t;setSeconds(t);paint(t);
+    setPlaying(false);latestSeconds.current=t;setSeconds(t);
+    const src=sourceRef.current;
+    if(src)void seekSourceFrame(src,t).then(()=>paint(t)).catch(err=>setNotice(String(err)));
   }
   async function exportPreview(){
     if(!sourceRef.current||exportingRef.current)return;
@@ -129,9 +189,14 @@ export default function ProofDirectorPage(){
         if(t>=PROOF_SECONDS){stopped=true;recorder.stop();}
         else raf=requestAnimationFrame(frame);
       };
+      if(sourceRef.current instanceof HTMLVideoElement){
+        sourceRef.current.currentTime=0;
+        await sourceRef.current.play();
+      }
       recorder.start(250);
       raf=requestAnimationFrame(frame);
       await finished.finally(()=>cancelAnimationFrame(raf));
+      if(sourceRef.current instanceof HTMLVideoElement)sourceRef.current.pause();
       const blob=new Blob(chunks,{type});
       if(blob.size<10000)throw Error("Review export was empty");
       const href=URL.createObjectURL(blob);
@@ -140,7 +205,7 @@ export default function ProofDirectorPage(){
       window.setTimeout(()=>URL.revokeObjectURL(href),60_000);
       setNotice("Review-only WebM exported. Silent by design: no robot voice, no disguised upscale. Use offline FFmpeg mastering for H.264 + owner-approved narration.");
     }catch(e){setNotice("Export failed: "+(e instanceof Error?e.message:String(e)));}
-    finally{exportingRef.current=false;setExporting(false);}
+    finally{if(sourceRef.current instanceof HTMLVideoElement)sourceRef.current.pause();exportingRef.current=false;setExporting(false);}
   }
 
   return <main className={styles.shell}>
@@ -158,7 +223,7 @@ export default function ProofDirectorPage(){
           <canvas ref={canvas} width={540} height={960} aria-label="10-second cinematic proof preview"/>
           {!source&&<div className={styles.empty}>
             <strong>NO FABRICATED SCREENS.</strong>
-            <span>Add an actual product screenshot to preview the film.</span>
+            <span>Add authentic product footage or a screenshot to preview the film.</span>
           </div>}
         </div>
         <div className={styles.transport}>
@@ -175,11 +240,11 @@ export default function ProofDirectorPage(){
       <aside className={styles.controls}>
         <div className={styles.section}>
           <span className={styles.overline}>01 / SOURCE GATE</span>
-          <h2>Use real product pixels.</h2>
-          <p>Upload an owner-approved screenshot of the public Promptence site. Nothing is automatically invented, uploaded to GitHub, or stored on our servers.</p>
+          <h2>Use real product footage.</h2>
+          <p>Import an approved video recording (MP4/WebM, 8 seconds or longer) or screenshot of the real Promptence interface. A real screen recording is the recommended source. Nothing is uploaded or persisted.</p>
           <label className={styles.upload}>
-            <span>+ ADD SCREENSHOT (PNG / JPG / WEBP)</span>
-            <input data-testid="proof-source-input" type="file" accept="image/png,image/jpeg,image/webp" onChange={attach}/>
+            <span>+ IMPORT REAL VIDEO / SCREENSHOT</span>
+            <input data-testid="proof-source-input" type="file" accept="image/png,image/jpeg,image/webp,video/mp4,video/webm" onChange={attach}/>
           </label>
           {sourceName&&<small className={styles.source}>LOCAL SOURCE / {sourceName}</small>}
         </div>
@@ -196,7 +261,7 @@ export default function ProofDirectorPage(){
         <div className={styles.section}>
           <span className={styles.overline}>03 / FILM GATE</span>
           <h2>Export a review — not an ad.</h2>
-          <p>This browser proof exports a 540×960 WebM with no synthesized voice. A final 1080×1920 MP4 is produced on a workstation with an approved recording and FFmpeg.</p>
+          <p>This browser proof exports a 540×960 WebM with no synthesized voice. If video is supplied, its decoded frames replace still images. A final 1080×1920 MP4 is produced on a workstation with an approved recording and FFmpeg.</p>
           <button className={styles.export} disabled={!source||exporting} onClick={exportPreview}>
             {exporting?"ENCODING…":"EXPORT 10s SILENT REVIEW ↗"}
           </button>

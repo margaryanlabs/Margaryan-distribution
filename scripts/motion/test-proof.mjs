@@ -8,10 +8,11 @@ import {readFile,writeFile,mkdir,stat} from "node:fs/promises";
 import {resolve,dirname,join} from "node:path";
 import {spawnSync} from "node:child_process";
 const args=process.argv.slice(2);
-if(args.length!==2||args[0]!=="--screen")throw Error("Usage: npm run motion:test-proof -- --screen /real/approved/screenshot.png");
+if(args.length!==2||!["--screen","--video"].includes(args[0]))throw Error("Usage: npm run motion:test-proof -- --screen screenshot.png OR --video real-clip.mp4");
 const src=resolve(args[1]);
 const f=await stat(src);
-if(!f.isFile()||f.size>12_000_000)throw Error("Invalid source file");
+const isVideo=args[0]==="--video";
+if(!f.isFile()||f.size>(isVideo?180_000_000:12_000_000))throw Error("Invalid source file");
 const root=new URL("http://127.0.0.1:3000/motion/proof");
 const {chromium}=await import("playwright");
 const folder=resolve("out/proof-browser-review");
@@ -25,7 +26,7 @@ try{
  if(!response?.ok())throw Error("Proof director did not respond");
  if(await page.locator("button").filter({hasText:"EXPORT 10s SILENT REVIEW"}).isEnabled())throw Error("Export must be blocked before source upload");
  await page.locator('[data-testid="proof-source-input"]').setInputFiles(src);
- await page.waitForFunction(()=>window.__motionProofReady===true,{timeout:30000});
+ await page.waitForFunction(expected=>window.__motionProofReady===true&&window.__motionProofSource===expected,isVideo?"video":"image",{timeout:40000});
  await page.evaluate(()=>document.fonts.ready);
  const samples=[.35,1.8,2.6,3.9,5.5,7.2,7.8,8.8,9.8];
  let last="",unique=0;
@@ -45,7 +46,7 @@ try{
   "-frames:v","1",join(folder,"contact-sheet.png")],{timeout:120000,encoding:"utf8"});
  if(sheet.status!==0)throw Error("Contact sheet generation failed: "+sheet.stderr);
  await writeFile(join(folder,"review.json"),JSON.stringify({
-  source:src,numberOfTimeSamples:samples.length,uniqueConsecutiveFrames:unique,
+  source:src,sourceType:isVideo?"real-video":"screenshot",numberOfTimeSamples:samples.length,uniqueConsecutiveFrames:unique,
   deterministic:true,sourceGate:true,browserErrors:errors,
   contactSheet:"contact-sheet.png",humanApprovalRequired:true
  },null,2)+"\n");

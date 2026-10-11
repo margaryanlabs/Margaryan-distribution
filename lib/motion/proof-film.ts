@@ -10,7 +10,9 @@
  * Source may be a screenshot of an approved public Promptence page. It must
  * be visually reviewed against that page before publication. No external fetch.
  */
+export type ProofMedia = HTMLImageElement | HTMLVideoElement;
 export const PROOF_SECONDS = 10;
+function dimensions(media:ProofMedia){return media instanceof HTMLVideoElement ? {width:media.videoWidth,height:media.videoHeight,ready:media.readyState>=2}:{width:media.naturalWidth,height:media.naturalHeight,ready:media.complete};}
 export const PROOF_NATIVE_WIDTH = 1080;
 export const PROOF_NATIVE_HEIGHT = 1920;
 
@@ -50,7 +52,7 @@ function clipRound(ctx:CanvasRenderingContext2D,x:number,y:number,w:number,h:num
 }
 function sourcePlane(
   ctx:CanvasRenderingContext2D,
-  source:HTMLImageElement,
+  source:ProofMedia,
   x:number,y:number,w:number,h:number,angle:number,
   zoom:number,
   exposure:number
@@ -58,7 +60,8 @@ function sourcePlane(
   ctx.save();
   // Photograph the *whole* approved screenshot onto a real aspect-faithful
   // surface. Cover-crops and altered/fake product values are prohibited.
-  const aspect=source.naturalWidth/source.naturalHeight;
+  const {width:sourceWidth,height:sourceHeight}=dimensions(source);
+  const aspect=sourceWidth/sourceHeight;
   const planeAspect=w/h;
   let iw=w,ih=h;
   if(aspect>planeAspect)ih=w/aspect;
@@ -85,7 +88,7 @@ function sourcePlane(
   ctx.beginPath();ctx.roundRect(-w/2,-h/2,w,h,16);ctx.stroke();
   ctx.restore();
 }
-function drawOpening(ctx:CanvasRenderingContext2D,source:HTMLImageElement,t:number,W:number,H:number) {
+function drawOpening(ctx:CanvasRenderingContext2D,source:ProofMedia,t:number,W:number,H:number) {
   bg(ctx,W,H);
   const entrance=out((t-.18)/1.45);
   // Two coherent moving light planes, not random rings or generic HUDs.
@@ -111,19 +114,20 @@ function drawOpening(ctx:CanvasRenderingContext2D,source:HTMLImageElement,t:numb
   line(ctx,77,613,77+mix(0,420,between(t,.48,1.75)),613,MINT,3);
   ctx.restore();
 }
-function drawEvidence(ctx:CanvasRenderingContext2D,source:HTMLImageElement,t:number,W:number,H:number) {
+function drawEvidence(ctx:CanvasRenderingContext2D,source:ProofMedia,t:number,W:number,H:number) {
   bg(ctx,W,H,true);
   const enter=between(t,2.1,2.75);
   const journey=between(t,3.0,7.15);
   // Lens-directed travelling shot of the authentic screenshot.
   // The actual screenshot never morphs into fake model result data.
   const track=out(journey);
-  const screenX=mix(170,52,track);
-  const screenY=mix(660,485,track);
-  const scale=mix(.77,1.10,track);
+  const portrait=dimensions(source).width/dimensions(source).height<.85;
+  const screenX=mix(portrait?155:170,portrait?105:52,track);
+  const screenY=mix(portrait?490:660,portrait?390:485,track);
+  const scale=mix(.77,1.05,track);
   ctx.save();ctx.globalAlpha*=enter;
   bloom(ctx,420,830,1000,.85);
-  sourcePlane(ctx,source,screenX,screenY,900,800,mix(-.115,.025,journey),scale,.48);
+  sourcePlane(ctx,source,screenX,screenY,portrait?805:900,portrait?1200:800,mix(-.115,.025,journey),scale,.48);
   ctx.restore();
   const topY=260;
   ctx.save();
@@ -141,7 +145,7 @@ function drawEvidence(ctx:CanvasRenderingContext2D,source:HTMLImageElement,t:num
     107,1585,48,IVORY,740);
   text(ctx,"Observe  →  Diagnose  →  Verify",107,1641,29,MINT,640);
   ctx.restore();
-  text(ctx,"SOURCE SCREENSHOT / REVIEW REQUIRED",73,1807,21,"#2E624F",700);
+  text(ctx,source instanceof HTMLVideoElement?"REAL VIDEO SOURCE / REVIEW REQUIRED":"SOURCE SCREENSHOT / REVIEW REQUIRED",73,1807,21,"#2E624F",700);
 }
 function drawClosure(
   ctx:CanvasRenderingContext2D,logo:HTMLImageElement|null,t:number,W:number,H:number
@@ -171,11 +175,12 @@ function drawClosure(
 }
 /** Deterministic frame renderer, no static pre-rendered slides. */
 export function drawProofFrame(
-  ctx:CanvasRenderingContext2D,source:HTMLImageElement,
+  ctx:CanvasRenderingContext2D,source:ProofMedia,
   logo:HTMLImageElement|null,seconds:number,
   width=PROOF_NATIVE_WIDTH,height=PROOF_NATIVE_HEIGHT
 ) {
-  if(!source.complete||!source.naturalWidth||!source.naturalHeight)throw new Error("Approved source screenshot is required");
+  const media=dimensions(source);
+  if(!media.ready||!media.width||!media.height)throw new Error("Decoded approved product screenshot or video is required");
   const t=Math.max(0,Math.min(PROOF_SECONDS,seconds));
   const W=PROOF_NATIVE_WIDTH,H=PROOF_NATIVE_HEIGHT;
   ctx.save();ctx.setTransform(width/W,0,0,height/H,0,0);
