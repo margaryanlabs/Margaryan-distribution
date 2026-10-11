@@ -23,7 +23,8 @@
     "motion:test-reference": "node scripts/motion/test-reference.mjs",
     "motion:signature": "node scripts/motion/create-signature.mjs",
     "motion:feature": "node scripts/motion/create-feature-film.mjs",
-    "motion:proof": "node scripts/motion/render-proof.mjs"
+    "motion:proof": "node scripts/motion/render-proof.mjs",
+    "motion:test-proof": "node scripts/motion/test-proof.mjs"
   },
   "dependencies": {
     "next": "16.3.3",
