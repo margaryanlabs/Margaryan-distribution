@@ -715,6 +715,15 @@ export default function MotionStudioPage() {
             setSoundEnabled(true);
             setNotice("CREATED FROM ZERO: editable brand storyboard and local original synth soundtrack. No media, API key, neural video generation or fake evidence was required.");
           }}
+          onSceneMedia={async (mediaId,file)=>{
+            const loaded=await registerMotionSceneSource(mediaId,file);
+            updateProject({...project,scenes:project.scenes.map((scene,index)=>
+              index===selectedIndex?{...scene,kind:"screen",mediaId,mediaStart:0,productBeat:undefined}:scene)});
+            setAssetRevision(n=>n+1);
+            setPlaying(false);
+            setNotice((loaded.type==="video"?"REAL VIDEO":"REAL SOURCE IMAGE")+" linked to shot "+(selectedIndex+1)+
+              ". Check source coverage and original frame authenticity before publishing.");
+          }}
           onScreenshot={async file=>{
             await setLocalProductScreen(project.brand,file);
             setAssetRevision(value=>value+1);
@@ -1008,6 +1017,24 @@ export default function MotionStudioPage() {
             <button type="button" disabled={project.scenes.length>=8||exporting} onClick={duplicateScene}>+ DUPLICATE</button>
           </div>
         </section>
+        {selected.kind==="screen"&&selected.mediaId&&<div className={styles.sourceInspector}>
+          <strong>SHOT SOURCE / APPROVED LOCAL MATERIAL</strong>
+          <p>{getMotionSceneSource(selected.mediaId)?.filename||"Source not loaded in this browser"}
+            {" · "}{getMotionSceneSource(selected.mediaId)?.type==="video"?"MOVING VIDEO":"STILL IMAGE"}
+          </p>
+          {getMotionSceneSource(selected.mediaId)?.type==="video"&&<label className={styles.field}>
+            <span>TRUE VIDEO INPOINT / {(selected.mediaStart||0).toFixed(2)} SEC</span>
+            <input type="range" min="0"
+              max={Math.max(0,(getMotionSceneSource(selected.mediaId)?.duration||0)-selected.seconds-.15)}
+              step=".05" value={selected.mediaStart||0} disabled={exporting}
+              onChange={event=>editScene("mediaStart",Number(event.target.value))}/>
+            <small>Decoder uses real source frames. A short clip blocks export rather than freezing its last frame.</small>
+          </label>}
+          <button type="button" disabled={exporting} onClick={()=>{
+            updateProject({...project,scenes:project.scenes.map((shot,index)=>
+              index===selectedIndex?{...shot,mediaId:undefined,mediaStart:0}:shot)});
+          }}>DETACH FROM SHOT</button>
+        </div>}
         <label className={styles.screenUpload}>
           <strong>REAL PRODUCT SCREEN / SOURCE FOOTAGE</strong>
           <span>{hasProductScreen(project.brand)
