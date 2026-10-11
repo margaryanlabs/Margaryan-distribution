@@ -98,3 +98,39 @@ and run a real ChatGPT MCP integration plus privacy/abuse review.
 
 Merge only after newest main and branch are reconciled, GitHub Actions
 run relevant tests, and manual browser QA completes.
+
+## Verified actual video file (11 October, isolated render QA)
+
+A temporary 8 GB Vercel Linux sandbox installed Chrome 145 via Playwright,
+loaded the compiled Next.js `/motion/chat-preview` route, injected five
+separate original two-second Motion scenes, scrubbed to Act 5 and performed
+a genuine foreground MediaRecorder capture. A separately installed static
+FFprobe decoded the resulting **720 × 1280 H.264 MP4** and inspected
+actual video packet timestamps:
+
+- Chapters: **5**; target length **10 seconds**.
+- Last encoded frame timestamp: **9.965767 seconds**.
+- Codec: **H.264**; resolution **720 × 1280**.
+- Encoded MP4 file size: **1,981,404 bytes**.
+- Real browser errors: none; multi-chapter export test **PASS**.
+
+The file was temporary and was cleaned by the regression harness; it was not
+silently published or uploaded to ChatGPT. This establishes a functioning
+real short multi-act recording; it is not proof of 300-second stability,
+accurate human voice, production aesthetics or Android memory behavior.
+
+An expanded five-act **120-second** Chromium test was attempted using
+`MOTION_E2E_SECONDS=120`, but the Vercel Sandbox expired/stopped before the
+download completed, so this **is not a successful long-film QA result and
+does not establish a recorder defect**. Long-form (120/300s) runs remain a
+separate release gate. The workflow can be triggered manually with 10, 120
+or 300 seconds on a normal Ubuntu GitHub runner. Account-level GitHub Actions
+jobs are still failing before their first step; runner provisioning must be
+repaired separately.
+
+After the editor became a seven-panel workspace, the reviewed ChatGPT
+`#motion-sequence-v1` link had to explicitly open **FEATURE FILM** and the
+`#motion-chat-v1` link had to reveal **ASSETS / Chat Operator**. Both
+entry routes are now wired with a regression check; neither automatically
+approves imports.
+
