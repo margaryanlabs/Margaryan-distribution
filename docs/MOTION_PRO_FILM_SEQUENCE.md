@@ -54,8 +54,8 @@ Every chapter is sent to the EXISTING render-master.mjs path, preserving genuine
 
 ## Known limits and next work
 
-- The browser authors multiple chapters but does not yet have one continuous NLE preview across all chapters; this is real sequenced mastering, not a single free-form editor.
-- Requires the operator's workstation. No hosted MP4 job queue, automatic video generator, free human TTS voice, subscriptions or multi-tenant storage is claimed.
+- **New browser workprint:** saved graphic-only chapters can be previewed consecutively and recorded as one 720p/24fps silent WebM/MP4 file up to 192 seconds using the existing Canvas engine. This is real browser recording, but not a multi-track NLE or a frame-perfect FFmpeg master. Capturing in a background tab is deliberately cancelled.
+- Genuine approved source-video/image-overlay mastering, continuous voice/music and full H.264 QA still require an operator workstation with Chromium and FFmpeg. No hosted MP4 job queue, automatic video model, free human TTS voice, subscriptions or multi-tenant storage is claimed.
 - Real cuts at chapter boundaries, not frame-smooth cross-chapter transitions. Manual editorial and source review required.
 - Final film may be too long for some social-discovery placements. Produce different platform edits.
 - Public GitHub/Chat Pack workflows must never receive private client assets, secrets, unlicensed clips or confidential briefs.
@@ -86,8 +86,7 @@ The Sequence Studio checks the incoming link before modifying any project:
 - A **Master Timeline** shows every saved chapter and the relative duration
   of every shot; clicking an act loads that chapter into the existing editor.
 
-This is a **two-PR integration**: PR #55 creates the feature-film link and
-PR #57 opens it. Production routing must deploy both changes together.
+**Combined integration PR #61** brings the feature-film tool and Sequence Studio together on the current main branch while preserving real source media, Voice Booth, approved ZIP bundles and image overlays.
 Vercel-ready code is not proof of an installed/approved ChatGPT plugin
 or a tested final audiovisual MP4.
 
@@ -99,3 +98,24 @@ links are not encrypted; do not share confidential commercial scripts.
 copy. Use product screenshots only from user-approved original footage,
 respect official brand marks, and check the complete 120s exported MP4
 manually before distributing it.
+
+## Browser visual workprint — no workstation required
+
+Open Sequence Studio and choose **TRY 120s DEMO → APPROVE & SAVE FILM**,
+then **PLAY WHOLE FILM** for a continuous chapter-by-chapter preview or
+**EXPORT VISUAL FILM** to record the composed graphic frames in the user's
+own browser. Browser capture is user-initiated, runs in real time with the
+page visible, and exports the codec supported by the device; it never
+pretends a silent WebM is an MP4 with professional sound.
+
+The testable `planBrowserFeature` contract refuses chapters containing
+approved source-video/screen/overlay bindings or signature art because the
+browser preview-only exporter cannot guarantee frame-perfect decoding or
+media provenance for them. Those projects must use `motion:sequence` on a
+workstation with real media maps and licensed voice/music. The 192s
+browser maximum is intentionally lower than the workstation's 512s cap.
+
+Run `npm run motion:test-film-browser` to verify the 120s/192s timeline,
+source exclusions, format and duration bounds. A successful TypeScript build
+and the contract test do **not** establish actual browser codec support or
+mobile end-to-end export; review a real downloaded video before release.
