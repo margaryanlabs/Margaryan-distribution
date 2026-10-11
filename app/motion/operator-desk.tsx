@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BRAND_INFO, DEFAULT_VISUAL, sanitizeVisual,
   type MotionBrand, type MotionProject, type MotionVisualControls
@@ -47,6 +47,7 @@ export default function OperatorDesk({
   const [source,setSource]=useState("");
   const [inboxLoading,setInboxLoading]=useState(false);
   const [preview,setPreview]=useState<ChatOperatorPreview|null>(null);
+  const previousProject=useRef(project);
   const [notice,setNotice]=useState("Keyless Motion Operator: connected projects open as a reviewed draft; manual Chat Packs remain supported.");
   const [undo,setUndo]=useState<MotionProject|null>(null);
   const [media,setMedia]=useState<LocalMediaRecord[]>([]);
@@ -70,7 +71,9 @@ export default function OperatorDesk({
     setAssetURL(url);
     return()=>URL.revokeObjectURL(url);
   },[selected]);
-  useEffect(()=>{setPreview(null);},[project]);
+  useEffect(()=>{
+    if(previousProject.current!==project){previousProject.current=project;setPreview(null);}
+  },[project]);
   // URL-fragment film payload stays client-side. Never writes without approval.
   useEffect(()=>{
     if(!ready||!window.location.hash.startsWith("#motion-chat="))return;
