@@ -35,3 +35,11 @@
 .notice{font-size:11px;line-height:1.55;color:#cde6d6;overflow-wrap:anywhere;margin:14px 0 4px}
 @media(max-width:440px){.booth{padding:14px 10px}.booth h3{font-size:24px}.clock span{font-size:18px}}
 @media(prefers-reduced-motion:reduce){.meterFill{transition:none}}
+
+.signal{margin-top:11px;padding:12px 10px;border:1px solid #466d55;border-radius:8px;
+ background:#153021;display:grid;gap:6px;color:#d7f3de}
+.signal[data-state=blocked]{border-color:#a94a4b;background:#362022}
+.signal[data-state=review]{border-color:#ad8b4d;background:#332d1d}
+.signal strong{font-size:10px;letter-spacing:.07em}
+.signal small{font-size:9px;color:#c2e5cd;font-variant-numeric:tabular-nums}
+.signal p{font-size:10px;line-height:1.5;margin:0}
