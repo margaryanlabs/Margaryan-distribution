@@ -83,6 +83,9 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
   player.addEventListener("load", () => { ready = true; sendToPlayer(); });
   player.src = origin + "/motion/chat-preview";
   window.addEventListener("message", event => {
+    if (event.source === player.contentWindow && event.origin === origin && event.data && event.data.kind === "margaryan-motion-preview-ready-v1") {
+      ready = true; sendToPlayer(); return;
+    }
     if (event.source !== window.parent) return;
     const msg = event.data;
     if (!msg || msg.jsonrpc !== "2.0") return;
