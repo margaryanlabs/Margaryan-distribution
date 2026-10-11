@@ -26,7 +26,7 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
 .shot{display:block;width:100%;appearance:none;text-align:left;cursor:pointer;background:transparent;color:inherit;padding:10px 6px;border:0;border-top:1px solid #282b32;border-radius:4px}.shot:first-of-type{border:0}.shot:hover,.shot[aria-pressed="true"]{background:#1b2b45;outline:1px solid #405a83}.shot:focus-visible{outline:2px solid #b4c9ff;outline-offset:2px}.shot .number{font-size:10px;color:var(--accent)}.shot strong{display:block;font-size:12px;margin:4px 0;line-height:1.35}.shot small{color:var(--muted)}
 .actions{display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap}
 .btn{appearance:none;border:1px solid #6d7f9b;border-radius:9px;background:#1e293d;color:var(--ink);font-weight:700;font-size:12px;padding:10px 14px;cursor:pointer;text-decoration:none}.btn:hover{background:#34435c}
-.note{font-size:11px;line-height:1.5;color:var(--muted)}#status{color:#b7cdff}
+.director{margin-top:13px;padding:12px;border:1px solid #34455d;border-radius:11px;background:#121927}.director label{display:block;color:#bcd0eb;font-size:10px;font-weight:850;letter-spacing:.1em;margin-bottom:9px}.director textarea{width:100%;min-height:58px;resize:vertical;background:#070c15;color:#edf3fc;border:1px solid #455976;border-radius:6px;padding:10px;font:12px/1.5 system-ui,sans-serif}.director textarea:focus-visible{outline:2px solid #b4c9ff}.director button{margin-top:9px}.director button:disabled{opacity:.5;cursor:not-allowed}.note{font-size:11px;line-height:1.5;color:var(--muted)}#status{color:#b7cdff}
 @media(max-width:600px){.layout{grid-template-columns:1fr}.player iframe{height:530px}.shots{max-height:230px}.title{font-size:18px}}
 </style></head>
 <body><main class="wrap">
@@ -35,6 +35,7 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
 <p class="subtitle" id="subtitle">Waiting for an editable storyboard from ChatGPT.</p>
 <div class="layout"><div class="player"><iframe id="player" title="Live motion canvas" sandbox="allow-scripts allow-same-origin allow-downloads"></iframe></div>
 <div class="shots" id="shots"><h2>SHOT LIST / DIRECTOR</h2><p class="note">Ask ChatGPT to create a motion film. Its actual Canvas preview will appear here.</p></div></div>
+<div class="director"><label for="editPrompt">DIRECT YOUR SELECTED SHOT WITH CHATGPT</label><textarea id="editPrompt" maxlength="320" placeholder="Example: Make the second shot more cinematic, reduce words and emphasize the main product benefit."></textarea><button id="askEdit" class="btn" type="button" disabled>ASK CHATGPT TO REVISE THIS SHOT ↗</button><p class="note" style="margin:8px 0 0">This sends your requested edit as a follow-up in ChatGPT. It does not silently change or publish your film.</p></div>
 <div class="actions"><a id="openEditor" class="btn" href="#" target="_blank" rel="noopener noreferrer" hidden>OPEN FULL EDITOR ↗</a><span class="note" id="status" role="status">Preview only; video has not been exported.</span></div>
 <p class="note">This player uses browser motion graphics, not AI-generated live-action footage. Export runs in your browser. Use your own local brand logo, voiceover and licensed music without uploading them to our servers. Video format depends on browser support.</p>
 </main><script>
@@ -47,6 +48,8 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
   const subtitle = document.getElementById("subtitle");
   const status = document.getElementById("status");
   const editor = document.getElementById("openEditor");
+  const editPrompt = document.getElementById("editPrompt");
+  const askEdit = document.getElementById("askEdit");
   let latest = null;
   let selectedIndex = 0;
   let lastFilmTitle = "";
@@ -70,6 +73,7 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
     lastFilmTitle=film.title;
     selectedIndex=Math.min(selectedIndex,film.scenes.length-1);
     latest = data;
+    askEdit.disabled=false;
     title.textContent = safe(film.title);
     subtitle.textContent = film.scenes.length + " SCENES · " + Number(data.durationSeconds).toFixed(1) + " SEC · " + safe(film.format).toUpperCase();
     shots.replaceChildren();
@@ -123,6 +127,31 @@ export function motionStudioWidgetHtml(studioOrigin: string): string {
       seekToSeconds:currentShotTime()
     },origin);
   }
+  askEdit.addEventListener("click", async () => {
+    if(!latest || !latest.previewProject || askEdit.disabled)return;
+    const direction=editPrompt.value.trim().slice(0,320);
+    if(direction.length<5){
+      status.textContent="Enter at least five characters describing the shot change.";
+      editPrompt.focus();return;
+    }
+    const scene=latest.previewProject.scenes[selectedIndex];
+    const prompt="Please revise only scene "+(selectedIndex+1)+" of my current Content Studio film '"+safe(latest.previewProject.title)+
+      "'. Existing scene headline: '"+safe(scene?.headline)+"'. Direction: "+direction+
+      ". Use revise_motion_film with the latest exact current_project from this conversation. Keep other scenes, client brand identity and approved media unchanged. Return the updated playable film; ask for the current project JSON if it is unavailable. Do not claim a video file has been exported.";
+    if(!window.openai || typeof window.openai.sendFollowUpMessage!=="function"){
+      status.textContent="Natural-language edits require an installed ChatGPT host. In Host Lab, use the test revision button.";
+      return;
+    }
+    askEdit.disabled=true;
+    status.textContent="Sending your selected-shot direction to ChatGPT…";
+    try{
+      await window.openai.sendFollowUpMessage({prompt,scrollToBottom:true});
+      status.textContent="Edit request sent to ChatGPT. Review the revised shot when the model replies.";
+      editPrompt.value="";
+    }catch(err){
+      status.textContent="ChatGPT could not accept the edit request: "+String(err && err.message || err).slice(0,100);
+    }finally{askEdit.disabled=false;}
+  });
   player.addEventListener("load", () => { ready = true; sendToPlayer(); });
   player.src = origin + "/motion/chat-preview";
   // ChatGPT opens links through the host-approved external navigation API.
