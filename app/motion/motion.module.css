@@ -284,3 +284,10 @@
  background:#12392d;padding:6px 8px;font-weight:850;letter-spacing:.1em}
 .spatialStatus p{font-size:11px;color:#b0c0c9;line-height:1.6;margin:8px 0}
 .spatialStatus small{display:block;font-size:10px;color:#93a6b1;line-height:1.5;overflow-wrap:anywhere;margin-top:8px}
+
+.spatialDemoButton{display:block;width:100%;margin:10px 0 12px;padding:13px 10px;
+ background:linear-gradient(145deg,#202d38,#13242b);color:#dcecf4;
+ border:1px solid #577a89;border-radius:9px;text-align:center;
+ font-size:10px;font-weight:800;letter-spacing:.1em;cursor:pointer}
+.spatialDemoButton:hover:not(:disabled){border-color:var(--brand-accent);background:#20343c}
+.spatialDemoButton:disabled{opacity:.4;cursor:not-allowed}
