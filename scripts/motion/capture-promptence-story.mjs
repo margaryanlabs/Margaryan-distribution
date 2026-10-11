@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Capture five *different* publicly visible Promptence feature areas for
+ * Capture six *different* publicly visible Promptence feature areas for
  * native Motion Studio. Strictly fail on first-visit overlays, unreadable
  * mobile type, invisible target headings and near-duplicate screen content.
  *
@@ -11,7 +11,7 @@
 import {mkdir,writeFile} from "node:fs/promises";
 import {createHash} from "node:crypto";
 import {join,resolve} from "node:path";
-import {clearPublicOnboarding,inspectProductFrame,screenshotSignature,verifyNovelShot,
+import {clearPublicOnboarding,inspectProductFrame,inspectProductElement,screenshotSignature,verifyNovelShot,
   PROMPTENCE_SECTIONS} from "./source-capture-gates.mjs";
 const argv=process.argv.slice(2);
 if(argv.length!==2||argv[0]!=="--out"||!argv[1]||argv[1].startsWith("--"))
@@ -32,11 +32,15 @@ try{
   const verified=[];const signatures=[];
   await mkdir(folder,{recursive:true,mode:0o700});
   for(const section of PROMPTENCE_SECTIONS){
-    const heading=page.getByRole("heading",{name:section.heading,exact:true}).first();
-    await heading.waitFor({state:"visible",timeout:12000});
-    await heading.scrollIntoViewIfNeeded({timeout:8000});
+    const target=section.selector
+      ?page.locator(section.selector).first()
+      :page.getByRole("heading",{name:section.heading,exact:true}).first();
+    await target.waitFor({state:"visible",timeout:12000});
+    await target.scrollIntoViewIfNeeded({timeout:8000});
     await page.waitForTimeout(300);
-    const check=await inspectProductFrame(page,section.heading);
+    const check=section.selector
+      ?await inspectProductElement(page,section.selector)
+      :await inspectProductFrame(page,section.heading);
     const bytes=await page.screenshot({type:"png",animations:"disabled",fullPage:false});
     const signature=await screenshotSignature(page,bytes);
     const novelty=verifyNovelShot(signatures,signature,5);
@@ -58,5 +62,5 @@ try{
   await writeFile(join(folder,"promptence-source-manifest.json"),JSON.stringify(manifest,null,2)+"\n",{mode:0o600});
   await writeFile(join(folder,"motion-media-map.json"),JSON.stringify(Object.fromEntries(
     verified.map(s=>[s.assetId,join(folder,s.filename)])),null,2)+"\n",{mode:0o600});
-  process.stdout.write("Five distinct real product sections ready for human review. No simulated AI answers.\n");
+  process.stdout.write("Six distinct real product sections ready for human review. No simulated AI answers.\n");
 }finally{await browser.close();}
