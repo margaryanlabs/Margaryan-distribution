@@ -36,14 +36,15 @@ try{
   const response=await page.goto(base+"/motion/chat-preview",{waitUntil:"domcontentloaded",timeout:30_000});
   assert.equal(response?.status(),200,"first-party preview should be HTTP 200");
   const exportButton=page.getByRole("button",{name:"↓ EXPORT WHOLE FILM"});
-  await exportButton.waitFor({timeout:20_000}); // Hydrated React listener is now mounted.
+  await exportButton.waitFor({timeout:20_000});
+  await page.locator('main[data-motion-preview-hydrated="true"]').waitFor({timeout:20_000});
   await page.evaluate(projects=>window.postMessage({
     kind:"margaryan-motion-preview-v1",projects
   },window.location.origin),chapters);
   await page.waitForFunction(()=>{
     const input=document.querySelector('input[aria-label="Film playhead"]');
     return input&&Number(input.max)===10&&!input.disabled;
-  },{timeout:20_000});
+  },undefined,{timeout:20_000});
   assert.ok(await page.getByText(/5 ACTS/).count(),"one film with five acts");
   // A chapter seek may be issued by the parent MCP widget without replacing
   // the film; the export later resets the playhead to the first act.
@@ -51,7 +52,7 @@ try{
   await page.waitForFunction(()=>{
     const el=document.querySelector('input[aria-label="Film playhead"]');
     return el&&Math.abs(Number(el.value)-8.1)<.1;
-  },{timeout:4_000});
+  },undefined,{timeout:4_000});
   const canvas=page.locator("canvas");
   assert.equal(await canvas.getAttribute("width"),"720");
   assert.equal(await canvas.getAttribute("height"),"1280");
