@@ -1,4 +1,5 @@
-import type { MotionProject, MotionScene } from "./studio";
+import type { MotionProject } from "./studio";
+import { chooseTransition } from "./editorial-transitions";
 
 /**
  * Per-shot, rights-reviewed local source media. Registration only accepts File
@@ -90,6 +91,13 @@ export function motionSourceIssues(project:MotionProject):string[]{
   const issues:string[]=[];
   for(let i=0;i<project.scenes.length;i++){
     const scene=project.scenes[i];
+    const next=project.scenes[i+1];
+    if(scene.kind==="screen"&&next?.kind==="screen"&&scene.mediaId&&
+      next.mediaId===scene.mediaId&&getMotionSceneSource(scene.mediaId)?.type==="video"&&
+      chooseTransition(scene.transition,project.qualityMode,i)!=="cut"){
+      issues.push("Shot "+(i+1)+" and "+(i+2)+" reuse one video in an overlapping transition. Set CUT on shot "+
+        (i+1)+" or use separate approved source recordings.");
+    }
     if(scene.kind!=="screen"||!scene.mediaId)continue;
     const media=registered.get(scene.mediaId);
     if(!media){issues.push("Shot "+(i+1)+": approved source file "+scene.mediaId+" not attached in this browser.");continue;}
