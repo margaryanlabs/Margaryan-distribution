@@ -64,6 +64,16 @@ export default function QualityLab(){
   const mediaRef=useRef<MediaRecorder|null>(null);
   const abort=useRef(false);
   const project=useRef<MotionProject>(makeTestFilm());
+  // Visitors see a genuinely rendered frame immediately, not a black mockup.
+  useEffect(()=>{
+    const node=canvas.current;
+    const ctx=node?.getContext("2d");
+    if(ctx)drawMotionFrame(ctx,project.current,1.1,WIDTH,HEIGHT);
+    void preloadMotionLogo("labs").then(()=>{
+      const real=canvas.current?.getContext("2d");
+      if(real)drawMotionFrame(real,project.current,1.1,WIDTH,HEIGHT);
+    }).catch(()=>{/* The film can still render without a branded SVG. */});
+  },[]);
   useEffect(()=>{alive.current=true;abort.current=false;return ()=>{
     alive.current=false;abort.current=true;
     if(liveURL.current)URL.revokeObjectURL(liveURL.current);
