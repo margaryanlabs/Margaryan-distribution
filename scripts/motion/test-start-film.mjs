@@ -27,9 +27,9 @@ const api=f(brandInfo,frames,x=>x,
  (lang,format)=>({...frames("promptence",format),title:"PROMPTENCE / 2026 DIRECTOR CUT",
  language:lang,signatureFilm:"promptence-answer",
  scenes:Array.from({length:8},(_,i)=>({id:"scene-"+(i+1),kind:"kinetic",seconds:4.56}))}));
-assert.equal(api.STUDIO_FILM_CHOICES.length,5);
+assert.equal(api.STUDIO_FILM_CHOICES.length,6);
 assert.deepEqual(new Set(api.STUDIO_FILM_CHOICES.map(x=>x.kind)),
- new Set(["reel","campaign","product","feature","proof"]));
+ new Set(["reel","campaign","product","feature","proof","interaction"]));
 for(const card of api.STUDIO_FILM_CHOICES){
  assert.ok(card.title&&card.desc&&card.length&&card.step&&card.source);
  assert.ok(api.studioFilmInstruction(card.kind).length>20);
@@ -54,6 +54,11 @@ assert.ok(product.scenes.every(s=>s.kind!=="screen"||!s.mediaId),
 assert.match(product.scenes[2].support,/оригинальную|запись|настоящ/);
 assert.equal(product.format,"landscape");
 assert.equal(product.filmChrome,"clean");
+const interaction=api.prepareStudioFilm({...choice,kind:"interaction",brand:"promptence",format:"portrait"});
+assert.equal(interaction.scenes.length,8);
+assert.ok(interaction.scenes.every((s,i)=>s.kind==="screen"&&s.mediaStart===i*4&&s.transition==="cut"&&!s.mediaId));
+assert.equal(interaction.filmChrome,"clean");
+assert.throws(()=>api.prepareStudioFilm({...choice,kind:"interaction",brand:"veto"}),/Promptence/);
 const feature=api.prepareStudioFilm({...choice,kind:"feature",brand:"labs",format:"square",language:"en"});
 const director=api.prepareStudioFilm({...choice,kind:"campaign",
  brand:"promptence",format:"landscape",brief:"",language:"ru"});
@@ -93,4 +98,4 @@ assert.match(ui,/onStart\(\{kind,brand:/);
 assert.match(css,/\.selectionLayout/);
 assert.match(css,/@media\(max-width:650px\)/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
-console.log("Motion Start PASS: five real production modes, correct templates/sources, editor handoff, safe draft confirmation, editable RU-first UX and mobile layout.");
+console.log("Motion Start PASS: six real production modes, correct templates/sources, editor handoff, safe draft confirmation, editable RU-first UX and mobile layout.");
