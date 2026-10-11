@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import {assertReadableFrame,meanPixelDifference,verifyNovelShot,
   PROMPTENCE_SECTIONS} from "./source-capture-gates.mjs";
 import {criticalDirectorNotes,assertDirectorRelease,
-  assertApprovedSourceManifest} from "./release-quality-gates.mjs";
+  assertApprovedSourceManifest,assertSourceFraming,visibleSourceFraction} from "./release-quality-gates.mjs";
 
 assert.equal(PROMPTENCE_SECTIONS.length,6);
 assert.equal(new Set(PROMPTENCE_SECTIONS.map(x=>x.assetId)).size,6);
@@ -14,6 +14,9 @@ assert.throws(()=>assertReadableFrame({...goodFrame,overlayVisible:true}),/onboa
 assert.throws(()=>assertReadableFrame({...goodFrame,headingVisible:false}),/outside/);
 assert.throws(()=>assertReadableFrame({...goodFrame,headingWidth:114}),/compressed/);
 assert.equal(meanPixelDifference([0,0,255],[0,15,255]),5);
+assert.ok(visibleSourceFraction(1280,720,885.6,480)>.95);
+assert.throws(()=>assertSourceFraming(1080,1920,885.6,480,"portrait-in-stage"),/cover-crops/);
+assert.ok(assertSourceFraming(1280,720,885.6,480,"wide-proof")>.95);
 assert.equal(verifyNovelShot([],Array(6).fill(100)),255);
 assert.throws(()=>verifyNovelShot([[1,1,1,1]],[2,2,2,2]),/duplicate-looking/);
 assert.equal(verifyNovelShot([[0,0,0,0]],[255,255,255,255]),255);
