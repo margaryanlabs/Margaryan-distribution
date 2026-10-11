@@ -8,7 +8,7 @@ export const CHAT_PROTOCOL = "motion-chat-v1" as const;
 export type ChatScenePatch = {
   target: "scene"; index: number;
   set: Partial<Pick<MotionScene,"kind"|"eyebrow"|"headline"|"support"|"seconds"|
-    "typographyScale"|"titleTreatment"|"camera"|"transition"|"intensity"|"voiceCue"|"productBeat"|"mediaId"|"mediaStart">>;
+    "typographyScale"|"titleTreatment"|"camera"|"transition"|"intensity"|"voiceCue"|"productBeat"|"mediaId"|"mediaStart"|"sourceLayout"|"sourceFocusX"|"sourceFocusY"|"sourceZoomStart"|"sourceZoomEnd">>;
 };
 export type ChatProjectPatch = {
   target:"project";
@@ -31,7 +31,7 @@ export interface ChatOperatorPreview {
 }
 
 const SCENE_FIELDS=["kind","eyebrow","headline","support","seconds","typographyScale",
-  "titleTreatment","camera","transition","intensity","voiceCue","productBeat","mediaId","mediaStart"] as const;
+  "titleTreatment","camera","transition","intensity","voiceCue","productBeat","mediaId","mediaStart","sourceLayout","sourceFocusX","sourceFocusY","sourceZoomStart","sourceZoomEnd"] as const;
 const PROJECT_FIELDS=["title","format","style","language","qualityMode","visual","audio"] as const;
 const allowedScene=new Set<string>(SCENE_FIELDS);
 const allowedProject=new Set<string>(PROJECT_FIELDS);

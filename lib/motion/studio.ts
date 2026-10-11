@@ -1,4 +1,5 @@
 import { sanitizeAudioEdit } from "./timeline-edit";
+import { sanitizeSourceDirection, type SourceDirection } from "./source-composition";
 
 export type MotionBrand = "veto" | "promptence" | "raios" | "labs" | "ingu" | "meqena" | "suren" | "veto_private" | "veto_sport" | "armat" | "tun" | "hay_engine" | "reality_engine";
 export type MotionFormat = "portrait" | "square" | "landscape";
@@ -31,6 +32,12 @@ export interface MotionScene {
   mediaId?: string;
   /** Source inpoint in seconds for a genuine video clip, never beyond its duration. */
   mediaStart?: number;
+  /** Actual focal position and zoom of an approved source image/video. */
+  sourceLayout?: SourceDirection["sourceLayout"];
+  sourceFocusX?: number;
+  sourceFocusY?: number;
+  sourceZoomStart?: number;
+  sourceZoomEnd?: number;
   intensity?: number;
   /** Editorial narration cue, not automatically generated or spoken. */
   voiceCue?: string;
@@ -269,6 +276,7 @@ export function sanitizeMotionProject(input: unknown): MotionProject {
         ?s.mediaId:undefined,
       mediaStart:typeof s.mediaStart==="number"&&Number.isFinite(s.mediaStart)
         ?Math.min(3600,Math.max(0,Number(s.mediaStart.toFixed(2)))):0,
+      ...sanitizeSourceDirection(s),
       intensity: Math.max(0, Math.min(1, Number.isFinite(Number(s.intensity)) && s.intensity !== undefined ? Number(s.intensity) : .5)),
       voiceCue: clean(s.voiceCue, 300)
     };

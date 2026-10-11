@@ -14,6 +14,11 @@ export interface ProductionCue {
   titleTreatment?: string;
   mediaId?: string;
   mediaStart?: number;
+  sourceLayout?: string;
+  sourceFocusX?: number;
+  sourceFocusY?: number;
+  sourceZoomStart?: number;
+  sourceZoomEnd?: number;
   /** Exact operator-local source inpoint; source bytes are never packaged. */
   sourceReviewRequired?: boolean;
   headline: string;
@@ -44,6 +49,11 @@ export function makeProductionPack(project: MotionProject) {
       titleTreatment: scene.titleTreatment,
       mediaId: scene.mediaId,
       mediaStart: scene.mediaStart,
+      sourceLayout: scene.sourceLayout,
+      sourceFocusX: scene.sourceFocusX,
+      sourceFocusY: scene.sourceFocusY,
+      sourceZoomStart: scene.sourceZoomStart,
+      sourceZoomEnd: scene.sourceZoomEnd,
       sourceReviewRequired: scene.kind==="screen",
       headline: scene.headline,
       camera: scene.camera || "inherit",
