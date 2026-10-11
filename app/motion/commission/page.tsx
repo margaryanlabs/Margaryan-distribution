@@ -87,12 +87,12 @@ export default function CommissionPage(){
      widgetId.current=null;setCaptcha("");
    };
  },[availability?.accepting,availability?.siteKey]);
- function checked():MotionCommission{
-   return parseMotionCommission(form);
+ function checked(requireConsent=true):MotionCommission{
+   return parseMotionCommission(form,requireConsent);
  }
  function download(){
    try{
-     const text=motionCommissionText(checked());
+     const text=motionCommissionText(checked(false));
      const blob=new Blob([text+"\n"],{type:"text/plain;charset=utf-8"});
      const url=URL.createObjectURL(blob),a=document.createElement("a");
      a.href=url;a.download="motion-studio-film-brief.txt";
@@ -102,7 +102,7 @@ export default function CommissionPage(){
    }catch(e){setMessage(e instanceof Error?e.message:String(e));}
  }
  async function copy(){
-   try{await navigator.clipboard.writeText(motionCommissionText(checked()));
+   try{await navigator.clipboard.writeText(motionCommissionText(checked(false)));
      setMessage(language==="ru"?"Бриф скопирован. Заявка не отправлена.":"Brief copied. No enquiry was sent.");
    }catch(e){setMessage(e instanceof Error?e.message:String(e));}
  }
