@@ -1,5 +1,5 @@
 import {
-  BRAND_INFO, durationOf, sceneAt,
+  BRAND_INFO, durationOf, sceneAt, sanitizeVisual,
   type MotionProject, type MotionScene
 } from "./studio";
 import { drawProductComposition } from "./product-compositions";
@@ -57,14 +57,17 @@ function textLines(ctx: CanvasRenderingContext2D, text: string, width: number) {
   if (part) lines.push(part);
   return lines;
 }
-function drawBackground(ctx: CanvasRenderingContext2D, W: number, H: number, accent: string, t: number, seed: number, technical: boolean) {
+function drawBackground(ctx: CanvasRenderingContext2D, W: number, H: number, accent: string, t: number, seed: number, technical: boolean, glowLevel=.5) {
   const background = ctx.createLinearGradient(0, 0, W, H);
   background.addColorStop(0, technical ? "#101a23" : "#16191f");
   background.addColorStop(.5, "#090c12");
   background.addColorStop(1, "#040609");
   ctx.fillStyle = background; ctx.fillRect(0, 0, W, H);
+  ctx.save();
+  ctx.globalAlpha*=Math.max(0,Math.min(1.5,glowLevel*2));
   glow(ctx, W * .68 + Math.cos(t * .2) * 90, H * .5, Math.min(H * .5, 650), accent);
   glow(ctx, W * .08, H * .81, 400, "#5777b3");
+  ctx.restore();
 
   ctx.save(); ctx.strokeStyle = "#ffffff0b"; ctx.lineWidth = 1;
   // The vanishing-point lattice creates perceived depth without external shaders.
@@ -268,52 +271,61 @@ function drawShot(ctx: CanvasRenderingContext2D, project: MotionProject, index: 
   const accent = BRAND_INFO[project.brand].accent;
   const progress = clamp(localTime / scene.seconds);
   const seed = (project.seed || 0) + index * 197;
+  const grade=sanitizeVisual(project.visual);
+  const artTime=absoluteTime*grade.motion;
   ctx.save(); ctx.globalAlpha = alpha;
-  drawBackground(ctx, W, H, accent, absoluteTime, seed, project.style === "technical");
+  drawBackground(ctx, W, H, accent, artTime, seed, project.style === "technical",grade.glow);
   // A shot has its own optical staging, hero moment and tempo.
   // Product interfaces are deliberately selective rather than repeated behind
   // every headline, which made the previous film resemble a slide carousel.
   const renderScenery=()=>{
-    if(scene.kind==="opener"||scene.kind==="network"||scene.kind==="orbit"){
-      drawWorldRig(ctx,W,H,absoluteTime,accent,index,
+    if(grade.motion>0&&(scene.kind==="opener"||scene.kind==="network"||scene.kind==="orbit")){
+      drawWorldRig(ctx,W,H,artTime,accent,index,
         scene.kind==="opener"?"floor":scene.kind==="orbit"?"portal":"signal");
     }
     if(project.brand==="promptence"&&scene.productBeat) {
       // Ten authored stage-specific conceptual compositions, not fake AI results.
       // A real client/provider screenshot is only drawn through the separate
       // explicit "screen" scene with approved source footage.
-      drawPromptenceBeat(ctx,scene.productBeat,W,H,absoluteTime,progress);
+      drawPromptenceBeat(ctx,scene.productBeat,W,H,artTime,progress);
     } else if(scene.kind==="spatial") {
       // Time-addressable Three.js compositing (only on an explicitly selected shot).
       // A missing renderer is not silently represented as genuine WebGL:
       // export and offline mastering preflight must load it first.
-      if(!drawSpatialFrame(ctx,W,H,accent,absoluteTime,progress,index,scene,project.brand)) {
-        drawCinematicSet(ctx,project,scene,index,absoluteTime,progress,W,H);
+      if(!drawSpatialFrame(ctx,W,H,accent,artTime,progress,index,scene,project.brand)) {
+        drawCinematicSet(ctx,project,scene,index,artTime,progress,W,H);
       }
     } else if(project.signatureFilm==="promptence-answer"&&project.brand==="promptence"){
       // Flagship is deliberately a separate authored visual grammar. Do not
       // overlay a generic orbit/dashboard slideshow atop the bespoke shots.
-      drawPromptenceSignatureArt(ctx,project,index,absoluteTime,progress,W,H);
+      drawPromptenceSignatureArt(ctx,project,index,artTime,progress,W,H);
       // Owner-supplied real UI remains available if explicitly selected.
-      if(scene.kind==="screen")drawProductScreen(ctx,project.brand,W,H,absoluteTime,progress,accent);
+      if(scene.kind==="screen")drawProductScreen(ctx,project.brand,W,H,artTime,progress,accent);
     }else{
-      drawCinematicSet(ctx, project, scene, index, absoluteTime, progress, W, H);
+      drawCinematicSet(ctx, project, scene, index, artTime, progress, W, H);
       if (scene.kind === "network") {
-        drawProductComposition(ctx, project, scene, absoluteTime, W, H, accent);
+        drawProductComposition(ctx, project, scene, artTime, W, H, accent);
       }
-      if (scene.kind === "screen") drawProductScreen(ctx,project.brand,W,H,absoluteTime,progress,accent);
+      if (scene.kind === "screen") drawProductScreen(ctx,project.brand,W,H,artTime,progress,accent);
     }
   };
-  if(scene.camera==="locked")renderScenery();
+  if(scene.camera==="locked"||grade.motion===0)renderScenery();
   else withSceneCamera(ctx,W,H,progress,index,()=>{
     ctx.save();
-    applyDirectedCamera(ctx,scene,progress,W,H);
+    applyDirectedCamera(ctx,{...scene,intensity:Math.min(1,(scene.intensity??.5)*grade.motion)},progress,W,H);
     renderScenery();
     ctx.restore();
   });
   // Text is outside the camera transform: never sacrifice glyph readability.
-  renderText(ctx, scene, W, H, progress, accent, absoluteTime,
-    project.style, project.language, project.qualityMode);
+  renderText(ctx,{...scene,typographyScale:(scene.typographyScale??1)*grade.textScale},
+    W,H,progress,accent,artTime,project.style,project.language,project.qualityMode);
+  // Subtle film grade. Source screenshot content is not manipulated via generated claims.
+  const delta=grade.contrast-.5;
+  if(Math.abs(delta)>.015){
+    ctx.fillStyle=delta>0?"#020507":"#ddebe0";
+    ctx.globalAlpha=Math.min(.16,Math.abs(delta)*.25)*alpha;
+    ctx.fillRect(0,0,W,H);
+  }
   ctx.restore();
 }
 
