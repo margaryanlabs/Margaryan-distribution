@@ -9,6 +9,7 @@ const actions=[
  ["03","PATCH","Preview shot edits without overwriting an active film."],
  ["04","PRODUCE","Attach original sources and render in the authorized Motion Studio worker/editor."]
 ];
+const MCP_ENDPOINT="https://distribution-web-production.up.railway.app/api/motion/mcp";
 export default function MotionMcpInfo(){
  return <main className={styles.page}>
   <div className={styles.shell}>
@@ -17,8 +18,8 @@ export default function MotionMcpInfo(){
    <h1>DIRECT FROM CHAT.<br/><em>BUILT IN MOTION.</em></h1>
    <p className={styles.lead}>A genuine Model Context Protocol connection to our Motion Director. ChatGPT can create, inspect and refine an editable film plan. Real voice, music, source media and MP4 mastering remain in our owned production pipeline.</p>
    <div className={styles.connection}>
-    <div><small>STREAMABLE HTTP ENDPOINT</small><strong>/api/motion/mcp</strong></div>
-    <CopyMcpEndpoint/>
+    <div><small>STREAMABLE HTTP ENDPOINT</small><strong>{MCP_ENDPOINT}</strong></div>
+    <CopyMcpEndpoint endpoint={MCP_ENDPOINT}/>
    </div>
    <section className={styles.grid}>{actions.map(([number,title,detail])=><article key={number}>
     <b>{number}</b><h2>{title}</h2><p>{detail}</p></article>)}</section>
