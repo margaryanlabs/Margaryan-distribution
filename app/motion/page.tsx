@@ -26,6 +26,8 @@ import { createKeylessStoryboard, getLocalDirectorExamples, type MotionLanguage,
 import QuickStudio from "./quick-studio";
 import MultitrackEditor from "./multitrack-editor";
 import PrecisionCutDesk from "./precision-cut-desk";
+import ReleaseReadinessDesk from "./release-readiness-desk";
+import type { ReadinessPanel } from "@/lib/motion/release-readiness";
 import FilmSequenceDesk from "./film-sequence-desk";
 import VoiceBooth from "./voice-booth";
 import OperatorDesk from "./operator-desk";
@@ -810,7 +812,7 @@ export default function MotionStudioPage() {
           <button type="button" className={styles.deliverSecondary}
             onClick={saveJson}>↓ SAVE EDITABLE PROJECT</button>
           <button type="button" className={styles.deliverSecondary}
-            onClick={()=>setEditorPanel("review")}>◈ OPEN FRAME & EVIDENCE REVIEW</button>
+            onClick={()=>setEditorPanel("review")}>◈ OPEN SOURCE & RELEASE REVIEW</button>
         </div>}
         <div className={styles.panelSection} hidden={editorPanel!=="media"}>
         <OperatorDesk project={project} selectedIndex={selectedIndex}
@@ -1048,6 +1050,23 @@ export default function MotionStudioPage() {
             {referenceComparison.notes.map((note,i)=><p key={i}>{note}</p>)}
           </div>}
         </section>
+        <ReleaseReadinessDesk project={project} qa={qa}
+          voiceAttached={voiceover!==null}
+          voiceSeconds={narrationSeconds}
+          voiceReady={narrationWindow.ready}
+          voiceOverflowSeconds={narrationWindow.overflowSeconds}
+          musicAttached={licensedMusic!==null}
+          onNavigate={(panel:ReadinessPanel,shotIndex?:number)=>{
+            setPlaying(false);
+            if(shotIndex!==undefined&&shotIndex>=0&&shotIndex<project.scenes.length)
+              selectScene(shotIndex);
+            setEditorPanel(panel);
+            const holder=document.getElementById("motion-inspector-scroll");
+            if(holder)holder.scrollTo({top:0,behavior:"smooth"});
+            if(window.matchMedia("(max-width: 850px)").matches)
+              requestAnimationFrame(()=>document.getElementById("motion-inspector")?.scrollIntoView({block:"start",behavior:"smooth"}));
+          }}
+        />
         <div className={styles.qaPanel}>
           <div><strong>PRODUCTION PREFLIGHT</strong><b data-grade={qa.grade}>{qa.grade}</b></div>
           <button type="button" className={styles.polishButton} disabled={exporting}
