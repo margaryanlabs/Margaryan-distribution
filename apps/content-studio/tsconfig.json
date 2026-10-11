@@ -30,12 +30,15 @@
         "./node_modules/gsap"
       ],
       "three": [
-        "./node_modules/three"
+        "./node_modules/@types/three"
       ],
       "three/*": [
-        "./node_modules/three/*"
+        "./node_modules/@types/three/*"
       ]
-    }
+    },
+    "typeRoots": [
+      "./node_modules/@types"
+    ]
   },
   "include": [
     "next-env.d.ts",
