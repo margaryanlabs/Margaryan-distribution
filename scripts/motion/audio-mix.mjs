@@ -6,8 +6,9 @@ const clamp=(value,maximum,fallback=0)=>
 const f=n=>Number(n).toFixed(3);
 
 /**
- * Shared local H.264/AAC audio-track contract. Does not upload input media.
- * Video timestamps are authoritative; edits are applied to approved audio.
+ * Sound Director v2: actual speech-controlled sidechain ducking, mild speech
+ * compression and EBU R128 normalization. No external voice/music API.
+ * Neither loudness measurements nor this mix certify a professional voice.
  */
 export function buildAudioMix({project,opts,scorePath,duration,probeAudio=probe}){
   const e=project.audio||{};
@@ -35,7 +36,8 @@ export function buildAudioMix({project,opts,scorePath,duration,probeAudio=probe}
       if(!Number.isFinite(sourceSeconds)||sourceSeconds<=musicTrim+.1)
         throw Error("MUSIC TIMING: source trim removes the soundtrack.");
     }
-    audio.push({path,kind:"music",volume:opts.voice ? .16 : .75});
+    // Retain audible music between spoken lines; duck dynamically during narration.
+    audio.push({path,kind:"music",volume:opts.voice ? .62 : .75});
   }
   const audioInputArgs=[],filters=[];
   for(const [index,item] of audio.entries()){
@@ -47,7 +49,10 @@ export function buildAudioMix({project,opts,scorePath,duration,probeAudio=probe}
       const fadeIn=Math.min(usable/2,voiceFadeIn);
       const fadeOut=Math.min(usable/2,voiceFadeOut);
       steps.push("atrim=start="+f(voiceTrim)+":duration="+f(usable),
-        "asetpts=PTS-STARTPTS","volume="+item.volume);
+        "asetpts=PTS-STARTPTS",
+        "highpass=f=80",
+        "acompressor=threshold=0.125:ratio=2.3:attack=12:release=170:makeup=1.12",
+        "volume="+item.volume);
       if(fadeIn>.001)steps.push("afade=t=in:st=0:d="+f(fadeIn));
       if(fadeOut>.001)steps.push("afade=t=out:st="+f(usable-fadeOut)+":d="+f(fadeOut));
       steps.push("adelay="+Math.round(voiceStart*1000)+":all=1");
@@ -63,18 +68,28 @@ export function buildAudioMix({project,opts,scorePath,duration,probeAudio=probe}
     filters.push("["+(index+1)+":a:0]"+steps.join(",")+"[aud"+index+"]");
   }
   const audioMap=[];
+  const voiceAndMusic=audio.some(s=>s.kind==="voice")&&audio.some(s=>s.kind==="music");
   if(!audio.length)audioMap.push("-an");
   else{
-    filters.push(audio.length===2?
-      "[aud0][aud1]amix=inputs=2:duration=first:dropout_transition=0[aout]":
-      "[aud0]anull[aout]");
+    if(voiceAndMusic){
+      filters.push(
+        "[aud0]asplit=2[narration][sidechain]",
+        "[aud1][sidechain]sidechaincompress=threshold=0.024:ratio=7:attack=35:release=300:detection=rms[ducked]",
+        "[narration][ducked]amix=inputs=2:duration=first:dropout_transition=0[premaster]"
+      );
+    }else filters.push("[aud0]anull[premaster]");
+    // EBU R128 and a final limiter prevent egregious technical peaks.
+    // Human listening is still needed for intonation, music and aesthetics.
+    filters.push("[premaster]alimiter=limit=0.94:attack=5:release=55:level=false,loudnorm=I=-16:TP=-1.5:LRA=11[aout]");
     audioMap.push("-filter_complex",filters.join(";"),"-map","0:v:0",
       "-map","[aout]","-c:a","aac","-b:a","192k");
   }
   return {
     audioInputArgs,audioMap,audioTracks:audio.length,
     metadata:{voiceStart,voiceTrim,musicTrim,voiceFadeIn,voiceFadeOut,musicFadeIn,musicFadeOut,
-      narrationDuration,voiceRequested:!!opts.voice,musicRequested:!!opts.music}
+      narrationDuration,voiceRequested:!!opts.voice,musicRequested:!!opts.music,
+      mixEngine:"Margaryan Sound Director v2",dynamicVoiceSidechain:voiceAndMusic,
+      integratedLoudnessTarget:-16,truePeakTarget:-1.5,humanListeningRequired:true}
   };
 }
 function probe(path){
