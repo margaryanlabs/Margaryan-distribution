@@ -17,6 +17,7 @@ import {assertApprovedSourceManifest,assertApprovedInteractionManifest,assertDir
 import { dirname, resolve, extname } from "node:path";
 import process from "node:process";
 import { buildAudioMix } from "./audio-mix.mjs";
+import { inspectAudioMaster } from "./qa-master-audio.mjs";
 
 function parse(argv) {
   const positional=[],opts={};
@@ -289,6 +290,13 @@ try {
     throw Error("Encoded master format/dimensions incorrect");
   }
   if(audioTracks&&!track)throw Error("Audio requested but MP4 audio track missing");
+  // Inspect the ACTUAL final AAC bytes, not just a storyboard estimate.
+  // Strict commercial exports must resolve audio defects before publishing.
+  const soundQA=track?inspectAudioMaster(outputPath):null;
+  if(opts.release&&soundQA?.state==="review")
+    throw Error("RELEASE BLOCKED: measured sound issues: "+soundQA.warnings.join(" | "));
+  if(soundQA?.state==="review")
+    process.stderr.write("SOUND QA REVIEW: "+soundQA.warnings.join(" | ")+"\n");
   // Deliver platform-native sidecars as part of the video master bundle.
   const captionsURL=new URL("/api/motion/captions",url.href);
   const captionsResponse=await fetch(captionsURL,{
@@ -325,6 +333,7 @@ try {
     expectedDuration:duration,file:outputPath,codec:video.codec_name,
     width:video.width,height:video.height,audioCodec:track?.codec_name||null,
     audioIncluded:!!track,voiceRequested:!!opts.voice,musicRequested:!!opts.music,
+    soundQA,
      timelineAudioEdit:mixMetadata,
     originalScoreGenerated:!!scorePath,originalScoreFile:scorePath,
     contactSheet:sheet,captionFiles:[".srt",".vtt","-narration-guide.txt"],
