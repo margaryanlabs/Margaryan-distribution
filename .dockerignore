@@ -1,0 +1,17 @@
+.git
+.next
+node_modules
+out
+*.mp4
+*.wav
+*.webm
+*.mp3
+*.png
+*.jpg
+.env
+.env.*
+!.env.example
+*.log
+coverage
+.vercel
+*.zip
