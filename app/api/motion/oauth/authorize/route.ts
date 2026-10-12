@@ -40,7 +40,7 @@ export async function GET(request:Request){
  small{display:block;margin-top:20px;color:#84a590}</style></head><body><main>
  <div>◉ MARGARYAN LABS / MOTION STUDIO</div>
  <h1>Connect ChatGPT to your Motion Studio?</h1>
- <p>You are signed in as the Distribution operator. Approve this connection only if <strong>you</strong> initiated it.</p>
+ <p>You are signed in as the Distribution operator. Approve this connection only if <strong>you</strong> initiated it.</p>\n <small>Exact callback: <code>${esc(x.redirect_uri)}</code></small>
  <ul>${x.scope.includes("motion:read")?"<li>Read your Motion render job progress and MP4 status.</li>":""}
  ${x.scope.includes("motion:render")?"<li>Request paid Railway compute: one job at a time, maximum three daily.</li>":""}
  <li>Only the existing fixed Promptence cinema preset is currently supported.</li></ul>
