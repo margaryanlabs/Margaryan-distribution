@@ -41,14 +41,17 @@ export function proxy(request:NextRequest){
  // token/registration are independently validated; owner MCP demands OAuth
  // on EVERY request, and downloads require a short-lived HMAC-signed link.
  // /api/motion/oauth/authorize retains operator Basic auth and explicit consent.
+ // Public shareable Motion creator, GPT setup, privacy notice and static
+ // OpenAPI action declaration are deliberately EXACT-MATCH only. No CRM,
+ // video worker, OAuth consent or billable queue becomes public.
  // The PUBLIC Motion MCP is read-only/stateless and implements its own origin,
  // input and schema validation. This exception is EXACT-MATCH only: no CRM,
  // worker, private file, authenticated editing or render path is exposed.
  // Vercel deployment protection may still run before this proxy; Railway's
  // publicly reachable distribution-web origin serves the narrow MCP route.
  // Do not open other /api, /motion/* or Distribution routes without operator authentication.
- if((path==="/motion"||path==="/motion/proof"||path==="/motion/commission"||path==="/motion/mcp")||
-   (path==="/api/motion/storyboard"||path==="/api/motion/captions"||path==="/api/motion/signature"||path==="/api/motion/commission"||path==="/api/motion/mcp"||path==="/api/motion/mcp/owner"||path==="/api/motion/oauth/register"||path==="/api/motion/oauth/token")||(
+ if((path==="/motion"||path==="/motion/proof"||path==="/motion/commission"||path==="/motion/mcp"||path==="/motion/create"||path==="/motion/gpt"||path==="/motion/privacy")||
+   (path==="/api/motion/storyboard"||path==="/api/motion/gpt/openapi"||path==="/api/motion/captions"||path==="/api/motion/signature"||path==="/api/motion/commission"||path==="/api/motion/mcp"||path==="/api/motion/mcp/owner"||path==="/api/motion/oauth/register"||path==="/api/motion/oauth/token")||(
     path.startsWith("/motion/brands/")&&[
     "promptence.svg","meqena.svg","ingu.svg","veto-sport.svg",
     "veto-private.svg","hay-engine.svg","tun-component-preview.svg"
