@@ -59,7 +59,7 @@ export default function MotionStart({
      </div>
      <div className={styles.navActions}>
        <span className={styles.local}>● Локальная студия</span>
-       <a href="/motion/commission">Заказать ролик ↗</a>
+       <a href="/motion/create">ПУБЛИЧНАЯ СТУДИЯ ↗</a>\n       <a href="/motion/gpt">СОЗДАТЬ ЧЕРЕЗ GPT ↗</a>\n       <a href="/motion/commission">Заказать ролик ↗</a>
        <button type="button" disabled={busy} onClick={onResume}>В редактор →</button>
      </div>
    </header>
