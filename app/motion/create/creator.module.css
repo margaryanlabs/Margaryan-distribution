@@ -186,3 +186,14 @@
 @media(max-width:1080px){.shell{grid-template-columns:minmax(0,1fr)}.side{position:relative;top:auto;padding-top:0;display:grid;grid-template-columns:1fr 1fr;gap:17px}.poster{height:420px}.assistant{margin-top:0}.sideProof{grid-column:1/-1;margin-top:0}.gptSplit{grid-template-columns:1fr}.gptVisual{min-height:470px}}
 @media(max-width:650px){.nav{padding:14px 17px;min-height:72px}.logotype{font-size:11px}.logotype small{font-size:7px}.logosymbol{width:38px;height:38px;font-size:23px}.engineBadge{display:none}.navGpt,.shareTop{font-size:9px;padding:10px}.shareTop span{display:none}.shell{padding:42px 15px 62px;gap:30px}.intro h1{font-size:clamp(60px,12vw,90px)}.progress button{padding:15px 12px;font-size:10px}.stepBody{padding:19px}.goalGrid{gap:8px}.goalPoster{height:132px;padding:11px}.goalPoster strong{font-size:clamp(23px,6vw,33px)}.goalTitle b{font-size:11px}.goalDesc{font-size:9px}.segment{gap:5px}.segment button{padding:11px 8px}.segment b{font-size:10px}.segment small{font-size:8px}.side{display:block}.poster{height:400px}.assistant{margin-top:18px}.sideProof{margin-top:20px}.previewFrame{min-height:280px}.previewFrame[data-format=portrait] canvas{height:min(80vw,400px)}.actions{display:grid}.actions>button{width:100%}.gptShell{padding:0 16px 45px}.gptPage h1{font-size:clamp(56px,12vw,82px)}.gptStep{padding:22px 17px;grid-template-columns:25px 1fr}.gptCopy{flex-wrap:wrap}.gptCopy button{width:100%}.gptVisual{min-height:450px}.gptFoot{flex-wrap:wrap}.policyBox{margin-top:50px}.importModal{padding:22px}}
 @media(prefers-reduced-motion:reduce){.orbA{animation:none}.goalCard{transition:none}}
+
+
+/* ChatGPT code-director handoff: the user, not the browser, sends the brief. */
+.chatBridge{margin:23px 0 0;padding:clamp(20px,2.7vw,30px);border:1px solid #6c9b83;border-radius:13px;background:linear-gradient(145deg,#203c31,#101e1d 65%);box-shadow:inset 0 1px #d8ffe316}
+.chatBridge small{display:block;color:#b4e2cb;font-size:10px;font-weight:850;letter-spacing:.12em;margin-bottom:11px}
+.chatBridge strong{display:block;font-size:clamp(18px,2vw,24px);line-height:1.22;letter-spacing:-.04em;color:#f0fff3}
+.chatBridge p{color:#becfc4;font-size:12px;line-height:1.7;margin:12px 0 17px}
+.chatBridge button{border:1px solid #d6f5dc;border-radius:9px;background:#c2f4d1;color:#10291a;font-size:11px;font-weight:900;line-height:1.5;padding:13px 17px;text-align:center;min-height:48px;max-width:100%}
+.chatBridge button:hover{background:#e5ffec}
+.chatBridge em{display:block;font-style:normal;font-size:10px;color:#9eb7aa;margin-top:12px;line-height:1.6}
+@media(max-width:650px){.chatBridge button{width:100%}}
