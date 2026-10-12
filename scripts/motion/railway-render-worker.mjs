@@ -178,7 +178,9 @@ async function work(){
 }
 async function cleanOldFiles(){
  for(const item of await readdir(DIR,{withFileTypes:true})){
-  if(!item.isFile()||!/^([a-f0-9-]{36})\.mp4$/i.test(item.name))continue;
+  // Sidecars include private director frames, cue text and soundtrack; they
+  // must expire alongside the MP4, not accumulate on the paid private volume.
+  if(!item.isFile()||!/^([a-f0-9-]{36})(?:\.mp4|\.director\.motion\.json|\.director-audit\.json|\.director-contact-sheet\.png|\.score\.wav|\.render-report\.json|\.srt|\.vtt|-narration-guide\.txt|-contact-sheet\.jpg)$/i.test(item.name))continue;
   const p=join(DIR,item.name);
   const s=await stat(p);
   if(Date.now()-s.mtimeMs>7*86400000)await unlink(p).catch(()=>{});
