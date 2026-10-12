@@ -8,10 +8,11 @@ ENV NODE_ENV=development \
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg fonts-dejavu-core fonts-noto-core \
   && rm -rf /var/lib/apt/lists/*
-COPY package.json package-lock.json ./
-# Keep production lock deterministic. Playwright only in this worker container,
+COPY package.json ./
+# The repository currently has NO package-lock; pin top-level dependencies in package.json.
+# Playwright only in this worker container,
 # not in the public Next app's production dependency graph.
-RUN npm ci --no-audit --no-fund \
+RUN npm install --no-audit --no-fund \
   && npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
 COPY . .
 RUN npm run build \
