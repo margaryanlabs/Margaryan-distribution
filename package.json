@@ -37,7 +37,7 @@
     "motion:test-source-camera": "node scripts/motion/test-source-camera.mjs",
     "motion:test-voice-booth": "node scripts/motion/test-voice-booth.mjs",
     "motion:test-bundle": "node scripts/motion/test-portable-bundle.mjs",
-    "prebuild": "npm run motion:test-sound-director && npm run motion:test-audio && npm run motion:test-owner-oauth && npm run motion:test-owned-worker && npm run motion:test-native-mcp && npm run motion:test-interaction-audio && npm run motion:test-interaction && npm run motion:test-film-quality && npm run motion:test-start && npm run motion:test-focus-notes && npm run motion:test-release && npm run motion:test-editor-workspace && npm run motion:test-commission && npm run motion:test-sequence && npm run motion:test-film-browser && npm run motion:test-film-audio && npm run motion:test-precision && npm run motion:test-overlays && npm run motion:test-bundle",
+    "prebuild": "npm run motion:test-voice-contract && npm run motion:test-sound-director && npm run motion:test-audio && npm run motion:test-owner-oauth && npm run motion:test-owned-worker && npm run motion:test-native-mcp && npm run motion:test-interaction-audio && npm run motion:test-interaction && npm run motion:test-film-quality && npm run motion:test-start && npm run motion:test-focus-notes && npm run motion:test-release && npm run motion:test-editor-workspace && npm run motion:test-commission && npm run motion:test-sequence && npm run motion:test-film-browser && npm run motion:test-film-audio && npm run motion:test-precision && npm run motion:test-overlays && npm run motion:test-bundle",
     "motion:test-overlays": "node scripts/motion/test-image-overlay.mjs",
     "motion:test-precision": "node scripts/motion/test-precision-edit.mjs",
     "motion:sequence": "node scripts/motion/render-sequence.mjs",
@@ -58,7 +58,10 @@
     "motion:test-native-mcp": "node scripts/motion/test-native-mcp.mjs",
     "motion:test-owned-worker": "node scripts/motion/test-owned-worker.mjs",
     "motion:test-owner-oauth": "node scripts/motion/test-owner-oauth.mjs",
-    "motion:test-sound-director": "node scripts/motion/test-sound-director.mjs"
+    "motion:test-sound-director": "node scripts/motion/test-sound-director.mjs",
+    "motion:voice:offline": "python3 scripts/motion/local-kokoro-narration.py",
+    "motion:test-voice-offline": "python3 scripts/motion/test-kokoro-narration.py",
+    "motion:test-voice-contract": "node scripts/motion/test-offline-narration-contract.mjs"
   },
   "dependencies": {
     "next": "16.3.3",
