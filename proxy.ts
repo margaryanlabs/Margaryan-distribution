@@ -37,6 +37,10 @@ export function proxy(request:NextRequest){
  // separately protected with same-origin checks, mandatory Turnstile and
  // fail-closed verified mail delivery. This exception must NEVER cover /api/leads.
  // These public routes do not expose CRM data or provider credentials.
+ // Separate OAuth routes are narrowly public ONLY as protocol endpoints:
+ // token/registration are independently validated; owner MCP demands OAuth
+ // on EVERY request, and downloads require a short-lived HMAC-signed link.
+ // /api/motion/oauth/authorize retains operator Basic auth and explicit consent.
  // The PUBLIC Motion MCP is read-only/stateless and implements its own origin,
  // input and schema validation. This exception is EXACT-MATCH only: no CRM,
  // worker, private file, authenticated editing or render path is exposed.
@@ -44,7 +48,16 @@ export function proxy(request:NextRequest){
  // publicly reachable distribution-web origin serves the narrow MCP route.
  // Do not open other /api, /motion/* or Distribution routes without operator authentication.
  if((path==="/motion"||path==="/motion/proof"||path==="/motion/commission"||path==="/motion/mcp")||
-   (path==="/api/motion/storyboard"||path==="/api/motion/captions"||path==="/api/motion/signature"||path==="/api/motion/commission"||path==="/api/motion/mcp")||/^\/motion\/brands\/(?:promptence|meqena|ingu|veto-sport|veto-private|hay-engine|tun-component-preview)\.svg$/.test(path))return NextResponse.next();
+   (path==="/api/motion/storyboard"||path==="/api/motion/captions"||path==="/api/motion/signature"||path==="/api/motion/commission"||path==="/api/motion/mcp"||path==="/api/motion/mcp/owner"||path==="/api/motion/oauth/register"||path==="/api/motion/oauth/token")||(
+    path.startsWith("/motion/brands/")&&[
+    "promptence.svg","meqena.svg","ingu.svg","veto-sport.svg",
+    "veto-private.svg","hay-engine.svg","tun-component-preview.svg"
+   ].includes(path.slice("/motion/brands/".length))
+   )
+   ||path==="/.well-known/oauth-protected-resource"
+   ||path==="/.well-known/oauth-protected-resource/api/motion/mcp/owner"
+   ||path==="/.well-known/oauth-authorization-server"
+   ||new RegExp("^/api/motion/share/[0-9a-f-]{36}$","i").test(path))return NextResponse.next();
  const expectedUser=process.env.DISTRIBUTION_BASIC_USER;
  const expectedPassword=process.env.DISTRIBUTION_BASIC_PASSWORD;
  const operatorAuthConfigured=Boolean(expectedUser&&expectedPassword);
