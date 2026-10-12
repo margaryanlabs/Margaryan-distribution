@@ -33,7 +33,7 @@ assert.ok(!proxy.includes('path==="/api/motion/auto-director"'),
  "Owner AI Director must never appear in public proxy allowlist");
 assert.match(editor,/generateWithAiDirector/);
 assert.match(editor,/api\/motion\/auto-director/);
-assert.match(editor,/window\.confirm\("AI DIRECTOR/);
+assert.match(editor,/window\.confirm\(cloud/);
 assert.match(editor,/СОЗДАТЬ ЧЕРЕЗ НАШ КОД/);
 assert.match(editor,/AI DIRECTOR · АВТОМАТИЧЕСКИЙ СЦЕНАРИЙ/);
 assert.match(creator,/fetch\("\/api\/motion\/storyboard"/);

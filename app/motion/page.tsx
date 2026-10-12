@@ -478,20 +478,22 @@ export default function MotionStudioPage() {
     } finally { setGenerating(false); }
   }
 
-  async function generateWithAiDirector():Promise<void>{
+  async function generateWithAiDirector(cloud=false):Promise<void>{
     if(aiGenerating||generating||exporting||directorRepairing)return;
-    if(!window.confirm("AI DIRECTOR использует отдельную текстовую AI-модель через наш сервер. Это может расходовать API-кредиты. Лимит: 8 запусков за 24 часа. Это НЕ нейросетевая генерация видео. Запустить?"))return;
+    if(!window.confirm(cloud
+      ?"Запустить полный AI FILM → MP4? Система потратит API-кредиты на сценарий и ресурсы Railway на приватный рендер. Лимиты: 8 AI-попыток и 3 MP4 за 24 часа. Результат требует проверки, озвучка не генерируется. Подтверждаешь?"
+      :"AI DIRECTOR использует отдельную текстовую AI-модель через наш сервер. Это может расходовать API-кредиты. Лимит: 8 запусков за 24 часа. Это НЕ нейросетевая генерация видео. Запустить?"))return;
     setAiGenerating(true);setPlaying(false);
     setNotice("AI DIRECTOR: отправляем только текст брифа авторизованному режиссёру. Исходные видео, фото и ключи не передаются.");
     try{
       const response=await fetch("/api/motion/auto-director",{
        method:"POST",credentials:"same-origin",
        headers:{"Content-Type":"application/json"},
-       body:JSON.stringify({approveTextModelCharge:true,brief:{
+       body:JSON.stringify({approveTextModelCharge:true,approveCloudRender:cloud,brief:{
         prompt:brief,brand:project.brand,format:project.format,language,style
        }})
       });
-      let result: {project?:MotionProject;error?:string;message?:string;usedTokens?:number;model?:string};
+      let result: {project?:MotionProject;error?:string;message?:string;usedTokens?:number;model?:string;queued?:boolean;job?:{id:string;state:string}};
       try{result=await response.json();}catch{throw Error("AI Director не смог ответить. Проверьте вход владельца.");}
       if(!response.ok||!result.project){
         if(response.status===401)throw Error("Нужен вход владельца в /motion/render, затем вернитесь в студию.");
@@ -503,6 +505,13 @@ export default function MotionStudioPage() {
       // Only code-backed scenes returned by our own schema/quality compiler.
       resetMotionSceneSources();jump(0);setSelectedIndex(0);setFeatureOpen(false);
       setProject(clean);
+      if(cloud&&result.queued&&result.job?.id){
+        setNotice("AI FILM: оригинальный проект отправлен в наш защищённый FFmpeg. Открываем очередь рендера.");
+        // Output stays private; users can watch progress and download the
+        // authenticated MP4 after actual technical QA has completed.
+        window.location.assign("/motion/render?job="+encodeURIComponent(result.job.id));
+        return;
+      }
       setNotice("AI DIRECTOR: новый оригинальный сценарий на "+clean.scenes.length+
         " сцен создан текстовой моделью "+(result.model||"")+
         " и собран нашим Motion Canvas/3D кодом. Проверьте кадры, звук и экспорт. MP4 ещё нет.");
@@ -1126,6 +1135,15 @@ export default function MotionStudioPage() {
           style={{background:"#203d34",color:"#d8f7e4",border:"1px solid #8ab49c",marginTop:12}}>
           {aiGenerating ? "AI РЕЖИССЁР РАБОТАЕТ…" : "✳ AI DIRECTOR · АВТОМАТИЧЕСКИЙ СЦЕНАРИЙ ↗"}
         </button>
+        <button className={styles.heroButton} type="button" onClick={()=>void generateWithAiDirector(true)}
+          disabled={aiGenerating || generating || exporting || brief.trim().length < 12}
+          style={{background:"#d9f3e2",color:"#092218",border:"1px solid #a1d7bb",marginTop:12}}>
+          {aiGenerating ? "AI FILM · ГОТОВИМ ПРОЕКТ…" : "🎬 AI FILM → НАШ СЕРВЕР → MP4 ↗"}
+        </button>
+        <p className={styles.hint}>AI FILM: идея → режиссура отдельной AI-моделью → проверенный набор сцен
+         → собственный Chromium/FFmpeg → защищённый MP4. Перед запуском подтверждаются
+         расходы модели и сервера. Видеоряд — наша анимация и 3D, не синтез реальных съёмок.
+         В итоговом черновике есть оригинальная инструментальная музыка, но пока нет дикторской озвучки.</p>
         <p className={styles.hint}>AI Director — отдельная текстовая AI-модель в коде нашего сервера,
          не этот ChatGPT-чат. Работает только после входа владельца и явного подтверждения
          расхода API. В результате — новые редактируемые сцены собственного Motion Canvas,

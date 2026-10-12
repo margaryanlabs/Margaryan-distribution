@@ -2,6 +2,7 @@ import {NextResponse} from "next/server";
 import {timingSafeEqual} from "node:crypto";
 import {generateAiMotionProject,motionAiDirectorAvailable,motionAiDirectorLimits,motionAiRemaining} from "@/lib/motion/ai-director";
 import {type DirectorBrief} from "@/lib/motion/director";
+import {latestMotionRenderJobs,queueMotionRender,publicRenderJob} from "@/lib/motion/cloud-render-queue";
 
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
@@ -46,7 +47,7 @@ export async function POST(request:Request){
  if(Number(request.headers.get("content-length")||"0")>MAX_BODY)
   return respond({error:"brief_too_large"},413);
  if(!motionAiDirectorAvailable())return respond({error:"ai_director_disabled"},503);
- let input:{approveTextModelCharge?:unknown;brief?:DirectorBrief};
+ let input:{approveTextModelCharge?:unknown;approveCloudRender?:unknown;brief?:DirectorBrief};
  try{
   const raw=await request.text();
   if(raw.length>MAX_BODY)return respond({error:"brief_too_large"},413);
@@ -54,17 +55,34 @@ export async function POST(request:Request){
  }catch{return respond({error:"invalid_json"},400);}
  if(!input||Array.isArray(input)||input.approveTextModelCharge!==true)
   return respond({error:"explicit_cost_approval_required"},403);
+ const requestedRender=input.approveCloudRender===true;
+ if(input.approveCloudRender!==undefined&&input.approveCloudRender!==false&&input.approveCloudRender!==true)
+  return respond({error:"invalid_render_consent"},400);
  const brief=input.brief;
  if(!brief||typeof brief!=="object"||Array.isArray(brief)||
     typeof brief.prompt!=="string"||brief.prompt.trim().length<12||
     brief.prompt.length>650||!brief.brand||!brief.format)
   return respond({error:"invalid_brief"},400);
  try{
+  if(requestedRender){
+   if(process.env.MOTION_RENDER_ENABLED!=="true")return respond({error:"render_service_disabled"},503);
+   const recent=await latestMotionRenderJobs();
+   if(recent.some(j=>j.state==="queued"||j.state==="running"))
+    return respond({error:"one_render_at_a_time"},429);
+   const now=Date.now();
+   if(recent.filter(j=>now-new Date(j.created_at).getTime()<86_400_000).length>=3)
+    return respond({error:"daily_render_limit_3"},429);
+  }
   const result=await generateAiMotionProject(brief);
-  return respond(result);
+  if(!requestedRender)return respond(result);
+  const queued=await queueMotionRender(result.project);
+  return respond({...result,rendered:false,queued:true,job:publicRenderJob(queued),
+    reviewRequired:true,commerciallyApproved:false},202);
  }catch(e){
   const message=e instanceof Error?e.message:"ai_generation_failed";
   if(message==="ai_daily_limit")return respond({error:"ai_daily_limit_8"},429);
+  if(message==="MOTION_RENDER_QUEUE_BUSY")return respond({error:"one_render_at_a_time",modelChargeMayHaveOccurred:true},429);
+  if(message==="MOTION_RENDER_DAILY_LIMIT")return respond({error:"daily_render_limit_3",modelChargeMayHaveOccurred:true},429);
   if(message==="invalid_brief"||message==="invalid_brand_or_format"||message==="invalid_language"||message==="invalid_style")
    return respond({error:message},400);
   if(message==="ai_director_disabled")return respond({error:message},503);
