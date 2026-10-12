@@ -10,6 +10,7 @@ Until v2, narration and music were combined with fixed music gain `0.16`. The mu
 - It retains an audible music bed (`0.62`) and derives an **actual audio sidechain** from the approved voice waveform. FFmpeg `sidechaincompress` reduces the score when voice is active and releases it between sentences. This is NOT scripted volume automation, and is NOT a replacement for listening.
 - A final limiter and single-pass EBU R128 `loudnorm` target **-16 LUFS / -1.5 dBTP** are applied. These are engineering targets and may differ from measured results.
 - Every rendered MP4 with an audio track now goes through `scripts/motion/qa-master-audio.mjs` which **measures the final encoded AAC**, checks non-silence, integrated loudness and peaks. The numbers are written into `*.render-report.json`; explicit human-listening and licensing flags remain false.
+- The **owned Railway cloud worker** now reads that real render report and refuses to mark an MP4 `complete` unless the final AAC audio passes these measured gates. After seven days, soundtrack, caption and private director review sidecars expire together with the MP4.
 - Problematic drafts get audio QA warnings. Commercial `--release` **fails closed** on measured audio problems rather than silently passing.
 - Existing `--voice` still accepts **only locally authorized** WAV/MP3/etc. No private audio upload or voice cloning is implied.
 
