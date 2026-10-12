@@ -21,7 +21,7 @@ Public MCP NEVER queues a render, discloses private job state, or provides downl
 4. ChatGPT dynamically registers a restricted **HTTPS-only ChatGPT/OpenAI redirect** at `/api/motion/oauth/register`. No arbitrary redirect hosts or `localhost` registrations are permitted.
 5. The owner visits `/api/motion/oauth/authorize`, authenticates **using existing Distribution Basic operator credentials**, sees requested permissions and presses **Approve Connection**. A SameSite/HttpOnly double-submit cookie proof prevents cross-site submission.
 6. Server issues a single-use five-minute code, bound to `client_id`, exact redirect, resource, approved scopes and PKCE verifier.
-7. Code exchange provides an opaque, **one-hour** access token and a rotating **30-day** refresh token. Only **SHA-256 token hashes** persist in the existing private Postgres.
+7. Code exchange provides an opaque, **one-hour** access token and a rotating **30-day** refresh token. Only **HMAC-SHA256 token hashes** (keyed with the owner env secret) persist in the existing private Postgres.
 8. The owner MCP checks access on **every** request. `motion_owner_render_create` additionally requires the `motion:render` scope, acknowledgement of Railway compute charges and **human approval** in the connected ChatGPT app.
 
 **Note:** Full write-capable custom MCP apps depend on actual account/workspace plan. This code does **not** install a plugin into your account and cannot bypass ChatGPT Plus/Business/Enterprise permission policies.
@@ -73,5 +73,5 @@ After live deploy, check:
 
 - ChatGPT account installation is ALWAYS done by the owner using supported app settings. **No ChatGPT account token is accessible to us** merely by creating the server.
 - DCR currently has a 20-client hard cap (no bulk cleanup UI). Restrict registrations to recognized exact ChatGPT/OpenAI callback origins and paths.
-- Disconnect/revoke UI for OAuth tokens is not yet implemented; if compromised, rotate `MOTION_OWNER_OAUTH_SIGNING_SECRET` and revoke tokens in DB, or disable `MOTION_RENDER_ENABLED`. Existing issued DB tokens do not depend cryptographically on the signing secret: for full immediate invalidation revoke in DB or disable/rotate the service token verification design. (A proper session revocation UI is a required next privacy improvement.)
+- Disconnect/revoke UI for individual OAuth clients is not yet implemented. Rotating `MOTION_OWNER_OAUTH_SIGNING_SECRET` revokes all access/refresh tokens and one-time codes (because hashes are server-keyed), and invalidates time-limited share URLs. Disabling `MOTION_RENDER_ENABLED` also suspends rendering entirely. Per-client revocation remains a next security improvement.
 - Mastering a film from an owner-supplied script, genuine private app footage or external professional narration is **not** in this fixed-preset owner queue yet. Those require per-asset rights/approval, isolated uploads and explicit operator governance.
