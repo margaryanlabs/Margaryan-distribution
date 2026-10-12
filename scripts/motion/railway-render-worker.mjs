@@ -146,6 +146,23 @@ async function work(){
   const stream=JSON.parse(probe.stdout).streams?.[0];
   if(stream?.codec_name!=="h264"||stream?.width!==1080||stream?.height!==1920)
    throw Error("invalid_h264");
+  // Completion means the ACTUAL decoded AAC has passed technical quality QA.
+  // Motion master writes this report after measuring FFmpeg's final MP4 bytes.
+  const reportPath=file.replace(/\.mp4$/i,".render-report.json");
+  const reportStat=await stat(reportPath);
+  if(!reportStat.isFile()||reportStat.size>250_000)
+   throw Error("sound_qa_missing");
+  const report=JSON.parse(await readFile(reportPath,"utf8"));
+  if(report.audioIncluded!==true||report.soundQA?.state!=="measured"||
+     report.soundQA?.humanListeningRequired!==true||
+     report.finalMasterHumanReviewRequired!==true)
+   throw Error("sound_qa_not_cleared");
+  const audioQuality=report.soundQA.measurement;
+  if(!Number.isFinite(audioQuality?.integratedLUFS)||
+     !Number.isFinite(audioQuality?.truePeakDBTP))
+   throw Error("sound_qa_bad_measurement");
+  log("info","sound_qa_measured:"+id+":LUFS="+audioQuality.integratedLUFS+
+    ":DBTP="+audioQuality.truePeakDBTP);
   await db.query(`update motion_render_jobs set state='complete',
    output_bytes=$2,finished_at=now(),updated_at=now()
    where id=$1 and state='running'`,[id,fileInfo.size]);
@@ -161,7 +178,9 @@ async function work(){
 }
 async function cleanOldFiles(){
  for(const item of await readdir(DIR,{withFileTypes:true})){
-  if(!item.isFile()||!/^([a-f0-9-]{36})\.mp4$/i.test(item.name))continue;
+  // Sidecars include private director frames, cue text and soundtrack; they
+  // must expire alongside the MP4, not accumulate on the paid private volume.
+  if(!item.isFile()||!/^([a-f0-9-]{36})(?:\.mp4|\.director\.motion\.json|\.director-audit\.json|\.director-contact-sheet\.png|\.score\.wav|\.render-report\.json|\.srt|\.vtt|-narration-guide\.txt|-contact-sheet\.jpg)$/i.test(item.name))continue;
   const p=join(DIR,item.name);
   const s=await stat(p);
   if(Date.now()-s.mtimeMs>7*86400000)await unlink(p).catch(()=>{});
