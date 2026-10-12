@@ -1,4 +1,4 @@
-import {randomBytes} from "node:crypto";
+import {randomBytes,timingSafeEqual} from "node:crypto";
 import {consentCsrfSignature,issueMotionOAuthCode,motionOAuthClientValid,
  normalizeScope,validateAuthorizationInput,MOTION_OAUTH_ISSUER} from "@/lib/motion/owner-oauth";
 export const runtime="nodejs";
@@ -84,7 +84,6 @@ function validateCsrf(state:string,nonce:string,signature:string){
   const expected=consentCsrfSignature(state,nonce);
   if(signature.length!==expected.length)return false;
   const a=Buffer.from(signature),b=Buffer.from(expected);
-  const {timingSafeEqual}=require("node:crypto") as typeof import("node:crypto");
   return nonce.length>=32&&timingSafeEqual(a,b);
  }catch{return false;}
 }
