@@ -3,6 +3,7 @@ import {useCallback,useEffect,useRef,useState,type CSSProperties} from "react";
 import {BRAND_INFO,durationOf,sanitizeMotionProject,type MotionBrand,type MotionFormat,type MotionProject} from "@/lib/motion/studio";
 import {drawMotionFrame} from "@/lib/motion/render-engine";
 import {preloadMotionLogo} from "@/lib/motion/brand-assets";
+import {buildMotionChatHandoff} from "@/lib/motion/chat-handoff";
 import styles from "./creator.module.css";
 
 type Goal="campaign"|"demo"|"social"|"story";
@@ -37,7 +38,7 @@ function saveFile(project:MotionProject){
 export default function PublicMotionCreator(){
  const [phase,setPhase]=useState<Phase>("idea");
  const [goal,setGoal]=useState<Goal>("campaign");
- const [brand,setBrand]=useState<MotionBrand>("promptence");
+ const [brand,setBrand]=useState<MotionBrand>("labs");
  const [format,setFormat]=useState<MotionFormat>("portrait");
  const [language,setLanguage]=useState<Voice>("ru");
  const [style,setStyle]=useState<Style>("cinematic");
@@ -141,6 +142,27 @@ export default function PublicMotionCreator(){
    else{await navigator.clipboard.writeText(link);setNotice("Ссылка на публичную студию скопирована.");}
   }catch{/* cancelled browser share */}
  };
+ const copyForChatGPT=async()=>{
+  if(brief.trim().length<12&&!project){setError("Сначала напиши идею — она нужна для персональной режиссуры.");return;}
+  const text=buildMotionChatHandoff({brief,brand,format,language,style,
+   goal:GOALS.find(x=>x.id===goal)?.name||"Кино-реклама",project});
+  try{
+   await navigator.clipboard.writeText(text);
+   setNotice("Режиссёрское задание скопировано. Теперь вручную вставь его в этот чат ChatGPT — сайт ничего не отправил автоматически.");
+  }catch{
+   const blob=new Blob([text],{type:"text/plain;charset=utf-8"});
+   const url=URL.createObjectURL(blob);
+   const a=document.createElement("a");a.href=url;a.download="motion-chatgpt-director-brief.txt";
+   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+   setNotice("Бриф скачан: открой текст и отправь его в ChatGPT вручную.");
+  }
+ };
+ const startFresh=()=>{
+  if(project&&!window.confirm("Начать новый фильм с чистого листа? Текущий несохранённый проект в этом окне будет заменён. Сначала скачай его JSON, если он нужен."))return;
+  setProject(null);setBrief("");setGoal("campaign");setBrand("labs");setFormat("portrait");setLanguage("ru");setStyle("cinematic");
+  setPhase("idea");setPlaying(true);setSeek(0);seekTime.current=0;setImportJson("");setError("");
+  setNotice("НОВЫЙ ФИЛЬМ: никаких материалов из предыдущего проекта не импортировано.");
+ };
  const openEditor=()=>{
   if(!project)return;
   try{
@@ -204,6 +226,13 @@ export default function PublicMotionCreator(){
         ПРОДОЛЖИТЬ <span>↗</span></button>
         <button className={styles.secondary} type="button" onClick={()=>{setShowImport(true);setError("");}}>
          ИМПОРТ ПРОЕКТА GPT ↓</button></div>
+       <div className={styles.chatBridge}>
+        <small>DIRECTOR / CODE MODE</small>
+        <strong>Хочешь по-настоящему авторский ролик?</strong>
+        <p>Обычный режим создаёт анимацию нашим шаблонным движком. Для уникальных сцен и режиссуры через код скопируй бриф и <b>вставь его вручную в этот чат ChatGPT</b>. Я смогу работать в существующем GitHub-проекте, а не просто менять надписи.</p>
+        <button type="button" onClick={()=>void copyForChatGPT()}>✳ СКОПИРОВАТЬ ЗАДАНИЕ ДЛЯ CHATGPT ↗</button>
+        <em>Ничего не отправляется автоматически. Исходники и старые видео не прикладываются.</em>
+       </div>
      </section>}
      {phase==="direction"&&<section className={styles.stepBody}>
       <div className={styles.stepHeading}><small>02 / CREATIVE DIRECTION</small><h2>Собери<br/><em>свой стиль.</em></h2>
@@ -254,7 +283,14 @@ export default function PublicMotionCreator(){
        </div>)}</div>
       <div className={styles.actions}><button type="button" className={styles.primary} onClick={openEditor}>
        ОТКРЫТЬ ПОЛНЫЙ МОНТАЖ <span>↗</span></button>
-       <button type="button" className={styles.secondary} onClick={()=>saveFile(project)}>↓ СКАЧАТЬ ПРОЕКТ</button></div>
+       <button type="button" className={styles.secondary} onClick={()=>saveFile(project)}>↓ СКАЧАТЬ ПРОЕКТ</button>
+       <button type="button" className={styles.secondary} onClick={startFresh}>✦ НОВЫЙ ФИЛЬМ / БЕЗ СТАРЫХ СЦЕН</button></div>
+      <div className={styles.chatBridge}>
+       <small>CHATGPT / AUTHOR-DRIVEN PRODUCTION</small>
+       <strong>Сделать этот ролик оригинальным через код</strong>
+       <p>Этот предпросмотр собран нашим процедурным движком. Скопируй задание и вставь его в чат со мной: я смогу изучить код Motion Engine, спроектировать уникальные кадры и подготовить изменения в GitHub. Видео не передаётся автоматически.</p>
+       <button type="button" onClick={()=>void copyForChatGPT()}>✳ ЗАДАНИЕ ДЛЯ РЕЖИССЁРА В CHATGPT ↗</button>
+      </div>
       <p className={styles.truth}>Не готовый рекламный MP4: озвучку, музыку, реальные кадры и финальный экспорт необходимо подтвердить в студии. Для коммерческой публикации обязателен просмотр качества.</p>
      </section>}
      {error&&<p className={styles.error} role="alert">{error}</p>}
@@ -272,8 +308,8 @@ export default function PublicMotionCreator(){
     <div className={styles.assistant}>
       <span className={styles.assistantSpark}>✳</span>
       <div><small>YOUR CREATIVE COPILOT</small><strong>Хочешь делать это через GPT?</strong>
-       <p>Свяжи наш Motion Director со своим GPT — сценарии будут собираться прямо в ChatGPT.</p>
-       <a href="/motion/gpt">ПОДКЛЮЧИТЬ GPT DIRECTOR <span>↗</span></a>
+       <p>Обычный генератор сайта не отправляет задания ChatGPT. Скопируй бриф через кнопку режиссёра и вставь его в чат, если нужна работа непосредственно с кодом.</p>
+       <a href="/motion/gpt">ВАРИАНТ GPT ACTION <span>↗</span></a>
       </div>
     </div>
     <div className={styles.sideProof}>
