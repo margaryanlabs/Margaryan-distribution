@@ -45,6 +45,8 @@ export default function PublicMotionCreator(){
  const [brief,setBrief]=useState("");
  const [project,setProject]=useState<MotionProject|null>(null);
  const [busy,setBusy]=useState(false);
+ const [exporting,setExporting]=useState(false);
+ const [exportProgress,setExportProgress]=useState(0);
  const [playing,setPlaying]=useState(true);
  const [seek,setSeek]=useState(0);
  const [notice,setNotice]=useState("");
@@ -134,6 +136,65 @@ export default function PublicMotionCreator(){
   const t=setInterval(()=>setSeek(seekTime.current),130);
   return()=>clearInterval(t);
  },[project]);
+ const exportWorkprint=async()=>{
+  if(exporting||busy||!project||!canvas.current)return;
+  const surface=canvas.current;
+  if(typeof surface.captureStream!=="function"||typeof MediaRecorder==="undefined"){
+   setError("Этот браузер не поддерживает запись видео. Открой полный монтаж в актуальном Chrome / Edge.");return;
+  }
+  const candidates=["video/mp4;codecs=avc1.42E01E","video/webm;codecs=vp9",
+    "video/webm;codecs=vp8","video/webm"];
+  const mime=candidates.find(x=>MediaRecorder.isTypeSupported(x));
+  if(!mime){setError("Нет поддерживаемого видеокодека MP4/WebM. Попробуй полный редактор.");return;}
+  setExporting(true);setExportProgress(0);setError("");
+  setNotice("Записываем настоящее видео из кадров нашего Canvas. Держи вкладку открытой: видео пока без звука.");
+  setPlaying(true);isPlaying.current=true;seekTime.current=0;setSeek(0);
+  const duration=durationOf(project);
+  let stream:MediaStream|null=null,recorder:MediaRecorder|null=null,timer:ReturnType<typeof setInterval>|null=null;
+  let interrupted=false;
+  const hidden=()=>{
+   if(document.hidden){interrupted=true;
+    if(recorder?.state==="recording")recorder.stop();
+   }
+  };
+  document.addEventListener("visibilitychange",hidden);
+  try{
+   if(duration<3||duration>64)throw Error("Для быстрого экспорта фильм должен длиться от 3 до 64 секунд.");
+   stream=surface.captureStream(30);
+   recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:6_000_000});
+   const pieces:Blob[]=[];
+   const recording=recorder;
+   const completed=new Promise<Blob>((resolve,reject)=>{
+    recording.ondataavailable=e=>{if(e.data.size>0)pieces.push(e.data);};
+    recording.onerror=()=>reject(Error("Браузерный видеокодер завершился с ошибкой."));
+    recording.onstop=()=>resolve(new Blob(pieces,{type:mime.split(";")[0]}));
+   });
+   recording.start(500);
+   const startAt=performance.now();
+   timer=setInterval(()=>{
+    const elapsed=(performance.now()-startAt)/1000;
+    setExportProgress(Math.min(100,Math.floor(elapsed/duration*100)));
+    if(elapsed>=duration&&recording.state==="recording")recording.stop();
+   },100);
+   const blob=await completed;
+   if(interrupted)throw Error("Экспорт прервался: вкладка была скрыта. Повтори и не переключай приложения.");
+   if(blob.size<3000||blob.size>120_000_000)throw Error("Видеофайл пуст или превышает 120 МБ.");
+   const extension=mime.startsWith("video/mp4")?"mp4":"webm";
+   const url=URL.createObjectURL(blob),a=document.createElement("a");
+   a.href=url;a.download="margaryan-motion-"+project.brand+"-workprint."+extension;
+   document.body.appendChild(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),30_000);
+   setExportProgress(100);
+   setNotice("Видео "+extension.toUpperCase()+" записано на устройство. Это реальный, но немой черновой фильм. Проверь качество перед публикацией.");
+  }catch(e){setError(e instanceof Error?e.message:"Не удалось экспортировать видео.");}
+  finally{
+   if(timer)clearInterval(timer);
+   document.removeEventListener("visibilitychange",hidden);
+   if(recorder?.state==="recording")recorder.stop();
+   stream?.getTracks().forEach(t=>t.stop());
+   isPlaying.current=false;setPlaying(false);setExporting(false);
+  }
+ };
  const share=async()=>{
   const link=window.location.origin+"/motion/create";
   try{
@@ -158,6 +219,7 @@ export default function PublicMotionCreator(){
   }
  };
  const startFresh=()=>{
+  if(exporting)return;
   if(project&&!window.confirm("Начать новый фильм с чистого листа? Текущий несохранённый проект в этом окне будет заменён. Сначала скачай его JSON, если он нужен."))return;
   setProject(null);setBrief("");setGoal("campaign");setBrand("labs");setFormat("portrait");setLanguage("ru");setStyle("cinematic");
   setPhase("idea");setPlaying(true);setSeek(0);seekTime.current=0;setImportJson("");setError("");
@@ -284,7 +346,11 @@ export default function PublicMotionCreator(){
       <div className={styles.actions}><button type="button" className={styles.primary} onClick={openEditor}>
        ОТКРЫТЬ ПОЛНЫЙ МОНТАЖ <span>↗</span></button>
        <button type="button" className={styles.secondary} onClick={()=>saveFile(project)}>↓ СКАЧАТЬ ПРОЕКТ</button>
-       <button type="button" className={styles.secondary} onClick={startFresh}>✦ НОВЫЙ ФИЛЬМ / БЕЗ СТАРЫХ СЦЕН</button></div>
+       <button type="button" className={styles.secondary} disabled={exporting} onClick={startFresh}>✦ НОВЫЙ ФИЛЬМ / БЕЗ СТАРЫХ СЦЕН</button>
+       <button type="button" className={styles.secondary} disabled={exporting} onClick={()=>void exportWorkprint()}>
+        {exporting?"● ЗАПИСЬ "+exportProgress+"%":"↓ СКАЧАТЬ ВИДЕО MP4 / WEBM"}
+       </button></div>
+      <p className={styles.truth}>Быстрый экспорт записывает реальную графику Motion из Canvas, без сторонних генераторов. Файл пока БЕЗ ЗВУКА; формат MP4 или WebM зависит от браузера. Для профессионального звука и мастеринга открой полный монтаж и пройди QA. Во время записи не закрывай вкладку.</p>
       <div className={styles.chatBridge}>
        <small>CHATGPT / AUTHOR-DRIVEN PRODUCTION</small>
        <strong>Сделать этот ролик оригинальным через код</strong>
