@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import styles from "./render.module.css";
-type Job={id:string;state:"queued"|"running"|"complete"|"failed";createdAt:string;
+type Job={id:string;preset:"promptence_cinema"|"owner_ai";state:"queued"|"running"|"complete"|"failed";createdAt:string;
  bytes:number|null;errorCode:string|null;download?:string};
 export default function MotionCloudRender(){
  const [jobs,setJobs]=useState<Job[]>([]);
@@ -9,6 +9,11 @@ export default function MotionCloudRender(){
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState("");
  const [notice,setNotice]=useState("");
+ const [selectedJob,setSelectedJob]=useState("");
+ useEffect(()=>{
+  const chosen=new URLSearchParams(window.location.search).get("job");
+  if(chosen&&/^[0-9a-f-]{36}$/i.test(chosen))setSelectedJob(chosen);
+ },[]);
  useEffect(()=>{
   let active=true;
   async function check(){
@@ -43,6 +48,11 @@ export default function MotionCloudRender(){
   <header><a href="/motion">← MOTION STUDIO</a><span>FIRST-PARTY RENDER SYSTEM</span></header>
   <div className={styles.chip}>MARGARYAN MOTION STUDIO / OWN INFRASTRUCTURE</div>
   <h1>YOUR FILM.<br/><em>OUR ENGINE.</em></h1>
+  {selectedJob&&<p role="status" className={styles.success}>
+   AI FILM / Ваш фильм поставлен в защищённую очередь. Статус обновляется автоматически
+   каждые 5,5 секунд. Когда рендер завершится, здесь появится ссылка DOWNLOAD MP4.
+   Это проверочный монтаж с инструментальной музыкой, без профессиональной дикторской озвучки.
+  </p>}
   <p className={styles.lead}>Рендер на собственном Railway-воркере: настоящее создание кадров через наш Canvas/Chromium, оригинальная музыка Motion и сборка MP4 в FFmpeg. Без сторонних видеогенераторов.</p>
   <div className={styles.grid}>
    <section className={styles.card}>
@@ -61,8 +71,10 @@ export default function MotionCloudRender(){
     <p>Выполненные видео хранятся на защищённом томе Railway. Скачивание доступно только через авторизованный Distribution.</p>
     {error&&<p role="alert" className={styles.error}>{error}</p>}
     {notice&&<p role="status" className={styles.success}>{notice}</p>}
-    <div className={styles.list}>{jobs.map(job=><article key={job.id}>
-     <div><b>{job.state.toUpperCase()}</b><small>{new Date(job.createdAt).toLocaleString("ru-RU")}</small></div>
+    <div className={styles.list}>{jobs.map(job=><article key={job.id}
+      style={selectedJob===job.id?{outline:"2px solid #77c69c",outlineOffset:3}:undefined}>
+     <div><b>{job.preset==="owner_ai"?"✳ AI ORIGINAL / ":"PROMPTENCE / "}{job.state.toUpperCase()}</b>
+      <small>{new Date(job.createdAt).toLocaleString("ru-RU")}</small></div>
      {job.state==="complete"&&job.download?<a href={job.download} download>↓ DOWNLOAD MP4</a>:
       <span>{job.state==="failed"?job.errorCode||"Render failed":job.state==="running"?"Rendering real frames…":"Queued for render…"}</span>}
     </article>)}</div>
