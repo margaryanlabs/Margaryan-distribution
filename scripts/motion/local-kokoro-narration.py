@@ -56,7 +56,7 @@ def validate_pack(pack):
         if narration and end - start < 0.75:
             raise VoicePlanError("Too short for natural narration")
         result.append({"shot": idx, "start": float(start), "end": float(end),
-                       "narration": narration, "available": float(end-start-PAUSE_SECONDS)})
+                       "narration": narration, "available": float(min(end-start-PAUSE_SECONDS, duration-start-0.55))})
         previous = float(end)
     return float(duration), result
 
@@ -123,7 +123,7 @@ def main():
             samples, check = validate_signal(samples, rate)
             if sample_rate is None:
                 sample_rate = rate
-                timeline = np.zeros(int(total*rate), dtype=np.float32)
+                timeline = np.zeros(int((total-0.50)*rate), dtype=np.float32)
             elif rate != sample_rate:
                 raise VoicePlanError("Voice model changed sample rate mid-session")
             # Strict alignment: never truncate phrases or silently speed up speech.
@@ -151,7 +151,7 @@ def main():
             out.setframerate(sample_rate)
             out.writeframes((timeline*32767).astype("<i2").tobytes())
         print(json.dumps({"status":"WAV_READY_NEEDS_HUMAN_REVIEW",
-                          "file":str(args.out),"seconds":total,"shots":checks,
+                          "file":str(args.out),"seconds":round(len(timeline)/sample_rate,3),"filmSeconds":total,"shots":checks,
                           "voice":args.voice,"modelDownloaded":False,
                           "creativeQualityApproved":False,"broadcastReady":False},indent=2))
     except (ValueError, OSError, VoicePlanError, json.JSONDecodeError) as e:
