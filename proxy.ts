@@ -48,11 +48,16 @@ export function proxy(request:NextRequest){
  // publicly reachable distribution-web origin serves the narrow MCP route.
  // Do not open other /api, /motion/* or Distribution routes without operator authentication.
  if((path==="/motion"||path==="/motion/proof"||path==="/motion/commission"||path==="/motion/mcp")||
-   (path==="/api/motion/storyboard"||path==="/api/motion/captions"||path==="/api/motion/signature"||path==="/api/motion/commission"||path==="/api/motion/mcp"||path==="/api/motion/mcp/owner"||path==="/api/motion/oauth/register"||path==="/api/motion/oauth/token")||/^\\/motion\\/brands\\/(?:promptence|meqena|ingu|veto-sport|veto-private|hay-engine|tun-component-preview)\\.svg$/.test(path)
+   (path==="/api/motion/storyboard"||path==="/api/motion/captions"||path==="/api/motion/signature"||path==="/api/motion/commission"||path==="/api/motion/mcp"||path==="/api/motion/mcp/owner"||path==="/api/motion/oauth/register"||path==="/api/motion/oauth/token")||(
+    path.startsWith("/motion/brands/")&&[
+    "promptence.svg","meqena.svg","ingu.svg","veto-sport.svg",
+    "veto-private.svg","hay-engine.svg","tun-component-preview.svg"
+   ].includes(path.slice("/motion/brands/".length))
+   )
    ||path==="/.well-known/oauth-protected-resource"
    ||path==="/.well-known/oauth-protected-resource/api/motion/mcp/owner"
    ||path==="/.well-known/oauth-authorization-server"
-   ||/^\\/api\\/motion\\/share\\/[0-9a-f-]{36}$/.test(path))return NextResponse.next();
+   ||new RegExp("^/api/motion/share/[0-9a-f-]{36}$","i").test(path))return NextResponse.next();
  const expectedUser=process.env.DISTRIBUTION_BASIC_USER;
  const expectedPassword=process.env.DISTRIBUTION_BASIC_PASSWORD;
  const operatorAuthConfigured=Boolean(expectedUser&&expectedPassword);
