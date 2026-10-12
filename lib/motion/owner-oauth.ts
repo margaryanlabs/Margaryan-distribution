@@ -8,7 +8,10 @@ const TOKEN_TTL_SECONDS=3600;
 const REFRESH_TTL_SECONDS=30*86400;
 const MAX_CLIENTS=20;
 declare global{var __motionOAuthSchema:Promise<void>|undefined;}
-const digest=(s:string)=>createHash("sha256").update(s).digest("hex");
+// Server-keyed SHA-256 hashes make all owner OAuth sessions revocable by
+// rotating ONE environment secret; no raw bearer token is persisted.
+const digest=(s:string)=>createHmac("sha256",signingSecret())
+ .update("owner-oauth-token:"+s).digest("hex");
 const entropy=()=>randomBytes(32).toString("base64url");
 const equal=(a:string,b:string)=>{
  const x=Buffer.from(a),y=Buffer.from(b);
