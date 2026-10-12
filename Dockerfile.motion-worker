@@ -1,0 +1,22 @@
+# Only our original Motion Studio code + Chromium/FFmpeg: NO AI video vendor.
+# This image runs on the existing Margaryan Distribution Railway project.
+FROM mcr.microsoft.com/playwright:v1.58.2-noble
+ENV NODE_ENV=development \
+    NEXT_TELEMETRY_DISABLED=1 \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+    PORT=3009
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg fonts-dejavu-core fonts-noto-core \
+  && rm -rf /var/lib/apt/lists/*
+COPY package.json package-lock.json ./
+# Keep production lock deterministic. Playwright only in this worker container,
+# not in the public Next app's production dependency graph.
+RUN npm ci --no-audit --no-fund \
+  && npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
+COPY . .
+RUN npm run build \
+  && node --check scripts/motion/railway-render-worker.mjs \
+  && ffmpeg -hide_banner -encoders | grep -q libx264
+ENV NODE_ENV=production
+EXPOSE 3009
+CMD ["node","scripts/motion/railway-render-worker.mjs"]
