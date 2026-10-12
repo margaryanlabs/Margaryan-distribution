@@ -83,6 +83,14 @@ export function disposeMotionSceneSource(id:string){
   if(url)URL.revokeObjectURL(url);
   urls.delete(id);
 }
+/** Release decoded scenes when the operator starts a different film.
+ * Files in the local approved IndexedDB library are intentionally preserved.
+ * Old recordings can only re-enter after an explicit re-attachment by the user.
+ */
+export function resetMotionSceneSources(){
+  for(const id of [...registered.keys()])disposeMotionSceneSource(id);
+  playbackError=null;
+}
 export function pauseMotionSourceVideos(){
   for(const item of registered.values())if(item.type==="video")
     (item.element as HTMLVideoElement).pause();
