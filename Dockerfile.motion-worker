@@ -15,9 +15,11 @@ COPY package.json ./
 RUN npm install --no-audit --no-fund \
   && npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.58.2
 COPY . .
+# Next/React production render must run with NODE_ENV=production, not development.
+# Installing devDependencies happened above; a production build still sees them.
+ENV NODE_ENV=production
 RUN npm run build \
   && node --check scripts/motion/railway-render-worker.mjs \
   && ffmpeg -hide_banner -encoders | grep -q libx264
-ENV NODE_ENV=production
 EXPOSE 3009
 CMD ["node","scripts/motion/railway-render-worker.mjs"]
