@@ -762,6 +762,21 @@ export default function MotionStudioPage() {
     return()=>window.removeEventListener("keydown",keys);
   },[mode,featureOpen,exporting,generating,directorRepairing,visualReviewing,shortcutHelp,focusMode]);
 
+  async function copyFilmToChatGPT(){
+    const directorBrief=buildMotionChatHandoff({
+      brief,brand:project.brand,format:project.format,
+      language,style,
+      goal:startedKind||"Авторский фильм из существующего проекта",
+      project
+    });
+    try{
+      await navigator.clipboard.writeText(directorBrief);
+      setNotice("РЕЖИССЁРСКИЙ БРИФ СКОПИРОВАН. Вставьте его вручную в этот чат ChatGPT. Сайт не отправляет запрос автоматически.");
+    }catch{
+      downloadFile("motion-code-director-brief.txt",new Blob([directorBrief],{type:"text/plain;charset=utf-8"}));
+      setNotice("БРИФ СКАЧАН. Откройте файл и вручную отправьте содержимое в ChatGPT.");
+    }
+  }
   function showFilmLauncher(){
     if(exporting||generating)return;
     setPlaying(false);setFocusMode(false);setFeatureOpen(false);
@@ -816,6 +831,10 @@ export default function MotionStudioPage() {
     </button>
     <a className={styles.proofLaunch} href="/motion/proof"><strong>ПРОВЕРИТЬ ПРОДУКТ ↗</strong><span>Тест настоящего экрана Promptence</span></a>
     <a className={styles.proofLaunch} href="/motion/create"><strong>🎬 ПУБЛИЧНАЯ СТУДИЯ ↗</strong><span>Красивый путь от идеи к фильму — поделиться ссылкой</span></a>\n    <a className={styles.proofLaunch} href="/motion/gpt"><strong>GPT · РЕЖИССЁР ↗</strong><span>Создать сценарий через ChatGPT Actions</span></a>\n    <a className={styles.proofLaunch} href="/motion/mcp"><strong>CHATGPT · MCP ↗</strong><span>Подключить свой режиссёрский движок</span></a>
+    <button type="button" className={styles.proofLaunch} onClick={()=>void copyFilmToChatGPT()}>
+      <strong>✳ CHATGPT · РЕЖИССЁР В КОДЕ ↗</strong>
+      <span>Скопируй бриф → вставь в чат → авторские сцены в существующем GitHub. Автоматической отправки нет.</span>
+    </button>
     <a className={styles.proofLaunch} href="/motion/render"><strong>☁ НАШ RENDER ENGINE ↗</strong><span>Свой Chromium и FFmpeg · защищённый MP4</span></a>
   </nav>;
   if(launcherOpen)return <MotionStart initialBrand={project.brand}
