@@ -171,6 +171,17 @@ process.on("SIGTERM",()=>{shuttingDown=true;studio?.kill("SIGTERM");server.close
 process.on("SIGINT",()=>{shuttingDown=true;studio?.kill("SIGTERM");server.close();});
 try{
  await setupDb();
+ // One-time owner-authorized first mastering smoke: only when explicitly
+ // configured on Railway, only if the isolated queue has never been used.
+ // This consumes ONE of the same 3 daily slots and uses our fixed original cut.
+ if(process.env.MOTION_RENDER_FIRST_MASTER_TEST==="true"){
+  const existing=await db.query("select count(*)::int as count from motion_render_jobs");
+  if(Number(existing.rows[0]?.count||0)===0){
+   const {randomUUID}=await import("node:crypto");
+   await db.query("insert into motion_render_jobs(id,preset,state) values($1,'promptence_cinema','queued')",[randomUUID()]);
+   log("info","first_master_smoke_enqueued_once");
+  }
+ }
  await launchStudio();
  healthy=true;
  log("info","worker_ready_internal_only");
