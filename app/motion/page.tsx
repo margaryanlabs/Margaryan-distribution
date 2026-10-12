@@ -811,6 +811,7 @@ export default function MotionStudioPage() {
     </button>
     <a className={styles.proofLaunch} href="/motion/proof"><strong>ПРОВЕРИТЬ ПРОДУКТ ↗</strong><span>Тест настоящего экрана Promptence</span></a>
     <a className={styles.proofLaunch} href="/motion/mcp"><strong>CHATGPT · MCP ↗</strong><span>Подключить свой режиссёрский движок</span></a>
+    <a className={styles.proofLaunch} href="/motion/render"><strong>☁ НАШ RENDER ENGINE ↗</strong><span>Свой Chromium и FFmpeg · защищённый MP4</span></a>
   </nav>;
   if(launcherOpen)return <MotionStart initialBrand={project.brand}
     currentTitle={project.title} hasSavedDraft={hasSavedFilm}
