@@ -26,7 +26,7 @@ export default function MotionMcpInfo(){
    <div className={styles.notice}><strong>Not automatically connected to your ChatGPT account.</strong>
     <p>On an eligible ChatGPT web account, enable Developer mode, create a custom MCP app and scan tools using the endpoint above. Your plan and workspace permissions determine availability. Five public-safe tools are exposed. This page does not grant private render access or start a background render worker.</p>
    </div>
-   <div className={styles.bottom}><a href="/motion">OPEN MOTION STUDIO ↗</a>
+   <div className={styles.bottom}><a href="/motion/render">PRIVATE CLOUD RENDER ↗</a><a href="/motion">OPEN MOTION STUDIO ↗</a>
     <span>NO AI VIDEO PROVIDER · NO API CREDITS · REAL EDITABLE STORYBOARDS</span></div>
   </div>
  </main>;
