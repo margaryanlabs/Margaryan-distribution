@@ -60,8 +60,14 @@ export function safeOAuthRedirect(uri:string){
  try{
   const u=new URL(uri);
   if(u.protocol!=="https:"||u.username||u.password||u.search||u.hash||u.port)return false;
-  if(!["chatgpt.com","chat.openai.com","platform.openai.com"].includes(u.hostname))return false;
-  return /^\/(?:connector\/oauth\/|oauth\/|apps-manage\/oauth\/)/.test(u.pathname)&&u.pathname.length<240;
+  // RFC 9700 redirect allowlist: official ChatGPT callbacks only.
+  // October 2026 issuer-identifying AS uses stable callback; older apps use
+  // callback-ID-specific /connector/oauth/<id>. Exact paths, never prefixes.
+  if(u.hostname==="chatgpt.com"){
+   return u.pathname==="/connector_platform_oauth_redirect"||
+     /^\/connector\/oauth\/[A-Za-z0-9_-]{8,120}$/.test(u.pathname);
+  }
+  return u.hostname==="platform.openai.com"&&u.pathname==="/apps-manage/oauth";
  }catch{return false;}
 }
 export function normalizeScope(scope:string){

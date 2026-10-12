@@ -33,6 +33,14 @@ assert.match(auth,/origin/);
 assert.match(auth,/SameSite=Lax/);
 assert.match(auth,/HttpOnly/);
 assert.match(auth,/motion_oauth_nonce/);
+assert.ok(auth.includes("https://chatgpt.com https://platform.openai.com"),
+ "OAuth consent CSP must allow both official ChatGPT and OpenAI redirect hops");
+assert.ok(oauth.includes('u.pathname==="/connector_platform_oauth_redirect"'),
+ "ChatGPT stable issuer callback must be supported");
+assert.ok(oauth.includes("connector\\/oauth\\/"),
+ "Callback-ID-specific ChatGPT path must be supported");
+assert.ok(oauth.includes('u.pathname==="/apps-manage/oauth"'),
+ "OpenAI review callback must be supported");
 assert.match(token,/grant_type/);
 assert.match(register,/token_endpoint_auth_method/);
 assert.match(endpoint,/verifyMotionOAuthAccess/);

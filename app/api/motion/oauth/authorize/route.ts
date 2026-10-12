@@ -3,7 +3,7 @@ import {consentCsrfSignature,issueMotionOAuthCode,motionOAuthClientValid,
  normalizeScope,validateAuthorizationInput,MOTION_OAUTH_ISSUER} from "@/lib/motion/owner-oauth";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
-const hdr={"Cache-Control":"no-store, private","Content-Security-Policy":"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
+const hdr={"Cache-Control":"no-store, private","Content-Security-Policy":"default-src 'none'; style-src 'unsafe-inline'; form-action 'self' https://chatgpt.com https://platform.openai.com; base-uri 'none'; frame-ancestors 'none'",
  "X-Content-Type-Options":"nosniff"};
 type OAuthInputs={client_id:string;redirect_uri:string;response_type:string;code_challenge:string;
  code_challenge_method:string;scope:string;resource:string;state:string};
