@@ -36,8 +36,9 @@ import FilmSequenceDesk from "./film-sequence-desk";
 import VoiceBooth from "./voice-booth";
 import OperatorDesk from "./operator-desk";
 import { getLocalMedia, mediaAsFile } from "@/lib/motion/local-media";
+import {buildMotionChatHandoff} from "@/lib/motion/chat-handoff";
 import {
-  getMotionSceneSource, registerMotionSceneSource, motionSourceIssues,
+  getMotionSceneSource, registerMotionSceneSource, resetMotionSceneSources, motionSourceIssues,
   prepareMotionSourceFrame, pauseMotionSourceVideos, syncMotionSourcePlayback,
   resetMotionPlaybackError, motionPlaybackError
 } from "@/lib/motion/scene-source";
@@ -46,7 +47,7 @@ import styles from "./motion.module.css";
 const STORAGE_KEY = "margaryan-motion-studio-v1";
 const BRANDS: MotionBrand[] = PORTFOLIO_BRANDS;
 const FORMATS: MotionFormat[] = ["portrait", "square", "landscape"];
-const defaultBrief = "Создай кинематографический проморолик VETO Intelligence: сильная типографика, визуализация сигналов, глубокий тёмный фон, эффектные переходы и мощный финал. Без обещаний прибыли.";
+const defaultBrief = "Создай оригинальную кинематографичную историю для Margaryan Labs: сильный первый кадр, выразительная типографика, новая анимация нашего движка и ясный финал. Никаких старых видеозаписей без моего выбора.";
 function timeLabel(seconds: number) {
   return Math.floor(seconds / 60).toString().padStart(2, "0") + ":" + Math.floor(seconds % 60).toString().padStart(2, "0");
 }
@@ -64,7 +65,7 @@ export default function MotionStudioPage() {
   const [hasSavedFilm,setHasSavedFilm]=useState(false);
   const [quickStart,setQuickStart]=useState<QuickStudioStart|null>(null);
   const [startedKind,setStartedKind]=useState<StudioFilmKind|null>(null);
-  const [project, setProject] = useState<MotionProject>(() => makeMotionPreset());
+  const [project, setProject] = useState<MotionProject>(() => makeMotionPreset("labs"));
   const [hydrated, setHydrated] = useState(false);
   const [brief, setBrief] = useState(defaultBrief);
   const [style, setStyle] = useState<MotionStyle>("cinematic");
@@ -279,6 +280,7 @@ export default function MotionStudioPage() {
       if (saved){
         setProject(sanitizeMotionProject(JSON.parse(saved)));
         setHasSavedFilm(true);
+        setNotice("ПРОШЛЫЙ ПРОЕКТ восстановлен из этого браузера. Для нового фильма без старых материалов нажмите «НОВЫЙ РОЛИК».");
       }
       const startSeen=window.localStorage.getItem("motion-first-film-v1")==="yes";
       const directQuick=new URLSearchParams(window.location.search).get("mode")==="quick";
@@ -409,6 +411,7 @@ export default function MotionStudioPage() {
     updateProject({ ...project, scenes: project.scenes.map((scene, i) => i === selectedIndex ? { ...scene, [field]: value } : scene) });
   }
   function loadBrand(brand: MotionBrand) {
+    resetMotionSceneSources();
     setPlaying(false); jump(0); setSelectedIndex(0);
     setProject(makeMotionPreset(brand, project.format));
     setBrief(getLocalDirectorExamples(brand)[0]);
@@ -775,6 +778,8 @@ export default function MotionStudioPage() {
       "Создать новый ролик? Текущий проект в редакторе будет заменён. Сохраните его JSON или переносимый архив, если нужно оставить копию."
     ))return;
     const selected={...raw,brief:raw.brief.trim()};
+    // Starting a new film releases decoded previews; saved files stay in IndexedDB.
+    resetMotionSceneSources();
     setPlaying(false);setFeatureOpen(false);setFocusMode(false);setShortcutHelp(false);
     timeRef.current=0;setPlayhead(0);setSelectedIndex(0);
     setSoundEnabled(false);setVoiceover(null);setLicensedMusic(null);
