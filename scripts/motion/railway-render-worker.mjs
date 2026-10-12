@@ -146,6 +146,23 @@ async function work(){
   const stream=JSON.parse(probe.stdout).streams?.[0];
   if(stream?.codec_name!=="h264"||stream?.width!==1080||stream?.height!==1920)
    throw Error("invalid_h264");
+  // Completion means the ACTUAL decoded AAC has passed technical quality QA.
+  // Motion master writes this report after measuring FFmpeg's final MP4 bytes.
+  const reportPath=file.replace(/\.mp4$/i,".render-report.json");
+  const reportStat=await stat(reportPath);
+  if(!reportStat.isFile()||reportStat.size>250_000)
+   throw Error("sound_qa_missing");
+  const report=JSON.parse(await readFile(reportPath,"utf8"));
+  if(report.audioIncluded!==true||report.soundQA?.state!=="measured"||
+     report.soundQA?.humanListeningRequired!==true||
+     report.finalMasterHumanReviewRequired!==true)
+   throw Error("sound_qa_not_cleared");
+  const audioQuality=report.soundQA.measurement;
+  if(!Number.isFinite(audioQuality?.integratedLUFS)||
+     !Number.isFinite(audioQuality?.truePeakDBTP))
+   throw Error("sound_qa_bad_measurement");
+  log("info","sound_qa_measured:"+id+":LUFS="+audioQuality.integratedLUFS+
+    ":DBTP="+audioQuality.truePeakDBTP);
   await db.query(`update motion_render_jobs set state='complete',
    output_bytes=$2,finished_at=now(),updated_at=now()
    where id=$1 and state='running'`,[id,fileInfo.size]);
