@@ -21,7 +21,7 @@ assert.match(style,/@media\(max-width:650px\)/);
 assert.match(style,/@media\(prefers-reduced-motion:reduce\)/);
 assert.match(setup,/createMotionStoryboard/);
 assert.match(setup,/chatgpt.com\/gpts\/editor/);
-assert.match(setup,/No API|API key|API-ключ/i);
+assert.match(setup,/без ключа OpenAI API|No API|API key|API-ключ/i);
 assert.match(schema,/operationId:"createMotionStoryboard"/);
 assert.match(schema,/rendered.*const:false/);
 assert.match(schema,/privacy|Motion Studio Director/);
