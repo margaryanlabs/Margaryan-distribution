@@ -58,7 +58,9 @@
     "motion:test-native-mcp": "node scripts/motion/test-native-mcp.mjs",
     "motion:test-owned-worker": "node scripts/motion/test-owned-worker.mjs",
     "motion:test-owner-oauth": "node scripts/motion/test-owner-oauth.mjs",
-    "motion:test-sound-director": "node scripts/motion/test-sound-director.mjs"
+    "motion:test-sound-director": "node scripts/motion/test-sound-director.mjs",
+    "motion:voice:offline": "python3 scripts/motion/local-kokoro-narration.py",
+    "motion:test-voice-offline": "python3 scripts/motion/test-kokoro-narration.py"
   },
   "dependencies": {
     "next": "16.3.3",
