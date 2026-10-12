@@ -8,7 +8,7 @@
  */
 import {createServer} from "node:http";
 import {spawn} from "node:child_process";
-import {mkdir,stat,readdir,unlink,readFile} from "node:fs/promises";
+import {mkdir,stat,readdir,unlink,readFile,writeFile} from "node:fs/promises";
 import {createReadStream} from "node:fs";
 import {pipeline} from "node:stream/promises";
 import {resolve,join} from "node:path";
@@ -41,13 +41,17 @@ async function setupDb(){
  await db.query(`
  create table if not exists motion_render_jobs(
   id uuid primary key,
-  preset text not null check(preset='promptence_cinema'),
+  preset text not null check(preset in ('promptence_cinema','owner_ai')),
   state text not null check(state in ('queued','running','complete','failed')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   started_at timestamptz,finished_at timestamptz,
   output_bytes bigint,error_code text
  );
+ alter table motion_render_jobs drop constraint if exists motion_render_jobs_preset_check;
+ alter table motion_render_jobs add constraint motion_render_jobs_preset_check
+  check (preset in ('promptence_cinema','owner_ai'));
+ alter table motion_render_jobs add column if not exists project_json jsonb;
  create index if not exists motion_render_jobs_recent on motion_render_jobs(created_at desc);
  `);
  await db.query(`update motion_render_jobs set state='failed',
@@ -125,16 +129,43 @@ async function work(){
  set state='running',started_at=now(),updated_at=now()
  where id=(select id from motion_render_jobs where state='queued'
  order by created_at for update skip locked limit 1)
- returning id,preset`);
+ returning id,preset,project_json`);
  const task=claim.rows[0];if(!task)return;
  jobInProcess=true;const id=task.id,file=join(DIR,id+".mp4");
+ const aiSource=join(DIR,id+".source.motion.json");
+ let masterSource=TEMPLATE;
+ let expectedWidth=1080,expectedHeight=1920;
  let error="render_failed";
  try{
-  if(!UUID.test(id)||task.preset!=="promptence_cinema")throw Error("preset_not_allowed");
-  if((await stat(TEMPLATE)).size>20000)throw Error("invalid_preset");
+  if(!UUID.test(id)||!["promptence_cinema","owner_ai"].includes(task.preset))
+   throw Error("preset_not_allowed");
+  if(task.preset==="owner_ai"){
+   const draft=task.project_json;
+   if(!draft||typeof draft!=="object"||Array.isArray(draft))
+    throw Error("owner_project_missing");
+   const data=JSON.stringify(draft);
+   if(data.length>16000||!Array.isArray(draft.scenes)||
+      draft.scenes.length<5||draft.scenes.length>8||
+      !["portrait","landscape","square"].includes(draft.format)||
+      draft.scenes.some(scene=>!scene||![
+       "opener","statement","network","kinetic","orbit","spatial","closer"
+      ].includes(scene.kind)||typeof scene.headline!=="string"||scene.headline.length>100||
+       !Number.isFinite(scene.seconds)||scene.seconds<2||scene.seconds>8||
+       scene.mediaId||scene.overlayMediaId||scene.kind==="screen")||
+      /"(?:mediaId|overlayMediaId|screenMediaId|filePath|mediaUrl|sourceUrl|script|code|url)"\s*:/i.test(data))
+    throw Error("owner_project_invalid");
+   const seconds=draft.scenes.reduce((a,scene)=>a+scene.seconds,0);
+   if(seconds>60||seconds<15)throw Error("owner_project_timing");
+   if(draft.format==="landscape"){expectedWidth=1920;expectedHeight=1080;}
+   if(draft.format==="square"){expectedWidth=1080;expectedHeight=1080;}
+   await writeFile(aiSource,data,{encoding:"utf8",mode:0o600,flag:"wx"});
+   masterSource=aiSource;
+  }else{
+   if((await stat(TEMPLATE)).size>20000)throw Error("invalid_preset");
+  }
   log("info","render_started:"+id);
   await execute(process.execPath,[
-   resolve("scripts/motion/render-master.mjs"),TEMPLATE,file,
+   resolve("scripts/motion/render-master.mjs"),masterSource,file,
    "--url","http://127.0.0.1:"+STUDIO_PORT+"/motion",
    "--fps","24","--crf","21"
   ],{timeout:MAX_SECONDS*1000});
@@ -144,7 +175,7 @@ async function work(){
   const probe=await execute("ffprobe",["-v","error","-select_streams","v:0",
    "-show_entries","stream=codec_name,width,height","-of","json",file],{timeout:15000});
   const stream=JSON.parse(probe.stdout).streams?.[0];
-  if(stream?.codec_name!=="h264"||stream?.width!==1080||stream?.height!==1920)
+  if(stream?.codec_name!=="h264"||stream?.width!==expectedWidth||stream?.height!==expectedHeight)
    throw Error("invalid_h264");
   // Completion means the ACTUAL decoded AAC has passed technical quality QA.
   // Motion master writes this report after measuring FFmpeg's final MP4 bytes.
@@ -164,7 +195,7 @@ async function work(){
   log("info","sound_qa_measured:"+id+":LUFS="+audioQuality.integratedLUFS+
     ":DBTP="+audioQuality.truePeakDBTP);
   await db.query(`update motion_render_jobs set state='complete',
-   output_bytes=$2,finished_at=now(),updated_at=now()
+   output_bytes=$2,finished_at=now(),updated_at=now(),project_json=null
    where id=$1 and state='running'`,[id,fileInfo.size]);
   log("info","render_complete:"+id+":"+fileInfo.size);
  }catch(e){
@@ -172,15 +203,18 @@ async function work(){
   log("error","render_failed:"+id+":"+error);
   await unlink(file).catch(()=>{});
   await db.query(`update motion_render_jobs set state='failed',
-   error_code=$2,finished_at=now(),updated_at=now()
+   error_code=$2,finished_at=now(),updated_at=now(),project_json=null
    where id=$1 and state='running'`,[id,error]).catch(()=>{});
- }finally{jobInProcess=false;}
+ }finally{
+  await unlink(aiSource).catch(()=>{});
+  jobInProcess=false;
+ }
 }
 async function cleanOldFiles(){
  for(const item of await readdir(DIR,{withFileTypes:true})){
   // Sidecars include private director frames, cue text and soundtrack; they
   // must expire alongside the MP4, not accumulate on the paid private volume.
-  if(!item.isFile()||!/^([a-f0-9-]{36})(?:\.mp4|\.director\.motion\.json|\.director-audit\.json|\.director-contact-sheet\.png|\.score\.wav|\.render-report\.json|\.srt|\.vtt|-narration-guide\.txt|-contact-sheet\.jpg)$/i.test(item.name))continue;
+  if(!item.isFile()||!/^([a-f0-9-]{36})(?:\.mp4|\.source\.motion\.json|\.director\.motion\.json|\.director-audit\.json|\.director-contact-sheet\.png|\.score\.wav|\.render-report\.json|\.srt|\.vtt|-narration-guide\.txt|-contact-sheet\.jpg)$/i.test(item.name))continue;
   const p=join(DIR,item.name);
   const s=await stat(p);
   if(Date.now()-s.mtimeMs>7*86400000)await unlink(p).catch(()=>{});
