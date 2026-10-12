@@ -25,7 +25,7 @@ assert.match(api,/originMatches\(request\)/);
 assert.match(api,/body.preset!=="promptence_cinema"/);
 assert.match(api,/MOTION_RENDER_QUEUE_BUSY/);
 assert.match(download,/MOTION_WORKER_INTERNAL_SECRET/);
-assert.match(download,/\.railway\\.internal/);
+assert.match(download,/MOTION_WORKER_INTERNAL_URL/);
 assert.doesNotMatch(download,/https:\/\/.*up\.railway\.app/);
 assert.match(worker,/spawn\(process\.execPath/);
 assert.match(worker,/render-master\.mjs/);
