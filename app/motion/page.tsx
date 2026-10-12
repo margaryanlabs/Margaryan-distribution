@@ -101,6 +101,7 @@ export default function MotionStudioPage() {
   const [playing, setPlaying] = useState(false);
   const [playhead, setPlayhead] = useState(0);
   const [generating, setGenerating] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [visualReviewing, setVisualReviewing] = useState(false);
   const [directorRepairing, setDirectorRepairing] = useState(false);
@@ -475,6 +476,38 @@ export default function MotionStudioPage() {
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Could not generate storyboard");
     } finally { setGenerating(false); }
+  }
+
+  async function generateWithAiDirector():Promise<void>{
+    if(aiGenerating||generating||exporting||directorRepairing)return;
+    if(!window.confirm("AI DIRECTOR использует отдельную текстовую AI-модель через наш сервер. Это может расходовать API-кредиты. Лимит: 8 запусков за 24 часа. Это НЕ нейросетевая генерация видео. Запустить?"))return;
+    setAiGenerating(true);setPlaying(false);
+    setNotice("AI DIRECTOR: отправляем только текст брифа авторизованному режиссёру. Исходные видео, фото и ключи не передаются.");
+    try{
+      const response=await fetch("/api/motion/auto-director",{
+       method:"POST",credentials:"same-origin",
+       headers:{"Content-Type":"application/json"},
+       body:JSON.stringify({approveTextModelCharge:true,brief:{
+        prompt:brief,brand:project.brand,format:project.format,language,style
+       }})
+      });
+      let result: {project?:MotionProject;error?:string;message?:string;usedTokens?:number;model?:string};
+      try{result=await response.json();}catch{throw Error("AI Director не смог ответить. Проверьте вход владельца.");}
+      if(!response.ok||!result.project){
+        if(response.status===401)throw Error("Нужен вход владельца в /motion/render, затем вернитесь в студию.");
+        if(result.error==="ai_director_disabled")throw Error("AI Director отключён в Railway: требуется MOTION_AI_DIRECTOR_ENABLED=true.");
+        if(result.error==="ai_daily_limit_8")throw Error("Сегодня исчерпан лимит AI Director (8 запусков / 24 часа).");
+        throw Error("AI Director: "+(result.message||result.error||"Запрос не выполнен."));
+      }
+      const clean=sanitizeMotionProject(result.project);
+      // Only code-backed scenes returned by our own schema/quality compiler.
+      resetMotionSceneSources();jump(0);setSelectedIndex(0);setFeatureOpen(false);
+      setProject(clean);
+      setNotice("AI DIRECTOR: новый оригинальный сценарий на "+clean.scenes.length+
+        " сцен создан текстовой моделью "+(result.model||"")+
+        " и собран нашим Motion Canvas/3D кодом. Проверьте кадры, звук и экспорт. MP4 ещё нет.");
+    }catch(error){setNotice(error instanceof Error?error.message:"AI Director failed");}
+    finally{setAiGenerating(false);}
   }
 
   async function compareReference():Promise<void> {
@@ -1084,9 +1117,19 @@ export default function MotionStudioPage() {
           <button type="button" onClick={() => setBrief(getLocalDirectorExamples(project.brand)[1])}>RU</button>
           <button type="button" onClick={() => setBrief(getLocalDirectorExamples(project.brand)[2])}>HY</button>
         </div>
-        <button className={styles.heroButton} onClick={generate} disabled={generating || exporting || brief.trim().length < 6}>
-          {generating ? "DIRECTING…" : "CREATE FILM / NO API KEY ↗"}
+        <button className={styles.heroButton} onClick={generate}
+          disabled={generating || aiGenerating || exporting || brief.trim().length < 6}>
+          {generating ? "CODE ENGINE…" : "⚡ СОЗДАТЬ ЧЕРЕЗ НАШ КОД · БЕСПЛАТНО ↗"}
         </button>
+        <button className={styles.heroButton} type="button" onClick={()=>void generateWithAiDirector()}
+          disabled={aiGenerating || generating || exporting || brief.trim().length < 12}
+          style={{background:"#203d34",color:"#d8f7e4",border:"1px solid #8ab49c",marginTop:12}}>
+          {aiGenerating ? "AI РЕЖИССЁР РАБОТАЕТ…" : "✳ AI DIRECTOR · АВТОМАТИЧЕСКИЙ СЦЕНАРИЙ ↗"}
+        </button>
+        <p className={styles.hint}>AI Director — отдельная текстовая AI-модель в коде нашего сервера,
+         не этот ChatGPT-чат. Работает только после входа владельца и явного подтверждения
+         расхода API. В результате — новые редактируемые сцены собственного Motion Canvas,
+         не нейросетевое видео и не MP4.</p>
         <button className={styles.spatialDemoButton} type="button" onClick={loadSpatialDemo}
           disabled={generating||exporting||directorRepairing}>
           ◈ LOAD 3D / SPATIAL BRAND FILM
