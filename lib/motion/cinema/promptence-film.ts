@@ -10,6 +10,88 @@ const clamp = (n: number) => Math.max(0, Math.min(1, n));
 const ease = (n: number) => { const t = clamp(n); return t * t * (3 - 2 * t); };
 const mix = (a: number, b: number, t: number) => a + (b - a) * ease(t);
 
+
+
+// Physically reflected studio strips. The scene is entirely authored in code;
+// no remote HDRI, stock footage, fake product UI, or unpredictable shader time.
+function createReflectionStudio(renderer: THREE.WebGLRenderer) {
+  const surface = document.createElement("canvas");
+  surface.width = 1024;
+  surface.height = 512;
+  const ctx = surface.getContext("2d");
+  if (!ctx) throw new Error("Unable to prepare studio reflection environment");
+  const grad = ctx.createLinearGradient(0,0,0,512);
+  grad.addColorStop(0,"#283b33");
+  grad.addColorStop(.44,"#111b18");
+  grad.addColorStop(.53,"#08100d");
+  grad.addColorStop(1,"#050907");
+  ctx.fillStyle=grad; ctx.fillRect(0,0,1024,512);
+  const softbox=(x:number,y:number,w:number,h:number,color:string)=>{
+    ctx.save();
+    ctx.shadowBlur=32; ctx.shadowColor=color;
+    ctx.fillStyle=color; ctx.fillRect(x,y,w,h); ctx.restore();
+  };
+  softbox(84,128,38,230,"#dce9e2");
+  softbox(282,72,13,270,"#bafbd6");
+  softbox(610,110,105,72,"#91ada5");
+  softbox(802,140,22,180,"#e4eee7");
+  softbox(934,190,11,93,"#4ee6a1");
+  const env = new THREE.CanvasTexture(surface);
+  env.mapping=THREE.EquirectangularReflectionMapping;
+  env.colorSpace=THREE.SRGBColorSpace;
+  const generator=new THREE.PMREMGenerator(renderer);
+  const envTarget=generator.fromEquirectangular(env);
+  generator.dispose(); env.dispose();
+  return envTarget;
+}
+
+// Intentional, clearly marked CONCEPT treatment. This makes the first preview
+// look designed rather than black, while never resembling a genuine AI result.
+function makeConceptScreen(): THREE.CanvasTexture {
+  const c=document.createElement("canvas");
+  c.width=1600;c.height=900;
+  const ctx=c.getContext("2d");
+  if(!ctx)throw Error("Unable to create concept treatment");
+  const bg=ctx.createLinearGradient(0,0,1600,900);
+  bg.addColorStop(0,"#0b1812");bg.addColorStop(1,"#06110c");
+  ctx.fillStyle=bg;ctx.fillRect(0,0,1600,900);
+  ctx.fillStyle="#4ee6a1";ctx.fillRect(0,0,11,900);
+  ctx.font="bold 23px Arial, sans-serif";
+  ctx.fillStyle="#b9e7ca";ctx.fillText("PROMPTENCE  /  INTELLIGENCE",85,90);
+  ctx.fillStyle="#456656";ctx.fillRect(85,119,1427,2);
+  ctx.fillStyle="#eef8f2";ctx.font="600 62px Arial, sans-serif";
+  ctx.fillText("From answers",90,220);
+  ctx.fillStyle="#84efa9";ctx.fillText("to evidence.",90,294);
+  ctx.fillStyle="#b0c6b6";ctx.font="25px Arial, sans-serif";
+  ctx.fillText("Discover   /   Diagnose   /   Act   /   Remeasure",91,355);
+  // Named process stages, no fabricated company rankings, provider text or numbers.
+  const tags=["QUESTION","AI ANSWER","SOURCE","PRIORITY","REMEASURE"];
+  const x=[125,458,781,1097,1404];
+  ctx.strokeStyle="#587765";ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(x[0],543);
+  for(let i=1;i<x.length;i++)ctx.lineTo(x[i],543);
+  ctx.stroke();
+  tags.forEach((label,i)=>{
+    ctx.beginPath();ctx.arc(x[i],543,i===2?23:17,0,Math.PI*2);
+    ctx.fillStyle=i===2?"#70edaa":"#203c2c";ctx.fill();
+    ctx.strokeStyle="#93d5ab";ctx.lineWidth=4;ctx.stroke();
+    ctx.fillStyle=i===2?"#aef8c9":"#d7e6da";
+    ctx.font="600 22px Arial, sans-serif";ctx.textAlign="center";
+    ctx.fillText(label,x[i],608);
+  });ctx.textAlign="left";
+  const row=ctx.createLinearGradient(0,730,0,850);
+  row.addColorStop(0,"#0d2318");row.addColorStop(1,"#102c1e");
+  ctx.fillStyle=row;ctx.fillRect(85,724,1425,111);
+  ctx.fillStyle="#78d6a2";ctx.fillRect(85,724,1425,3);
+  ctx.fillStyle="#cde5d4";ctx.font="bold 24px Arial, sans-serif";
+  ctx.fillText("HOW AI RECOMMENDATIONS BECOME DECISIONS",112,774);
+  ctx.fillStyle="#87b89a";ctx.font="18px Arial, sans-serif";
+  ctx.fillText("CONCEPT VISUAL  ·  NOT LIVE RESULTS OR A PRODUCT SCREENSHOT",113,809);
+  const texture=new THREE.CanvasTexture(c);
+  texture.colorSpace=THREE.SRGBColorSpace;
+  return texture;
+}
+
 export interface PromptenceFilm {
   canvas: HTMLCanvasElement;
   setTime: (seconds: number) => void;
@@ -42,6 +124,8 @@ export function createPromptenceFilm(width: number, height: number): PromptenceF
   const world = new THREE.Scene();
   world.background = new THREE.Color(INK);
   world.fog = new THREE.FogExp2(INK, 0.026);
+  const studioEnv = createReflectionStudio(renderer);
+  world.environment = studioEnv.texture;
   const camera = new THREE.PerspectiveCamera(34, width / height, .1, 90);
   const stage = new THREE.Group();
   world.add(stage);
@@ -77,7 +161,10 @@ export function createPromptenceFilm(width: number, height: number): PromptenceF
   const screenMaterial = new THREE.MeshBasicMaterial({ transparent: false, toneMapped: false });
   const screen = new THREE.Mesh(new THREE.PlaneGeometry(5.98, 3.365), screenMaterial);
   screen.position.z = .104;
-  screen.visible = false; // No mock product screenshots.
+  const conceptTexture = makeConceptScreen();
+  screenMaterial.map = conceptTexture;
+  screenMaterial.needsUpdate = true;
+  screen.visible = true; // Clearly labeled conceptual treatment, never fake results.
   frame.add(screen);
   const seam = new THREE.Mesh(
     new THREE.BoxGeometry(6.45, .012, .22),
@@ -237,17 +324,19 @@ export function createPromptenceFilm(width: number, height: number): PromptenceF
       if (disposed) return;
       disposed = true;
       texture?.dispose();
+      studioEnv.dispose();
       world.traverse(node => {
         if (node instanceof THREE.Mesh || node instanceof THREE.Line || node instanceof THREE.Points) {
           node.geometry.dispose();
           const materials = Array.isArray(node.material) ? node.material : [node.material];
           materials.forEach(m => {
             const map = (m as THREE.MeshBasicMaterial).map;
-            if (map && map !== texture) map.dispose();
+            if (map && map !== texture && map !== conceptTexture) map.dispose();
             m.dispose();
           });
         }
       });
+      conceptTexture.dispose();
       renderer.dispose();
     }
   };
