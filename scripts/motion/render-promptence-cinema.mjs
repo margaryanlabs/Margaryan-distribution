@@ -119,7 +119,7 @@ async function main() {
         await publicPage.evaluate(() => document.fonts.ready);
         const body = (await publicPage.locator("body").innerText({timeout:15_000})).toLowerCase();
         if (!body.includes("promptence")) throw Error("Official product screenshot failed page identity check");
-        o.screen = o.output.replace(/\\.mp4$/, ".real-landing.png");
+        o.screen = o.output.slice(0, -4) + ".real-landing.png";
         await publicPage.screenshot({path:o.screen,type:"png",animations:"disabled"});
         console.log("Real public landing captured from https://promptence.tech/ (read-only).");
       } finally { await publicPage.close(); }
