@@ -5,7 +5,9 @@ This is an **opt-in module inside the existing Margaryan Motion Studio**, not a 
 ## What is actually implemented
 
 - Genuine `THREE.WebGLRenderer` and perspective camera with a Catmull-Rom camera track.
-- World-space extruded graphite product display, physically lit materials and six connected evidence traces.
+- World-space machined graphite product display, studio PMREM reflection map, physical floor and six connected evidence traces with staggered choreography.
+- An explicitly marked **CONCEPT VISUAL / NOT LIVE RESULTS** display when there is no product capture; this is not a fabricated UI screenshot.
+- Editor offers a three-act shot navigator for directorial review.
 - Exact absolute-time updates: every frame seeks to timestamp `t`; no random rendering or accumulated delta.
 - Owner-approved **real product screenshot** imported into the product display as a texture. The scene renders a dark unpopulated screen until the owner provides a genuine capture; it never draws fake AI results.
 - Brand lockup uses the existing verified `/motion/brands/promptence.svg` asset.
@@ -37,11 +39,24 @@ npm run motion:cinema -- out/promptence-cinema.mp4 \
   --music /absolute/path/to/licensed-score.mp3 \
   --fps 30
 
+# Zero-upload alternative: capture only the official public Promptence homepage
+npm run motion:cinema -- out/promptence-landing.mp4 --capture-public --fps 30
+
 # Visual-only concept proof: 10-second 3D scene, NO PRODUCT SCREEN
 npm run motion:cinema -- out/promptence-3d-concept.mp4 --concept
 ```
 
 The screen capture must be a real PNG/JPEG/WebP, at least 720 × 400, under 12 MB. No login credentials, recordings, analytics scores or business secrets should be put in the renderer. If a capture is not provided, the physical 3D screen remains blank by design. A concept proof is **not** a launch-film master.
+
+The optional `--capture-public` path uses a separate unauthenticated Chromium page
+to capture exactly `https://promptence.tech/` and validates that the browser stays on
+the official domain and sees the product name. It never signs in, submits a scan, or
+constructs unverified AI outputs. The reviewed PNG is saved beside the output MP4.
+`--screen` and `--capture-public` cannot be used together.
+
+The CLI probes **three actual WebGL framebuffer samples** before writing frames. A
+black or frozen 3D renderer blocks the MP4; the QA report records sampled luminance
+and per-frame hashes. This is a technical integrity check, not artistic approval.
 
 The CLI operates on the locally running Studio only. It never sends private media to a hosted model or automatically posts a video. Output is `*.mp4` plus `*.qa.json`; product/artistic sign-off remains manual.
 
@@ -55,7 +70,7 @@ The CLI operates on the locally running Studio only. It never sends private medi
 
 ## Operator QA checklist
 
-1. Open `/motion/cinema` and verify WebGL status is READY, not UNAVAILABLE.
+1. Open `/motion/cinema` and verify WebGL status is READY, not UNAVAILABLE. Review the 3 director acts and the reflective studio scene.
 2. Scrub 0, 2.5, 5, 8.5 and 9.9 seconds: camera, screen and 3D evidence transform independently and deterministically.
 3. Confirm the *real* screenshot is present before using any footage of a product.
 4. Confirm the exact Promptence mark and large closing typography are readable on mobile.
