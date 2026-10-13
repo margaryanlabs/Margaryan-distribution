@@ -16,6 +16,34 @@ This is an **opt-in module inside the existing Margaryan Motion Studio**, not a 
 - Native resolution, duration, FPS and audio stream checked by `ffprobe`.
 - Blocking errors for missing source, missing GPU/WebGL, missing Playwright, bad audio, or invalid output.
 
+## One-button browser video export (mobile-compatible)
+
+Open the preview at `/motion/cinema`, review the three acts and press
+**EXPORT ACTUAL VIDEO**. The browser records a 10-second clip from its real
+WebGL canvas using `MediaRecorder` and a separate 1280 × 720 canvas composer
+for typography and the original Promptence SVG.
+
+- A native MP4 is chosen **only when the browser supports H.264 MediaRecorder**;
+  otherwise the downloaded file is WebM (VP9/VP8). The download extension
+  always matches the actual encoder, never a fake `.mp4` rename.
+- This is a browser workprint recorded in real time with frame drops possible
+  on weak devices, not a fixed-frame, mastering-grade export. For guaranteed
+  1920 × 1080/30fps use the offline FFmpeg CLI.
+- The download is intentionally **silent**. It does not substitute poor
+  synthetic speech/music or pretend to have a licensed soundtrack.
+- The concept screen and final titles are explicitly designed brand
+  compositions; no live AI measurements or fake recommendations.
+- The browser does not upload screenshots or recorded videos to a server.
+
+## Automated real master proof
+
+A new `Motion Cinema 3D Master (proof)` GitHub Actions workflow attempts
+the **real 1920×1080 / 24fps, 10-second H.264 concept** using Playwright + 
+Chromium SwiftShader/WebGL and FFmpeg. When the actual workflow successfully
+creates the movie, it uploads the MP4 plus the frame-QA JSON as a seven-day
+GitHub artifact. The workflow **fails** on missing WebGL, black/frozen frames
+or missing MP4. A green Next.js/Vercel build alone does not prove video output.
+
 ## Workflow (Node 22+)
 
 ```bash
