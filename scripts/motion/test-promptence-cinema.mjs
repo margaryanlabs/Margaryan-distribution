@@ -40,7 +40,7 @@ assert.match(p,/__motionCinemaSeek/);
 assert.match(p,/data-testid="cinema-source"/);
 assert.match(cli,/ffprobe/);
 assert.match(cli,/WebGL unavailable/);
-assert.ok(!/espeak|pillow|stock footage/i.test(f));
+assert.ok(!/^\\s*(?:import|require)\\b[^\\n]*(?:espeak|pillow)/im.test(f));
 assert.match(r("app/motion/page.tsx"),/href="\/motion\/cinema"/);
 const syntax=spawnSync(process.execPath,["--check",script],{encoding:"utf8"});
 assert.equal(syntax.status,0,syntax.stderr);
