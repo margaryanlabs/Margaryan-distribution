@@ -52,3 +52,17 @@
 .shotnum{font-size:25px;font-weight:300;letter-spacing:-.08em;color:#76eaaa}
 .shotarrow{font-size:20px;color:#99c3a6}
 @media(max-width:750px){.shotlist{grid-template-columns:1fr}.shotlist button{padding:12px 15px}}
+
+/* Production controls are intentionally outside the filmed 16:9 frame. */
+.exportbar{display:flex;align-items:center;gap:22px;padding:18px 20px;border:1px solid #345e42;
+  background:linear-gradient(120deg,#132c1d,#0b1610);position:relative;min-height:78px}
+.exportbar>div:first-child{flex:1;display:grid;gap:9px}
+.exportbar strong{letter-spacing:.1em;font-size:11px;color:#dffbe8}
+.exportbar span{font-size:11px;line-height:1.55;color:#a3c1ad}
+.exportbar button{border:none;background:#a5f6be;color:#061409;padding:18px 20px;font-size:11px;
+  letter-spacing:.07em;font-weight:800;cursor:pointer;min-width:230px}
+.exportbar button:disabled{opacity:.5;cursor:not-allowed}
+.exportProgress{position:absolute;bottom:0;left:0;right:0;height:4px;background:#203e2b}
+.exportProgress i{display:block;background:#9df4c1;height:100%;transition:width .15s linear}
+@media(max-width:750px){.exportbar{flex-direction:column;align-items:stretch}
+  .exportbar button{min-width:0;width:100%}}
