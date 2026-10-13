@@ -135,6 +135,33 @@ async function main() {
     if (!box || Math.round(box.width) !== 1920 || Math.round(box.height) !== 1080)
       throw Error("Cinema stage must be natively 1920x1080; refusing an upscaled fake master");
     if (errors.length) throw Error("Browser scene errors: " + errors.join("; "));
+    // This inspects the actual 3D WebGL framebuffer at three authored beats,
+    // not just the HTML title overlays. A blank or frozen canvas fails mastering.
+    const frameEvidence=[];
+    for (const seconds of [.9, 4.8, 7.1]) {
+      await page.evaluate(t => window.__motionCinemaSeek(t), seconds);
+      const sample=await page.evaluate(() => {
+        const canvas=document.querySelector("#cinema-film-frame canvas");
+        if (!(canvas instanceof HTMLCanvasElement))
+          throw Error("WebGL canvas missing");
+        const probe=document.createElement("canvas");probe.width=64;probe.height=36;
+        const ctx=probe.getContext("2d",{willReadFrequently:true});
+        if (!ctx) throw Error("Canvas pixel probe unavailable");
+        ctx.drawImage(canvas,0,0,64,36);
+        const pixels=ctx.getImageData(0,0,64,36).data;
+        let sum=0,hash=2166136261;
+        for(let i=0;i<pixels.length;i+=4) {
+          const luma=(pixels[i]*.2126+pixels[i+1]*.7152+pixels[i+2]*.0722);
+          sum+=luma;
+          for(let c=0;c<3;c++)hash=Math.imul(hash^pixels[i+c],16777619);
+        }
+        return {meanLuma:sum/(pixels.length/4),frameHash:(hash>>>0).toString(16)};
+      });
+      if(sample.meanLuma<7.5)throw Error("WebGL output too dark or blank at "+seconds+"s");
+      frameEvidence.push({seconds,...sample});
+    }
+    if (new Set(frameEvidence.map(x => x.frameHash)).size!==frameEvidence.length)
+      throw Error("WebGL output repeats identical frames across cinematic beats");
     const ff = ["-y","-hide_banner","-loglevel","error",
       "-f","image2pipe","-framerate",String(o.fps),"-vcodec","png","-i","pipe:0"];
     const inputs = [o.voice,o.music].filter(Boolean);
@@ -173,7 +200,8 @@ async function main() {
     if (status !== 0) throw Error("Cinema encoder: " + stderr);
     const info = inspectMp4(o.output, o.fps, inputs.length > 0);
     const report = {...info, ...plan, videoGenerated:true, verifiedWithFfprobe:true,
-      publicationApproved:false, note:"Codec/frame checks do not establish commercial creative approval, factual claims, or music rights."};
+      publicationApproved:false, frameEvidence,
+      note:"Codec/frame checks do not establish commercial creative approval, factual claims, or music rights."};
     await writeFile(o.output.replace(/\.mp4$/, ".qa.json"), JSON.stringify(report,null,2)+"\n");
     console.log(JSON.stringify({ok:true, file:o.output, report},null,2));
   } finally {
