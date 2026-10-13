@@ -166,6 +166,35 @@ export function createPromptenceFilm(width: number, height: number): PromptenceF
   screenMaterial.needsUpdate = true;
   screen.visible = true; // Clearly labeled conceptual treatment, never fake results.
   frame.add(screen);
+  // Machined edge catches light when the camera rolls past the device.
+  const bezelStrips = [
+    {x:0,y:1.897,w:6.34,h:.021},
+    {x:-3.157,y:0,w:.018,h:3.75},
+    {x:3.157,y:0,w:.018,h:3.75},
+  ];
+  const satin = new THREE.MeshPhysicalMaterial({
+    color: 0x86ada1, metalness: .78, roughness: .19, clearcoat: .7
+  });
+  for (const {x,y,w,h} of bezelStrips) {
+    const strip=new THREE.Mesh(new THREE.BoxGeometry(w,h,.205),satin);
+    strip.position.set(x,y,.015);
+    frame.add(strip);
+  }
+  const cameraEye = new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,.015,24),
+    new THREE.MeshBasicMaterial({color:0x344942}));
+  cameraEye.rotation.x=Math.PI/2;
+  cameraEye.position.set(0,1.914,.118);
+  frame.add(cameraEye);
+
+  // A dark studio floor grounds the moving hero object in the same 3D scene.
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(120,120),
+    new THREE.MeshPhysicalMaterial({color:0x0a1510,metalness:.43,roughness:.34,envMapIntensity:.48})
+  );
+  floor.rotation.x=-Math.PI/2;
+  floor.position.y=-3.05;
+  world.add(floor);
+
   const seam = new THREE.Mesh(
     new THREE.BoxGeometry(6.45, .012, .22),
     new THREE.MeshBasicMaterial({ color: 0x9ef3c7 })
@@ -233,11 +262,11 @@ export function createPromptenceFilm(width: number, height: number): PromptenceF
 
   // Actual world-space camera path; no forced 2D perspective on flat PNG layers.
   const cameraRoute = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-4.9, 2.2, 10.3),
-    new THREE.Vector3(-2.45, .95, 8.0),
-    new THREE.Vector3(.45, .1, 7.0),
-    new THREE.Vector3(2.25, .65, 6.4),
-    new THREE.Vector3(0, .1, 10.1)
+    new THREE.Vector3(-3.8, 1.8, 11.5),
+    new THREE.Vector3(-2.35, .8, 9.3),
+    new THREE.Vector3(.15, .15, 8.3),
+    new THREE.Vector3(1.65, .5, 8.1),
+    new THREE.Vector3(0, .2, 11.1)
   ], false, "centripetal");
   const targetRoute = new THREE.CatmullRomCurve3([
     new THREE.Vector3(0, .1, 0),
@@ -272,15 +301,20 @@ export function createPromptenceFilm(width: number, height: number): PromptenceF
     frame.scale.setScalar(mix(1, .72, disperse));
     frame.position.z = mix(0, -1.9, disperse);
     for (let i = 0; i < traces.length; i++) {
-      materials[i].opacity = .95 * ease((t - 3.1 - i * .16) / .9) *
-        (1 - ease((t - 7.5) / 1.2));
+      const reveal = ease((t - 3.1 - i * .16) / .9);
+      const converge = ease((t - 7.45) / 1.3);
+      materials[i].opacity = .95 * reveal * (1-converge);
+      traces[i].scale.setScalar((.14 + .86*reveal) * (1-.68*converge));
       traces[i].visible = materials[i].opacity > .003;
       const mat = flags[i].material as THREE.MeshBasicMaterial;
       mat.opacity = ease((t - 4 - i * .19) / .8) * (1 - ease((t - 7.3) / 1.1));
       flags[i].visible = mat.opacity > .003;
       flags[i].position.z = points[i][2] + .11 * Math.sin(t * .6 + i);
+      flags[i].scale.setScalar(.68 + .32 * reveal);
     }
-    edge.intensity = mix(12, 27, ease((t - 4) / 3));
+    edge.intensity = mix(11, 24, ease((t - 4) / 3));
+    softbox.intensity = mix(3.8, 5.3, ease((t - 2) / 4));
+    edge.position.x = 4.2 + Math.sin(t*.23)*.5;
     stage.rotation.y = .018 * Math.sin(t * .6);
     renderer.render(world, camera);
   }
