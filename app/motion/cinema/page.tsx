@@ -14,6 +14,7 @@ declare global {
 }
 const DURATION = 10;
 const q = (n: number) => Math.max(0, Math.min(DURATION, n));
+const fade = (a:number,b:number,t:number) => { const x=Math.max(0,Math.min(1,(t-a)/(b-a)));return x*x*(3-2*x); };
 
 export default function CinematicDirector() {
   const frame = useRef<HTMLDivElement>(null);
@@ -104,9 +105,9 @@ export default function CinematicDirector() {
       setError(reason);
     }
   }
-  const showFirst = position < 3.3;
-  const showMiddle = position >= 3.3 && position < 7.7;
-  const showFinal = position >= 7.7;
+  const introOpacity = fade(0,.8,position) * (1-fade(2.6,3.7,position));
+  const middleOpacity = fade(3.5,4.6,position) * (1-fade(6.85,8.05,position));
+  const finalOpacity = fade(7.65,9.25,position);
 
   return <main className={styles.root} style={exportMode.current ? {width:1920,height:1080,padding:0,overflow:"hidden"} : undefined}>
     {!exportMode.current && <header className={styles.header}>
@@ -121,14 +122,14 @@ export default function CinematicDirector() {
       <div className={styles.filmFrame} id="cinema-film-frame" ref={frame}>
         <div className={styles.grain} aria-hidden="true" />
         <div className={styles.topline}>MARGARYAN LABS <span>PRODUCT INTELLIGENCE / 001</span></div>
-        <div className={styles.headline} style={{ opacity: showFirst ? 1 : 0 }}>
+        <div className={styles.headline} style={{ opacity: introOpacity }}>
           <span className={styles.kicker}>A NEW DECISION LAYER</span>
           <strong>They ask AI.<br /><i>Who does it choose?</i></strong>
         </div>
-        <div className={styles.middle} style={{ opacity: showMiddle ? 1 : 0 }}>
+        <div className={styles.middle} style={{ opacity: middleOpacity }}>
           <span>QUESTION → OBSERVATION → EVIDENCE → ACTION</span>
         </div>
-        <div className={styles.final} style={{ opacity: showFinal ? 1 : 0 }}>
+        <div className={styles.final} style={{ opacity: finalOpacity }}>
           <img src="/motion/brands/promptence.svg" alt="Promptence official mark" />
           <strong>PROMPTENCE</strong>
           <span>AI RECOMMENDATION INTELLIGENCE</span>
