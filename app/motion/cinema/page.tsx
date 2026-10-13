@@ -154,6 +154,22 @@ export default function CinematicDirector() {
           }} />
         <output>{position.toFixed(2)} / 10.00</output>
       </div>
+      <div className={styles.shotlist} aria-label="Cinematic shot navigation">
+        {[
+          {at:.8,num:"01",title:"THE QUESTION",subtitle:"Photographic product reveal"},
+          {at:4.85,num:"02",title:"FROM ANSWER TO EVIDENCE",subtitle:"3D signal choreography"},
+          {at:8.75,num:"03",title:"THE BRAND MOMENT",subtitle:"Signature logo and final line"}
+        ].map(shot => <button key={shot.num} type="button"
+          data-current={position >= (shot.num==="03"?7.75:shot.num==="02"?3.35:0)
+            && position < (shot.num==="01"?3.35:shot.num==="02"?7.75:10.01)}
+          disabled={!film.current} onClick={() => {
+            stop();film.current?.setTime(shot.at);setPosition(shot.at);
+          }}>
+          <span className={styles.shotnum}>{shot.num}</span>
+          <span><strong>{shot.title}</strong><small>{shot.subtitle}</small></span>
+          <span className={styles.shotarrow}>↗</span>
+        </button>)}
+      </div>
       <div className={styles.import}>
         <div><strong>REAL PROMPTENCE SCREEN</strong>
           <p>Optional for the concept preview. Required for any product-footage release.
