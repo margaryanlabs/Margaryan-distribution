@@ -103,6 +103,7 @@ export async function recordPromptenceCinema({film,onProgress,signal}:CinemaReco
   canvas.width=W; canvas.height=H;
   const ctx=canvas.getContext("2d",{alpha:false});
   if (!ctx) throw Error("Cinema compositor unavailable");
+  const outputCtx:CanvasRenderingContext2D = ctx;
   const stream=canvas.captureStream(30);
   const track=stream.getVideoTracks()[0];
   if (!track) throw Error("No video track from cinematic compositor");
@@ -131,8 +132,8 @@ export async function recordPromptenceCinema({film,onProgress,signal}:CinemaReco
 
   function paint(t:number) {
     film.setTime(Math.min(DURATION,t));
-    ctx.drawImage(film.canvas,0,0,W,H);
-    drawType(ctx,t,mark);
+    outputCtx.drawImage(film.canvas,0,0,W,H);
+    drawType(outputCtx,t,mark);
   }
   let raf=0;
   try {
