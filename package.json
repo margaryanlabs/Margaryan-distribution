@@ -41,6 +41,8 @@
     "motion:test-overlays": "node scripts/motion/test-image-overlay.mjs",
     "motion:test-precision": "node scripts/motion/test-precision-edit.mjs",
     "motion:sequence": "node scripts/motion/render-sequence.mjs",
+    "motion:cinema": "node scripts/motion/render-promptence-cinema.mjs",
+    "motion:test-cinema": "node scripts/motion/test-promptence-cinema.mjs",
     "motion:test-sequence": "node scripts/motion/test-film-sequence.mjs",
     "motion:test-film-browser": "node --experimental-strip-types scripts/motion/test-film-browser-plan.mjs",
     "motion:test-film-audio": "node --experimental-strip-types scripts/motion/test-film-audio-mix.mjs",
