@@ -26,6 +26,9 @@ export default function CinematicDirector() {
   const [playing, setPlaying] = useState(false);
   const [sourceLoaded, setSourceLoaded] = useState(false);
   const [status, setStatus] = useState("INITIALIZING WEBGL");
+  const [recording, setRecording] = useState(false);
+  const [recordProgress, setRecordProgress] = useState(0);
+  const recordAbort = useRef<AbortController | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -64,6 +67,7 @@ export default function CinematicDirector() {
     return () => {
       closed = true;
       if (playback.current !== null) cancelAnimationFrame(playback.current);
+      recordAbort.current?.abort();
       film.current?.dispose(); film.current = null;
       delete window.__motionCinemaSeek;
       delete window.__motionCinemaHasSource;
@@ -78,7 +82,7 @@ export default function CinematicDirector() {
     setPlaying(false);
   }
   function play() {
-    if (!film.current || playing) return;
+    if (!film.current || playing || recording) return;
     playStarted.current = performance.now() - position * 1000;
     setPlaying(true);
     const tick = (now: number) => {
@@ -91,6 +95,47 @@ export default function CinematicDirector() {
     };
     playback.current = requestAnimationFrame(tick);
   }
+  async function exportBrowserFilm() {
+    const director = film.current;
+    if (!director || recording || error) return;
+    stop();
+    const resume = position;
+    const controller = new AbortController();
+    recordAbort.current = controller;
+    setRecording(true);
+    setRecordProgress(0);
+    setError(null);
+    setStatus("RECORDING 10-SECOND WEBGL FILM");
+    try {
+      const {recordPromptenceCinema}=await import("@/lib/motion/cinema/browser-record");
+      const result=await recordPromptenceCinema({
+        film:director,
+        onProgress:value=>setRecordProgress(Math.max(0,Math.min(1,value))),
+        signal:controller.signal
+      });
+      const url=URL.createObjectURL(result.blob);
+      const link=document.createElement("a");
+      link.href=url;
+      link.download="PROMPTENCE_WEBGL_CINEMA_10S."+result.extension;
+      document.body.appendChild(link);link.click();link.remove();
+      window.setTimeout(()=>URL.revokeObjectURL(url),60_000);
+      setStatus("RECORDED "+result.extension.toUpperCase()+" / "+Math.round(result.blob.size/1024)+" KB");
+    } catch(e) {
+      if (!controller.signal.aborted) {
+        const reason=e instanceof Error?e.message:String(e);
+        setError(reason);
+        setStatus("RECORD FAILED — PREVIEW UNCHANGED");
+      }
+    } finally {
+      recordAbort.current=null;
+      setRecording(false);
+      if (!controller.signal.aborted) {
+        director.setTime(resume);
+        setPosition(resume);
+      }
+    }
+  }
+
   async function useSource(file: File | undefined) {
     if (!file || !film.current) return;
     try {
@@ -144,15 +189,29 @@ export default function CinematicDirector() {
       onChange={e => void useSource(e.target.files?.[0])} />}
     {!exportMode.current && <section className={styles.controls}>
       <div className={styles.transport}>
-        <button onClick={() => playing ? stop() : play()} disabled={!film.current}>
+        <button onClick={() => playing ? stop() : play()} disabled={!film.current || recording}>
           {playing ? "Ⅱ PAUSE" : "▶ PLAY 10 SEC"}
         </button>
         <input aria-label="Film playhead" type="range" min="0" max={DURATION} step=".01"
-          value={position} onChange={e => {
+          value={position} disabled={recording} onChange={e => {
             stop(); const t = q(Number(e.target.value));
             film.current?.setTime(t); setPosition(t);
           }} />
         <output>{position.toFixed(2)} / 10.00</output>
+      </div>
+      <div className={styles.exportbar}>
+        <div>
+          <strong>BROWSER FILM MASTER / 10 SECONDS</strong>
+          <span>Real WebGL frames + burned-in titles + official logo.
+            Export is silent. MP4 when supported; otherwise WebM. Mobile GPU limits apply.</span>
+        </div>
+        <button type="button" disabled={!film.current || recording}
+          onClick={()=>void exportBrowserFilm()}>
+          {recording?"RECORDING "+Math.round(recordProgress*100)+"%":"↓ EXPORT ACTUAL VIDEO"}
+        </button>
+        {recording && <div className={styles.exportProgress} role="progressbar"
+          aria-label="Video recording progress" aria-valuemin={0} aria-valuemax={100}
+          aria-valuenow={Math.round(recordProgress*100)}><i style={{width:(recordProgress*100)+"%"}}/></div>}
       </div>
       <div className={styles.shotlist} aria-label="Cinematic shot navigation">
         {[
@@ -162,7 +221,7 @@ export default function CinematicDirector() {
         ].map(shot => <button key={shot.num} type="button"
           data-current={position >= (shot.num==="03"?7.75:shot.num==="02"?3.35:0)
             && position < (shot.num==="01"?3.35:shot.num==="02"?7.75:10.01)}
-          disabled={!film.current} onClick={() => {
+          disabled={!film.current || recording} onClick={() => {
             stop();film.current?.setTime(shot.at);setPosition(shot.at);
           }}>
           <span className={styles.shotnum}>{shot.num}</span>
@@ -175,7 +234,7 @@ export default function CinematicDirector() {
           <p>Optional for the concept preview. Required for any product-footage release.
             The original screenshot is mapped onto an actual 3D surface and is never redrawn.</p></div>
         <label className={styles.upload}>IMPORT APPROVED CAPTURE
-          <input type="file" accept="image/png,image/jpeg,image/webp"
+          <input type="file" disabled={recording} accept="image/png,image/jpeg,image/webp"
             onChange={e => void useSource(e.target.files?.[0])} />
         </label>
         <span className={sourceLoaded ? styles.accepted : styles.pending}>
