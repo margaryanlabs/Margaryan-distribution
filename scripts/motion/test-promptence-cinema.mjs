@@ -51,7 +51,7 @@ assert.match(p,/EXPORT ACTUAL VIDEO/);
 const browserRecord=r("lib/motion/cinema/browser-record.ts");
 assert.match(browserRecord,/canvas\.captureStream\(30\)/);
 assert.match(browserRecord,/new MediaRecorder/);
-assert.match(browserRecord,/ctx\.drawImage\(film\.canvas/);
+assert.match(browserRecord,/outputCtx\.drawImage\(film\.canvas/);
 assert.match(browserRecord,/officialMark\(/);
 assert.match(browserRecord,/\.webm|webm/);
 assert.match(browserRecord,/\.mp4|mp4/);
