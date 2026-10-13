@@ -19,6 +19,7 @@ function options(args) {
   for (let i = 1; i < args.length; i++) {
     const key = args[i];
     if (key === "--concept") { o.concept = true; continue; }
+    if (key === "--capture-public") { o.capturePublic = true; continue; }
     if (key === "--dry-run") { o.dryRun = true; continue; }
     if (!["--screen", "--voice", "--music", "--fps", "--url", "--chromium"].includes(key))
       throw Error("Unknown argument: " + key);
@@ -33,7 +34,8 @@ function options(args) {
   if (url.protocol !== "http:" || !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname) ||
       url.pathname !== "/motion/cinema")
     throw Error("Cinema renderer only accepts local Studio /motion/cinema");
-  if (!o.screen && !o.concept) throw Error("Real product screenshot is required. Use --screen owner-approved.png, or --concept for a clearly non-product draft.");
+  if (o.screen && o.capturePublic) throw Error("Choose either --screen or --capture-public, not both");
+  if (!o.screen && !o.capturePublic && !o.concept) throw Error("Real product screenshot is required. Use --screen owner-approved.png, --capture-public for the official landing, or --concept for a clearly non-product draft.");
   return o;
 }
 async function sourceCheck(o) {
@@ -75,8 +77,9 @@ async function main() {
   const o = options(process.argv.slice(2));
   await sourceCheck(o);
   const plan = { format:"Promptence Cinema / WebGL v1", duration:FILM_DURATION,
-    dimensions:"1920x1080", fps:o.fps, authenticProductSource:!!o.screen,
-    demoOnly:!o.screen, voice:!!o.voice, licensedMusic:!!o.music,
+    dimensions:"1920x1080", fps:o.fps, authenticProductSource:!!(o.screen || o.capturePublic),
+    demoOnly:!(o.screen || o.capturePublic), capturePublicLanding:!!o.capturePublic,
+    voice:!!o.voice, licensedMusic:!!o.music,
     useGpuWebGl:true, description:"Own WebGL geometry/camera; exact time-seek offline frames." };
   if (o.dryRun) { console.log(JSON.stringify(plan, null, 2)); return; }
   if (spawnSync("ffmpeg", ["-version"], {stdio:"ignore"}).status !== 0)
@@ -104,8 +107,25 @@ async function main() {
     const init = await page.evaluate(() => ({ready:window.__motionCinemaReady,
       error:window.__motionCinemaError}));
     if (!init.ready || init.error) throw Error("Real WebGL unavailable: " + init.error);
+    if (o.capturePublic) {
+      // This captures only the official public landing, without login or mutation.
+      const publicPage = await browser.newPage({viewport:{width:1600,height:900},
+        deviceScaleFactor:1, locale:"en-US"});
+      try {
+        const response = await publicPage.goto("https://promptence.tech/",
+          {waitUntil:"domcontentloaded",timeout:45_000});
+        if (!response?.ok() || new URL(publicPage.url()).hostname !== "promptence.tech")
+          throw Error("Official public product page unavailable; refusing an unrelated screenshot");
+        await publicPage.evaluate(() => document.fonts.ready);
+        const body = (await publicPage.locator("body").innerText({timeout:15_000})).toLowerCase();
+        if (!body.includes("promptence")) throw Error("Official product screenshot failed page identity check");
+        o.screen = o.output.replace(/\\.mp4$/, ".real-landing.png");
+        await publicPage.screenshot({path:o.screen,type:"png",animations:"disabled"});
+        console.log("Real public landing captured from https://promptence.tech/ (read-only).");
+      } finally { await publicPage.close(); }
+    }
     if (o.screen) {
-      await page.locator('input[type="file"]').setInputFiles(o.screen);
+      await page.locator('[data-testid="cinema-source"]').setInputFiles(o.screen);
       await page.waitForFunction(() => window.__motionCinemaHasSource?.() === true,
         {timeout:20_000});
     }
