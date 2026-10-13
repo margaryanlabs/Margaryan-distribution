@@ -46,6 +46,18 @@ assert.match(f,/renderer\.render\(world, camera\)/);
 assert.match(p,/\/motion\/brands\/promptence\.svg/);
 assert.match(p,/__motionCinemaSeek/);
 assert.match(p,/data-testid="cinema-source"/);
+assert.match(p,/recordPromptenceCinema/);
+assert.match(p,/EXPORT ACTUAL VIDEO/);
+const browserRecord=r("lib/motion/cinema/browser-record.ts");
+assert.match(browserRecord,/canvas\.captureStream\(30\)/);
+assert.match(browserRecord,/new MediaRecorder/);
+assert.match(browserRecord,/ctx\.drawImage\(film\.canvas/);
+assert.match(browserRecord,/officialMark\(/);
+assert.match(browserRecord,/\.webm|webm/);
+assert.match(browserRecord,/\.mp4|mp4/);
+assert.match(browserRecord,/recording requires a browser/);
+assert.ok(!/subprocess|espeak/i.test(browserRecord));
+
 assert.match(cli,/ffprobe/);
 assert.match(cli,/new Set\(frameEvidence\.map/);
 assert.match(cli,/https:\/\/promptence\.tech\//);
