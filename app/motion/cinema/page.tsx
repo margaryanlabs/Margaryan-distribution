@@ -108,7 +108,7 @@ export default function CinematicDirector() {
   const showMiddle = position >= 3.3 && position < 7.7;
   const showFinal = position >= 7.7;
 
-  return <main className={styles.root}>
+  return <main className={styles.root} style={exportMode.current ? {width:1920,height:1080,padding:0,overflow:"hidden"} : undefined}>
     {!exportMode.current && <header className={styles.header}>
       <a href="/motion" className={styles.back}>← MOTION STUDIO</a>
       <div><span className={styles.eyebrow}>MARGARYAN LABS / CINEMATIC ENGINE</span>
@@ -117,7 +117,7 @@ export default function CinematicDirector() {
           reproducible timecodes. No invented AI analytics.</p></div>
       <span className={styles.chip}>{status}</span>
     </header>}
-    <section className={styles.stageWrap} aria-label="Motion cinema preview">
+    <section className={styles.stageWrap} style={exportMode.current ? {width:1920,maxWidth:"none"} : undefined} aria-label="Motion cinema preview">
       <div className={styles.filmFrame} id="cinema-film-frame" ref={frame}>
         <div className={styles.grain} aria-hidden="true" />
         <div className={styles.topline}>MARGARYAN LABS <span>PRODUCT INTELLIGENCE / 001</span></div>
@@ -137,6 +137,10 @@ export default function CinematicDirector() {
         <div className={styles.bottomline}>PROMPTENCE <span>01 / 01 — CINEMATIC PROOF</span></div>
       </div>
     </section>
+    {exportMode.current && <input data-testid="cinema-source" aria-label="Source capture for renderer"
+      type="file" accept="image/png,image/jpeg,image/webp"
+      style={{position:"absolute",opacity:0,width:1,height:1}}
+      onChange={e => void useSource(e.target.files?.[0])} />}
     {!exportMode.current && <section className={styles.controls}>
       <div className={styles.transport}>
         <button onClick={() => playing ? stop() : play()} disabled={!film.current}>
