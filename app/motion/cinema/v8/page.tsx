@@ -107,7 +107,6 @@ export default function PromptenceCinematicV8(){
   <section className={styles.stage}>
     <div id="cinema-film-frame" ref={mount} className={styles.frame}
       style={isExport?{width:1920,height:1080,aspectRatio:"auto",border:"none"}:undefined}>
-}
       <div className={styles.corners}>
        <span>MARGARYAN LABS / PROMPTENCE</span><span>SHOT 001 — ACTUAL WEBGL CAMERA</span>
       </div>
