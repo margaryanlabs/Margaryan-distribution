@@ -9,7 +9,7 @@ const clip=(x:number)=>Math.min(TOTAL,Math.max(0,x));
 
 export default function PromptenceCinematicV9(){
  const mount=useRef<HTMLDivElement>(null);
- const shot=useRef<V8Shot|null>(null);
+ const shot=useRef<V9Film|null>(null);
  const animation=useRef<number|null>(null);
  const started=useRef(0);
  const realSource=useRef(false);
@@ -27,9 +27,9 @@ export default function PromptenceCinematicV9(){
   window.__motionCinemaReady=false;
   window.__motionCinemaError=undefined;
   realSource.current=false;
-  void import("@/lib/motion/cinema/promptence-film-v8").then(async({createV9Film})=>{
+  void import("@/lib/motion/cinema/promptence-film-v9").then(async({createV9Film})=>{
     if(closed||!mount.current)return;
-    const film=createV8Shot(exportMode?1920:1280,exportMode?1080:720);
+    const film=createV9Film(exportMode?1920:1280,exportMode?1080:720);
     shot.current=film;
     film.canvas.className=styles.webgl;
     mount.current.appendChild(film.canvas);
