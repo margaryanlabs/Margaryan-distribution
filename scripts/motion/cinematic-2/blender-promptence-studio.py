@@ -176,9 +176,9 @@ laptop_glass,_=principled("05 | deep monitor glass",(.011,.017,.015,1),.18,.07,.
 display_black,_=principled("06 | black inner bezel",(.005,.010,.007,1),.09,.25,.24)
 rock,_=principled("07 | wet basalt detail",(.024,.029,.029,1),.13,.38,.12)
 noisy_surface(rock,.46,.022,26)
-stone_top,_=principled("08 | dark stone plinth",(.033,.039,.038,1),.11,.28,.19)
+stone_top,_=principled("08 | dark stone plinth",(.021,.028,.026,1),.12,.36,.12)
 noisy_surface(stone_top,.28,.008,120)
-ground,_=principled("09 | ebony studio floor",(.007,.011,.009,1),.20,.19,.38)
+ground,_=principled("09 | ebony studio floor",(.018,.022,.020,1),.22,.16,.42)
 noisy_surface(ground,.035,.003,75)
 glass_card,_=principled("10 | charcoal optical glass",(.034,.053,.047,1),.21,.19,.48,.31)
 ivory,_=principled("11 | warm ivory letters",(.83,.94,.85,1),.09,.33,.25)
@@ -231,7 +231,37 @@ def ragged_plinth(name, radius, top=-.10, bottom=-.41, n=82):
     o.modifiers.new("Weighted bevel highlights","WEIGHTED_NORMAL")
     return o
 
-plinth=ragged_plinth("Foreground hero / basalt stage",4.26)
+plinth=ragged_plinth("Foreground hero / basalt stage",4.36)
+# Backdrop is genuine rough 3D geometry with studio lighting, rather than
+# the black-void background visible in the original WebGL V9 workprint.
+wall_material,_=principled("15 | quarried graphite backwall",(.020,.026,.025,1),.07,.79,.04)
+noisy_surface(wall_material,.48,.048,12)
+cube("Background architectural slate wall",(0,9.1,3.8),(31,.55,10.7),
+     wall_material,.25,2)
+for x in (-9.1,-7.25,6.8,8.75):
+    cube("Vertical quarried monolith %s"%x,(x,7.2,4.0),
+         (.70,.95,8.8),wall_material,.12,2)
+# Thin genuine glowing horizon. The light grazes the stone and subtly
+# silhouettes the laptop without flooding the product screen.
+horizon=bpy.data.materials.new("16 | warm geometric horizon emitter")
+horizon.use_nodes=True
+pp=horizon.node_tree.nodes.get("Principled BSDF")
+pp.inputs["Base Color"].default_value=(.6,.57,.49,1)
+pp.inputs["Emission Color"].default_value=(1,.83,.65,1)
+pp.inputs["Emission Strength"].default_value=6
+cube("Long warm horizon slit",(0,7.1,.55),(22,.055,.026),horizon,.009,2)
+area_light("Wide warm horizon bounce",(0,6.5,2.3),2350,9.0,1.7,
+           color=(1,.78,.60),aim=(0,0,1.6))
+
+# Sparse photographic foreground rocks. Keep most of the floor available for
+# actual reflections and avoid masking any public product interface.
+for i,(x,y,r) in enumerate(((-4.85,-1.05,.71),(4.76,.32,.76),(-4.64,2.62,.48))):
+    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2,radius=r,
+                                          location=(x,y,-.09+r*.43))
+    ob=bpy.context.object;ob.name="Black basalt specimen / %s"%i
+    ob.scale=(1.34,.8,.79)
+    ob.data.materials.append(rock)
+
 # Slim contact shadow beneath computer, rendered naturally by Cycles.
 cube("Satin presentation foot", (0,0,.02),(6.75,3.98,.08),graphite,.10,7)
 
@@ -279,7 +309,7 @@ bpy.ops.mesh.primitive_uv_sphere_add(segments=14,ring_count=8,radius=.024,
 bpy.context.object.name="Built-in laptop camera dot";bpy.context.object.data.materials.append(keys)
 
 # A single very subtle arch silhouette behind the machine, not a literal glowing green orb.
-arc_curve("Architectural backlight arc",(1.2,4.8,3.5),4.2,arc_mat,radians(24),radians(156))
+arc_curve("Architectural backlight arc",(2.1,5.6,3.15),3.25,arc_mat,radians(-33),radians(189))
 for side in (-1,1):
     area_light("Edge strip %s"%side,(side*5.5,-1.0,7),1250,6.0,1.0,
                color=(.87,1,.90) if side>0 else (1,.94,.86),aim=(0,1,2))
@@ -308,18 +338,18 @@ def feature_card(title,subtitle,x,y,z,delay):
         ob.keyframe_insert(data_path="location",frame=42+delay)
     return glass
 
-feature_card("AI VISIBILITY","Observe brand appearances", -5.20,2.50,3.40,0)
-feature_card("SOURCES","Trace supporting evidence", -5.35,2.35,2.18,10)
-feature_card("DIAGNOSIS","Find what needs to change", 4.75,2.50,3.17,20)
+feature_card("AI VISIBILITY","Observe brand appearances", -4.34,2.50,3.60,0)
+feature_card("SOURCES","Trace supporting evidence", -4.49,2.40,2.30,10)
+feature_card("DIAGNOSIS","Find what needs to change", 4.34,2.50,3.44,20)
 
 # Subtle logo type on left of frame is cinematic layout, not a fake app metric.
 # It is deliberately behind the physical laptop and not oversized.
-add_text("Top left PROMPTENCE", "PROMPTENCE",(-5.95,4.18,5.0),.31,ivory,font)
-add_text("Headline identity", "UNDERSTAND THE ANSWER",(-5.95,4.18,4.68),.12,mint,font)
+add_text("Top left PROMPTENCE", "PROMPTENCE",(-4.8,2.6,5.25),.37,ivory,font)
+add_text("Headline identity", "UNDERSTAND THE ANSWER",(-4.8,2.6,4.92),.12,mint,font)
 
-area_light("Hero key / 4m softbox",(-4.2,-2.6,8.6),1950,6.2,3.3,
+area_light("Hero key / 4m softbox",(-4.2,-2.6,8.6),1730,6.2,3.3,
            color=(1,.97,.94),aim=(0,0,1.45))
-area_light("Card edge / silkbox",(5.3,2.5,7.2),1400,4.8,2,
+area_light("Card edge / silkbox",(5.3,2.5,7.2),1870,4.8,2,
            color=(.77,1,.86),aim=(.5,1.8,2.7))
 area_light("Neutral screen glance",(0,-7.5,5.2),220,3.8,2.0,
            color=(1,1,1),aim=(0,1.7,2.4))
@@ -340,14 +370,14 @@ cam.data.dof.use_dof=True
 cam.data.dof.focus_distance=13.5
 cam.data.dof.aperture_fstop=8.0
 # Stable physically motivated camera path over 5s. Later shots can reuse the rig.
-pose1=(8.25,-13.50,6.40)
-pose2=(6.85,-11.55,6.02)
-focus1=(0,0.85,2.12)
-focus2=(.06,1.12,2.33)
+pose1=(7.7,-12.5,5.75)
+pose2=(6.4,-10.75,5.58)
+focus1=(0,.92,2.48)
+focus2=(.06,1.12,2.52)
 for frame,pos,focalpoint,lens in (
-    (1,pose1,focus1,46),
-    (48,(7.55,-12.5,6.28),(0,1.0,2.21),47),
-    (120,pose2,focus2,51)
+    (1,pose1,focus1,44),
+    (48,(7.1,-11.8,5.66),(0,1.0,2.45),47),
+    (120,pose2,focus2,49)
 ):
     camera_pose(pos,focalpoint,lens)
     cam.keyframe_insert(data_path="location",frame=frame)
