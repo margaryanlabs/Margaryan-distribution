@@ -203,6 +203,14 @@ export default function CinematicDirector() {
           }} />
         <output>{position.toFixed(2)} / 16.00</output>
       </div>
+      <div className={styles.masterNote}>
+        <div><span>INDEPENDENT RENDER VERIFICATION / V6</span>
+          <strong>16 seconds · Full HD · 384 actual 3D frames · English voice + original sound design</strong>
+          <small>The verified MP4 includes a read-only real public Promptence page capture.
+            Your live WebGL preview stays editable separately.</small></div>
+        <a href="https://d2ol7oe51mr4n9.cloudfront.net/user_3HoFPSIfr8HaTS2uAE1uxoDnLl0/37e7e46e-3555-4727-81d8-8f241daa67d2.mp4"
+          target="_blank" rel="noreferrer noopener">▶ WATCH VERIFIED V6 MP4 ↗</a>
+      </div>
       <div className={styles.exportbar}>
         <div>
           <strong>BROWSER FILM MASTER / 16 SECONDS</strong>
