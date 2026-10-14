@@ -40,7 +40,7 @@
 @media(prefers-reduced-motion:reduce){.root *{scroll-behavior:auto}}
 
 /* Editorial shot cards live in the director workspace, never in the filmed master. */
-.shotlist{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.shotlist{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 .shotlist button{display:flex;gap:16px;align-items:center;text-align:left;min-width:0;padding:17px 19px;
   color:#cfe1d5;background:linear-gradient(145deg,#101c15,#0b150f);border:1px solid #253d30;
   cursor:pointer;transition:border-color .16s,background .16s}
