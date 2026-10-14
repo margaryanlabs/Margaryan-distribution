@@ -125,6 +125,14 @@ export default function PromptenceCinematicV8(){
      }}/>
     <output>{seconds.toFixed(2)} / 05.00</output>
    </div>
+   <div className={styles.master}>
+     <div><small>VERIFIED 5-SECOND WEBGL MASTER</small>
+       <strong>1920×1080 / 24 FPS / 120 REAL 3D FRAMES</strong>
+       <span>Exact timeline render with the genuine public Promptence homepage and an original synthesized score. Artistic draft — not approved advertising.</span>
+     </div>
+     <a href="https://d2ol7oe51mr4n9.cloudfront.net/user_3HoFPSIfr8HaTS2uAE1uxoDnLl0/39561146-ae7f-4ff6-a44d-d98d2334c7e9.mp4"
+       target="_blank" rel="noopener noreferrer">▶ WATCH THE REAL V8 MP4</a>
+   </div>
    <div className={styles.beats}>
     {[{at:.35,n:"01",title:"PHYSICAL MACRO"},{at:2.15,n:"02",title:"REAL PRODUCT"},{at:4.05,n:"03",title:"SCREEN BECOMES SPACE"}].map(b=>
     <button key={b.n} disabled={!ready} onClick={()=>{stop();shot.current?.setTime(b.at);setSeconds(b.at)}}>
