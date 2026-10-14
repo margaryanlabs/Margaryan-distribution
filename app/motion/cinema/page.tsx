@@ -156,7 +156,7 @@ export default function CinematicDirector() {
   const opticOpacity = fade(13.0,13.75,position) * (1-fade(15.55,16.35,position));
   const finalOpacity = fade(16.65,18.35,position);
 
-  return <main className={styles.root} style={exportMode.current ? {width:1920,height:1080,padding:0,overflow:"hidden"} : undefined}>
+  return <main className={styles.root} style={exportMode.current ? {position:"fixed",inset:0,zIndex:2147483647,isolation:"isolate",width:1920,height:1080,padding:0,overflow:"hidden"} : undefined}>
     {!exportMode.current && <header className={styles.header}>
       <a href="/motion" className={styles.back}>← MOTION STUDIO</a>
       <div><span className={styles.eyebrow}>MARGARYAN LABS / CINEMATIC ENGINE</span>
