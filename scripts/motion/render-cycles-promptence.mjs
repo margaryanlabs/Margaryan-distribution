@@ -54,7 +54,7 @@ function run(command,args,timeout){
 }
 function probe(mp4){
   const r=spawnSync("ffprobe",["-v","error","-count_frames","-show_entries",
-    "format=duration,size:stream=codec_name,width,height,avg_frame_rate,nb_read_frames",
+    "format=duration,size:stream=codec_name,width,height,avg_frame_rate,nb_read_frames,duration",
     "-of","json",mp4],{encoding:"utf8",timeout:30000});
   if(r.status!==0)throw Error("FFprobe could not verify master: "+r.stderr);
   return JSON.parse(r.stdout);
@@ -98,7 +98,7 @@ async function main(){
   if(o.music)ffargs.push("-i",o.music);
   ffargs.push("-map","0:v:0");
   if(o.music)ffargs.push("-map","1:a:0");
-  ffargs.push("-frames:v",String(n),"-c:v","libx264","-preset","slow",
+  ffargs.push("-t",String(n/24),"-c:v","libx264","-preset","slow",
     "-crf","16","-pix_fmt","yuv420p");
   if(o.music)ffargs.push("-c:a","aac","-b:a","192k","-af",
     "atrim=0:"+String(n/24)+",afade=t=out:st="+String(Math.max(.1,n/24-.35))+":d=0.3");
@@ -113,6 +113,11 @@ async function main(){
     throw Error("Incorrect encoded frame count");
   if(Math.abs(Number(data.format.duration)-n/24)>.12)
     throw Error("Incorrect video duration");
+  if(o.music){
+    const audio=data.streams.find(s=>s.codec_name==="aac");
+    if(!audio||!Number.isFinite(Number(audio.duration))||Number(audio.duration)<n/24-.08)
+      throw Error("Full-length AAC soundtrack missing/truncated");
+  }
   // Photometric sanity: four distinct rendered time points, not one static render.
   // FFmpeg outputs raw 48×27 luma planes so no native-image npm dependency is needed.
   const stamps=[.08,.32,.65,.92].map(v=>v*n/24);
