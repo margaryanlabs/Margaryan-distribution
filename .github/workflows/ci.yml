@@ -59,6 +59,8 @@ jobs:
         run: npm run motion:test-score
       - name: Motion reference codec and evidence contract
         run: npm run motion:test-reference
+      - name: Promptence Cinematic WebGL source and offline export contract
+        run: npm run motion:test-cinema
       - name: Typecheck
         run: npm run typecheck
       - name: Production build

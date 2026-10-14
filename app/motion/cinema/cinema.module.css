@@ -1,0 +1,89 @@
+.root{position:relative;z-index:1000000;isolation:isolate;min-height:100vh;background:#070d0a;color:#f4f0e7;font-family:Arial,Helvetica,sans-serif;padding:clamp(14px,2vw,34px);box-sizing:border-box}
+.header{max-width:1500px;margin:0 auto 22px;display:grid;grid-template-columns:auto 1fr auto;gap:28px;align-items:center}
+.back{font:700 11px/1.3 Arial,sans-serif;letter-spacing:.1em;text-decoration:none;color:#9df4c1;white-space:nowrap}
+.eyebrow,.kicker{color:#9df4c1;font-size:10px;letter-spacing:.2em;font-weight:700}
+.header h1{font-size:clamp(26px,3.5vw,55px);letter-spacing:-.07em;line-height:.95;margin:9px 0}
+.header h1 em{font-style:normal;color:#9df4c1}
+.header p{max-width:780px;color:#9baea4;font-size:12px;line-height:1.65}
+.chip{font-size:9px;letter-spacing:.12em;color:#b6e9c9;border:1px solid #244534;padding:12px}
+.stageWrap{max-width:1500px;margin:auto;display:flex;justify-content:center}
+.filmFrame{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;background:#07100c;isolation:isolate;border:1px solid #304237;box-shadow:0 30px 90px #000a}
+.webgl{position:absolute;inset:0;width:100%;height:100%;display:block}
+.grain{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 47%,#0008 100%);z-index:1}
+.topline,.bottomline{position:absolute;z-index:5;left:4.8%;right:4.8%;font-size:clamp(7px,1vw,15px);letter-spacing:.16em;color:#c5d9cb;display:flex;justify-content:space-between}
+.topline{top:5.5%}.bottomline{bottom:5.2%;color:#8aa896}
+.headline{position:absolute;z-index:3;top:33%;left:6%;right:auto;width:50%;transition:none;pointer-events:none}
+.headline strong{display:block;margin-top:2.5%;font-weight:650;letter-spacing:-.06em;font-size:clamp(27px,4.7vw,78px);line-height:1.02;text-shadow:0 4px 28px #000e}
+.headline strong i{font-style:normal;color:#9df4c1}
+.middle{position:absolute;z-index:4;left:5%;right:5%;bottom:14%;text-align:center;letter-spacing:.27em;color:#cbedd9;font-size:clamp(8px,1.2vw,19px);font-weight:650;text-shadow:0 0 24px #000;pointer-events:none}
+.final{position:absolute;z-index:6;inset:0;background:linear-gradient(120deg,#05100a,#09170e);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2%;pointer-events:none}
+.final img{width:min(15%,190px);height:auto;min-width:52px;filter:drop-shadow(0 2px 14px #0008)}
+.final strong{font-size:clamp(48px,9.1vw,150px);letter-spacing:-.065em;line-height:1;font-weight:700}
+.final span{letter-spacing:.21em;color:#9df4c1;font-size:clamp(8px,1vw,17px);font-weight:700}
+.final small{margin-top:4%;letter-spacing:.2em;color:#fff;font-size:clamp(7px,.8vw,13px)}
+.controls{max-width:1500px;margin:20px auto 0;display:grid;gap:14px}
+.transport{display:flex;gap:16px;align-items:center}
+.transport button{background:#9df4c1;border:none;padding:15px 20px;color:#07100c;font-weight:800;cursor:pointer;min-width:145px}
+.transport button:disabled{opacity:.45;cursor:not-allowed}
+.transport input{flex:1;accent-color:#4ee6a1}
+.transport output{font:11px monospace;color:#b6c9be;min-width:98px;text-align:right}
+.import{border:1px solid #294034;background:#0b1510;padding:22px;display:flex;align-items:center;gap:24px}
+.import>div{flex:1}.import strong{letter-spacing:.13em;font-size:11px}
+.import p,.foot{font-size:12px;color:#a0b9aa;line-height:1.65;max-width:860px}
+.upload{font-size:10px;font-weight:800;letter-spacing:.07em;border:1px solid #47785e;padding:15px;cursor:pointer;color:#cef6db}
+.upload input{display:none}
+.accepted,.pending{font:700 9px Arial;letter-spacing:.08em;min-width:175px}
+.accepted{color:#9df4c1}.pending{color:#b4a188}
+.error{color:#ffb0a3;border:1px solid #7c443b;padding:15px}
+.foot code{color:#c9e9d5;overflow-wrap:anywhere}
+@media(max-width:850px){.header{grid-template-columns:1fr;gap:12px}.chip{width:max-content}.import{flex-direction:column;align-items:flex-start}.headline strong{font-size:clamp(22px,6vw,52px)}.topline,.bottomline{letter-spacing:.05em}}
+@media(prefers-reduced-motion:reduce){.root *{scroll-behavior:auto}}
+
+/* Editorial shot cards live in the director workspace, never in the filmed master. */
+.shotlist{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.shotlist button{display:flex;gap:16px;align-items:center;text-align:left;min-width:0;padding:17px 19px;
+  color:#cfe1d5;background:linear-gradient(145deg,#101c15,#0b150f);border:1px solid #253d30;
+  cursor:pointer;transition:border-color .16s,background .16s}
+.shotlist button:hover,.shotlist button[data-current="true"]{border-color:#75eaaa;background:#152a1c}
+.shotlist button:disabled{opacity:.4;cursor:not-allowed}
+.shotlist button>span:nth-child(2){display:grid;gap:7px;flex:1;min-width:0}
+.shotlist strong{font-size:10px;letter-spacing:.11em;overflow-wrap:anywhere}
+.shotlist small{font-size:11px;color:#9bb4a4;line-height:1.3}
+.shotnum{font-size:25px;font-weight:300;letter-spacing:-.08em;color:#76eaaa}
+.shotarrow{font-size:20px;color:#99c3a6}
+@media(max-width:750px){.shotlist{grid-template-columns:1fr}.shotlist button{padding:12px 15px}}
+
+/* Production controls are intentionally outside the filmed 16:9 frame. */
+.exportbar{display:flex;align-items:center;gap:22px;padding:18px 20px;border:1px solid #345e42;
+  background:linear-gradient(120deg,#132c1d,#0b1610);position:relative;min-height:78px}
+.exportbar>div:first-child{flex:1;display:grid;gap:9px}
+.exportbar strong{letter-spacing:.1em;font-size:11px;color:#dffbe8}
+.exportbar span{font-size:11px;line-height:1.55;color:#a3c1ad}
+.exportbar button{border:none;background:#a5f6be;color:#061409;padding:18px 20px;font-size:11px;
+  letter-spacing:.07em;font-weight:800;cursor:pointer;min-width:230px}
+.exportbar button:disabled{opacity:.5;cursor:not-allowed}
+.exportProgress{position:absolute;bottom:0;left:0;right:0;height:4px;background:#203e2b}
+.exportProgress i{display:block;background:#9df4c1;height:100%;transition:width .15s linear}
+@media(max-width:750px){.exportbar{flex-direction:column;align-items:stretch}
+  .exportbar button{min-width:0;width:100%}}
+
+.masterNote{display:flex;gap:24px;align-items:center;border:1px solid #3c7655;
+  background:linear-gradient(135deg,#153022,#0b1b13);padding:21px 24px}
+.masterNote>div{flex:1;display:grid;gap:8px}
+.masterNote span{font:700 10px Arial,sans-serif;letter-spacing:.16em;color:#a4f2c2}
+.masterNote strong{font-size:14px;line-height:1.3;color:#f4f0e7;letter-spacing:-.01em}
+.masterNote small{color:#a3c1ad;font-size:11px;line-height:1.55}
+.masterNote>a{white-space:nowrap;background:#a4f2c2;color:#07120b;text-decoration:none;
+  font:800 11px Arial,sans-serif;padding:19px 22px;letter-spacing:.04em}
+.masterNote>a:hover{background:#e6fbea}
+@media(max-width:750px){.masterNote{flex-direction:column;align-items:stretch}
+.masterNote>a{text-align:center;white-space:normal}}
+
+/* V7: refined motion-director workspace, deliberately hidden from exported frame. */
+@media(max-width:1150px) and (min-width:751px){.shotlist{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+.v8Nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:21px 24px;border:1px solid #598165;background:linear-gradient(115deg,#142f1d,#0c1a11);text-decoration:none;color:#eaffee}
+.v8Nav>span{font-size:10px;letter-spacing:.14em;color:#9bf3b8;font-weight:800}
+.v8Nav>strong{font-size:12px;letter-spacing:.03em}
+.v8Nav:hover{border-color:#bbffce}
+@media(max-width:760px){.v8Nav{flex-direction:column;align-items:flex-start}}

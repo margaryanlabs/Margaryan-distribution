@@ -871,6 +871,7 @@ export default function MotionStudioPage() {
       <strong>БЫСТРЫЙ МОНТАЖ</strong>
       <span>Reels из своих видео, фото и музыки</span>
     </button>
+    <a className={styles.proofLaunch} href="/motion/cinema"><strong>✦ CINEMATIC 3D ENGINE ↗</strong><span>Настоящий WebGL, камера, свет, реальные экраны и экспорт MP4</span></a>
     <a className={styles.proofLaunch} href="/motion/proof"><strong>ПРОВЕРИТЬ ПРОДУКТ ↗</strong><span>Тест настоящего экрана Promptence</span></a>
     <a className={styles.proofLaunch} href="/motion/create"><strong>🎬 ПУБЛИЧНАЯ СТУДИЯ ↗</strong><span>Красивый путь от идеи к фильму — поделиться ссылкой</span></a>\n    <a className={styles.proofLaunch} href="/motion/gpt"><strong>GPT · РЕЖИССЁР ↗</strong><span>Создать сценарий через ChatGPT Actions</span></a>\n    <a className={styles.proofLaunch} href="/motion/mcp"><strong>CHATGPT · MCP ↗</strong><span>Подключить свой режиссёрский движок</span></a>
     <button type="button" className={styles.proofLaunch} onClick={()=>void copyFilmToChatGPT()}>
