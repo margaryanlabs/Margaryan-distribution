@@ -169,25 +169,25 @@ export default function CinematicDirector() {
       <div className={styles.filmFrame} id="cinema-film-frame" ref={frame}>
         <div className={styles.grain} aria-hidden="true" />
         <div className={styles.topline}>MARGARYAN LABS <span>PRODUCT INTELLIGENCE / 001</span></div>
-        <div className={styles.headline} style={{ opacity: introOpacity }}>
+        {introOpacity > .001 && <div className={styles.headline} style={{ opacity: introOpacity }}>
           <span className={styles.kicker}>THE NEW DISCOVERY ECONOMY</span>
           <strong>Your next customer<br /><i>is asking AI.</i></strong>
-        </div>
-        <div className={styles.middle} style={{ opacity: transformOpacity }}>
+        </div>}
+        {transformOpacity > .001 && <div className={styles.middle} style={{ opacity: transformOpacity }}>
           <span>THE ANSWER IS ONLY THE BEGINNING.</span>
-        </div>
-        <div className={styles.middle} style={{ opacity: middleOpacity }}>
+        </div>}
+        {middleOpacity > .001 && <div className={styles.middle} style={{ opacity: middleOpacity }}>
           <span>SEE THE SOURCES. UNDERSTAND THE SIGNAL.</span>
-        </div>
-        <div className={styles.middle} style={{ opacity: opticOpacity }}>
+        </div>}
+        {opticOpacity > .001 && <div className={styles.middle} style={{ opacity: opticOpacity }}>
           <span>FROM EVIDENCE TO ACTION.</span>
-        </div>
-        <div className={styles.final} style={{ opacity: finalOpacity }}>
+        </div>}
+        {finalOpacity > .001 && <div className={styles.final} style={{ opacity: finalOpacity }}>
           <img src="/motion/brands/promptence.svg" alt="Promptence official mark" />
           <strong>PROMPTENCE</strong>
           <span>AI RECOMMENDATION INTELLIGENCE</span>
           <small>UNDERSTAND THE ANSWER. · PROMPTENCE.TECH</small>
-        </div>
+        </div>}
         <div className={styles.bottomline}>PROMPTENCE <span>01 / 05 — PRODUCT TO PROOF</span></div>
       </div>
     </section>
