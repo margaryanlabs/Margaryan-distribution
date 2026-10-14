@@ -138,7 +138,7 @@ async function main() {
     // This inspects the actual 3D WebGL framebuffer at three authored beats,
     // not just the HTML title overlays. A blank or frozen canvas fails mastering.
     const frameEvidence=[];
-    for (const seconds of [.9, 4.8, 7.1]) {
+    for (const seconds of [.9, 5.6, 9.5, 14.5, 18.7]) {
       await page.evaluate(t => window.__motionCinemaSeek(t), seconds);
       const sample=await page.evaluate(() => {
         const canvas=document.querySelector("#cinema-film-frame canvas");
