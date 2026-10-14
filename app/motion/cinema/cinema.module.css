@@ -81,3 +81,9 @@
 
 /* V7: refined motion-director workspace, deliberately hidden from exported frame. */
 @media(max-width:1150px) and (min-width:751px){.shotlist{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+.v8Nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:21px 24px;border:1px solid #598165;background:linear-gradient(115deg,#142f1d,#0c1a11);text-decoration:none;color:#eaffee}
+.v8Nav>span{font-size:10px;letter-spacing:.14em;color:#9bf3b8;font-weight:800}
+.v8Nav>strong{font-size:12px;letter-spacing:.03em}
+.v8Nav:hover{border-color:#bbffce}
+@media(max-width:760px){.v8Nav{flex-direction:column;align-items:flex-start}}
