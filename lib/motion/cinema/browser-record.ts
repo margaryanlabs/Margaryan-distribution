@@ -1,8 +1,8 @@
 "use client";
 
-import type { PromptenceFilm } from "./promptence-film-v5";
+import type { PromptenceFilm } from "./promptence-film-v6";
 
-const DURATION = 10;
+const DURATION = 16;
 const W = 1280, H = 720;
 const GREEN = "#9df4c1";
 const IVORY = "#f4f0e7";
@@ -42,9 +42,10 @@ async function officialMark() {
 }
 
 function drawType(ctx:CanvasRenderingContext2D, time:number, mark:HTMLImageElement) {
-  const intro = smooth(0,.7,time) * (1-smooth(2.6,3.7,time));
-  const bridge = smooth(3.5,4.55,time) * (1-smooth(6.85,8.05,time));
-  const closing = smooth(7.65,9.25,time);
+  const intro = smooth(0,.7,time) * (1-smooth(3.1,4.1,time));
+  const transform = smooth(4.4,5.1,time) * (1-smooth(6.6,7.4,time));
+  const bridge = smooth(8.0,8.65,time) * (1-smooth(11.25,12.35,time));
+  const closing = smooth(12.55,14.25,time);
   ctx.save();
   // Match the preview frame's restrained vignetting without flattening its WebGL geometry.
   const vignette=ctx.createRadialGradient(640,330,90,640,340,820);
@@ -62,11 +63,17 @@ function drawType(ctx:CanvasRenderingContext2D, time:number, mark:HTMLImageEleme
     ctx.fillText("Your next customer",80,335);
     ctx.fillStyle=GREEN;ctx.fillText("is asking AI.",80,411);
   }
+  if (transform>0) {
+    ctx.globalAlpha=transform;
+    ctx.fillStyle="#def7e8";ctx.textAlign="center";ctx.font="700 22px Arial, sans-serif";
+    ctx.fillText("THE ANSWER IS ONLY THE BEGINNING.",640,614);
+    ctx.textAlign="left";
+  }
   if (bridge>0) {
     ctx.globalAlpha=bridge;
     ctx.font="700 22px Arial, sans-serif";
     ctx.fillStyle="#def7e8";ctx.textAlign="center";
-    ctx.fillText("BEYOND THE ANSWER. INTO THE EVIDENCE.",640,614);
+    ctx.fillText("SEE THE SOURCES. UNDERSTAND THE SIGNAL.",640,614);
     ctx.textAlign="left";
   }
   if (closing>0) {
@@ -76,10 +83,10 @@ function drawType(ctx:CanvasRenderingContext2D, time:number, mark:HTMLImageEleme
     ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
     // Fit official logo preserving its original aspect ratio.
     const ratio=mark.naturalWidth/mark.naturalHeight;
-    const iconH=90;
+    const iconH=110;
     ctx.drawImage(mark,640-iconH*ratio/2,191,iconH*ratio,iconH);
     ctx.fillStyle=IVORY;ctx.textAlign="center";
-    ctx.font="700 85px Arial, sans-serif";
+    ctx.font="700 100px Arial, sans-serif";
     ctx.fillText("PROMPTENCE",640,395);
     ctx.fillStyle=GREEN;ctx.font="700 17px Arial, sans-serif";
     ctx.fillText("AI RECOMMENDATION INTELLIGENCE",640,452);
@@ -90,7 +97,7 @@ function drawType(ctx:CanvasRenderingContext2D, time:number, mark:HTMLImageEleme
   ctx.globalAlpha=1;
   ctx.fillStyle="#8aa896";ctx.font="700 12px Arial, sans-serif";
   ctx.fillText("PROMPTENCE",65,686);
-  ctx.textAlign="right";ctx.fillText("01 / 01 — CINEMATIC PROOF",1215,686);
+  ctx.textAlign="right";ctx.fillText("01 / 04 — CINEMATIC TRANSFORMATION",1215,686);
   ctx.restore();
 }
 
@@ -143,7 +150,7 @@ export async function recordPromptenceCinema({film,onProgress,signal}:CinemaReco
     await new Promise<void>((resolve,reject)=>{
       const step=(now:number)=>{
         if (signal?.aborted) { reject(new Error("Video export cancelled"));return; }
-        if (recorder.state!=="recording") {reject(new Error("Recording stopped before 10 seconds"));return;}
+        if (recorder.state!=="recording") {reject(new Error("Recording stopped before 16 seconds"));return;}
         const t=Math.min(DURATION,(now-started)/1000);
         try {
           paint(t);
