@@ -228,7 +228,7 @@ area("Subtle frontal fill",(1,-8.0,4.6),170,(.92,.98,.94),6,3,(0,0,1.7))
 camera_data=bpy.data.cameras.new("Cinema 2.1 / 59mm product macro camera")
 camera=bpy.data.objects.new("Cinema 2.1 / 59mm dolly",camera_data)
 bpy.context.collection.objects.link(camera)
-camera_data.lens=59
+camera_data.lens=54
 camera_data.sensor_width=36
 camera_data.dof.use_dof=True
 camera_data.dof.focus_object=laptop_anchor
@@ -238,9 +238,9 @@ def look_at(obj,pt):
     direction=Vector(pt)-obj.location
     obj.rotation_euler=direction.to_track_quat("-Z","Y").to_euler()
 for frame,loc,target in [
-   (1, (7.2,-14.7,6.7),(.0,.02,1.77)),
-   (48,(5.2,-12.9,5.6),(.0,.02,1.86)),
-   (96,(3.4,-10.8,4.8),(.12,.16,2.05))
+   (1, (7.5,-15.7,6.85),(.0,.03,1.68)),
+   (48,(5.4,-14.3,6.05),(.0,.02,1.85)),
+   (96,(3.8,-11.8,5.05),(.12,.16,2.06))
 ]:
     camera.location=loc;look_at(camera,target)
     camera.keyframe_insert(data_path="location",frame=frame)
@@ -250,7 +250,7 @@ for fc in camera.animation_data.action.fcurves:
 
 # Product is static, camera and light do the work. No misleading moving UI elements.
 S.frame_start=1;S.frame_end=96;S.render.fps=24
-S.camera.data.lens=59
+S.camera.data.lens=54
 S.frame_set(max(1,min(96,A.frame)))
 
 if A.save_blend:
