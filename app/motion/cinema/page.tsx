@@ -38,7 +38,7 @@ export default function CinematicDirector() {
     window.__motionCinemaError = undefined;
     const width = exportMode.current ? 1920 : 1280;
     const height = exportMode.current ? 1080 : 720;
-    void import("@/lib/motion/cinema/promptence-film-v5").then(({ createPromptenceFilm }) => {
+    void import("@/lib/motion/cinema/promptence-film-v6").then(({ createPromptenceFilm }) => {
       if (closed || !frame.current) return;
       const director = createPromptenceFilm(width, height);
       if (closed) { director.dispose(); return; }
