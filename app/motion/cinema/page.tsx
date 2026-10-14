@@ -207,6 +207,11 @@ export default function CinematicDirector() {
           }} />
         <output>{position.toFixed(2)} / 20.00</output>
       </div>
+      <a href="/motion/cinema/v8" className={styles.v8Nav}>
+        <span>NEW DIRECTOR'S CUT · V8</span>
+        <strong>THE INVISIBLE MARKET — REAL PRODUCT / 5-SECOND BENCHMARK</strong>
+        <span>OPEN 3D FILM LAB ↗</span>
+      </a>
       <div className={styles.masterNote}>
         <div><span>INDEPENDENT RENDER VERIFIED / V7</span>
           <strong>20 seconds · 1920×1080 · 480 verified 3D frames · English voice · original score</strong>
