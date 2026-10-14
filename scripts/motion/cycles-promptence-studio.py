@@ -259,7 +259,7 @@ area("Wide frontal screen legibility",(2,-8.0,4.6),400,(.92,.98,.94),7,4,(0,0,1.
 camera_data=bpy.data.cameras.new("Cinema 2.0 / 70mm animated physical camera")
 camera=bpy.data.objects.new("Cinema 2.0 / 70mm dolly",camera_data)
 bpy.context.collection.objects.link(camera)
-camera_data.lens=67
+camera_data.lens=53
 camera_data.sensor_width=36
 camera_data.dof.use_dof=True
 camera_data.dof.focus_object=laptop_anchor
@@ -269,9 +269,9 @@ def look_at(obj,pt):
     direction=Vector(pt)-obj.location
     obj.rotation_euler=direction.to_track_quat("-Z","Y").to_euler()
 for frame,loc,target in [
-   (1, (8.2,-14.9,7.5),(0,0,2.0)),
-   (48,(6.6,-13.6,6.25),(0,.05,1.9)),
-   (96,(4.7,-10.75,5.45),(.17,.18,2.0))
+   (1, (7.7,-16.3,7.9),(0,0,1.78)),
+   (48,(6.7,-15.1,6.95),(0,.03,1.82)),
+   (96,(4.9,-12.7,5.65),(.12,.15,2.05))
 ]:
     camera.location=loc;look_at(camera,target)
     camera.keyframe_insert(data_path="location",frame=frame)
@@ -281,12 +281,12 @@ for fc in camera.animation_data.action.fcurves:
 
 # Product is static, camera and light do the work. No misleading moving UI elements.
 S.frame_start=1;S.frame_end=96;S.render.fps=24
-S.camera.data.lens=67
+S.camera.data.lens=53
 S.frame_set(max(1,min(96,A.frame)))
 
 if A.save_blend:
     os.makedirs(os.path.dirname(os.path.abspath(A.save_blend)),exist_ok=True)
-    bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath(A.save_blend))
+    bpy.ops.file.pack_all()\n    bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath(A.save_blend))
     print("CINEMA_BLEND_SAVED",os.path.abspath(A.save_blend))
 if A.sequence:
     first,last=[int(v) for v in A.frames.split(":")]
