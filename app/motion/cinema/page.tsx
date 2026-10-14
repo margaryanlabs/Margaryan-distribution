@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { PromptenceFilm } from "@/lib/motion/cinema/promptence-film-v6";
+import type { PromptenceFilm } from "@/lib/motion/cinema/promptence-film-v7";
 import styles from "./cinema.module.css";
 
 declare global {
@@ -12,7 +12,7 @@ declare global {
     __motionCinemaHasSource?: () => boolean;
   }
 }
-const DURATION = 16;
+const DURATION = 20;
 const q = (n: number) => Math.max(0, Math.min(DURATION, n));
 const fade = (a:number,b:number,t:number) => { const x=Math.max(0,Math.min(1,(t-a)/(b-a)));return x*x*(3-2*x); };
 
@@ -105,7 +105,7 @@ export default function CinematicDirector() {
     setRecording(true);
     setRecordProgress(0);
     setError(null);
-    setStatus("RECORDING 16-SECOND WEBGL FILM");
+    setStatus("RECORDING 20-SECOND WEBGL FILM");
     try {
       const {recordPromptenceCinema}=await import("@/lib/motion/cinema/browser-record");
       const result=await recordPromptenceCinema({
@@ -116,7 +116,7 @@ export default function CinematicDirector() {
       const url=URL.createObjectURL(result.blob);
       const link=document.createElement("a");
       link.href=url;
-      link.download="PROMPTENCE_WEBGL_CINEMA_16S."+result.extension;
+      link.download="PROMPTENCE_WEBGL_CINEMA_20S."+result.extension;
       document.body.appendChild(link);link.click();link.remove();
       window.setTimeout(()=>URL.revokeObjectURL(url),60_000);
       setStatus("RECORDED "+result.extension.toUpperCase()+" / "+Math.round(result.blob.size/1024)+" KB");
@@ -150,10 +150,11 @@ export default function CinematicDirector() {
       setError(reason);
     }
   }
-  const introOpacity = fade(0,.8,position) * (1-fade(3.1,4.1,position));
-  const transformOpacity = fade(4.4,5.1,position) * (1-fade(6.6,7.4,position));
-  const middleOpacity = fade(8.0,8.65,position) * (1-fade(11.25,12.35,position));
-  const finalOpacity = fade(12.55,14.25,position);
+  const introOpacity = fade(0,.8,position) * (1-fade(3.3,4.35,position));
+  const transformOpacity = fade(4.35,5.05,position) * (1-fade(6.5,7.35,position));
+  const middleOpacity = fade(8.1,8.9,position) * (1-fade(11.8,12.65,position));
+  const opticOpacity = fade(13.0,13.75,position) * (1-fade(15.55,16.35,position));
+  const finalOpacity = fade(16.65,18.35,position);
 
   return <main className={styles.root} style={exportMode.current ? {width:1920,height:1080,padding:0,overflow:"hidden"} : undefined}>
     {!exportMode.current && <header className={styles.header}>
@@ -178,13 +179,16 @@ export default function CinematicDirector() {
         <div className={styles.middle} style={{ opacity: middleOpacity }}>
           <span>SEE THE SOURCES. UNDERSTAND THE SIGNAL.</span>
         </div>
+        <div className={styles.middle} style={{ opacity: opticOpacity }}>
+          <span>FROM EVIDENCE TO ACTION.</span>
+        </div>
         <div className={styles.final} style={{ opacity: finalOpacity }}>
           <img src="/motion/brands/promptence.svg" alt="Promptence official mark" />
           <strong>PROMPTENCE</strong>
           <span>AI RECOMMENDATION INTELLIGENCE</span>
           <small>UNDERSTAND THE ANSWER. · PROMPTENCE.TECH</small>
         </div>
-        <div className={styles.bottomline}>PROMPTENCE <span>01 / 04 — CINEMATIC TRANSFORMATION</span></div>
+        <div className={styles.bottomline}>PROMPTENCE <span>01 / 05 — PRODUCT TO PROOF</span></div>
       </div>
     </section>
     {exportMode.current && <input data-testid="cinema-source" aria-label="Source capture for renderer"
@@ -194,18 +198,18 @@ export default function CinematicDirector() {
     {!exportMode.current && <section className={styles.controls}>
       <div className={styles.transport}>
         <button onClick={() => playing ? stop() : play()} disabled={!film.current || recording}>
-          {playing ? "Ⅱ PAUSE" : "▶ PLAY 16 SEC"}
+          {playing ? "Ⅱ PAUSE" : "▶ PLAY 20 SEC"}
         </button>
         <input aria-label="Film playhead" type="range" min="0" max={DURATION} step=".01"
           value={position} disabled={recording} onChange={e => {
             stop(); const t = q(Number(e.target.value));
             film.current?.setTime(t); setPosition(t);
           }} />
-        <output>{position.toFixed(2)} / 16.00</output>
+        <output>{position.toFixed(2)} / 20.00</output>
       </div>
       <div className={styles.masterNote}>
-        <div><span>INDEPENDENT RENDER VERIFICATION / V6</span>
-          <strong>16 seconds · Full HD · 384 actual 3D frames · English voice + original sound design</strong>
+        <div><span>PREPARING INDEPENDENT V7 MP4 PROOF</span>
+          <strong>V7 editor is available. The new MP4 will appear here only after real rendering and frame checks.</strong>
           <small>The verified MP4 includes a read-only real public Promptence page capture.
             Your live WebGL preview stays editable separately.</small></div>
         <a href="https://d2ol7oe51mr4n9.cloudfront.net/user_3HoFPSIfr8HaTS2uAE1uxoDnLl0/37e7e46e-3555-4727-81d8-8f241daa67d2.mp4"
@@ -213,13 +217,13 @@ export default function CinematicDirector() {
       </div>
       <div className={styles.exportbar}>
         <div>
-          <strong>BROWSER FILM MASTER / 16 SECONDS</strong>
-          <span>Real WebGL frames + sixty authentic source fragments + burned-in titles.
+          <strong>BROWSER FILM MASTER / 20 SECONDS</strong>
+          <span>Real WebGL + real screen fragments + modeled cinematic optic + final titles.
             Export is silent. MP4 when supported; otherwise WebM. Mobile GPU limits apply.</span>
         </div>
         <button type="button" disabled={!film.current || recording}
           onClick={()=>void exportBrowserFilm()}>
-          {recording?"RECORDING "+Math.round(recordProgress*100)+"%":"↓ EXPORT 16S REAL 3D VIDEO"}
+          {recording?"RECORDING "+Math.round(recordProgress*100)+"%":"↓ EXPORT 20S REAL 3D VIDEO"}
         </button>
         {recording && <div className={styles.exportProgress} role="progressbar"
           aria-label="Video recording progress" aria-valuemin={0} aria-valuemax={100}
@@ -227,13 +231,14 @@ export default function CinematicDirector() {
       </div>
       <div className={styles.shotlist} aria-label="Cinematic shot navigation">
         {[
-          {at:1.3,num:"01",title:"REAL PRODUCT",subtitle:"The public Promptence homepage"},
-          {at:5.8,num:"02",title:"THE UNFOLDING",subtitle:"Sixty authentic screen fragments in 3D"},
-          {at:9.5,num:"03",title:"EVIDENCE FIELD",subtitle:"Signal particles and reflective rings"},
-          {at:14.1,num:"04",title:"BRAND RESOLUTION",subtitle:"Promptence signature and final line"}
+          {at:1.3,num:"01",title:"THE QUESTION",subtitle:"Authentic product and studio lighting"},
+          {at:5.5,num:"02",title:"THE BREAKTHROUGH",subtitle:"Real screen disintegrates into 3D space"},
+          {at:10.0,num:"03",title:"THE EVIDENCE",subtitle:"Architectural light and signal intelligence"},
+          {at:14.3,num:"04",title:"THE OPTIC",subtitle:"Glass, light and precision macro detail"},
+          {at:18.5,num:"05",title:"THE SIGNATURE",subtitle:"Large definitive Promptence brand close"}
         ].map(shot => <button key={shot.num} type="button"
-          data-current={position >= (shot.num==="04"?12.6:shot.num==="03"?7.7:shot.num==="02"?4.25:0)
-            && position < (shot.num==="01"?4.25:shot.num==="02"?7.7:shot.num==="03"?12.6:16.01)}
+          data-current={position >= (shot.num==="05"?16.4:shot.num==="04"?12.5:shot.num==="03"?8.0:shot.num==="02"?4.4:0)
+            && position < (shot.num==="01"?4.4:shot.num==="02"?8:shot.num==="03"?12.5:shot.num==="04"?16.4:20.01)}
           disabled={!film.current || recording} onClick={() => {
             stop();film.current?.setTime(shot.at);setPosition(shot.at);
           }}>
