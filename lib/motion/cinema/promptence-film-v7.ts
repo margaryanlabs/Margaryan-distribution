@@ -179,7 +179,7 @@ export function createPromptenceFilm(width:number,height:number):PromptenceFilm{
       uv.setXY(k,(col+uv.getX(k))/COLS,(row+uv.getY(k))/ROWS);
     }
     const material=new THREE.MeshBasicMaterial({
-      map:concept,color:0x579578,transparent:true,opacity:0,depthWrite:false,
+      map:concept,color:0x3f7857,transparent:true,opacity:0,depthWrite:false,
       side:THREE.DoubleSide,toneMapped:false
     });
     const mesh=new THREE.Mesh(geometry,material);
@@ -294,27 +294,27 @@ export function createPromptenceFilm(width:number,height:number):PromptenceFilm{
   const lensStage = new THREE.Group();
   world.add(lensStage);
   const crystal = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(1.18, 4),
+    new THREE.IcosahedronGeometry(.78, 1),
     new THREE.MeshPhysicalMaterial({
-      color:0x83ffbf,metalness:.12,roughness:.085,transmission:.46,
-      thickness:1.7,ior:1.42,clearcoat:1,clearcoatRoughness:.10,
-      envMapIntensity:1.5
+      color:0x285a3b,metalness:.44,roughness:.12,transmission:.19,
+      thickness:.55,ior:1.31,clearcoat:1,clearcoatRoughness:.09,
+      envMapIntensity:1.25
     })
   );
   lensStage.add(crystal);
   const innerFacet = new THREE.Mesh(
-    new THREE.IcosahedronGeometry(.38,2),
+    new THREE.IcosahedronGeometry(.24,1),
     new THREE.MeshPhysicalMaterial({
-      color:0xd5ffe9,metalness:.58,roughness:.17,clearcoat:1,
-      emissive:0x126439,emissiveIntensity:.42
+      color:0x9eddb4,metalness:.81,roughness:.12,clearcoat:1,
+      emissive:0x123e27,emissiveIntensity:.08
     })
   );
   lensStage.add(innerFacet);
   const opticBands:THREE.Mesh[]=[];
   const opticMats:THREE.MeshPhysicalMaterial[]=[];
-  for(let i=0;i<4;i++){
+  for(let i=0;i<3;i++){
     const mat=new THREE.MeshPhysicalMaterial({
-      color:i%2?0xa6d7b8:0x86f3b2,metalness:.87,
+      color:i%2?0xb2cfc1:0x7bb497,metalness:.93,
       roughness:.15,clearcoat:1,clearcoatRoughness:.09,
       transparent:true,opacity:0,depthWrite:false,envMapIntensity:1.4
     });
@@ -416,7 +416,7 @@ export function createPromptenceFilm(width:number,height:number):PromptenceFilm{
         lerp(device.rotation.z,Math.sin(theta*.8)*.1,into)
       );
       mesh.scale.setScalar(lerp(device.scale.x,.73,into)*(1-.88*vanish));
-      mesh.material.opacity=smooth(4.15+delay,4.7+delay,t)*(1-vanish)*.39;
+      mesh.material.opacity=smooth(4.15+delay,4.7+delay,t)*(1-vanish)*.31;
       mesh.visible=mesh.material.opacity>.004;
     }
 
@@ -460,7 +460,7 @@ export function createPromptenceFilm(width:number,height:number):PromptenceFilm{
 
     const opticReveal=smooth(12.45,13.2,t)*(1-smooth(16.05,17.45,t));
     lensStage.visible=opticReveal>.004;
-    lensStage.scale.setScalar(lerp(.38,1.18,smooth(12.6,14.2,t))*
+    lensStage.scale.setScalar(lerp(.28,.88,smooth(12.6,14.2,t))*
       (1-.48*smooth(16.3,17.6,t)));
     lensStage.position.set(lerp(.25,0,smooth(12.5,14,t)),0,.15);
     lensStage.rotation.set(
