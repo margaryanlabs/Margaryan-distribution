@@ -14,19 +14,21 @@ const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),"../..");
 function options(argv){
   if(!argv[0])throw Error("Usage: node scripts/motion/render-cycles-promptence.mjs out.mp4 --screen /verified/public.png --blender /path/to/blender [--width 1280 --height 720 --samples 32 --start 1 --end 48] [--music original.wav] [--dry-run]");
   const o={output:path.resolve(argv[0]),blender:process.env.BLENDER_BIN||"blender",
-    width:1280,height:720,samples:32,start:1,end:48,dryRun:false,screen:null,music:null};
+    width:1280,height:720,samples:32,start:1,end:48,dryRun:false,screen:null,music:null,scene:"v20"};
   for(let i=1;i<argv.length;i++){
     const k=argv[i];
     if(k==="--dry-run"){o.dryRun=true;continue;}
-    if(!["--screen","--blender","--width","--height","--samples","--start","--end","--music"].includes(k))
+    if(!["--screen","--blender","--width","--height","--samples","--start","--end","--music","--scene"].includes(k))
       throw Error("Unrecognized argument: "+k);
     if(!argv[++i])throw Error("Missing value for "+k);
     const v=argv[i];
     if(k==="--screen")o.screen=path.resolve(v);
     else if(k==="--blender")o.blender=v;
     else if(k==="--music")o.music=path.resolve(v);
+    else if(k==="--scene")o.scene=v;
     else o[k.slice(2)]=Number(v);
   }
+  if(!["v20","v21"].includes(o.scene))throw Error("Unknown Cycles scene, must be v20 or v21");
   if(path.extname(o.output).toLowerCase()!==".mp4")throw Error("Output must be .mp4");
   if(!o.screen)throw Error("Use --screen with a genuine owner-approved capture");
   if (![o.width,o.height,o.samples,o.start,o.end].every(Number.isInteger))
@@ -63,7 +65,7 @@ async function main(){
     title:"PROMPTENCE / Cinematic Engine 2.0",
     source:o.screen,authenticProductSource:true,engine:"Blender Cycles (ray tracing)",
     width:o.width,height:o.height,fps:24,frames:n,durationSeconds:n/24,
-    samples:o.samples,output:o.output,score:o.music,
+    samples:o.samples,output:o.output,score:o.music,scene:o.scene,
     publicationApproved:false,
     note:"Decoder/frame verification is not commercial creative approval"
   };
@@ -73,7 +75,7 @@ async function main(){
   const frameDir=base+"_cycles_frames";
   const blend=base+"_editable.blend";
   mkdirSync(frameDir,{recursive:true});
-  const script=path.join(ROOT,"scripts/motion/cycles-promptence-studio.py");
+  const script=path.join(ROOT,"scripts/motion/",o.scene==="v21" ? "cycles-promptence-studio-v21.py" : "cycles-promptence-studio.py");
   const args=["-b","-t","6","--python",script,"--",
     "--screenshot",o.screen,"--output",frameDir,"--save-blend",blend,
     "--width",String(o.width),"--height",String(o.height),
@@ -105,6 +107,32 @@ async function main(){
     throw Error("Incorrect encoded frame count");
   if(Math.abs(Number(data.format.duration)-n/24)>.12)
     throw Error("Incorrect video duration");
+  // Photometric sanity: four distinct rendered time points, not one static render.
+  // FFmpeg outputs raw 48×27 luma planes so no native-image npm dependency is needed.
+  const stamps=[.08,.32,.65,.92].map(v=>v*n/24);
+  const probes=[];
+  for(const t of stamps){
+    const sample=spawnSync("ffmpeg",["-v","error","-ss",String(t),"-i",o.output,
+      "-frames:v","1","-vf","scale=48:27,format=gray",
+      "-f","rawvideo","-pix_fmt","gray","-"],{encoding:null,timeout:30000});
+    if(sample.status!==0||sample.stdout.length!==48*27)
+      throw Error("Cannot inspect native Cycles video framebuffer");
+    const px=sample.stdout;
+    let sum=0;for(const n of px)sum+=n;
+    probes.push({time:+t.toFixed(3),mean:+(sum/px.length).toFixed(2),bytes:px});
+  }
+  if(probes.some(p=>p.mean<4))throw Error("Black or underexposed Cycles output blocked");
+  let changed=0;
+  for(let i=1;i<probes.length;i++){
+    let diff=0;
+    const current=probes[i].bytes,previous=probes[i-1].bytes;
+    for(let j=0;j<current.length;j++)diff+=Math.abs(current[j]-previous[j]);
+    const mae=diff/current.length;
+    if(mae>.24)changed++;
+    probes[i].mae=+mae.toFixed(3);
+  }
+  if(changed<2)throw Error("Frozen/near-static Cycles camera output blocked");
+  plan.visualQA=probes.map(({bytes,...summary})=>summary);
   plan.ffprobe=data;
   plan.blend=blend;plan.framesDirectory=frameDir;
   plan.verification="Codec/frame checks PASSED; creative quality requires human inspection";
