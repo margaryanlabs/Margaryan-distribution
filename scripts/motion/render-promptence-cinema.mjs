@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Authored 10-second 3D product film: Chromium/WebGL -> screenshot PNG -> FFmpeg.
+ * Authored 16-second 3D product film: Chromium/WebGL -> screenshot PNG -> FFmpeg.
  * Run after npm run dev. Requires Playwright installed locally and working WebGL.
  * This is not a fake video API and intentionally fails closed on GPU/context loss.
  */
@@ -9,7 +9,7 @@ import { dirname, extname, resolve } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
 
-export const FILM_DURATION = 10;
+export const FILM_DURATION = 16;
 const validAudio = /.(wav|mp3|m4a|aac|flac)$/i;
 const quote = s => String(s).slice(0, 800);
 function options(args) {
@@ -171,17 +171,17 @@ async function main() {
       ff.push("-filter_complex",
         "[1:a]highpass=f=75,lowpass=f=15000,loudnorm=I=-16:TP=-1.5:LRA=10[v];" +
         "[2:a]volume=0.17,apad[m];[v][m]amix=inputs=2:duration=longest:normalize=0," +
-        "atrim=0:10,apad,loudnorm=I=-16:TP=-1.5:LRA=11[a]");
+        "atrim=0:16,apad,loudnorm=I=-16:TP=-1.5:LRA=11[a]");
       audioMap = "[a]";
     } else if (o.voice || o.music) {
-      ff.push("-filter_complex","[1:a]apad,atrim=0:10,loudnorm=I=-16:TP=-1.5:LRA=11[a]");
+      ff.push("-filter_complex","[1:a]apad,atrim=0:16,loudnorm=I=-16:TP=-1.5:LRA=11[a]");
       audioMap = "[a]";
     }
     ff.push("-map","0:v:0");
     if (audioMap) ff.push("-map",audioMap,"-c:a","aac","-b:a","256k");
     else ff.push("-an");
     ff.push("-c:v","libx264","-preset","medium","-crf","17",
-      "-pix_fmt","yuv420p","-r",String(o.fps),"-t","10","-movflags","+faststart",o.output);
+      "-pix_fmt","yuv420p","-r",String(o.fps),"-t",String(FILM_DURATION),"-movflags","+faststart",o.output);
     encoder = spawn("ffmpeg", ff, {stdio:["pipe","ignore","pipe"]});
     let stderr = "";
     encoder.stderr.on("data", buf => { stderr = (stderr + String(buf)).slice(-4000); });
