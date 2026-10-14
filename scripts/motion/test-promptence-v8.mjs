@@ -1,0 +1,26 @@
+#!/usr/bin/env node
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+import {spawnSync} from "node:child_process";
+const source=p=>readFileSync(p,"utf8");
+const renderer=source("scripts/motion/render-promptence-v8.mjs");
+const film=source("lib/motion/cinema/promptence-film-v8.ts");
+const page=source("app/motion/cinema/v8/page.tsx");
+const r=spawnSync(process.execPath,["scripts/motion/render-promptence-v8.mjs","out/v8.mp4","--dry-run","--concept","--fps","24"],{encoding:"utf8",timeout:9000});
+assert.equal(r.status,0,r.stderr);
+const cfg=JSON.parse(r.stdout);
+assert.equal(cfg.duration,5);
+assert.equal(cfg.dimensions,"1920x1080");
+assert.equal(cfg.fps,24);
+assert.equal(cfg.demoOnly,true);
+const other=spawnSync(process.execPath,["scripts/motion/render-promptence-v8.mjs","out/v8.mp4","--dry-run","--capture-public","--fps","24"],{encoding:"utf8",timeout:9000});
+assert.equal(other.status,0,other.stderr);
+assert.equal(JSON.parse(other.stdout).authenticProductSource,true);
+for (const pattern of [/WebGLRenderer/,/MeshPhysicalMaterial/,/PerspectiveCamera/,/getAttribute\("uv"\)/,/applyMatrix4\(product.matrixWorld\)/,/setScreen\(file:File\)/]) assert.match(film,pattern);
+assert.match(page,/createV8Shot/);
+assert.match(page,/zIndex:2147483647/);
+assert.match(page,/data-testid="cinema-source"/);
+assert.match(renderer,/\[.5, 1.75, 3.1, 4.55\]/);
+const syntax=spawnSync(process.execPath,["--check","scripts/motion/render-promptence-v8.mjs"],{encoding:"utf8"});
+assert.equal(syntax.status,0,syntax.stderr);
+console.log("PROMPTENCE V8 five-second 3D macro test contracts PASS");
