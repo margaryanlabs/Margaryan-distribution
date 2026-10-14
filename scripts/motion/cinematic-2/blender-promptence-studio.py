@@ -338,7 +338,9 @@ if O.laptop_glb:
             ob.scale=(16.9,16.9,16.9)
             ob.location=(0,0,.07)
     # 16:9 approved website screenshot on the foreground of the actual panel.
-    screen.location=(0,1.44,2.27)
+    # The CC0 lid extends higher than our procedural lid. Fit the source capture
+    # to the true screen surface and keep the laptop keyboard unobstructed.
+    screen.location=(0,1.27,2.78)
     # Screen dimensions were already applied to the mesh before GLB import;
     # never scale them twice or the UI will overwhelm the entire shot.
     print("CC0_LAPTOP_MODEL_LOADED",len(meshes),"mesh objects",
