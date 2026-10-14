@@ -183,7 +183,7 @@ async function main() {
         "atrim=0:8,apad,loudnorm=I=-16:TP=-1.5:LRA=11[a]");
       audioMap = "[a]";
     } else if (o.voice || o.music) {
-      ff.push("-filter_complex","[1:a]apad,atrim=0:5,loudnorm=I=-16:TP=-1.5:LRA=11[a]");
+      ff.push("-filter_complex","[1:a]apad,atrim=0:8,loudnorm=I=-16:TP=-1.5:LRA=11[a]");
       audioMap = "[a]";
     }
     ff.push("-map","0:v:0");
