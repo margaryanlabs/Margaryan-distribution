@@ -207,6 +207,11 @@ export default function CinematicDirector() {
           }} />
         <output>{position.toFixed(2)} / 20.00</output>
       </div>
+      <a href="/motion/cinema/v9" className={styles.v8Nav}>
+        <span>NEW SCENE · V9 / TRUE 3D</span>
+        <strong>THE REAL PRODUCT STUDIO — 3D LAPTOP, BASALT SET, LIVE CAMERA</strong>
+        <span>OPEN V9 DIRECTOR ↗</span>
+      </a>
       <a href="/motion/cinema/v8" className={styles.v8Nav}>
         <span>NEW DIRECTOR'S CUT · V8</span>
         <strong>THE INVISIBLE MARKET — REAL PRODUCT / 5-SECOND BENCHMARK</strong>
