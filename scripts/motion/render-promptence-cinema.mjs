@@ -107,6 +107,15 @@ async function main() {
     const init = await page.evaluate(() => ({ready:window.__motionCinemaReady,
       error:window.__motionCinemaError}));
     if (!init.ready || init.error) throw Error("Real WebGL unavailable: " + init.error);
+    // A global Margaryan Distribution navigation bar once burned into every
+    // film frame. Refuse export unless this film's 3D stage isolates it.
+    const isolated = await page.locator("#cinema-film-frame").evaluate(frame => {
+      const stage = frame.closest("main");
+      if (!stage) return false;
+      const style = window.getComputedStyle(stage);
+      return style.position === "fixed" && Number(style.zIndex) > 100000;
+    });
+    if (!isolated) throw Error("Cinema stage is not isolated from global site navigation");
     if (o.capturePublic) {
       // This captures only the official public landing, without login or mutation.
       const publicPage = await browser.newPage({viewport:{width:1600,height:900},
