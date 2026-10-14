@@ -286,7 +286,8 @@ S.frame_set(max(1,min(96,A.frame)))
 
 if A.save_blend:
     os.makedirs(os.path.dirname(os.path.abspath(A.save_blend)),exist_ok=True)
-    bpy.ops.file.pack_all()\n    bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath(A.save_blend))
+    bpy.ops.file.pack_all()
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath(A.save_blend))
     print("CINEMA_BLEND_SAVED",os.path.abspath(A.save_blend))
 if A.sequence:
     first,last=[int(v) for v in A.frames.split(":")]
