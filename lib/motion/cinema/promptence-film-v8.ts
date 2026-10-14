@@ -119,8 +119,8 @@ export function createV8Shot(w:number,h:number):V8Shot {
     transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide});
    const mesh=new THREE.Mesh(geom,mat);
    // A milled graphite frame supplies a real thickness to each photographed shard.
-   const backing=new THREE.Mesh(new THREE.BoxGeometry(7.17/cols+.035,4.03/rows+.035,.035),
-     new THREE.MeshPhysicalMaterial({color:0x405648,metalness:.88,roughness:.23,
+   const backing=new THREE.Mesh(new THREE.BoxGeometry(7.17/cols+.008,4.03/rows+.01,.035),
+     new THREE.MeshPhysicalMaterial({color:0x839d8c,metalness:.91,roughness:.20,
        clearcoat:.87,clearcoatRoughness:.12,transparent:true,opacity:0}));
    ribbonGroup.add(backing);ribbonGroup.add(mesh);
    strips.push({mesh,backing,x:-3.585+(x+.5)*7.17/cols,
@@ -163,13 +163,13 @@ export function createV8Shot(w:number,h:number):V8Shot {
      const v=new THREE.Vector3(item.x,item.y,.175).applyMatrix4(product.matrixWorld);
      const nx=item.rank-2;
      const target=new THREE.Vector3(
-       product.position.x+item.x+nx*.085,
+       product.position.x+item.x+nx*.018,
        product.position.y+item.y+.018*Math.cos(nx*1.2),
-       product.position.z+.38+(nx+2)*.17);
+       product.position.z+.28+(nx+2)*.13);
      item.mesh.position.copy(v).lerp(target,lift);
      item.mesh.rotation.set(
        product.rotation.x,
-       product.rotation.y+nx*.035*lift,
+       product.rotation.y+nx*.025*lift,
        product.rotation.z+nx*.013*lift);
      item.mesh.scale.setScalar(product.scale.x);
      item.mesh.material.opacity=.97*reveal;
@@ -177,7 +177,7 @@ export function createV8Shot(w:number,h:number):V8Shot {
      item.backing.position.z-=.038;
      item.backing.rotation.copy(item.mesh.rotation);
      item.backing.scale.copy(item.mesh.scale);
-     item.backing.material.opacity=.84*reveal;
+     item.backing.material.opacity=.32*reveal;
    }
    rim.intensity=mix(20,36,ease(1,4.4,t));
    rim.position.x=mix(5,-3.3,ease(2.8,4.85,t));
