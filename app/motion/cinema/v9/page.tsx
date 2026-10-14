@@ -126,10 +126,12 @@ export default function PromptenceCinematicV9(){
     <output>{seconds.toFixed(2)} / 08.00</output>
    </div>
    <div className={styles.master}>
-     <div><small>V9 ORIGINAL 3D FILM SCENE</small>
-       <strong>ACTUAL THREE.JS LAPTOP + ENVIRONMENT · EIGHT SECONDS</strong>
-       <span>Source-honest public Promptence screen and real 3D geometry. The export link will appear only after an MP4 passes playback and framebuffer checks.</span>
+     <div><small>VERIFIED V9 NATIVE 3D VIDEO</small>
+       <strong>8 SEC · 1920×1080 · 192 ACTUAL WEBGL FRAMES · ORIGINAL MUSIC</strong>
+       <span>Real photographed public Promptence UI mapped onto modelled laptop. Framebuffer and H.264/AAC checks passed. Creative workprint, not release approval.</span>
      </div>
+     <a href="https://d2ol7oe51mr4n9.cloudfront.net/user_3HoFPSIfr8HaTS2uAE1uxoDnLl0/1a4864a6-557e-46c1-ba27-f956d36c2dbc.mp4"
+       target="_blank" rel="noopener noreferrer">▶ WATCH REAL V9 MP4</a>
    </div>
    <div className={styles.beats}>
     {[{at:.7,n:"01",title:"STUDIO REVEAL"},{at:3.3,n:"02",title:"REAL PRODUCT"},{at:6.65,n:"03",title:"CAPABILITIES IN SPACE"}].map(b=>
