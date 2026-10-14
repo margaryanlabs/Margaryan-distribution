@@ -14,10 +14,11 @@ const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),"../..");
 function options(argv){
   if(!argv[0])throw Error("Usage: node scripts/motion/render-cycles-promptence.mjs out.mp4 --screen /verified/public.png --blender /path/to/blender [--width 1280 --height 720 --samples 32 --start 1 --end 48] [--music original.wav] [--dry-run]");
   const o={output:path.resolve(argv[0]),blender:process.env.BLENDER_BIN||"blender",
-    width:1280,height:720,samples:32,start:1,end:48,dryRun:false,screen:null,music:null,scene:"v20"};
+    width:1280,height:720,samples:32,start:1,end:48,dryRun:false,encodeOnly:false,screen:null,music:null,scene:"v20"};
   for(let i=1;i<argv.length;i++){
     const k=argv[i];
     if(k==="--dry-run"){o.dryRun=true;continue;}
+    if(k==="--encode-only"){o.encodeOnly=true;continue;}
     if(!["--screen","--blender","--width","--height","--samples","--start","--end","--music","--scene"].includes(k))
       throw Error("Unrecognized argument: "+k);
     if(!argv[++i])throw Error("Missing value for "+k);
@@ -65,7 +66,7 @@ async function main(){
     title:"PROMPTENCE / Cinematic Engine 2.0",
     source:o.screen,authenticProductSource:true,engine:"Blender Cycles (ray tracing)",
     width:o.width,height:o.height,fps:24,frames:n,durationSeconds:n/24,
-    samples:o.samples,output:o.output,score:o.music,scene:o.scene,
+    samples:o.samples,output:o.output,score:o.music,scene:o.scene,encodeOnly:o.encodeOnly,
     publicationApproved:false,
     note:"Decoder/frame verification is not commercial creative approval"
   };
@@ -80,7 +81,12 @@ async function main(){
     "--screenshot",o.screen,"--output",frameDir,"--save-blend",blend,
     "--width",String(o.width),"--height",String(o.height),
     "--samples",String(o.samples),"--frames",o.start+":"+o.end,"--sequence"];
-  run(o.blender,args,40*60*1000);
+  if(o.encodeOnly){
+    if(!existsSync(blend)||statSync(blend).size<30000)
+      throw Error("Encode-only requires a real editable packed .blend from this output path");
+  }else{
+    run(o.blender,args,40*60*1000);
+  }
   for(let i=o.start;i<=o.end;i++){
     const frame=path.join(frameDir,"frame_"+String(i).padStart(4,"0")+".png");
     if(!existsSync(frame)||statSync(frame).size<10000)
@@ -95,7 +101,7 @@ async function main(){
   ffargs.push("-frames:v",String(n),"-c:v","libx264","-preset","slow",
     "-crf","16","-pix_fmt","yuv420p");
   if(o.music)ffargs.push("-c:a","aac","-b:a","192k","-af",
-    "atrim=0:"+String(n/24)+",afade=t=out:st="+String(Math.max(.1,n/24-.35))+":d=.3");
+    "atrim=0:"+String(n/24)+",afade=t=out:st="+String(Math.max(.1,n/24-.35))+":d=0.3");
   else ffargs.push("-an");
   ffargs.push("-movflags","+faststart",o.output);
   run("ffmpeg",ffargs,600000);
