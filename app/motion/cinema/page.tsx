@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { PromptenceFilm } from "@/lib/motion/cinema/promptence-film";
+import type { PromptenceFilm } from "@/lib/motion/cinema/promptence-film-v5";
 import styles from "./cinema.module.css";
 
 declare global {
@@ -38,7 +38,7 @@ export default function CinematicDirector() {
     window.__motionCinemaError = undefined;
     const width = exportMode.current ? 1920 : 1280;
     const height = exportMode.current ? 1080 : 720;
-    void import("@/lib/motion/cinema/promptence-film").then(({ createPromptenceFilm }) => {
+    void import("@/lib/motion/cinema/promptence-film-v5").then(({ createPromptenceFilm }) => {
       if (closed || !frame.current) return;
       const director = createPromptenceFilm(width, height);
       if (closed) { director.dispose(); return; }
@@ -168,17 +168,17 @@ export default function CinematicDirector() {
         <div className={styles.grain} aria-hidden="true" />
         <div className={styles.topline}>MARGARYAN LABS <span>PRODUCT INTELLIGENCE / 001</span></div>
         <div className={styles.headline} style={{ opacity: introOpacity }}>
-          <span className={styles.kicker}>A NEW DECISION LAYER</span>
-          <strong>They ask AI.<br /><i>Who does it choose?</i></strong>
+          <span className={styles.kicker}>THE NEW DISCOVERY ECONOMY</span>
+          <strong>Your next customer<br /><i>is asking AI.</i></strong>
         </div>
         <div className={styles.middle} style={{ opacity: middleOpacity }}>
-          <span>QUESTION → OBSERVATION → EVIDENCE → ACTION</span>
+          <span>BEYOND THE ANSWER. INTO THE EVIDENCE.</span>
         </div>
         <div className={styles.final} style={{ opacity: finalOpacity }}>
           <img src="/motion/brands/promptence.svg" alt="Promptence official mark" />
           <strong>PROMPTENCE</strong>
           <span>AI RECOMMENDATION INTELLIGENCE</span>
-          <small>BE PART OF THE ANSWER. · PROMPTENCE.TECH</small>
+          <small>UNDERSTAND THE ANSWER. · PROMPTENCE.TECH</small>
         </div>
         <div className={styles.bottomline}>PROMPTENCE <span>01 / 01 — CINEMATIC PROOF</span></div>
       </div>
@@ -215,9 +215,9 @@ export default function CinematicDirector() {
       </div>
       <div className={styles.shotlist} aria-label="Cinematic shot navigation">
         {[
-          {at:.8,num:"01",title:"THE QUESTION",subtitle:"Photographic product reveal"},
-          {at:4.85,num:"02",title:"FROM ANSWER TO EVIDENCE",subtitle:"3D signal choreography"},
-          {at:8.75,num:"03",title:"THE BRAND MOMENT",subtitle:"Signature logo and final line"}
+          {at:.8,num:"01",title:"THE DISCOVERY",subtitle:"Real product / engineered reflections"},
+          {at:5.7,num:"02",title:"THE EVIDENCE FIELD",subtitle:"600 signal particles / physical orbital sculpture"},
+          {at:8.8,num:"03",title:"SIGNAL TO IDENTITY",subtitle:"The brand emerges from the intelligence field"}
         ].map(shot => <button key={shot.num} type="button"
           data-current={position >= (shot.num==="03"?7.75:shot.num==="02"?3.35:0)
             && position < (shot.num==="01"?3.35:shot.num==="02"?7.75:10.01)}
