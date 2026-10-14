@@ -32,8 +32,8 @@ function options(args) {
   o.fps = Number(o.fps);
   const url = new URL(o.url);
   if (url.protocol !== "http:" || !["localhost", "127.0.0.1", "[::1]"].includes(url.hostname) ||
-      url.pathname !== "/motion/cinema/v8")
-    throw Error("V8 renderer accepts only local Studio /motion/cinema/v8");
+      url.pathname !== "/motion/cinema/v9")
+    throw Error("V9 renderer accepts only local Studio /motion/cinema/v9");
   if (o.screen && o.capturePublic) throw Error("Choose either --screen or --capture-public, not both");
   if (!o.screen && !o.capturePublic && !o.concept) throw Error("Real product screenshot is required. Use --screen owner-approved.png, --capture-public for the official landing, or --concept for a clearly non-product draft.");
   return o;
