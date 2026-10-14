@@ -145,7 +145,9 @@ bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
 plinth.data.materials.append(MAT_SLATE);bevel(plinth,.030,6)
 cube("Endless studio / satin shadow floor",(0,0,-.075),(200,200,.08),MAT_GROUND,.025)
 
-# Editorial decision V2.1: no decorative ring behind the product.\n\nlaptop_anchor=bpy.data.objects.new("Laptop rig / independent geometry",None)
+# Editorial decision V2.1: no decorative ring behind the product.
+
+laptop_anchor=bpy.data.objects.new("Laptop rig / independent geometry",None)
 bpy.context.collection.objects.link(laptop_anchor)
 laptop_anchor.location=(0,-.07,.14)
 # Keyboard deck. Rear of device is +Y. Front faces the viewer at -Y.
@@ -214,7 +216,9 @@ bpy.ops.mesh.primitive_uv_sphere_add(segments=24,ring_count=12,radius=.022,
 camera_dot=bpy.context.object;camera_dot.name="Lens / 2mm actual physical camera"
 camera_dot.data.materials.append(MAT_DARK);parent_world(camera_dot,lid)
 
-# V2.1 quality gate: omit unreadable feature cards. Show the actual product screen instead.\n\n# Photography: a few large diffusion sources, directional rims and warm architectural light.
+# V2.1 quality gate: omit unreadable feature cards. Show the actual product screen instead.
+
+# Photography: a few large diffusion sources, directional rims and warm architectural light.
 area("Key softbox / precise 3.5m",( -5.1,-4.6,7.7),1050,(.91,1,.94),3.6,5.5,(0,0,1.65))
 area("Right ribbon / aluminium specular",(5.1,.7,5.2),560,(.73,1,.81),.72,4.5,(0,0,2.1))
 area("Long overhead diffusion",(0,3.8,8.7),790,(.94,.97,1),5.8,2.0,(0,0,1))
