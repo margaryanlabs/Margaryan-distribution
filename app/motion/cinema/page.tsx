@@ -208,12 +208,12 @@ export default function CinematicDirector() {
         <output>{position.toFixed(2)} / 20.00</output>
       </div>
       <div className={styles.masterNote}>
-        <div><span>PREPARING INDEPENDENT V7 MP4 PROOF</span>
-          <strong>V7 editor is available. The new MP4 will appear here only after real rendering and frame checks.</strong>
+        <div><span>INDEPENDENT RENDER VERIFIED / V7</span>
+          <strong>20 seconds · 1920×1080 · 480 verified 3D frames · English voice · original score</strong>
           <small>The verified MP4 includes a read-only real public Promptence page capture.
             Your live WebGL preview stays editable separately.</small></div>
-        <a href="https://d2ol7oe51mr4n9.cloudfront.net/user_3HoFPSIfr8HaTS2uAE1uxoDnLl0/37e7e46e-3555-4727-81d8-8f241daa67d2.mp4"
-          target="_blank" rel="noreferrer noopener">▶ WATCH VERIFIED V6 MP4 ↗</a>
+        <a href="https://d2ol7oe51mr4n9.cloudfront.net/user_3HoFPSIfr8HaTS2uAE1uxoDnLl0/9b62ee20-9f82-4cb4-bf81-3ff4714450b2.mp4"
+          target="_blank" rel="noreferrer noopener">▶ WATCH VERIFIED V7 MP4 ↗</a>
       </div>
       <div className={styles.exportbar}>
         <div>
