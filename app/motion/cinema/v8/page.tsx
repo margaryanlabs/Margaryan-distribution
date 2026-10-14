@@ -6,10 +6,6 @@ import styles from "./v8.module.css";
 
 const TOTAL=5;
 const clip=(x:number)=>Math.min(TOTAL,Math.max(0,x));
-const fade=(a:number,b:number,t:number)=>{
- const x=Math.min(1,Math.max(0,(t-a)/(b-a)));
- return x*x*(3-2*x);
-};
 
 export default function PromptenceCinematicV8(){
  const mount=useRef<HTMLDivElement>(null);
@@ -97,8 +93,6 @@ export default function PromptenceCinematicV8(){
     setStatus("APPROVED REAL PRODUCT SCREEN INSTALLED");setError("");
    }catch(e){setError(e instanceof Error?e.message:String(e));}
  }
- const opening=fade(.55,1.1,seconds)*(1-fade(2.55,3.25,seconds));
- const transition=fade(3.05,3.7,seconds)*(1-fade(4.40,5,seconds));
  return <main className={styles.root} style={isExport?{
    position:"fixed",inset:0,width:1920,height:1080,padding:0,
    zIndex:2147483647,background:"#050c08",isolation:"isolate",overflow:"hidden"
@@ -113,13 +107,7 @@ export default function PromptenceCinematicV8(){
   <section className={styles.stage}>
     <div id="cinema-film-frame" ref={mount} className={styles.frame}
       style={isExport?{width:1920,height:1080,aspectRatio:"auto",border:"none"}:undefined}>
-      {opening>.001&&<div className={styles.copy} style={{opacity:opening}}>
-       <small>THE INVISIBLE MARKET / 001</small>
-       <strong>AI is answering.<br/><em>Are you visible?</em></strong>
-      </div>}
-      {transition>.001&&<div className={styles.transition} style={{opacity:transition}}>
-        <span>AN ANSWER IS NOT THE WHOLE STORY.</span>
-      </div>}
+}
       <div className={styles.corners}>
        <span>MARGARYAN LABS / PROMPTENCE</span><span>SHOT 001 — ACTUAL WEBGL CAMERA</span>
       </div>
@@ -145,7 +133,7 @@ export default function PromptenceCinematicV8(){
     </button>)}
    </div>
    <div className={styles.provenance}>
-    <div><strong>WHAT IS REAL?</strong><p>The screen is an unchanged screenshot of the public Promptence homepage captured October 14, 2026. In the transformation, ten physically separated 3D surfaces reuse pixels of the same photograph. No invented AI scores or clients.</p></div>
+    <div><strong>WHAT IS REAL?</strong><p>The screen is an unchanged screenshot of the public Promptence homepage captured October 14, 2026. In the transformation, five full-height milled 3D surfaces reuse pixels of the same photograph. No invented AI scores or clients.</p></div>
     <span className={sourceReady?styles.success:styles.warning}>
       {sourceReady?"REAL PUBLIC SCREEN ACTIVE":"CONCEPT SCREEN — IMPORT REAL CAPTURE"}
     </span>
