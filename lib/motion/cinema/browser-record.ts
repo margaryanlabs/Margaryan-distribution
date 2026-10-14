@@ -1,8 +1,8 @@
 "use client";
 
-import type { PromptenceFilm } from "./promptence-film-v6";
+import type { PromptenceFilm } from "./promptence-film-v7";
 
-const DURATION = 16;
+const DURATION = 20;
 const W = 1280, H = 720;
 const GREEN = "#9df4c1";
 const IVORY = "#f4f0e7";
@@ -42,10 +42,11 @@ async function officialMark() {
 }
 
 function drawType(ctx:CanvasRenderingContext2D, time:number, mark:HTMLImageElement) {
-  const intro = smooth(0,.7,time) * (1-smooth(3.1,4.1,time));
-  const transform = smooth(4.4,5.1,time) * (1-smooth(6.6,7.4,time));
-  const bridge = smooth(8.0,8.65,time) * (1-smooth(11.25,12.35,time));
-  const closing = smooth(12.55,14.25,time);
+  const intro = smooth(0,.7,time) * (1-smooth(3.3,4.35,time));
+  const transform = smooth(4.35,5.05,time) * (1-smooth(6.5,7.35,time));
+  const bridge = smooth(8.1,8.9,time) * (1-smooth(11.8,12.65,time));
+  const optics = smooth(13,13.75,time) * (1-smooth(15.55,16.35,time));
+  const closing = smooth(16.65,18.35,time);
   ctx.save();
   // Match the preview frame's restrained vignetting without flattening its WebGL geometry.
   const vignette=ctx.createRadialGradient(640,330,90,640,340,820);
@@ -76,6 +77,13 @@ function drawType(ctx:CanvasRenderingContext2D, time:number, mark:HTMLImageEleme
     ctx.fillText("SEE THE SOURCES. UNDERSTAND THE SIGNAL.",640,614);
     ctx.textAlign="left";
   }
+  if (optics>0) {
+    ctx.globalAlpha=optics;
+    ctx.fillStyle="#def7e8";ctx.textAlign="center";
+    ctx.font="700 23px Arial, sans-serif";
+    ctx.fillText("FROM EVIDENCE TO ACTION.",640,614);
+    ctx.textAlign="left";
+  }
   if (closing>0) {
     ctx.globalAlpha=closing;
     const bg=ctx.createLinearGradient(0,0,1280,700);
@@ -97,7 +105,7 @@ function drawType(ctx:CanvasRenderingContext2D, time:number, mark:HTMLImageEleme
   ctx.globalAlpha=1;
   ctx.fillStyle="#8aa896";ctx.font="700 12px Arial, sans-serif";
   ctx.fillText("PROMPTENCE",65,686);
-  ctx.textAlign="right";ctx.fillText("01 / 04 — CINEMATIC TRANSFORMATION",1215,686);
+  ctx.textAlign="right";ctx.fillText("01 / 05 — PRODUCT TO PROOF",1215,686);
   ctx.restore();
 }
 
@@ -150,7 +158,7 @@ export async function recordPromptenceCinema({film,onProgress,signal}:CinemaReco
     await new Promise<void>((resolve,reject)=>{
       const step=(now:number)=>{
         if (signal?.aborted) { reject(new Error("Video export cancelled"));return; }
-        if (recorder.state!=="recording") {reject(new Error("Recording stopped before 16 seconds"));return;}
+        if (recorder.state!=="recording") {reject(new Error("Recording stopped before 20 seconds"));return;}
         const t=Math.min(DURATION,(now-started)/1000);
         try {
           paint(t);
