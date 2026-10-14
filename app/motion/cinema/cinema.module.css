@@ -66,3 +66,15 @@
 .exportProgress i{display:block;background:#9df4c1;height:100%;transition:width .15s linear}
 @media(max-width:750px){.exportbar{flex-direction:column;align-items:stretch}
   .exportbar button{min-width:0;width:100%}}
+
+.masterNote{display:flex;gap:24px;align-items:center;border:1px solid #3c7655;
+  background:linear-gradient(135deg,#153022,#0b1b13);padding:21px 24px}
+.masterNote>div{flex:1;display:grid;gap:8px}
+.masterNote span{font:700 10px Arial,sans-serif;letter-spacing:.16em;color:#a4f2c2}
+.masterNote strong{font-size:14px;line-height:1.3;color:#f4f0e7;letter-spacing:-.01em}
+.masterNote small{color:#a3c1ad;font-size:11px;line-height:1.55}
+.masterNote>a{white-space:nowrap;background:#a4f2c2;color:#07120b;text-decoration:none;
+  font:800 11px Arial,sans-serif;padding:19px 22px;letter-spacing:.04em}
+.masterNote>a:hover{background:#e6fbea}
+@media(max-width:750px){.masterNote{flex-direction:column;align-items:stretch}
+.masterNote>a{text-align:center;white-space:normal}}
