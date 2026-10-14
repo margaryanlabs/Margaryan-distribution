@@ -17,8 +17,8 @@
 .headline strong i{font-style:normal;color:#9df4c1}
 .middle{position:absolute;z-index:4;left:5%;right:5%;bottom:14%;text-align:center;letter-spacing:.27em;color:#cbedd9;font-size:clamp(8px,1.2vw,19px);font-weight:650;text-shadow:0 0 24px #000;pointer-events:none}
 .final{position:absolute;z-index:6;inset:0;background:linear-gradient(115deg,#07100cf7,#07100cdb);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2%;pointer-events:none}
-.final img{width:min(9%,130px);height:auto;min-width:36px;filter:drop-shadow(0 2px 14px #0008)}
-.final strong{font-size:clamp(28px,5.8vw,92px);letter-spacing:-.06em;line-height:1;font-weight:700}
+.final img{width:min(15%,190px);height:auto;min-width:52px;filter:drop-shadow(0 2px 14px #0008)}
+.final strong{font-size:clamp(48px,9.1vw,150px);letter-spacing:-.065em;line-height:1;font-weight:700}
 .final span{letter-spacing:.21em;color:#9df4c1;font-size:clamp(8px,1vw,17px);font-weight:700}
 .final small{margin-top:4%;letter-spacing:.2em;color:#fff;font-size:clamp(7px,.8vw,13px)}
 .controls{max-width:1500px;margin:20px auto 0;display:grid;gap:14px}
