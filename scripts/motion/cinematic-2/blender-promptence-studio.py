@@ -33,6 +33,7 @@ def args():
     p.add_argument("--frame", type=int, default=42)
     p.add_argument("--fps", type=int, default=24)
     p.add_argument("--save-blend", default=None)
+    p.add_argument("--hdri", default=None, help="Optional CC0 studio HDRI (Poly Haven)")
     p.add_argument("--engine", choices=["CYCLES", "BLENDER_EEVEE_NEXT"], default="CYCLES")
     o = p.parse_args(raw)
     w,h = (int(v) for v in o.size.lower().split("x"))
@@ -167,9 +168,9 @@ def camera_pose(pos, focus, focal):
 # Palette: no toy neon. Physically based graphite, neutral metals, ivory areas.
 graphite,_=principled("01 | dark graphite",(.027,.032,.031,1),.38,.31,.12)
 noisy_surface(graphite,.12,.018,64)
-aluminium,_=principled("02 | satin-machined silver",(.40,.45,.43,1),.88,.22,.24)
+aluminium,_=principled("02 | satin-machined silver",(.31,.34,.32,1),.91,.21,.30)
 noisy_surface(aluminium,.043,.0026,390)
-rim_metal,_=principled("03 | precisely machined lid edge",(.64,.71,.67,1),.94,.18,.35)
+rim_metal,_=principled("03 | precisely machined lid edge",(.53,.57,.55,1),.95,.16,.30)
 keys,_=principled("04 | matte keyboard",(.018,.025,.022,1),.22,.36,.12)
 noisy_surface(keys,.055,.0015,180)
 laptop_glass,_=principled("05 | deep monitor glass",(.011,.017,.015,1),.18,.07,.72)
@@ -178,7 +179,7 @@ rock,_=principled("07 | wet basalt detail",(.024,.029,.029,1),.13,.38,.12)
 noisy_surface(rock,.46,.022,26)
 stone_top,_=principled("08 | dark stone plinth",(.021,.028,.026,1),.12,.36,.12)
 noisy_surface(stone_top,.28,.008,120)
-ground,_=principled("09 | ebony studio floor",(.018,.022,.020,1),.22,.16,.42)
+ground,_=principled("09 | ebony studio floor",(.009,.013,.012,1),.27,.19,.30)
 noisy_surface(ground,.035,.003,75)
 glass_card,_=principled("10 | charcoal optical glass",(.034,.053,.047,1),.21,.19,.48,.31)
 ivory,_=principled("11 | warm ivory letters",(.83,.94,.85,1),.09,.33,.25)
@@ -234,12 +235,12 @@ def ragged_plinth(name, radius, top=-.10, bottom=-.41, n=82):
 plinth=ragged_plinth("Foreground hero / basalt stage",4.36)
 # Backdrop is genuine rough 3D geometry with studio lighting, rather than
 # the black-void background visible in the original WebGL V9 workprint.
-wall_material,_=principled("15 | quarried graphite backwall",(.020,.026,.025,1),.07,.79,.04)
+wall_material,_=principled("15 | quarried graphite backwall",(.013,.018,.016,1),.08,.78,.03)
 noisy_surface(wall_material,.48,.048,12)
-cube("Background architectural slate wall",(0,9.1,3.8),(31,.55,10.7),
+cube("Background architectural slate wall",(0,12.1,3.8),(31,.55,10.7),
      wall_material,.25,2)
 for x in (-9.1,-7.25,6.8,8.75):
-    cube("Vertical quarried monolith %s"%x,(x,7.2,4.0),
+    cube("Vertical quarried monolith %s"%x,(x,9.4,4.0),
          (.70,.95,8.8),wall_material,.12,2)
 # Thin genuine glowing horizon. The light grazes the stone and subtly
 # silhouettes the laptop without flooding the product screen.
@@ -249,8 +250,8 @@ pp=horizon.node_tree.nodes.get("Principled BSDF")
 pp.inputs["Base Color"].default_value=(.6,.57,.49,1)
 pp.inputs["Emission Color"].default_value=(1,.83,.65,1)
 pp.inputs["Emission Strength"].default_value=6
-cube("Long warm horizon slit",(0,7.1,.55),(22,.055,.026),horizon,.009,2)
-area_light("Wide warm horizon bounce",(0,6.5,2.3),2350,9.0,1.7,
+cube("Long warm horizon slit",(0,7.1,.60),(22,.055,.026),horizon,.009,2)
+area_light("Wide warm horizon bounce",(0,6.5,2.3),900,9.0,1.7,
            color=(1,.78,.60),aim=(0,0,1.6))
 
 # Sparse photographic foreground rocks. Keep most of the floor available for
@@ -340,16 +341,16 @@ def feature_card(title,subtitle,x,y,z,delay):
 
 feature_card("AI VISIBILITY","Observe brand appearances", -4.34,2.50,3.60,0)
 feature_card("SOURCES","Trace supporting evidence", -4.49,2.40,2.30,10)
-feature_card("DIAGNOSIS","Find what needs to change", 4.34,2.50,3.44,20)
+feature_card("DIAGNOSIS","Find what needs to change", 3.75,3.0,3.63,20)
 
 # Subtle logo type on left of frame is cinematic layout, not a fake app metric.
 # It is deliberately behind the physical laptop and not oversized.
 add_text("Top left PROMPTENCE", "PROMPTENCE",(-4.8,2.6,5.25),.37,ivory,font)
 add_text("Headline identity", "UNDERSTAND THE ANSWER",(-4.8,2.6,4.92),.12,mint,font)
 
-area_light("Hero key / 4m softbox",(-4.2,-2.6,8.6),1730,6.2,3.3,
+area_light("Hero key / 4m softbox",(-4.2,-2.6,8.6),1150,6.2,3.3,
            color=(1,.97,.94),aim=(0,0,1.45))
-area_light("Card edge / silkbox",(5.3,2.5,7.2),1870,4.8,2,
+area_light("Card edge / silkbox",(5.3,2.5,7.2),1150,4.8,2,
            color=(.77,1,.86),aim=(.5,1.8,2.7))
 area_light("Neutral screen glance",(0,-7.5,5.2),220,3.8,2.0,
            color=(1,1,1),aim=(0,1.7,2.4))
@@ -358,7 +359,13 @@ world=bpy.data.worlds.new("Near-black studio / no fake stars")
 scene.world=world
 world.use_nodes=True
 world.node_tree.nodes.get("Background").inputs["Color"].default_value=(.018,.025,.021,1)
-world.node_tree.nodes.get("Background").inputs["Strength"].default_value=.42
+world.node_tree.nodes.get("Background").inputs["Strength"].default_value=.35
+if O.hdri:
+    if not os.path.isfile(O.hdri):
+        raise FileNotFoundError("Expected CC0 HDRI path does not exist: "+O.hdri)
+    env_node=world.node_tree.nodes.new("ShaderNodeTexEnvironment")
+    env_node.image=bpy.data.images.load(os.path.abspath(O.hdri), check_existing=True)
+    world.node_tree.links.new(env_node.outputs["Color"],world.node_tree.nodes.get("Background").inputs["Color"])
 
 cam_data=bpy.data.cameras.new("Cinema lens 50mm")
 cam=bpy.data.objects.new("Cinema lens 50mm",cam_data)
@@ -396,6 +403,10 @@ scene["publication_approved"]=False
 scene["cinematic_gate"]="Single frame must pass HUMAN art direction review before 120-frame master"
 
 if O.save_blend:
+    # Portable project: pack *only* the owner-approved screen and CC0 HDRI image,
+    # never bundle font files or external account content.
+    image.pack()
+    if O.hdri:env_node.image.pack()
     bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath(O.save_blend))
 scene.render.filepath=os.path.abspath(O.out)
 bpy.ops.render.render(write_still=True)
