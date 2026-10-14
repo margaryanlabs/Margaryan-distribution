@@ -73,6 +73,8 @@ assert.match(cli,/ffprobe/);
 assert.match(cli,/new Set\(frameEvidence\.map/);
 assert.match(cli,/https:\/\/promptence\.tech\//);
 assert.match(cli,/WebGL unavailable/);
+assert.match(cli,/Cinema stage is not isolated from global site navigation/);
+assert.match(p,/zIndex:2147483647/);
 assert.ok(!/^\\s*(?:import|require)\\b[^\\n]*(?:espeak|pillow)/im.test(f));
 assert.match(r("app/motion/page.tsx"),/href="\/motion\/cinema"/);
 const syntax=spawnSync(process.execPath,["--check",script],{encoding:"utf8"});
