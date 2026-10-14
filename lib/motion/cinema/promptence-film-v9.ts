@@ -125,14 +125,15 @@ export function createV9Film(width:number,height:number):V9Film {
  const rocky=new THREE.MeshPhysicalMaterial({
   color:0x1a201d,metalness:.17,roughness:.81,envMapIntensity:.5
  });
- for(let i=0;i<23;i++){
-  const angle=i*2.39996323;
-  const distance=6.4+noise(i+910)*6.1;
-  const x=Math.cos(angle)*distance,z=Math.sin(angle)*distance-2.5;
-  const r=.95+noise(i+120)*2.1;
+ for(let i=0;i<16;i++){
+  // Backdrop only. Foreground monoliths must NEVER hide the actual laptop.
+  const side=i<8?-1:1;
+  const x=side*(7.2+noise(i+910)*5.8);
+  const z=-4.8-noise(i+44)*6.2;
+  const r=.72+noise(i+120)*.92;
   const rock=new THREE.Mesh(basalt(i+11,r),rocky);
-  rock.scale.set(.68+noise(i+28)*.6,1+noise(i+38)*2.15,.65+noise(i+44)*.5);
-  rock.position.set(x,-.65+rock.scale.y*r*.33,z);
+  rock.scale.set(.66+noise(i+28)*.45,.9+noise(i+38)*.9,.70+noise(i+44)*.36);
+  rock.position.set(x,-.49+rock.scale.y*r*.35,z);
   rock.rotation.set(noise(i)*.21,i*1.72,noise(i+19)*.16);
   scene.add(rock);rocks.push(rock);
  }
@@ -221,11 +222,11 @@ export function createV9Film(width:number,height:number):V9Film {
   img.position.z=.039;group.add(img);
   const leftSide=i<3;
   const index=leftSide?i:i-3;
-  const x=leftSide?-5.13:5.07;
+  const x=leftSide?-4.87:4.9;
   const y=leftSide?3.25-index*.92:2.71-index*1.02;
-  group.position.set(x,y,1.4);
+  group.position.set(x,y,1.3);
   group.rotation.y=leftSide?-.13:.12;
-  panels.push({group,body,material:mat,x,y,z:1.4,delay:i*.2});
+  panels.push({group,body,material:mat,x,y,z:1.3,delay:i*.2});
  });
 
  let realScreen:THREE.Texture|undefined,disposed=false;
@@ -236,10 +237,10 @@ export function createV9Film(width:number,height:number):V9Film {
   const reveal=ease(0,1.6,t);
   const cameraMove=ease(.4,7.9,t);
   // 8s cinema camera: medium-wide reveal → orbit → restrained screen push-in.
-  camera.position.set(lerp(7.2,4.35,cameraMove),lerp(4.4,3.7,cameraMove),
-   lerp(16.8,12.7,cameraMove));
-  camera.lookAt(new THREE.Vector3(lerp(.3,0,cameraMove),1.72,lerp(-.3,0,cameraMove)));
-  camera.fov=lerp(41.5,40,cameraMove);camera.updateProjectionMatrix();
+  camera.position.set(lerp(5.4,2.65,cameraMove),lerp(3.85,3.05,cameraMove),
+   lerp(12.8,9.45,cameraMove));
+  camera.lookAt(new THREE.Vector3(lerp(.1,0,cameraMove),1.63,lerp(-.15,0,cameraMove)));
+  camera.fov=lerp(40.5,40,cameraMove);camera.updateProjectionMatrix();
   laptop.rotation.y=lerp(-.17,.13,ease(0,7.9,t));
   laptop.position.y=-.06+.055*Math.sin(t*.5);
   rim.intensity=lerp(8,35,reveal);
