@@ -133,6 +133,16 @@ export default function PromptenceCinematicV9(){
      <a href="https://d2ol7oe51mr4n9.cloudfront.net/user_3HoFPSIfr8HaTS2uAE1uxoDnLl0/1a4864a6-557e-46c1-ba27-f956d36c2dbc.mp4"
        target="_blank" rel="noopener noreferrer">▶ WATCH REAL V9 MP4</a>
    </div>
+   <div className={styles.master}>
+     <div><small>CINEMATIC ENGINE 2.1 · RAY-TRACED MASTER</small>
+       <strong>ACTUAL BLENDER CYCLES · CLEAN PRODUCT COMPOSITION · 48 RENDERED FRAMES</strong>
+       <span>The new Blender master removes the oversized basalt stage, decorative ring and unreadable glass label. Verified 2-second 960×540 review master with full-length AAC audio; editable packed scene available. This is separate from the V9 WebGL preview.</span>
+     </div>
+     <a href="https://d2ol7oe51mr4n9.cloudfront.net/user_3HoFPSIfr8HaTS2uAE1uxoDnLl0/69e807dc-40f8-4190-98d8-eb70eb06d334.mp4"
+       target="_blank" rel="noopener noreferrer">▶ WATCH CYCLES 2.1</a>
+     <a href="https://d2ol7oe51mr4n9.cloudfront.net/user_3HoFPSIfr8HaTS2uAE1uxoDnLl0/a0c83c40-75c1-4950-8f3e-8f16fe273e4e.zip"
+       target="_blank" rel="noopener noreferrer">↓ EDITABLE BLENDER SCENE</a>
+   </div>
    <div className={styles.beats}>
     {[{at:.7,n:"01",title:"STUDIO REVEAL"},{at:3.3,n:"02",title:"REAL PRODUCT"},{at:6.65,n:"03",title:"CAPABILITIES IN SPACE"}].map(b=>
     <button key={b.n} disabled={!ready} onClick={()=>{stop();shot.current?.setTime(b.at);setSeconds(b.at)}}>
