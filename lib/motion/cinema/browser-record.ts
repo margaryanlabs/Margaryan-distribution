@@ -1,6 +1,6 @@
 "use client";
 
-import type { PromptenceFilm } from "./promptence-film";
+import type { PromptenceFilm } from "./promptence-film-v5";
 
 const DURATION = 10;
 const W = 1280, H = 720;
@@ -57,16 +57,16 @@ function drawType(ctx:CanvasRenderingContext2D, time:number, mark:HTMLImageEleme
   if (intro>0) {
     ctx.globalAlpha=intro;
     ctx.font="700 14px Arial, sans-serif";ctx.fillStyle=GREEN;
-    ctx.fillText("A NEW DECISION LAYER",114,237);
-    ctx.font="650 76px Arial, sans-serif";ctx.fillStyle=IVORY;
-    ctx.fillText("They ask AI.",112,345);
-    ctx.fillStyle=GREEN;ctx.fillText("Who does it choose?",112,440);
+    ctx.fillText("THE NEW DISCOVERY ECONOMY",80,235);
+    ctx.font="650 60px Arial, sans-serif";ctx.fillStyle=IVORY;
+    ctx.fillText("Your next customer",80,335);
+    ctx.fillStyle=GREEN;ctx.fillText("is asking AI.",80,411);
   }
   if (bridge>0) {
     ctx.globalAlpha=bridge;
     ctx.font="700 22px Arial, sans-serif";
     ctx.fillStyle="#def7e8";ctx.textAlign="center";
-    ctx.fillText("QUESTION  →  OBSERVATION  →  EVIDENCE  →  ACTION",640,614);
+    ctx.fillText("BEYOND THE ANSWER. INTO THE EVIDENCE.",640,614);
     ctx.textAlign="left";
   }
   if (closing>0) {
@@ -84,7 +84,7 @@ function drawType(ctx:CanvasRenderingContext2D, time:number, mark:HTMLImageEleme
     ctx.fillStyle=GREEN;ctx.font="700 17px Arial, sans-serif";
     ctx.fillText("AI RECOMMENDATION INTELLIGENCE",640,452);
     ctx.fillStyle=IVORY;ctx.font="700 13px Arial, sans-serif";
-    ctx.fillText("BE PART OF THE ANSWER.  ·  PROMPTENCE.TECH",640,548);
+    ctx.fillText("UNDERSTAND THE ANSWER.  ·  PROMPTENCE.TECH",640,548);
     ctx.textAlign="left";
   }
   ctx.globalAlpha=1;
