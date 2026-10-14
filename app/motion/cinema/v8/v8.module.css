@@ -38,3 +38,11 @@
 .error{color:#ffb9ad;border:1px solid #a95249;padding:15px}
 @media(max-width:920px){.heading{display:block}.state{margin:12px 0}.provenance{flex-wrap:wrap}.copy strong{font-size:clamp(18px,4.6vw,48px)}}
 @media(max-width:700px){.root{padding:10px}.beats{grid-template-columns:1fr}.corners,.footer{font-size:6px}.timeline{gap:8px}.timeline button{min-width:105px;padding:12px 7px}.timeline output{min-width:72px;font-size:10px}.copy small{font-size:6px}.copy strong{margin-top:8px}.provenance{display:grid;gap:12px}}
+
+.master{display:flex;align-items:center;gap:24px;padding:19px 24px;background:linear-gradient(115deg,#0d2819,#08160e);border:1px solid #37664b}
+.master div{display:grid;gap:8px;flex:1}
+.master small{color:#9decbc;letter-spacing:.15em;font-size:10px;font-weight:700}
+.master strong{font-size:13px;letter-spacing:.02em;color:#eefbf1}
+.master span{color:#91af9a;font-size:11px;line-height:1.5}
+.master a{display:block;padding:17px 19px;background:#a0eaba;color:#061509;text-decoration:none;font-size:11px;letter-spacing:.06em;font-weight:800;white-space:nowrap}
+@media(max-width:850px){.master{flex-wrap:wrap}.master a{width:100%;white-space:normal;text-align:center}}
