@@ -34,6 +34,7 @@ def args():
     p.add_argument("--fps", type=int, default=24)
     p.add_argument("--save-blend", default=None)
     p.add_argument("--hdri", default=None, help="Optional CC0 studio HDRI (Poly Haven)")
+    p.add_argument("--laptop-glb", default=None, help="Optional reviewed CC0 high-detail laptop GLB model")
     p.add_argument("--engine", choices=["CYCLES", "BLENDER_EEVEE_NEXT"], default="CYCLES")
     o = p.parse_args(raw)
     w,h = (int(v) for v in o.size.lower().split("x"))
@@ -43,6 +44,8 @@ def args():
         p.error("Shot frame must be 1..120 (5-second cinematic take)")
     if not os.path.isfile(o.screen):
         p.error("A real, existing product screenshot is REQUIRED")
+    if o.laptop_glb and not os.path.isfile(o.laptop_glb):
+        p.error("The high-detail laptop GLB asset path is missing")
     return o,w,h
 
 O,W,H = args()
@@ -309,6 +312,37 @@ bpy.ops.mesh.primitive_uv_sphere_add(segments=14,ring_count=8,radius=.024,
                                     location=(0,1.693,4.105))
 bpy.context.object.name="Built-in laptop camera dot";bpy.context.object.data.materials.append(keys)
 
+
+# Production asset switch: a legitimately published CC0 laptop with separately
+# modelled real metal keys/screen/housing, instead of our procedural keyboard.
+# The owner-approved screen texture remains a separate real plane.
+if O.laptop_glb:
+    manual_prefixes=(
+        "Satin presentation foot","Laptop chassis","Keyboard well",
+        "Anodized metal front lip","Precision tactile trackpad",
+        "Key / row","Full metal keyboard spacebar","Metal laptop hinge",
+        "Laptop upper lid","LCD black glass surround","Built-in laptop camera dot"
+    )
+    for ob in bpy.data.objects:
+        if any(ob.name.startswith(p) for p in manual_prefixes):
+            ob.hide_render=True
+    before=set(bpy.data.objects.keys())
+    bpy.ops.import_scene.gltf(filepath=os.path.abspath(O.laptop_glb))
+    imported=[bpy.data.objects[name] for name in bpy.data.objects.keys() if name not in before]
+    meshes=[ob for ob in imported if ob.type=="MESH"]
+    if not meshes:
+        raise RuntimeError("CC0 laptop asset has no mesh")
+    for ob in imported:
+        if ob.type=="MESH":
+            ob.name="CC0 professional laptop model | "+ob.name
+            ob.scale=(16.9,16.9,16.9)
+            ob.location=(0,0,.07)
+    # 16:9 approved website screenshot on the foreground of the actual panel.
+    screen.location=(0,1.44,2.27)
+    screen.scale=(3.025,1.70,1)
+    print("CC0_LAPTOP_MODEL_LOADED",len(meshes),"mesh objects",
+          "file",os.path.basename(O.laptop_glb))
+
 # A single very subtle arch silhouette behind the machine, not a literal glowing green orb.
 arc_curve("Architectural backlight arc",(2.1,5.6,3.15),3.25,arc_mat,radians(-33),radians(189))
 for side in (-1,1):
@@ -407,6 +441,15 @@ if O.save_blend:
     # never bundle font files or external account content.
     image.pack()
     if O.hdri:env_node.image.pack()
+    if O.laptop_glb:
+        # GLB embeds its original PBR textures; pack only scene images (not fonts).
+        for ob in bpy.data.objects:
+            if ob.type=="MESH" and ob.name.startswith("CC0 professional laptop"):
+                for mat in ob.data.materials:
+                    if mat and mat.use_nodes:
+                        for n in mat.node_tree.nodes:
+                            if n.type=="TEX_IMAGE" and n.image and not n.image.packed_file:
+                                n.image.pack()
     bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath(O.save_blend))
 scene.render.filepath=os.path.abspath(O.out)
 bpy.ops.render.render(write_still=True)
