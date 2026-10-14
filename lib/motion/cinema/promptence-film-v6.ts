@@ -179,7 +179,7 @@ export function createPromptenceFilm(width:number,height:number):PromptenceFilm{
       uv.setXY(k,(col+uv.getX(k))/COLS,(row+uv.getY(k))/ROWS);
     }
     const material=new THREE.MeshBasicMaterial({
-      map:concept,transparent:true,opacity:0,depthWrite:false,
+      map:concept,color:0x6fa78c,transparent:true,opacity:0,depthWrite:false,
       side:THREE.DoubleSide,toneMapped:false
     });
     const mesh=new THREE.Mesh(geometry,material);
@@ -305,7 +305,7 @@ export function createPromptenceFilm(width:number,height:number):PromptenceFilm{
     const t=Math.min(CINEMA_SECONDS,Math.max(0,t0));
     const reveal=smooth(0,.9,t);
     const leaving=smooth(4.0,6.1,t);
-    const field=smooth(6.05,8.1,t)*(1-smooth(11.9,13.8,t));
+    const field=smooth(6.25,8.35,t)*(1-smooth(11.9,13.8,t));
     const collapse=smooth(11.25,13.45,t);
     // Opening editorial composition deliberately reserves clean left-side typography.
     // UI is on the right, without the old giant overlay blocking its contents.
@@ -351,11 +351,11 @@ export function createPromptenceFilm(width:number,height:number):PromptenceFilm{
     // A seamless physical transition: the product UI is its own texture on
     // sixty independent spatial shards. Absolute-time math prevents frame drift.
     device.updateMatrixWorld(true);
-    fragmentGroup.visible=t>=3.8&&t<12.9;
+    fragmentGroup.visible=t>=3.8&&t<9.4;
     screen.visible=t<4.35;
     for(const {mesh,x,y,theta,delay} of fragments){
       const into=smooth(3.75+delay,6.55+delay,t);
-      const vanish=smooth(11.0+delay*.3,12.75+delay*.3,t);
+      const vanish=smooth(6.75+delay*.3,9.0+delay*.3,t);
       const source=new THREE.Vector3(x,y,.153).applyMatrix4(device.matrixWorld);
       const circumference=new THREE.Vector3(
         Math.sin(theta)*2.6,
@@ -370,8 +370,8 @@ export function createPromptenceFilm(width:number,height:number):PromptenceFilm{
         lerp(device.rotation.y,theta*.65+t*.09,into),
         lerp(device.rotation.z,Math.sin(theta*.8)*.1,into)
       );
-      mesh.scale.setScalar(lerp(device.scale.x,.83,into)*(1-.88*vanish));
-      mesh.material.opacity=smooth(3.75+delay,4.7+delay,t)*(1-vanish)*.83;
+      mesh.scale.setScalar(lerp(device.scale.x,.73,into)*(1-.88*vanish));
+      mesh.material.opacity=smooth(3.75+delay,4.7+delay,t)*(1-vanish)*.52;
       mesh.visible=mesh.material.opacity>.004;
     }
 
