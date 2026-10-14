@@ -12,8 +12,8 @@
 .grain{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 47%,#0008 100%);z-index:1}
 .topline,.bottomline{position:absolute;z-index:5;left:4.8%;right:4.8%;font-size:clamp(7px,1vw,15px);letter-spacing:.16em;color:#c5d9cb;display:flex;justify-content:space-between}
 .topline{top:5.5%}.bottomline{bottom:5.2%;color:#8aa896}
-.headline{position:absolute;z-index:3;top:36%;left:9%;right:9%;transition:none;pointer-events:none}
-.headline strong{display:block;margin-top:2.5%;font-weight:650;letter-spacing:-.075em;font-size:clamp(26px,5.9vw,92px);line-height:.98;text-shadow:0 5px 30px #000e}
+.headline{position:absolute;z-index:3;top:33%;left:6%;right:auto;width:50%;transition:none;pointer-events:none}
+.headline strong{display:block;margin-top:2.5%;font-weight:650;letter-spacing:-.06em;font-size:clamp(27px,4.7vw,78px);line-height:1.02;text-shadow:0 4px 28px #000e}
 .headline strong i{font-style:normal;color:#9df4c1}
 .middle{position:absolute;z-index:4;left:5%;right:5%;bottom:14%;text-align:center;letter-spacing:.27em;color:#cbedd9;font-size:clamp(8px,1.2vw,19px);font-weight:650;text-shadow:0 0 24px #000;pointer-events:none}
 .final{position:absolute;z-index:6;inset:0;background:linear-gradient(115deg,#07100cf7,#07100cdb);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2%;pointer-events:none}
