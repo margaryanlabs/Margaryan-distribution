@@ -16,7 +16,7 @@
 .headline strong{display:block;margin-top:2.5%;font-weight:650;letter-spacing:-.06em;font-size:clamp(27px,4.7vw,78px);line-height:1.02;text-shadow:0 4px 28px #000e}
 .headline strong i{font-style:normal;color:#9df4c1}
 .middle{position:absolute;z-index:4;left:5%;right:5%;bottom:14%;text-align:center;letter-spacing:.27em;color:#cbedd9;font-size:clamp(8px,1.2vw,19px);font-weight:650;text-shadow:0 0 24px #000;pointer-events:none}
-.final{position:absolute;z-index:6;inset:0;background:linear-gradient(115deg,#07100cf7,#07100cdb);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2%;pointer-events:none}
+.final{position:absolute;z-index:6;inset:0;background:linear-gradient(120deg,#05100a,#09170e);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2%;pointer-events:none}
 .final img{width:min(15%,190px);height:auto;min-width:52px;filter:drop-shadow(0 2px 14px #0008)}
 .final strong{font-size:clamp(48px,9.1vw,150px);letter-spacing:-.065em;line-height:1;font-weight:700}
 .final span{letter-spacing:.21em;color:#9df4c1;font-size:clamp(8px,1vw,17px);font-weight:700}
