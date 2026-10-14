@@ -339,7 +339,8 @@ if O.laptop_glb:
             ob.location=(0,0,.07)
     # 16:9 approved website screenshot on the foreground of the actual panel.
     screen.location=(0,1.44,2.27)
-    screen.scale=(3.025,1.70,1)
+    # Screen dimensions were already applied to the mesh before GLB import;
+    # never scale them twice or the UI will overwhelm the entire shot.
     print("CC0_LAPTOP_MODEL_LOADED",len(meshes),"mesh objects",
           "file",os.path.basename(O.laptop_glb))
 
