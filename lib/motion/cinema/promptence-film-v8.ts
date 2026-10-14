@@ -108,16 +108,23 @@ export function createV8Shot(w:number,h:number):V8Shot {
  // genuine pixels from the owner-approved / public website capture.
  const ribbonGroup=new THREE.Group();scene.add(ribbonGroup);
  const strips:{mesh:THREE.Mesh<THREE.PlaneGeometry,THREE.MeshBasicMaterial>;
+  backing:THREE.Mesh<THREE.BoxGeometry,THREE.MeshPhysicalMaterial>;
   x:number;y:number;rank:number}[]=[];
- const cols=5,rows=2;
+ const cols=5,rows=1;
  for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
    const geom=new THREE.PlaneGeometry(7.17/cols,4.03/rows);
    const u=geom.getAttribute("uv") as THREE.BufferAttribute;
    for(let i=0;i<u.count;i++)u.setXY(i,(x+u.getX(i))/cols,(y+u.getY(i))/rows);
    const mat=new THREE.MeshBasicMaterial({map:placeholder,toneMapped:false,
     transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide});
-   const mesh=new THREE.Mesh(geom,mat);ribbonGroup.add(mesh);
-   strips.push({mesh,x:-3.585+(x+.5)*7.17/cols,y:-2.015+(y+.5)*4.03/rows,rank:y*cols+x});
+   const mesh=new THREE.Mesh(geom,mat);
+   // A milled graphite frame supplies a real thickness to each photographed shard.
+   const backing=new THREE.Mesh(new THREE.BoxGeometry(7.17/cols+.035,4.03/rows+.035,.035),
+     new THREE.MeshPhysicalMaterial({color:0x405648,metalness:.88,roughness:.23,
+       clearcoat:.87,clearcoatRoughness:.12,transparent:true,opacity:0}));
+   ribbonGroup.add(backing);ribbonGroup.add(mesh);
+   strips.push({mesh,backing,x:-3.585+(x+.5)*7.17/cols,
+     y:-2.015+(y+.5)*4.03/rows,rank:y*cols+x});
  }
  // Silhouette accents track the device depth, but have no fake "data".
  const glint=new THREE.PointLight(0xb2ffcf,0,12,2);glint.position.set(-3.2,1.95,.9);
@@ -144,31 +151,33 @@ export function createV8Shot(w:number,h:number):V8Shot {
     mix(-.47,-.26,pull)+.08*plunge,
     mix(-.06,.01,pull));
    // Screen fades into its own photographically truthful UV regions.
-   const split=ease(2.65,4.25,t);
-   screen.visible=t<4.6;
-   screen.material.opacity=1-.81*split;
-   const drag=ease(3.35,5,t);
-   product.scale.setScalar(1-.09*drag);
+   const split=ease(2.85,4.5,t);
+   screen.visible=t<4.98;
+   screen.material.opacity=1-.94*split;
+   product.scale.setScalar(1);
    product.updateMatrixWorld(true);
-   ribbonGroup.visible=t>=2.62;
+   ribbonGroup.visible=t>=2.84;
    for(const item of strips){
-     const reveal=ease(2.62+(item.rank%5)*.065,3.65+(item.rank%5)*.06,t);
-     const lift=ease(2.95+(item.rank%5)*.09,4.7+(item.rank%5)*.025,t);
-     const v=new THREE.Vector3(item.x,item.y,.16).applyMatrix4(product.matrixWorld);
-     const nx=(item.rank%5)-2;
-     const ny=Math.floor(item.rank/5)===0?-.5:.5;
+     const reveal=ease(2.84+item.rank*.08,3.8+item.rank*.04,t);
+     const lift=ease(3.2+item.rank*.075,4.9,t);
+     const v=new THREE.Vector3(item.x,item.y,.175).applyMatrix4(product.matrixWorld);
+     const nx=item.rank-2;
      const target=new THREE.Vector3(
-       .95+nx*.52,
-       ny*.86+.16,
-       .38+Math.cos(nx*.45)*.42+lift*.75);
+       product.position.x+item.x+nx*.085,
+       product.position.y+item.y+.018*Math.cos(nx*1.2),
+       product.position.z+.38+(nx+2)*.17);
      item.mesh.position.copy(v).lerp(target,lift);
      item.mesh.rotation.set(
-       product.rotation.x+(ny*.07)*lift,
-       product.rotation.y+nx*.105*lift,
-       product.rotation.z+nx*.016*lift);
-     const scale=product.scale.x*(1-.38*lift);
-     item.mesh.scale.setScalar(scale);
-     item.mesh.material.opacity=.93*reveal;
+       product.rotation.x,
+       product.rotation.y+nx*.035*lift,
+       product.rotation.z+nx*.013*lift);
+     item.mesh.scale.setScalar(product.scale.x);
+     item.mesh.material.opacity=.97*reveal;
+     item.backing.position.copy(item.mesh.position);
+     item.backing.position.z-=.038;
+     item.backing.rotation.copy(item.mesh.rotation);
+     item.backing.scale.copy(item.mesh.scale);
+     item.backing.material.opacity=.84*reveal;
    }
    rim.intensity=mix(20,36,ease(1,4.4,t));
    rim.position.x=mix(5,-3.3,ease(2.8,4.85,t));
