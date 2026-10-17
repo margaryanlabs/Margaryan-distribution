@@ -1,0 +1,115 @@
+{
+  "version": 1,
+  "title": "VETO TELEGRAM / PRIVATE TELEGRAM OS / LAUNCH FILM",
+  "brand": "veto_private",
+  "format": "portrait",
+  "language": "ru",
+  "style": "cinematic",
+  "seed": 20261017,
+  "qualityMode": "signature",
+  "filmChrome": "clean",
+  "visual": {
+    "motion": 1.18,
+    "textScale": 0.91,
+    "contrast": 0.64,
+    "glow": 0.27
+  },
+  "scenes": [
+    {
+      "id": "scene-1",
+      "kind": "kinetic",
+      "eyebrow": "PRIVATE TELEGRAM OS",
+      "headline": "ТВОЙ TELEGRAM МОЖЕТ БОЛЬШЕ.",
+      "support": "Знакомые чаты. Новый уровень контроля.",
+      "seconds": 3,
+      "camera": "push",
+      "transition": "cut",
+      "titleTreatment": "kinetic",
+      "voiceCue": "Твой Telegram может больше."
+    },
+    {
+      "id": "scene-2",
+      "kind": "screen",
+      "eyebrow": "VETO CHATS",
+      "headline": "ЧАТЫ. НА ТВОИХ ПРАВИЛАХ.",
+      "support": "Переписки, ответы, медиа и голосовые сообщения.",
+      "seconds": 3,
+      "camera": "drift",
+      "transition": "slash",
+      "titleTreatment": "editorial",
+      "voiceCue": "Знакомые чаты — с новым удобством."
+    },
+    {
+      "id": "scene-3",
+      "kind": "statement",
+      "eyebrow": "VETO PRIVACY",
+      "headline": "НЕ ВСЁ ИСЧЕЗАЕТ.",
+      "support": "История событий и изменений при подключении Telegram Business.",
+      "seconds": 3,
+      "camera": "push",
+      "transition": "cut",
+      "titleTreatment": "mask",
+      "voiceCue": "История изменений — там, где подключён Business."
+    },
+    {
+      "id": "scene-4",
+      "kind": "screen",
+      "eyebrow": "VETO STORIES",
+      "headline": "ИСТОРИИ. ТОЧНАЯ АУДИТОРИЯ.",
+      "support": "Контакты, близкие, выбранные пользователи и исключения.",
+      "seconds": 3,
+      "camera": "drift",
+      "transition": "wipe",
+      "titleTreatment": "editorial",
+      "voiceCue": "Stories — именно для тех, кому ты хочешь их показать."
+    },
+    {
+      "id": "scene-5",
+      "kind": "network",
+      "eyebrow": "VETO INTELLIGENCE",
+      "headline": "НЕ ПРОСТО ПРОСМОТРЫ.",
+      "support": "Аналитика собственной аудитории Stories без выдуманных метрик.",
+      "seconds": 3,
+      "camera": "push",
+      "transition": "grid",
+      "titleTreatment": "mask",
+      "voiceCue": "Понимай свою аудиторию."
+    },
+    {
+      "id": "scene-6",
+      "kind": "orbit",
+      "eyebrow": "VETO STUDIO",
+      "headline": "ТВОЙ СТИЛЬ.",
+      "support": "Стикеры и эмодзи для Telegram.",
+      "seconds": 3,
+      "camera": "drift",
+      "transition": "cut",
+      "titleTreatment": "kinetic",
+      "voiceCue": "Создавай стикеры и эмодзи в своём стиле."
+    },
+    {
+      "id": "scene-7",
+      "kind": "spatial",
+      "eyebrow": "PRIVATE TELEGRAM OS",
+      "headline": "ОДНО ПРОСТРАНСТВО.",
+      "support": "Chats · Stories · Privacy · Studio.",
+      "seconds": 3,
+      "camera": "push",
+      "transition": "zoom",
+      "titleTreatment": "editorial",
+      "voiceCue": "Всё в одном личном пространстве."
+    },
+    {
+      "id": "scene-8",
+      "kind": "closer",
+      "eyebrow": "MARGARYAN LABS PRESENTS",
+      "headline": "VETO TELEGRAM",
+      "support": "@Storypilotlab_bot",
+      "seconds": 3,
+      "camera": "locked",
+      "transition": "cut",
+      "titleTreatment": "minimal",
+      "voiceCue": "VETO Telegram. Твой Telegram. Твои правила."
+    }
+  ]
+}
