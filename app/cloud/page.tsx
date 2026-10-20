@@ -3,6 +3,7 @@
 import {useCallback,useEffect,useMemo,useState} from "react";
 import styles from "./cloud.module.css";
 import MigrationLab from "./migration-lab";
+import CloudFoundation from "./foundation";
 import {cloudCatalog} from "@/lib/cloud/catalog";
 
 type App={uuid:string;name:string;status:string;domain:string;gitRepository:string;gitBranch:string;updatedAt:string};
@@ -10,7 +11,7 @@ type Server={uuid:string;name:string;ip:string;status:string;description:string}
 type Deployment={uuid:string;applicationName:string;status:string;commit:string;createdAt:string;serverName:string};
 type Project={uuid:string;name:string;description:string};
 type Snapshot={mode:"setup"|"connected"|"degraded";updatedAt:string;applications:App[];servers:Server[];deployments:Deployment[];projects:Project[];errors:string[];message?:string};
-type Section="overview"|"applications"|"deployments"|"servers"|"migration"|"setup";
+type Section="overview"|"applications"|"deployments"|"servers"|"migration"|"foundation"|"setup";
 const empty:Snapshot={mode:"setup",updatedAt:"",applications:[],servers:[],deployments:[],projects:[],errors:[]};
 const sections:{id:Section;label:string;symbol:string}[]=[
  {id:"overview",label:"Overview",symbol:"◫"},
@@ -18,6 +19,7 @@ const sections:{id:Section;label:string;symbol:string}[]=[
  {id:"deployments",label:"Deployments",symbol:"↗"},
  {id:"servers",label:"Servers",symbol:"▤"},
  {id:"migration",label:"Migration Lab",symbol:"◇"},
+ {id:"foundation",label:"Cloud Foundation",symbol:"✦"},
  {id:"setup",label:"Infrastructure setup",symbol:"⚙"}
 ];
 const migration=cloudCatalog.map(project=>({name:project.name,type:project.type,repo:project.repository||"Repository not verified"}));
@@ -123,6 +125,7 @@ export default function MarkarianCloud(){
       <div className={styles.projectList}>{migration.map(m=><div key={m.name} className={styles.projectRow}><span className={styles.projectIndex}>◇</span><span className={styles.projectMain}><strong>{m.name}</strong><small>{m.repo}</small></span><span className={styles.planned}>Not migrated</span></div>)}</div>
      </section>}
     {section==="migration"&&<MigrationLab/>}
+    {section==="foundation"&&<CloudFoundation/>}
     {section==="deployments"&&<section className={styles.panel}>
       <div className={styles.panelTitle}><div><span className={styles.eyebrow}>DEPLOYMENT ACTIVITY</span><h1>Deployments</h1></div><span className={styles.hint}>READ ONLY</span></div>
       <p className={styles.panelDescription}>Current running deployment records provided by Coolify. Build, rollback and trigger controls will be added after server authorization is configured.</p>
