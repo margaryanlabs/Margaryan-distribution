@@ -15,7 +15,7 @@ Cloud is an isolated module within the existing Next.js 16 app. Motion Studio, i
 - API paths: /api/v1/applications, /servers, /deployments and /projects.
 - Explicit allowlist of returned fields, preventing upstream secrets, environment values, DB credentials and internal configuration from reaching the browser.
 - 8-second timeout, no-store headers, bounded results and partial-failure status.
-- Scoped access control via Next.js proxy.ts: only /cloud and /api/cloud; if Distribution operator Basic credentials are configured, the UI **and** API require Basic authentication. Without those credentials, the static setup workspace remains visible but the API returns 503 and exposes no live data.
+- Cloud is protected by the **existing Distribution `proxy.ts`**. Its established Motion/CRM/worker authorization behavior and matcher are preserved. If Distribution operator Basic credentials are configured, the UI and Cloud API require authentication. Without those credentials the Cloud API returns 503, and the static setup workspace may be displayed on deployments without sensitive-runtime protection.
 - No side effects. No start/stop/redeploy/delete actions.
 
 ## Connect after VPS purchase
@@ -35,7 +35,7 @@ Cloud is an isolated module within the existing Next.js 16 app. Motion Studio, i
 
 ## Security boundaries
 
-- The cloud API is read-only and protected separately from all Distribution/Motion routes.
+- The cloud API is read-only, protected by the existing Distribution operator policy, and additionally fails closed when operator credentials are not configured.
 - The optional public setup page cannot read the Coolify API if owner Basic credentials are missing.
 - Backend never sends the Coolify Bearer token to the client.
 - Only a trusted **configured** Coolify base URL can be requested. The UI cannot accept arbitrary URLs.
