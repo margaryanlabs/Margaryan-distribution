@@ -110,3 +110,7 @@ The /cloud UI and /api/cloud both fail closed with HTTP 503 until the existing D
 ## Provider connection statuses
 
 Command Center shows a four-provider status strip. **Coolify** is live only after its read-only API succeeds. **Railway, Vercel and Supabase** are explicitly marked not connected to this application; although external connector tools may be available to ChatGPT, they are not inherited by the deployed website. No fake cross-provider statuses, costs or aggregated customer counts are presented. The next stage requires separate server-side read-only integrations, strict token scopes and consistent provider schemas.
+
+## Legacy Provider Bridge (Vercel / Railway / hosted Supabase)
+
+Server-side read-only metadata adapters are implemented in `lib/cloud/providers.ts`, API `GET /api/cloud/providers`. They require explicit private environment tokens. See `docs/cloud/PROVIDER_BRIDGE.md` for scoping, limits and privacy. This is a migration observation bridge, **not** a replacement for self-hosted data hosting or production deploy operations.
