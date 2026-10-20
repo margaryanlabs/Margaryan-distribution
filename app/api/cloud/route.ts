@@ -1,5 +1,5 @@
 import {NextResponse} from "next/server";
-import {safeList,appView,serverView,deploymentView,projectView,isValidCoolifyOrigin} from "@/lib/cloud/normalize";
+import {readCoolifyList,appView,serverView,deploymentView,projectView,isValidCoolifyOrigin} from "@/lib/cloud/normalize";
 
 export const dynamic="force-dynamic";
 export const runtime="nodejs";
@@ -7,14 +7,6 @@ export const runtime="nodejs";
 type Raw=Record<string,unknown>;
 const safeError=(error:unknown)=>error instanceof Error?error.message.slice(0,180):"Upstream unavailable";
 
-async function coolifyFetch(base:string,token:string,path:string):Promise<Raw[]>{
- const response=await fetch(base+"/api/v1/"+path,{
-  method:"GET",headers:{Authorization:"Bearer "+token,Accept:"application/json"},
-  cache:"no-store",signal:AbortSignal.timeout(8000),redirect:"error"
- });
- if(!response.ok)throw new Error("Coolify "+path+" returned HTTP "+response.status);
- return safeList(await response.json());
-}
 export async function GET(){
  const headers={"Cache-Control":"private, no-store, max-age=0",
   "X-Content-Type-Options":"nosniff"};
@@ -29,7 +21,7 @@ export async function GET(){
  }
  const base=new URL(address).origin;
  const endpoints=["applications","servers","deployments","projects"] as const;
- const results=await Promise.allSettled(endpoints.map(path=>coolifyFetch(base,token,path)));
+ const results=await Promise.allSettled(endpoints.map(path=>readCoolifyList(base,token,path)));
  const errors:string[]=[];
  const records=results.map((result,index)=>{
   if(result.status==="fulfilled")return result.value;

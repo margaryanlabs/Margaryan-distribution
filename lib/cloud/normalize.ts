@@ -42,3 +42,16 @@ export function isValidCoolifyOrigin(value:string){
   return true;
  }catch{return false;}
 }
+
+/** One bounded, GET-only read from our explicitly configured Coolify instance. */
+export async function readCoolifyList(base:string,token:string,path:string,fetcher:typeof fetch=fetch):Promise<Raw[]>{
+ const allowed=["applications","servers","deployments","projects"];
+ if(!allowed.includes(path))throw new Error("Unsupported Coolify inventory path");
+ if(!isValidCoolifyOrigin(base))throw new Error("Invalid Coolify base URL");
+ const response=await fetcher(new URL("/api/v1/"+path,base),{
+  method:"GET",headers:{Authorization:"Bearer "+token,Accept:"application/json"},
+  cache:"no-store",redirect:"error",signal:AbortSignal.timeout(8000)
+ });
+ if(!response.ok)throw new Error("Coolify "+path+" returned HTTP "+response.status);
+ return safeList(await response.json());
+}

@@ -43,10 +43,38 @@ test("Coolify origin is HTTPS-only, except local loopback testing",()=>{
 test("Cloud API is read only and operator auth remains enforced",()=>{
  const api=readFileSync(new URL("../../app/api/cloud/route.ts",import.meta.url),"utf8");
  const proxy=readFileSync(new URL("../../proxy.ts",import.meta.url),"utf8");
- assert.match(api,/method:"GET"/);
+ const normalizer=readFileSync(new URL("../../lib/cloud/normalize.ts",import.meta.url),"utf8");
+ assert.match(normalizer,/method:"GET"/);
  assert.doesNotMatch(api,/method:"(POST|PUT|DELETE|PATCH)"/);
  assert.match(api,/no-store/);
  assert.ok(proxy.includes('path==="/api/cloud"&&!operatorAuthConfigured'));
  assert.match(proxy,/machineAuthorized\(request\)/);
  assert.ok(proxy.includes('path==="/motion"'));
+});
+
+test("GET-only Coolify inventory uses bearer auth without returning credentials",async()=>{
+ const {readCoolifyList}=await import("../../lib/cloud/normalize.ts");
+ let requests=0;
+ const fake=async(url,options)=>{
+  requests++;
+  assert.equal(new URL(url).pathname,"/api/v1/applications");
+  assert.equal(options.method,"GET");
+  assert.equal(options.redirect,"error");
+  assert.equal(options.cache,"no-store");
+  assert.equal(options.headers.Authorization,"Bearer secret-token");
+  assert.ok(options.signal);
+  return new Response(JSON.stringify([{uuid:"a",name:"project"}]),{status:200});
+ };
+ const result=await readCoolifyList("https://cloud.example.com","secret-token","applications",fake);
+ assert.equal(requests,1);
+ assert.equal(result.length,1);
+ assert.equal(JSON.stringify(result).includes("secret-token"),false);
+});
+test("Unexpected path, failing HTTP and untrusted origin are rejected",async()=>{
+ const {readCoolifyList}=await import("../../lib/cloud/normalize.ts");
+ const unreachable=async()=>{throw new Error("must not call");};
+ await assert.rejects(readCoolifyList("https://cloud.example.com","secret","envs",unreachable),/Unsupported/);
+ await assert.rejects(readCoolifyList("http://example.com","secret","servers",unreachable),/Invalid Coolify/);
+ const unauthorized=async()=>new Response("unauthorized",{status:401});
+ await assert.rejects(readCoolifyList("https://cloud.example.com","secret","servers",unauthorized),/HTTP 401/);
 });

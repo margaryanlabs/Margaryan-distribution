@@ -16,7 +16,7 @@ Cloud is an isolated module within the existing Next.js 16 app. Motion Studio, i
 - API paths: /api/v1/applications, /servers, /deployments and /projects.
 - Explicit allowlist of returned fields, preventing upstream secrets, environment values, DB credentials and internal configuration from reaching the browser.
 - 8-second timeout, no-store headers, bounded results and partial-failure status.
-- Regression tests in `scripts/cloud/test-contract.mjs` cover upstream-response normalization, prevention of leaking raw upstream secrets, trusted base-origin rules and preservation of the existing operator authorization policy. These tests run in the repository CI, when runners are available.
+- Regression tests in `scripts/cloud/test-contract.mjs` cover upstream-response normalization, prevention of leaking raw upstream secrets, trusted base-origin rules, HTTP error handling, GET-only adapter and preservation of the existing operator authorization policy. These tests run in the repository CI, when runners are available.
 - Cloud is protected by the **existing Distribution `proxy.ts`**. Its established Motion/CRM/worker authorization behavior and matcher are preserved. If Distribution operator Basic credentials are configured, the UI and Cloud API require authentication. Without those credentials the Cloud API returns 503, and the static setup workspace may be displayed on deployments without sensitive-runtime protection.
 - No side effects. No start/stop/redeploy/delete actions.
 
@@ -82,3 +82,7 @@ Repository CI already runs npm run typecheck and npm run build. Verify Cloud aft
 - Dedicated cloud frontend and isolated auth provider for multi-tenant use.
 
 Coolify docs: https://coolify.io/docs/api/overview
+
+## Verified offline API contract (2026-10-20)
+
+Eight independent Node 22 tests passed on the copied Cloud adapter using mocked fetch calls. No real Coolify server is required. This is **not** a production Next.js build or browser integration test.
