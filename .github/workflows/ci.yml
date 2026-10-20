@@ -61,6 +61,8 @@ jobs:
         run: npm run motion:test-reference
       - name: Cloud normalization, privacy and operator-auth contract tests
         run: node --experimental-strip-types scripts/cloud/test-contract.mjs
+      - name: Verify safe Data Foundation source preparation
+        run: node --test scripts/cloud/prepare-supabase.test.mjs
       - name: Typecheck
         run: npm run typecheck
       - name: Production build
