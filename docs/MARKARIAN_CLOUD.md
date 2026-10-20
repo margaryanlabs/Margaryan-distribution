@@ -144,3 +144,7 @@ The navigation now includes an owner-only Recovery Center with four operator sta
 ## Command Center visual redesign (2026-10-21)
 
 New `app/cloud/command-v2.tsx` replaces the default page's outdated many-card dashboard with a premium editorial operations cockpit: infrastructure topology visual, actual-vs-planned source labels, accessible project filters, operator-local repo registry, expandable projects and prominent owner-infrastructure actions. Built directly into existing `/cloud`, not just an HTML mock. No live provider data is fabricated.
+
+## VPS capacity planner
+
+`/cloud → Capacity Planner` lets the owner evaluate **hypothetical** workload CPU/RAM allocations across host sizes and extra reserve. It intentionally excludes heavy Motion renderer and VETO ClickHouse by default until sizing them separately. It calculates resource fit but does not provision infrastructure, quote hosting prices or derive observed app traffic. Source `lib/cloud/capacity.ts` and offline regression tests `scripts/cloud/test-capacity.mjs`.

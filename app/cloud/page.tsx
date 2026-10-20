@@ -5,6 +5,7 @@ import styles from "./cloud.module.css";
 import MigrationLab from "./migration-lab";
 import CloudFoundation from "./foundation";
 import CommandV2 from "./command-v2";
+import CapacityPanel from "./capacity-panel";
 import ProviderConsole from "./provider-console";
 import CloudStudio from "./studio";
 import OwnedInfrastructure from "./owned-infrastructure";
@@ -99,6 +100,7 @@ export default function MarkarianCloud(){
    </header>
    <div className={styles.body}>
     {section==="command"&&<CommandV2 data={data} loading={loading} onRefresh={()=>void refresh()} onOpenSetup={()=>setSection("setup")} onOpenOwned={()=>setSection("owned")} onOpenDeploy={()=>setSection("deploy-engine")} onOpenCapacity={()=>setSection("capacity")} onOpenRecovery={()=>setSection("recovery")}/>}
+    {section==="capacity"&&<CapacityPanel onDeploy={()=>setSection("deploy-engine")} onSetup={()=>setSection("setup")}/>}
     {section==="overview"&&<>
      <section className={styles.hero}>
       <div className={styles.heroCopy}><span className={styles.eyebrow}>INFRASTRUCTURE COMMAND CENTER · V1</span>
