@@ -4,6 +4,7 @@ import {useEffect,useMemo,useState} from "react";
 import {appHealth,buildPortfolio,githubRepository,infrastructureNotice,type CloudSnapshot,type LocalProject} from "@/lib/cloud/command-center";
 import styles from "./command-center.module.css";
 import ProviderConsole from "./provider-console";
+import TelemetryPanel from "./telemetry-panel";
 
 type Filter="all"|"connected"|"planned"|"attention";
 type Props={data:CloudSnapshot;loading:boolean;onRefresh:()=>void;onOpenSetup:()=>void;onOpenMigration:()=>void;onOpenOwned:()=>void};
@@ -103,6 +104,7 @@ export default function CommandCenter({data,loading,onRefresh,onOpenSetup,onOpen
    <article><small>NEEDS ATTENTION</small><strong>{appsKnown?issues.length:"—"}</strong><span>{appsKnown?"Based on reported statuses":"No live health signals"}</span></article>
   </div>
   <ProviderConsole compact coolifyMode={data.mode}/>
+  <TelemetryPanel compact/>
   <div className={styles.mainGrid}>
    <section className={styles.projects}>
     <div className={styles.panelHead}><div><span className={styles.kicker}>PROJECT OPERATIONS</span><h2>All projects</h2></div><button type="button" className={styles.addProject} onClick={()=>{setAdding(!adding);setProjectError("");}} aria-expanded={adding}>{adding?"Cancel":"＋ Add project"}</button></div>
