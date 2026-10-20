@@ -4,7 +4,7 @@ import {useCallback,useEffect,useMemo,useState} from "react";
 import styles from "./cloud.module.css";
 import MigrationLab from "./migration-lab";
 import CloudFoundation from "./foundation";
-import CommandCenter from "./command-center";
+import CommandV2 from "./command-v2";
 import ProviderConsole from "./provider-console";
 import CloudStudio from "./studio";
 import OwnedInfrastructure from "./owned-infrastructure";
@@ -18,10 +18,11 @@ type Server={uuid:string;name:string;ip:string;status:string;description:string}
 type Deployment={uuid:string;applicationName:string;status:string;commit:string;createdAt:string;serverName:string};
 type Project={uuid:string;name:string;description:string};
 type Snapshot={mode:"setup"|"connected"|"degraded";updatedAt:string;applications:App[];servers:Server[];deployments:Deployment[];projects:Project[];errors:string[];message?:string;sources?:{applications:boolean;servers:boolean;deployments:boolean;projects:boolean}};
-type Section="command"|"owned"|"deploy-engine"|"recovery"|"telemetry"|"studio"|"overview"|"applications"|"deployments"|"servers"|"migration"|"foundation"|"providers"|"setup";
+type Section="command"|"capacity"|"owned"|"deploy-engine"|"recovery"|"telemetry"|"studio"|"overview"|"applications"|"deployments"|"servers"|"migration"|"foundation"|"providers"|"setup";
 const empty:Snapshot={mode:"setup",updatedAt:"",applications:[],servers:[],deployments:[],projects:[],errors:[],sources:{applications:false,servers:false,deployments:false,projects:false}};
 const sections:{id:Section;label:string;symbol:string}[]=[
  {id:"command",label:"Command Center",symbol:"✦"},
+ {id:"capacity",label:"Capacity Planner",symbol:"▥"},
  {id:"owned",label:"Our Infrastructure",symbol:"▤"},
  {id:"deploy-engine",label:"Deploy Engine",symbol:"⇧"},
  {id:"telemetry",label:"Observability",symbol:"⌁"},
@@ -97,7 +98,7 @@ export default function MarkarianCloud(){
     </div>
    </header>
    <div className={styles.body}>
-    {section==="command"&&<CommandCenter data={data} loading={loading} onRefresh={()=>void refresh()} onOpenSetup={()=>setSection("setup")} onOpenMigration={()=>setSection("migration")} onOpenOwned={()=>setSection("owned")}/>}
+    {section==="command"&&<CommandV2 data={data} loading={loading} onRefresh={()=>void refresh()} onOpenSetup={()=>setSection("setup")} onOpenOwned={()=>setSection("owned")} onOpenDeploy={()=>setSection("deploy-engine")} onOpenCapacity={()=>setSection("capacity")} onOpenRecovery={()=>setSection("recovery")}/>}
     {section==="overview"&&<>
      <section className={styles.hero}>
       <div className={styles.heroCopy}><span className={styles.eyebrow}>INFRASTRUCTURE COMMAND CENTER · V1</span>

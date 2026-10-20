@@ -140,3 +140,7 @@ Operator-only streaming encrypted PostgreSQL backup to Restic added at scripts/c
 ## Recovery Center
 
 The navigation now includes an owner-only Recovery Center with four operator stages: preflight, encrypted streaming PostgreSQL backup, read-only archive inspection and manual staging restore drill. The browser can copy non-secret CLI commands but cannot trigger backup/restore mutations. Repo source is available at `scripts/cloud/recovery.mjs`, with 11 locally passing mocked process tests and a runbook at `docs/cloud/RECOVERY.md`. Completion is not recorded until an external real restore and sign-off; the UI shows missing evidence as unknown, never invented success.
+
+## Command Center visual redesign (2026-10-21)
+
+New `app/cloud/command-v2.tsx` replaces the default page's outdated many-card dashboard with a premium editorial operations cockpit: infrastructure topology visual, actual-vs-planned source labels, accessible project filters, operator-local repo registry, expandable projects and prominent owner-infrastructure actions. Built directly into existing `/cloud`, not just an HTML mock. No live provider data is fabricated.
