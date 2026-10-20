@@ -156,3 +156,7 @@ New `app/cloud/command-v2.tsx` replaces the default page's outdated many-card da
 ## Private GitHub staging import support
 
 The standalone operator-only staging importer now supports private `owner/repo` sources through a preconfigured Coolify GitHub App UUID. No GitHub private key, client secret or repository credential is in the manifest. It posts exclusively to the documented `/api/v1/applications/private-github-app` endpoint and remains `staging` only. See `docs/cloud/STAGING_DEPLOY.md`.
+
+## Mission Control V3
+
+Root /cloud now opens app/cloud/mission-control.tsx. Connected-source health, responsive views for infrastructure, projects, data/domains and Agent Watch, with 60-second browser-session refresh. See docs/cloud/MISSION_CONTROL_V3.md. Agent automations remain planned; there are no production write controls.
