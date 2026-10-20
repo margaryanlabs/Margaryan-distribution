@@ -118,3 +118,7 @@ Server-side read-only metadata adapters are implemented in `lib/cloud/providers.
 ## API defense in depth
 
 Both `/api/cloud` and `/api/cloud/providers` independently validate operator HTTP Basic credentials in Node.js using timing-safe SHA-256 comparisons. The existing root proxy continues to protect all Cloud pages and nested API paths. No Basic username/password means HTTP 503; invalid/missing credentials mean HTTP 401. This is an **interim owner-only access scheme**: self-hosted multi-user operations require SSO/MFA, permission-scoped roles, tamper-evident audit trails and preferably private VPN/Zero Trust access.
+
+## Unified Cloud Studio
+
+`/cloud → Cloud Studio` now offers twenty navigable modules (Deploy, Compute, Data, Operations, Security), searchable and filterable. For four supported Coolify inventory resources it shows live counts and first six records only if that API source succeeded. Non-inventory modules are labelled **Setup / Roadmap**; do not interpret the visible capability list as implemented hosting functionality. No production commands or write APIs are exposed.

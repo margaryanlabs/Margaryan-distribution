@@ -20,6 +20,10 @@ export default function CloudStudio({data,onOpenSetup}:{data:CloudSnapshot;onOpe
   (m.name+" "+m.description+" "+m.engine+" "+m.scope.join(" ")).toLowerCase().includes(query.toLowerCase().trim())
  ),[category,query]);
  const number=countFor(data,selected);
+ const inventoryRows=selected.source==="apps"?data.applications.map(a=>({name:a.name,status:a.status,detail:a.gitRepository||a.domain})):
+  selected.source==="servers"?data.servers.map(s=>({name:s.name,status:s.status,detail:s.description||s.ip})):
+  selected.source==="deployments"?data.deployments.map(d=>({name:d.applicationName,status:d.status,detail:d.commit.slice(0,8)})):
+  selected.source==="projects"?data.projects.map(p=>({name:p.name,status:"inventory",detail:p.description})):[];
  return <section className={styles.root}>
   <header className={styles.hero}>
    <div><span className={styles.eyebrow}>MARKARIAN CLOUD OS / UNIFIED PLATFORM</span><h1>Everything.<em> One workspace.</em></h1>
@@ -51,6 +55,10 @@ export default function CloudStudio({data,onOpenSetup}:{data:CloudSnapshot;onOpe
     <h2>{selected.name}</h2><p>{selected.description}</p>
     <div className={styles.engine}><small>PLANNED IMPLEMENTATION</small><strong>{selected.engine}</strong></div>
     {number!==null&&<div className={styles.inventory}><small>RECORDS RETURNED BY COOLIFY</small><strong>{number}</strong><span>Inventory count alone does not mean the service is healthy.</span></div>}
+    {number!==null&&<div className={styles.liveItems}><strong>Returned inventory (first 6)</strong>
+      {inventoryRows.length===0?<p>No resources reported by Coolify.</p>:inventoryRows.slice(0,6).map((r,index)=>
+       <div key={r.name+index} className={styles.liveRow}><span><b>{r.name||"Unnamed resource"}</b><small>{r.detail||"No details reported"}</small></span><em>{r.status||"Unknown"}</em></div>)}
+    </div>}
     <h3>Capabilities</h3><ul>{selected.scope.map(s=><li key={s}>{s}</li>)}</ul>
     <h3>Launch requirements</h3><ol>{selected.gate.map(s=><li key={s}>{s}</li>)}</ol>
     <button type="button" className={styles.action} onClick={onOpenSetup}>Infrastructure setup ↗</button>
