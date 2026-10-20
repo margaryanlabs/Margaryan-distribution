@@ -34,3 +34,7 @@ Verified: 20 October 2026. This is an audit of repository build metadata, **not*
 At 20 Oct 2026, PR #92 jobs `web` and `voice-gateway` repeatedly concluded failure without reported workflow steps or logs. The default branch's recent runs showed the same pre-step failure. This is **not evidence that compilation failed**. Check the repository's Actions run banner, account Actions billing/spending limits, runner availability and workflow permissions in GitHub UI. Code changes alone cannot reliably resolve missing runners.
 
 Local independent verification of the copied `lib/cloud/normalize.ts` behavior on Node 22 passed six normalization/URL/privacy tests and a standalone TypeScript check; repository-wide Next build remains **unverified**.
+
+## Repository identity update
+
+Verified from GitHub on 2026-10-20: VETO Intelligence source repository is `margaryanlabs/decision-command`. This is a repository-identity confirmation, **not** a successful source build, not a security audit and not a deployment verification. High-resource VETO ClickHouse requires a separate dedicated capacity plan.

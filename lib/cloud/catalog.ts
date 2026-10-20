@@ -26,7 +26,7 @@ export const cloudCatalog:CloudCatalogItem[]=[
   repository:null,repositoryVerified:false,level:"standard",workload:"web",
   review:["Identify canonical repository","Confirm runtime stack","Verify domain and build output"]},
  {id:"veto",name:"VETO Intelligence",type:"Risk and trading analytics",
-  repository:null,repositoryVerified:false,level:"critical",workload:"data",
+  repository:"margaryanlabs/decision-command",repositoryVerified:true,level:"critical",workload:"data",
   review:["Identify canonical repository","Exchange credentials and isolation","Ingestion, storage and replay retention"]},
  {id:"vetu",name:"VETU Telegram",type:"Telegram mini app",
   repository:null,repositoryVerified:false,level:"high",workload:"web-worker",
