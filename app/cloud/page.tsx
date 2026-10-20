@@ -4,7 +4,7 @@ import {useCallback,useEffect,useMemo,useState} from "react";
 import styles from "./cloud.module.css";
 import MigrationLab from "./migration-lab";
 import CloudFoundation from "./foundation";
-import CommandV2 from "./command-v2";
+import MissionControl from "./mission-control";
 import CapacityPanel from "./capacity-panel";
 import ProviderConsole from "./provider-console";
 import CloudStudio from "./studio";
@@ -106,7 +106,7 @@ export default function MarkarianCloud(){
     </div>
    </header>
    <div className={styles.body}>
-    {section==="command"&&<CommandV2 data={data} loading={loading} onRefresh={()=>void refresh()} onOpenSetup={()=>setSection("setup")} onOpenOwned={()=>setSection("owned")} onOpenDeploy={()=>setSection("deploy-engine")} onOpenCapacity={()=>setSection("capacity")} onOpenRecovery={()=>setSection("recovery")}/>}
+    {section==="command"&&<MissionControl data={data} loading={loading} onRefresh={()=>void refresh()} onOpenSetup={()=>setSection("setup")} onOpenOwned={()=>setSection("owned")} onOpenDeploy={()=>setSection("deploy-engine")} onOpenRecovery={()=>setSection("recovery")} onOpenStudio={()=>setSection("studio")} onOpenTelemetry={()=>setSection("telemetry")}/>}
     {section==="capacity"&&<CapacityPanel onDeploy={()=>setSection("deploy-engine")} onSetup={()=>setSection("setup")}/>}
     {section==="overview"&&<>
      <section className={styles.hero}>
