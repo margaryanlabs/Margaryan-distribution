@@ -67,6 +67,8 @@ jobs:
         run: node --experimental-strip-types --test scripts/cloud/test-providers.mjs
       - name: Cloud API operator defense-in-depth tests
         run: node --experimental-strip-types --test scripts/cloud/test-operator-auth.mjs
+      - name: Test owned private operations stack
+        run: node --test scripts/cloud/test-ops.mjs
       - name: Typecheck
         run: npm run typecheck
       - name: Production build
