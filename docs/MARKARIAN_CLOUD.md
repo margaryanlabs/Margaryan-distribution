@@ -132,3 +132,7 @@ Command Center now links to **Our Infrastructure**. This workspace is the centra
 Cloud OS now includes **Observability** and a compact Prometheus status widget in Command Center. The server-side endpoint `GET /api/cloud/telemetry` supports `CLOUD_PROMETHEUS_URL` and optional `CLOUD_PROMETHEUS_TOKEN`. It validates the configured origin, authenticates operators independently of the root proxy, accepts only three fixed aggregation queries, and omits scrape labels, instance hostnames, tokens and raw upstream data. An unconfigured or unreachable Prometheus reports setup/degraded with null metrics, not manufactured uptime numbers.
 
 See `docs/cloud/SELF_HOSTED_TELEMETRY.md` for the secure connection and known limitations. The Ops Compose currently collects Prometheus self-metrics only, **not CPU/RAM/application health until exporters are installed**. Focused Node 22 offline tests of the telemetry parser and fetch adapter passed 5/5, plus a standalone TypeScript typecheck. The full repo build still requires a functioning runner.
+
+## Markarian Recovery
+
+Operator-only streaming encrypted PostgreSQL backup to Restic added at scripts/cloud/recovery.mjs. Review docs/cloud/RECOVERY.md before setting offsite credentials or running any backup. It does not migrate production databases, manage object storage, perform retention cleanup or guarantee a working staging restore. Browser only shows preparation instructions; backup execution stays out of web APIs.
