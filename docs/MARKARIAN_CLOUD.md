@@ -148,3 +148,7 @@ New `app/cloud/command-v2.tsx` replaces the default page's outdated many-card da
 ## VPS capacity planner
 
 `/cloud → Capacity Planner` lets the owner evaluate **hypothetical** workload CPU/RAM allocations across host sizes and extra reserve. It intentionally excludes heavy Motion renderer and VETO ClickHouse by default until sizing them separately. It calculates resource fit but does not provision infrastructure, quote hosting prices or derive observed app traffic. Source `lib/cloud/capacity.ts` and offline regression tests `scripts/cloud/test-capacity.mjs`.
+
+## Operator-only real staging importer
+
+`deploy-stage.mjs` prepares and, when explicitly approved, calls the actual Coolify `POST /api/v1/applications/public` endpoint to create a **new staging application record only**. No production write, deployment launch or secret value is exposed by the web UI. This is the first intentionally guarded external write flow for a secured future VPS; it has not been connected to a VPS in this repository. See `docs/cloud/STAGING_DEPLOY.md`.
