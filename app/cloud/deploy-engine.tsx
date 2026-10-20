@@ -15,9 +15,9 @@ export default function DeployEngine({onOpenSetup}:{onOpenSetup:()=>void}){
  const [feedback,setFeedback]=useState("");
  const [showJson,setShowJson]=useState(false);
  const [confirmed,setConfirmed]=useState(false);
- const update=<K extends keyof DeployInput>(key:K,value:DeployInput[K])=>{
+ function update<K extends keyof DeployInput>(key:K,value:DeployInput[K]){
   setInput(p=>({...p,[key]:value}));setFeedback("");setConfirmed(false);
- };
+ }
  const errors=useMemo(()=>validateDeployInput(input),[input]);
  const plan=useMemo(()=>errors.length===0?createDeployPlan(input):null,[input,errors]);
  function fromCatalog(repo:string){
