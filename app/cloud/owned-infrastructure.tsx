@@ -32,7 +32,7 @@ export default function OwnedInfrastructure({data,onOpenSetup,onOpenStudio,onOpe
    <article><small>COOLIFY CONNECTION</small><strong>{signals.stage}</strong><span>Only real provider responses count as connected</span></article>
    <article><small>REGISTERED VPS</small><strong>{signals.serverCount===null?"—":signals.serverCount}</strong><span>Own servers reported by Coolify</span></article>
    <article><small>HOSTED APPLICATIONS</small><strong>{signals.applicationCount===null?"—":signals.applicationCount}</strong><span>Observed app records, not planned projects</span></article>
-   <article><small>VERIFIED MIGRATIONS</small><strong>0</strong><span>None has passed cutover and restore tests</span></article>
+   <article><small>VERIFIED MIGRATIONS</small><strong>—</strong><span>No cutover evidence registry integrated yet</span></article>
   </div>
   <div className={styles.mid}>
    <section className={styles.catalog}>
