@@ -6,12 +6,12 @@ import styles from "./command-center.module.css";
 import ProviderConsole from "./provider-console";
 
 type Filter="all"|"connected"|"planned"|"attention";
-type Props={data:CloudSnapshot;loading:boolean;onRefresh:()=>void;onOpenSetup:()=>void;onOpenMigration:()=>void};
+type Props={data:CloudSnapshot;loading:boolean;onRefresh:()=>void;onOpenSetup:()=>void;onOpenMigration:()=>void;onOpenOwned:()=>void};
 const dt=(value:string)=>{if(!value)return "Not checked";const d=new Date(value);return Number.isNaN(d.getTime())?"Not checked":d.toLocaleString(undefined,{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});};
 const mood=(name:"running"|"attention"|"unknown")=>name==="running"?styles.healthy:name==="attention"?styles.critical:styles.neutral;
 function words(status:string){return status?status.replaceAll("_"," "):"Unknown";}
 const chip=(health:"running"|"attention"|"unknown")=>health==="running"?styles.statusGood:health==="attention"?styles.statusBad:styles.statusUnknown;
-export default function CommandCenter({data,loading,onRefresh,onOpenSetup,onOpenMigration}:Props){
+export default function CommandCenter({data,loading,onRefresh,onOpenSetup,onOpenMigration,onOpenOwned}:Props){
  const [query,setQuery]=useState("");
  const [filter,setFilter]=useState<Filter>("all");
  const [chosen,setChosen]=useState("");
@@ -82,7 +82,7 @@ export default function CommandCenter({data,loading,onRefresh,onOpenSetup,onOpen
     <h1>Command <em>Center.</em></h1>
     <p>Every project. Every server. One clear place to understand what is connected, what needs attention and what is still being prepared.</p>
     <div className={styles.heroButtons}>
-     <button type="button" className={styles.primary} onClick={onOpenSetup}>Connect infrastructure <span>↗</span></button>
+     <button type="button" className={styles.primary} onClick={onOpenOwned}>Our infrastructure <span>↗</span></button>
      <button type="button" className={styles.outline} onClick={onOpenMigration}>Migration Lab <span>→</span></button>
     </div>
    </div>

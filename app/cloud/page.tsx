@@ -7,6 +7,7 @@ import CloudFoundation from "./foundation";
 import CommandCenter from "./command-center";
 import ProviderConsole from "./provider-console";
 import CloudStudio from "./studio";
+import OwnedInfrastructure from "./owned-infrastructure";
 import {cloudCatalog} from "@/lib/cloud/catalog";
 
 type App={uuid:string;name:string;status:string;domain:string;gitRepository:string;gitBranch:string;updatedAt:string};
@@ -14,10 +15,11 @@ type Server={uuid:string;name:string;ip:string;status:string;description:string}
 type Deployment={uuid:string;applicationName:string;status:string;commit:string;createdAt:string;serverName:string};
 type Project={uuid:string;name:string;description:string};
 type Snapshot={mode:"setup"|"connected"|"degraded";updatedAt:string;applications:App[];servers:Server[];deployments:Deployment[];projects:Project[];errors:string[];message?:string;sources?:{applications:boolean;servers:boolean;deployments:boolean;projects:boolean}};
-type Section="command"|"studio"|"overview"|"applications"|"deployments"|"servers"|"migration"|"foundation"|"providers"|"setup";
+type Section="command"|"owned"|"studio"|"overview"|"applications"|"deployments"|"servers"|"migration"|"foundation"|"providers"|"setup";
 const empty:Snapshot={mode:"setup",updatedAt:"",applications:[],servers:[],deployments:[],projects:[],errors:[],sources:{applications:false,servers:false,deployments:false,projects:false}};
 const sections:{id:Section;label:string;symbol:string}[]=[
  {id:"command",label:"Command Center",symbol:"✦"},
+ {id:"owned",label:"Our Infrastructure",symbol:"▤"},
  {id:"studio",label:"Cloud Studio",symbol:"▧"},
  {id:"overview",label:"Overview",symbol:"◫"},
  {id:"applications",label:"Applications",symbol:"▦"},
@@ -89,7 +91,7 @@ export default function MarkarianCloud(){
     </div>
    </header>
    <div className={styles.body}>
-    {section==="command"&&<CommandCenter data={data} loading={loading} onRefresh={()=>void refresh()} onOpenSetup={()=>setSection("setup")} onOpenMigration={()=>setSection("migration")}/>}
+    {section==="command"&&<CommandCenter data={data} loading={loading} onRefresh={()=>void refresh()} onOpenSetup={()=>setSection("setup")} onOpenMigration={()=>setSection("migration")} onOpenOwned={()=>setSection("owned")}/>}
     {section==="overview"&&<>
      <section className={styles.hero}>
       <div className={styles.heroCopy}><span className={styles.eyebrow}>INFRASTRUCTURE COMMAND CENTER · V1</span>
@@ -135,6 +137,7 @@ export default function MarkarianCloud(){
     {section==="foundation"&&<CloudFoundation/>}
     {section==="providers"&&<ProviderConsole/>}
     {section==="studio"&&<CloudStudio data={data} onOpenSetup={()=>setSection("setup")}/>}
+    {section==="owned"&&<OwnedInfrastructure data={data} onOpenSetup={()=>setSection("setup")} onOpenStudio={()=>setSection("studio")} onOpenMigration={()=>setSection("migration")}/>}
     {section==="deployments"&&<section className={styles.panel}>
       <div className={styles.panelTitle}><div><span className={styles.eyebrow}>DEPLOYMENT ACTIVITY</span><h1>Deployments</h1></div><span className={styles.hint}>READ ONLY</span></div>
       <p className={styles.panelDescription}>Current running deployment records provided by Coolify. Build, rollback and trigger controls will be added after server authorization is configured.</p>

@@ -122,3 +122,7 @@ Both `/api/cloud` and `/api/cloud/providers` independently validate operator HTT
 ## Unified Cloud Studio
 
 `/cloud → Cloud Studio` now offers twenty navigable modules (Deploy, Compute, Data, Operations, Security), searchable and filterable. For four supported Coolify inventory resources it shows live counts and first six records only if that API source succeeded. Non-inventory modules are labelled **Setup / Roadmap**; do not interpret the visible capability list as implemented hosting functionality. No production commands or write APIs are exposed.
+
+## Our independently hosted infrastructure (primary direction)
+
+Command Center now links to **Our Infrastructure**. This workspace is the central readiness map for self-hosted Compute, Data, Queue, Metrics, Recovery and Trust. It separates inventory observed from the connected Coolify instance from repository source readiness. We are NOT depending on Vercel, Railway or hosted Supabase for this target architecture, though the existing Distribution web deployment currently needs a live host before migration. Operations Compose for Valkey + Prometheus + Grafana is in `deploy/cloud/ops`; no public ports, locally generated secrets, no default public admin UI. Operator runbook: `deploy/cloud/ops/README.md`. The managed provider bridge remains an optional migration tool, not the main hosting system.
