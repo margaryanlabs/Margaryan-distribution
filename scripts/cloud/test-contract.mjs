@@ -47,7 +47,7 @@ test("Cloud API is read only and operator auth remains enforced",()=>{
  assert.match(normalizer,/method:"GET"/);
  assert.doesNotMatch(api,/method:"(POST|PUT|DELETE|PATCH)"/);
  assert.match(api,/no-store/);
- assert.ok(proxy.includes('path==="/api/cloud"&&!operatorAuthConfigured'));
+ assert.ok(proxy.includes('path==="/api/cloud"||path==="/cloud"||path.startsWith("/cloud/")'));
  assert.match(proxy,/machineAuthorized\(request\)/);
  assert.ok(proxy.includes('path==="/motion"'));
 });

@@ -9,6 +9,7 @@ type Props={data:CloudSnapshot;loading:boolean;onRefresh:()=>void;onOpenSetup:()
 const dt=(value:string)=>{if(!value)return "Not checked";const d=new Date(value);return Number.isNaN(d.getTime())?"Not checked":d.toLocaleString(undefined,{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});};
 const mood=(name:"running"|"attention"|"unknown")=>name==="running"?styles.healthy:name==="attention"?styles.critical:styles.neutral;
 function words(status:string){return status?status.replaceAll("_"," "):"Unknown";}
+const chip=(health:"running"|"attention"|"unknown")=>health==="running"?styles.statusGood:health==="attention"?styles.statusBad:styles.statusUnknown;
 export default function CommandCenter({data,loading,onRefresh,onOpenSetup,onOpenMigration}:Props){
  const [query,setQuery]=useState("");
  const [filter,setFilter]=useState<Filter>("all");
@@ -80,7 +81,7 @@ export default function CommandCenter({data,loading,onRefresh,onOpenSetup,onOpen
       <div><small>RISK LEVEL</small><strong>{active.risk||"Unassessed"}</strong></div>
      </div>
      {active.liveApplications.length>0&&<div className={styles.apps}><strong>Coolify application records</strong>
-      {active.liveApplications.map((app,index)=><div className={styles.application} key={app.uuid||String(index)}><div><b>{app.name}</b><small>{app.gitBranch||"Unknown branch"} · {app.domain||"Domain not reported"}</small></div><span className={mood(appHealth(app.status))}>{words(app.status)}</span></div>)}
+      {active.liveApplications.map((app,index)=><div className={styles.application} key={app.uuid||String(index)}><div><b>{app.name}</b><small>{app.gitBranch||"Unknown branch"} · {app.domain||"Domain not reported"}</small></div><span className={chip(appHealth(app.status))}>{words(app.status)}</span></div>)}
      </div>}
      <button type="button" className={styles.detailAction} onClick={active.linked?onOpenSetup:onOpenMigration}>{active.linked?"Open infrastructure setup →":"Prepare migration →"}</button>
     </div>}
@@ -94,7 +95,7 @@ export default function CommandCenter({data,loading,onRefresh,onOpenSetup,onOpen
     <section className={styles.sidePanel}><div className={styles.panelHead}><div><span className={styles.kicker}>DEPLOYMENTS</span><h2>Activity</h2></div><span className={styles.panelMeta}>{deploymentsKnown?data.deployments.length:"—"}</span></div>
      {!deploymentsKnown?<p className={styles.emptySmall}>Connect Coolify to see deployment records.</p>:
       data.deployments.length===0?<p className={styles.emptySmall}>No deployment records were returned.</p>:
-      data.deployments.slice(0,6).map((d,index)=><div key={d.uuid||String(index)} className={styles.deployment}><div><strong>{d.applicationName||"Unnamed deploy"}</strong><small>{d.createdAt?dt(d.createdAt):"Time unavailable"}</small></div><span className={mood(appHealth(d.status))}>{words(d.status)}</span></div>)}
+      data.deployments.slice(0,6).map((d,index)=><div key={d.uuid||String(index)} className={styles.deployment}><div><strong>{d.applicationName||"Unnamed deploy"}</strong><small>{d.createdAt?dt(d.createdAt):"Time unavailable"}</small></div><span className={chip(appHealth(d.status))}>{words(d.status)}</span></div>)}
     </section>
     <section className={styles.security}><div className={styles.securityTop}><span>♧</span><strong>Security boundary</strong></div><p>Read-only control. Tokens stay on the server. Destructive actions and database operations are not exposed by this console.</p><small>Production controls require dedicated operator identity, audit logs and explicit confirmation.</small></section>
    </aside>
