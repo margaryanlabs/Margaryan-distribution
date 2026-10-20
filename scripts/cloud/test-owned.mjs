@@ -35,7 +35,7 @@ test("Actual server reachability comes from status, never assumed from counts",(
 test("Self-owned modules are documented without misrepresenting them as running",()=>{
  assert.equal(ownedLayers.length,7);
  assert.equal(ownedLayers.some(x=>x.id==="data"&&x.status==="source-ready"),true);
- assert.equal(ownedLayers.some(x=>x.id==="backup"&&x.status==="planned"),true);
+ assert.equal(ownedLayers.some(x=>x.id==="backup"&&x.status==="source-ready"&&x.location==="scripts/cloud/recovery.mjs"),true);
  for(const item of ownedLayers){
   assert.ok(item.location);
   assert.ok(item.needs.length>0);
@@ -43,4 +43,12 @@ test("Self-owned modules are documented without misrepresenting them as running"
  const ui=readFileSync(new URL("../../app/cloud/owned-infrastructure.tsx",import.meta.url),"utf8");
  assert.match(ui,/SOURCE PREPARED · NOT HOSTED/);
  assert.doesNotMatch(ui,/Production READY|fully migrated/i);
+});
+
+test("Recovery source never claims a tested production restore",()=>{
+ const source=readFileSync(new URL("../../scripts/cloud/recovery.mjs",import.meta.url),"utf8");
+ const interfaceFile=readFileSync(new URL("../../app/cloud/recovery-panel.tsx",import.meta.url),"utf8");
+ assert.match(source,/Restor(?:e|ing) test: NOT PERFORMED/);
+ assert.match(interfaceFile,/No real restore evidence has been collected/);
+ assert.doesNotMatch(interfaceFile,/RESTORE NOW|DROP DATABASE/);
 });

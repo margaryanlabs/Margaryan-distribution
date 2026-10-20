@@ -136,3 +136,7 @@ See `docs/cloud/SELF_HOSTED_TELEMETRY.md` for the secure connection and known li
 ## Markarian Recovery
 
 Operator-only streaming encrypted PostgreSQL backup to Restic added at scripts/cloud/recovery.mjs. Review docs/cloud/RECOVERY.md before setting offsite credentials or running any backup. It does not migrate production databases, manage object storage, perform retention cleanup or guarantee a working staging restore. Browser only shows preparation instructions; backup execution stays out of web APIs.
+
+## Recovery Center
+
+The navigation now includes an owner-only Recovery Center with four operator stages: preflight, encrypted streaming PostgreSQL backup, read-only archive inspection and manual staging restore drill. The browser can copy non-secret CLI commands but cannot trigger backup/restore mutations. Repo source is available at `scripts/cloud/recovery.mjs`, with 11 locally passing mocked process tests and a runbook at `docs/cloud/RECOVERY.md`. Completion is not recorded until an external real restore and sign-off; the UI shows missing evidence as unknown, never invented success.
