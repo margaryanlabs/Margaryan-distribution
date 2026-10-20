@@ -7,7 +7,7 @@ import type {ClickHouseStatus} from "@/lib/cloud/clickhouse";
 import styles from "./mission-control.module.css";
 
 type Props={data:CloudSnapshot;loading:boolean;startView?:View;onRefresh:()=>void;onOpenSetup:()=>void;onOpenOwned:()=>void;
- onOpenDeploy:()=>void;onOpenRecovery:()=>void;onOpenStudio:()=>void;onOpenTelemetry:()=>void};
+ onOpenDeploy:()=>void;onOpenRecovery:()=>void;onOpenStudio:()=>void;onOpenTelemetry:()=>void;onOpenDomains:()=>void};
 type View="fleet"|"projects"|"data"|"agents";
 type ProjectFilter="all"|"hosted"|"issues"|"planned";
 type Auxiliary={providers:ProviderView[]|null;clickhouse:ClickHouseStatus|null;error:string};
@@ -41,7 +41,7 @@ function when(raw:string){
 }
 function safeText(value:string){return value.length>105?value.slice(0,105)+"…":value;}
 function labelState(state:ProviderView["state"]){return state==="connected"?"Connected":state==="error"?"Connection error":"Not configured";}
-export default function MissionControl({data,loading,startView="fleet",onRefresh,onOpenSetup,onOpenOwned,onOpenDeploy,onOpenRecovery,onOpenStudio,onOpenTelemetry}:Props){
+export default function MissionControl({data,loading,startView="fleet",onRefresh,onOpenSetup,onOpenOwned,onOpenDeploy,onOpenRecovery,onOpenStudio,onOpenTelemetry,onOpenDomains}:Props){
  const [view,setView]=useState<View>(startView);
  const [projectFilter,setProjectFilter]=useState<ProjectFilter>("all");
  const [search,setSearch]=useState("");
@@ -238,7 +238,7 @@ export default function MissionControl({data,loading,startView="fleet",onRefresh
     {aux.error&&<p className={styles.errorText}>{aux.error}</p>}
    </section>
    <section className={styles.surface}>
-    <div className={styles.sectionHeader}><div><span className={styles.overline}>DOMAINS & EDGE</span><h2>Domain connections</h2></div><button type="button" className={styles.microLink} onClick={onOpenSetup}>DNS setup ↗</button></div>
+    <div className={styles.sectionHeader}><div><span className={styles.overline}>DOMAINS & EDGE</span><h2>Domain connections</h2></div><button type="button" className={styles.microLink} onClick={onOpenDomains}>Connect domain ↗</button></div>
     {!appsReady?<div className={styles.noSource}><span>◎</span><div><strong>Waiting for domain inventory</strong><p>Connect Coolify to view configured application hostnames.</p></div></div>:
      domains.length===0?<div className={styles.noSource}><span>◎</span><div><strong>No domains reported</strong><p>No application domains have been configured in the connected inventory.</p></div></div>:
      <div className={styles.domains}>{domains.map(d=><div key={d.id}><span><strong>{d.host}</strong><small>{d.app}</small></span>

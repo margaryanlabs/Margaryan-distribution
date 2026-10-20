@@ -85,6 +85,8 @@ jobs:
         run: node --experimental-strip-types --test scripts/cloud/test-health-signals.mjs
       - name: Mission Control V3 navigation and auth contracts
         run: node --test scripts/cloud/test-mission-control-v3.mjs
+      - name: Domain connection plan validation
+        run: node --experimental-strip-types --test scripts/cloud/test-domain-plan.mjs
       - name: Typecheck
         run: npm run typecheck
       - name: Production build

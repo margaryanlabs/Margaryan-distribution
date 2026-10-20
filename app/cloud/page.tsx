@@ -5,6 +5,7 @@ import styles from "./cloud.module.css";
 import MigrationLab from "./migration-lab";
 import CloudFoundation from "./foundation";
 import MissionControl from "./mission-control";
+import DomainPlanner from "./domain-planner";
 import CapacityPanel from "./capacity-panel";
 import ProviderConsole from "./provider-console";
 import CloudStudio from "./studio";
@@ -19,12 +20,13 @@ type Server={uuid:string;name:string;ip:string;status:string;description:string}
 type Deployment={uuid:string;applicationName:string;status:string;commit:string;createdAt:string;serverName:string};
 type Project={uuid:string;name:string;description:string};
 type Snapshot={mode:"setup"|"connected"|"degraded";updatedAt:string;applications:App[];servers:Server[];deployments:Deployment[];projects:Project[];errors:string[];message?:string;sources?:{applications:boolean;servers:boolean;deployments:boolean;projects:boolean}};
-type Section="command"|"project-center"|"data-center"|"agent-watch"|"capacity"|"owned"|"deploy-engine"|"recovery"|"telemetry"|"studio"|"overview"|"applications"|"deployments"|"servers"|"migration"|"foundation"|"providers"|"setup";
+type Section="command"|"domain-planner"|"project-center"|"data-center"|"agent-watch"|"capacity"|"owned"|"deploy-engine"|"recovery"|"telemetry"|"studio"|"overview"|"applications"|"deployments"|"servers"|"migration"|"foundation"|"providers"|"setup";
 const empty:Snapshot={mode:"setup",updatedAt:"",applications:[],servers:[],deployments:[],projects:[],errors:[],sources:{applications:false,servers:false,deployments:false,projects:false}};
 const sections:{id:Section;label:string;symbol:string}[]=[
  {id:"command",label:"Mission Control",symbol:"✦"},
  {id:"project-center",label:"All Projects",symbol:"▦"},
  {id:"data-center",label:"Data & Domains",symbol:"▤"},
+ {id:"domain-planner",label:"Domain Connect",symbol:"◎"},
  {id:"agent-watch",label:"Agent Watch",symbol:"✳"},
  {id:"capacity",label:"Capacity Planner",symbol:"▥"},
  {id:"owned",label:"Our Infrastructure",symbol:"▤"},
@@ -82,7 +84,7 @@ export default function MarkarianCloud(){
    </a>
    <div className={styles.navLabel}>CONTROL ROOM</div>
    <nav aria-label="Cloud navigation">
-    {sections.filter(item=>["command","project-center","data-center","agent-watch","owned","deploy-engine","capacity","recovery","telemetry","studio"].includes(item.id)).map(item=><button key={item.id} type="button" onClick={()=>{setSection(item.id);setFilter("");}} aria-current={section===item.id?"page":undefined} className={section===item.id?styles.navActive:styles.navButton}>
+    {sections.filter(item=>["command","project-center","data-center","domain-planner","agent-watch","owned","deploy-engine","capacity","recovery","telemetry","studio"].includes(item.id)).map(item=><button key={item.id} type="button" onClick={()=>{setSection(item.id);setFilter("");}} aria-current={section===item.id?"page":undefined} className={section===item.id?styles.navActive:styles.navButton}>
      <span className={styles.navIcon}>{item.symbol}</span>{item.label}
     </button>)}
     <div className={styles.navDivider}/>
@@ -109,8 +111,9 @@ export default function MarkarianCloud(){
     </div>
    </header>
    <div className={styles.body}>
-    {["command","project-center","data-center","agent-watch"].includes(section)&&<MissionControl key={section} startView={section==="project-center"?"projects":section==="data-center"?"data":section==="agent-watch"?"agents":"fleet"} data={data} loading={loading} onRefresh={()=>void refresh()} onOpenSetup={()=>setSection("setup")} onOpenOwned={()=>setSection("owned")} onOpenDeploy={()=>setSection("deploy-engine")} onOpenRecovery={()=>setSection("recovery")} onOpenStudio={()=>setSection("studio")} onOpenTelemetry={()=>setSection("telemetry")}/>}
+    {["command","project-center","data-center","agent-watch"].includes(section)&&<MissionControl key={section} startView={section==="project-center"?"projects":section==="data-center"?"data":section==="agent-watch"?"agents":"fleet"} data={data} loading={loading} onRefresh={()=>void refresh()} onOpenSetup={()=>setSection("setup")} onOpenOwned={()=>setSection("owned")} onOpenDeploy={()=>setSection("deploy-engine")} onOpenRecovery={()=>setSection("recovery")} onOpenStudio={()=>setSection("studio")} onOpenTelemetry={()=>setSection("telemetry")} onOpenDomains={()=>setSection("domain-planner")}/>}
     {section==="capacity"&&<CapacityPanel onDeploy={()=>setSection("deploy-engine")} onSetup={()=>setSection("setup")}/>}
+    {section==="domain-planner"&&<DomainPlanner onOpenSetup={()=>setSection("setup")}/>}
     {section==="overview"&&<>
      <section className={styles.hero}>
       <div className={styles.heroCopy}><span className={styles.eyebrow}>INFRASTRUCTURE COMMAND CENTER · V1</span>
