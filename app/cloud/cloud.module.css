@@ -35,7 +35,7 @@
  .cloud{display:block;grid-template-columns:none}
  .sidebar{position:relative;height:auto;min-height:0;padding:13px 12px;background:#111216;border-bottom:1px solid #313238}
  .brand{margin:0;padding:2px 3px 11px;border:0}
- .navLabel,.sideBottom,.navDivider,.navSecondaryToggle{display:none}
+ .navLabel,.sideBottom,.navDivider{display:none}
  .sidebar nav{display:flex;overflow-x:auto;gap:4px;padding-bottom:3px}
  .sidebar nav .navButton,.sidebar nav .navActive{min-height:37px;font-size:10px;padding:9px 12px;flex-shrink:0}
  .sidebar nav .navIcon{display:none}
@@ -43,3 +43,5 @@
  .breadcrumb{font-size:8px;letter-spacing:.07em}
  .body{padding:18px 13px}
 }
+
+@media(max-width:720px){.sidebar nav .navSecondaryToggle{min-height:37px;flex-shrink:0;border:1px solid #404046;border-radius:7px;display:flex;white-space:nowrap;padding:7px 10px;margin:0;font-size:9px;gap:9px}}
