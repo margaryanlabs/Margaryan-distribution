@@ -96,3 +96,9 @@ Eight independent Node 22 tests passed on the copied Cloud adapter using mocked 
 ### Coolify server status mapping
 
 The Coolify `GET /api/v1/servers` response exposes `settings.is_reachable` and `settings.is_usable` booleans, not a standard top-level `status` field. Markarian Cloud now derives `healthy`, `unreachable`, `not ready` or `unknown` from those values, without assuming a server is healthy when data is missing. No server was contacted in this PR.
+
+## Command Center and manually added projects
+
+Command Center is the default /cloud view. Its service data is read-only from Coolify, and a clear data-source availability flag prevents failed upstream calls from being misrepresented as zero services. Manually added project names and normalized GitHub paths are stored **only in the current browser's localStorage** under `markarian-cloud-projects-v1`; there is no server persistence, cross-device sync, repository write, project provisioning or credential collection. The operator may remove only this local planning entry — **not** a real deployment.
+
+The /cloud UI and /api/cloud both fail closed with HTTP 503 until the existing Distribution operator Basic credentials are configured. Before hosting real customer resources use VPN/Zero Trust, SSO/MFA, scoped roles, audit trails and separate permission-controlled write flows; Basic alone is not an appropriate long-term multi-tenant access model.

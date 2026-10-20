@@ -1,7 +1,7 @@
 "use client";
 
-import {useMemo,useState} from "react";
-import {appHealth,buildPortfolio,infrastructureNotice,type CloudSnapshot,type PortfolioItem} from "@/lib/cloud/command-center";
+import {useEffect,useMemo,useState} from "react";
+import {appHealth,buildPortfolio,githubRepository,infrastructureNotice,type CloudSnapshot,type LocalProject} from "@/lib/cloud/command-center";
 import styles from "./command-center.module.css";
 
 type Filter="all"|"connected"|"planned"|"attention";
@@ -14,7 +14,54 @@ export default function CommandCenter({data,loading,onRefresh,onOpenSetup,onOpen
  const [query,setQuery]=useState("");
  const [filter,setFilter]=useState<Filter>("all");
  const [chosen,setChosen]=useState("");
- const portfolio=useMemo(()=>buildPortfolio(data),[data]);
+ const [adding,setAdding]=useState(false);
+ const [projectName,setProjectName]=useState("");
+ const [projectRepo,setProjectRepo]=useState("");
+ const [projectError,setProjectError]=useState("");
+ const [localProjects,setLocalProjects]=useState<LocalProject[]>([]);
+ const [localReady,setLocalReady]=useState(false);
+ useEffect(()=>{
+  try{
+   const raw=window.localStorage.getItem("markarian-cloud-projects-v1");
+   if(raw){
+    const parsed:unknown=JSON.parse(raw);
+    if(Array.isArray(parsed)){
+     setLocalProjects(parsed.filter((p):p is LocalProject=>Boolean(
+      p&&typeof p==="object"&&typeof p.id==="string"&&typeof p.name==="string"&&
+      typeof p.repository==="string"&&githubRepository(p.repository)
+     )).slice(0,50).map(p=>({id:p.id.slice(0,80),name:p.name.slice(0,80),repository:p.repository.slice(0,180)})));
+    }
+   }
+  }catch{setProjectError("Local project registry could not be read.");}
+  setLocalReady(true);
+ },[]);
+ const portfolio=useMemo(()=>buildPortfolio(data,localProjects),[data,localProjects]);
+ function addProject(){
+  const repo=githubRepository(projectRepo);
+  const name=projectName.trim();
+  if(!localReady)return;
+  if(!repo||name.length<2||name.length>80){
+   setProjectError("Enter a 2–80 character project name and valid GitHub owner/repository.");
+   return;
+  }
+  if(portfolio.some(item=>item.repository&&githubRepository(item.repository)===repo)){
+   setProjectError("This GitHub repository is already present in the portfolio.");
+   return;
+  }
+  if(localProjects.length>=50){setProjectError("Local registry is limited to 50 additional projects.");return;}
+  const next=[...localProjects,{id:crypto.randomUUID(),name,repository:repo}];
+  try{
+   window.localStorage.setItem("markarian-cloud-projects-v1",JSON.stringify(next));
+  }catch{setProjectError("Storage is unavailable. Your project was not saved.");return;}
+  setLocalProjects(next);setProjectName("");setProjectRepo("");setProjectError("");setAdding(false);
+ }
+ function removeLocal(item:LocalProject){
+  const next=localProjects.filter(p=>p.id!==item.id);
+  try{
+   window.localStorage.setItem("markarian-cloud-projects-v1",JSON.stringify(next));
+   setLocalProjects(next);setChosen("");
+  }catch{setProjectError("Could not update local storage.");}
+ }
  const visible=useMemo(()=>portfolio.filter(item=>{
   if(filter==="connected"&&!item.linked)return false;
   if(filter==="planned"&&item.linked)return false;
@@ -56,7 +103,15 @@ export default function CommandCenter({data,loading,onRefresh,onOpenSetup,onOpen
   </div>
   <div className={styles.mainGrid}>
    <section className={styles.projects}>
-    <div className={styles.panelHead}><div><span className={styles.kicker}>PROJECT OPERATIONS</span><h2>All projects</h2></div><span className={styles.panelMeta}>{visible.length} shown</span></div>
+    <div className={styles.panelHead}><div><span className={styles.kicker}>PROJECT OPERATIONS</span><h2>All projects</h2></div><button type="button" className={styles.addProject} onClick={()=>{setAdding(!adding);setProjectError("");}} aria-expanded={adding}>{adding?"Cancel":"＋ Add project"}</button></div>
+    {adding&&<form className={styles.addForm} onSubmit={event=>{event.preventDefault();addProject();}}>
+     <strong>Register a project for migration</strong>
+     <p>This saves a name and GitHub path on this device only. It will not deploy or change your repository.</p>
+     <label>Project name<input required maxLength={80} value={projectName} onChange={e=>setProjectName(e.target.value)} placeholder="My new project"/></label>
+     <label>GitHub repository<input required value={projectRepo} onChange={e=>setProjectRepo(e.target.value)} placeholder="owner/repository"/></label>
+     {projectError&&<p role="alert" className={styles.formError}>{projectError}</p>}
+     <button type="submit" disabled={!localReady}>Save project locally</button>
+    </form>}
     <div className={styles.toolbar}>
      <label className={styles.searchLabel}><span aria-hidden="true">⌕</span><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Find project or repository…" aria-label="Search projects"/></label>
      <div className={styles.filters} role="group" aria-label="Filter projects">
@@ -83,6 +138,10 @@ export default function CommandCenter({data,loading,onRefresh,onOpenSetup,onOpen
      {active.liveApplications.length>0&&<div className={styles.apps}><strong>Coolify application records</strong>
       {active.liveApplications.map((app,index)=><div className={styles.application} key={app.uuid||String(index)}><div><b>{app.name}</b><small>{app.gitBranch||"Unknown branch"} · {app.domain||"Domain not reported"}</small></div><span className={chip(appHealth(app.status))}>{words(app.status)}</span></div>)}
      </div>}
+     {active.category==="local"&&<button className={styles.removeLocal} type="button" onClick={()=>{
+      const local=localProjects.find(p=>active.key==="local:"+p.id);
+      if(local)removeLocal(local);
+     }}>Remove local planning entry</button>}
      <button type="button" className={styles.detailAction} onClick={active.linked?onOpenSetup:onOpenMigration}>{active.linked?"Open infrastructure setup →":"Prepare migration →"}</button>
     </div>}
    </section>

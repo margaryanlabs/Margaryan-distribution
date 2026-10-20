@@ -32,10 +32,11 @@ export function githubRepository(value:string):string|null{
 }
 export type PortfolioItem={
  key:string;name:string;type:string;repository:string|null;
- category:"catalog"|"discovered";linked:boolean;liveApplications:CloudApp[];
+ category:"catalog"|"discovered"|"local";linked:boolean;liveApplications:CloudApp[];
  risk:"standard"|"high"|"critical"|null;health:Health;
 };
-export function buildPortfolio(snapshot:CloudSnapshot):PortfolioItem[]{
+export type LocalProject={id:string;name:string;repository:string};
+export function buildPortfolio(snapshot:CloudSnapshot,local:LocalProject[]=[]):PortfolioItem[]{
  const apps=snapshot.sources?.applications===false?[]:snapshot.applications;
  const seen=new Set<string>();
  const plans=cloudCatalog.map((project):PortfolioItem=>{
@@ -48,12 +49,23 @@ export function buildPortfolio(snapshot:CloudSnapshot):PortfolioItem[]{
    repository:project.repository,category:"catalog",linked:linked.length>0,
    liveApplications:linked,risk:project.level,health};
  });
+ const localPlans=local.filter(p=>!!githubRepository(p.repository)).slice(0,50).filter(
+  p=>!plans.some(q=>q.repository&&githubRepository(q.repository)===githubRepository(p.repository))
+ ).map((project):PortfolioItem=>{
+  const repo=githubRepository(project.repository);
+  const linked=apps.filter(app=>githubRepository(app.gitRepository)===repo);
+  linked.forEach(app=>seen.add(app.uuid));
+  return {key:"local:"+project.id,name:project.name,type:"Local project registry (this browser)",
+   repository:repo,category:"local",linked:linked.length>0,liveApplications:linked,risk:null,
+   health:linked.some(a=>appHealth(a.status)==="attention")?"attention":
+    linked.length&&linked.every(a=>appHealth(a.status)==="running")?"running":"unknown"};
+ });
  const other=apps.filter(app=>!seen.has(app.uuid)).map((app,index):PortfolioItem=>({
   key:"discovered:"+(app.uuid||String(index)),name:app.name||"Unnamed Coolify app",
   type:"Discovered in Coolify",repository:githubRepository(app.gitRepository),
   category:"discovered",linked:true,liveApplications:[app],risk:null,health:appHealth(app.status)
  }));
- return [...plans,...other];
+ return [...plans,...localPlans,...other];
 }
 export function infrastructureNotice(snapshot:CloudSnapshot){
  if(snapshot.mode==="setup")return "No private VPS or Coolify inventory is configured.";
