@@ -1,91 +1,35 @@
-import { NextRequest, NextResponse } from "next/server";
+import {timingSafeEqual} from "node:crypto";
+import type {NextRequest} from "next/server";
+import {NextResponse} from "next/server";
 
-function unauthorized() {return new NextResponse("Authentication required",{status:401,headers:{"WWW-Authenticate":'Basic realm="Margaryan Distribution", charset="UTF-8"',"Cache-Control":"no-store"}});}
-function unavailable(message:string){return new NextResponse(message,{status:503,headers:{"Cache-Control":"no-store"}});}
-function safeEqual(a:string,b:string){if(a.length!==b.length)return false;let diff=0;for(let i=0;i<a.length;i+=1)diff|=a.charCodeAt(i)^b.charCodeAt(i);return diff===0;}
-function isMachinePath(path:string){return path==="/api/portfolio/tick"||path==="/api/autopilot/tick"||path.startsWith("/api/worker/");}
-function machineAuthorized(request:NextRequest){
- const path=request.nextUrl.pathname;
- const authorization=request.headers.get("authorization")||"";
- if(path==="/api/portfolio/tick"&&process.env.CRON_SECRET&&safeEqual(authorization,`Bearer ${process.env.CRON_SECRET}`))return true;
- if(path==="/api/portfolio/tick"||path==="/api/autopilot/tick"){
-  const supplied=request.headers.get("x-autopilot-secret")||"";
-  if(process.env.AUTOPILOT_SECRET&&supplied&&safeEqual(supplied,process.env.AUTOPILOT_SECRET))return true;
- }
- if(isMachinePath(path)){
-  const supplied=request.headers.get("x-worker-secret")||"";
-  if(process.env.WORKER_SECRET&&supplied&&safeEqual(supplied,process.env.WORKER_SECRET))return true;
- }
- return false;
-}
-function sensitiveRuntimeConfigured(){
- return Boolean(
-  process.env.DISTRIBUTION_DATABASE_URL||
-  (process.env.DISTRIBUTION_SUPABASE_URL&&process.env.DISTRIBUTION_SUPABASE_SERVICE_ROLE_KEY)||
-  process.env.OPENAI_API_KEY||
-  process.env.GOOGLE_REFRESH_TOKEN||
-  process.env.GMAIL_ACCESS_TOKEN||
-  process.env.GOOGLE_ACCESS_TOKEN||
-  process.env.EXECUTION_ENABLED==="true"
- );
+// Scoped ONLY to Markarian Cloud routes. Existing Distribution and Motion
+// authentication and behavior remain unchanged.
+function same(a:string,b:string){
+ const x=Buffer.from(a),y=Buffer.from(b);
+ return x.length===y.length&&timingSafeEqual(x,y);
 }
 export function proxy(request:NextRequest){
- if(machineAuthorized(request))return NextResponse.next();
-
- const path=request.nextUrl.pathname;
- // Public Motion commission endpoint is also explicitly allowed; its POST is
- // separately protected with same-origin checks, mandatory Turnstile and
- // fail-closed verified mail delivery. This exception must NEVER cover /api/leads.
- // These public routes do not expose CRM data or provider credentials.
- // Separate OAuth routes are narrowly public ONLY as protocol endpoints:
- // token/registration are independently validated; owner MCP demands OAuth
- // on EVERY request, and downloads require a short-lived HMAC-signed link.
- // /api/motion/oauth/authorize retains operator Basic auth and explicit consent.
- // Public shareable Motion creator, GPT setup, privacy notice and static
- // OpenAPI action declaration are deliberately EXACT-MATCH only. No CRM,
- // video worker, OAuth consent or billable queue becomes public.
- // The PUBLIC Motion MCP is read-only/stateless and implements its own origin,
- // input and schema validation. This exception is EXACT-MATCH only: no CRM,
- // worker, private file, authenticated editing or render path is exposed.
- // Vercel deployment protection may still run before this proxy; Railway's
- // publicly reachable distribution-web origin serves the narrow MCP route.
- // Do not open other /api, /motion/* or Distribution routes without operator authentication.
- if((path==="/motion"||path==="/motion/proof"||path==="/motion/commission"||path==="/motion/mcp"||path==="/motion/create"||path==="/motion/gpt"||path==="/motion/privacy")||
-   (path==="/api/motion/storyboard"||path==="/api/motion/gpt/openapi"||path==="/api/motion/captions"||path==="/api/motion/signature"||path==="/api/motion/commission"||path==="/api/motion/mcp"||path==="/api/motion/mcp/owner"||path==="/api/motion/oauth/register"||path==="/api/motion/oauth/token")||(
-    path.startsWith("/motion/brands/")&&[
-    "promptence.svg","meqena.svg","ingu.svg","veto-sport.svg",
-    "veto-private.svg","hay-engine.svg","tun-component-preview.svg"
-   ].includes(path.slice("/motion/brands/".length))
-   )
-   ||path==="/.well-known/oauth-protected-resource"
-   ||path==="/.well-known/oauth-protected-resource/api/motion/mcp/owner"
-   ||path==="/.well-known/oauth-authorization-server"
-   ||new RegExp("^/api/motion/share/[0-9a-f-]{36}$","i").test(path))return NextResponse.next();
- const expectedUser=process.env.DISTRIBUTION_BASIC_USER;
- const expectedPassword=process.env.DISTRIBUTION_BASIC_PASSWORD;
- const operatorAuthConfigured=Boolean(expectedUser&&expectedPassword);
-
- // Private message data must never be accessible on an unauthenticated demo deployment.
- if((path==="/linkedin"||path.startsWith("/linkedin/")||path.startsWith("/api/linkedin/agent"))&&!operatorAuthConfigured)return unavailable("Set DISTRIBUTION_BASIC_USER and DISTRIBUTION_BASIC_PASSWORD to enable private LinkedIn conversations.");
-
- if(isMachinePath(path)&&!operatorAuthConfigured)return unavailable("Machine endpoint disabled until CRON_SECRET, WORKER_SECRET, AUTOPILOT_SECRET, or operator auth is configured.");
-
- if(process.env.NODE_ENV==="production"&&sensitiveRuntimeConfigured()&&!operatorAuthConfigured){
-  return unavailable("Distribution runtime is activated but operator authentication is not configured.");
- }
-
- if(!operatorAuthConfigured)return NextResponse.next();
-
- const authorization=request.headers.get("authorization");
- if(!authorization?.startsWith("Basic "))return unauthorized();
- try{
-  const decoded=atob(authorization.slice(6));
-  const separator=decoded.indexOf(":");
-  if(separator<0)return unauthorized();
-  const username=decoded.slice(0,separator);
-  const password=decoded.slice(separator+1);
-  if(!safeEqual(username,expectedUser!)||!safeEqual(password,expectedPassword!))return unauthorized();
+ const user=process.env.DISTRIBUTION_BASIC_USER;
+ const pass=process.env.DISTRIBUTION_BASIC_PASSWORD;
+ const isApi=request.nextUrl.pathname.startsWith("/api/cloud");
+ // The preview UI contains no sensitive live data. Never expose the API
+ // if an operator password is not configured.
+ if(!user||!pass){
+  if(isApi)return NextResponse.json({error:"Cloud API requires DISTRIBUTION_BASIC_USER and DISTRIBUTION_BASIC_PASSWORD."},
+   {status:503,headers:{"Cache-Control":"no-store"}});
   return NextResponse.next();
- }catch{return unauthorized();}
+ }
+ const header=request.headers.get("authorization")||"";
+ let pair="";
+ if(header.startsWith("Basic ")&&header.length<1500){
+  try{pair=Buffer.from(header.slice(6),"base64").toString("utf8");}catch{}
+ }
+ const boundary=pair.indexOf(":");
+ if(boundary>=0&&same(pair.slice(0,boundary),user)&&same(pair.slice(boundary+1),pass))
+  return NextResponse.next();
+ return new NextResponse("Operator authorization required",{
+  status:401,headers:{"WWW-Authenticate":'Basic realm="Markarian Cloud", charset="UTF-8"',
+    "Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}
+ });
 }
-export const config={matcher:["/((?!api/health|_next/static|_next/image|favicon.ico).*)"]};
+export const config={matcher:["/cloud/:path*","/api/cloud/:path*"]};
