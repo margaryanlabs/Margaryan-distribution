@@ -66,7 +66,7 @@ export function proxy(request:NextRequest){
  const operatorAuthConfigured=Boolean(expectedUser&&expectedPassword);
 
  // Cloud may read private server inventory: never allow its API without operator auth.
- if(path==="/api/cloud"&&!operatorAuthConfigured)return unavailable("Configure Distribution operator auth before connecting Cloud.");
+ if((path==="/api/cloud"||path==="/cloud"||path.startsWith("/cloud/"))&&!operatorAuthConfigured)return unavailable("Private Cloud console requires configured operator authentication.");
 
  // Private message data must never be accessible on an unauthenticated demo deployment.
  if((path==="/linkedin"||path.startsWith("/linkedin/")||path.startsWith("/api/linkedin/agent"))&&!operatorAuthConfigured)return unavailable("Set DISTRIBUTION_BASIC_USER and DISTRIBUTION_BASIC_PASSWORD to enable private LinkedIn conversations.");

@@ -13,7 +13,7 @@ export async function GET(){
  const address=process.env.CLOUD_COOLIFY_URL?.trim();
  const token=process.env.CLOUD_COOLIFY_TOKEN?.trim();
  const now=new Date().toISOString();
- const blank={applications:[],servers:[],deployments:[],projects:[]};
+ const blank={applications:[],servers:[],deployments:[],projects:[],sources:{applications:false,servers:false,deployments:false,projects:false}};
  if(!address||!token)return NextResponse.json({mode:"setup",updatedAt:now,...blank,errors:[],
   message:"Set CLOUD_COOLIFY_URL and CLOUD_COOLIFY_TOKEN after purchasing a server."},{headers});
  if(!isValidCoolifyOrigin(address)){
@@ -23,6 +23,7 @@ export async function GET(){
  const endpoints=["applications","servers","deployments","projects"] as const;
  const results=await Promise.allSettled(endpoints.map(path=>readCoolifyList(base,token,path)));
  const errors:string[]=[];
+ const sources=Object.fromEntries(endpoints.map((name,index)=>[name,results[index].status==="fulfilled"])) as Record<(typeof endpoints)[number],boolean>;
  const records=results.map((result,index)=>{
   if(result.status==="fulfilled")return result.value;
   errors.push(endpoints[index]+": "+safeError(result.reason));
@@ -31,5 +32,5 @@ export async function GET(){
  return NextResponse.json({mode:errors.length?"degraded":"connected",updatedAt:now,
   applications:records[0].map(appView),servers:records[1].map(serverView),
   deployments:records[2].map(deploymentView),projects:records[3].map(projectView),
-  errors},{headers});
+  sources,errors},{headers});
 }

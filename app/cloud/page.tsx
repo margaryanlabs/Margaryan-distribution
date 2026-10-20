@@ -4,16 +4,18 @@ import {useCallback,useEffect,useMemo,useState} from "react";
 import styles from "./cloud.module.css";
 import MigrationLab from "./migration-lab";
 import CloudFoundation from "./foundation";
+import CommandCenter from "./command-center";
 import {cloudCatalog} from "@/lib/cloud/catalog";
 
 type App={uuid:string;name:string;status:string;domain:string;gitRepository:string;gitBranch:string;updatedAt:string};
 type Server={uuid:string;name:string;ip:string;status:string;description:string};
 type Deployment={uuid:string;applicationName:string;status:string;commit:string;createdAt:string;serverName:string};
 type Project={uuid:string;name:string;description:string};
-type Snapshot={mode:"setup"|"connected"|"degraded";updatedAt:string;applications:App[];servers:Server[];deployments:Deployment[];projects:Project[];errors:string[];message?:string};
-type Section="overview"|"applications"|"deployments"|"servers"|"migration"|"foundation"|"setup";
-const empty:Snapshot={mode:"setup",updatedAt:"",applications:[],servers:[],deployments:[],projects:[],errors:[]};
+type Snapshot={mode:"setup"|"connected"|"degraded";updatedAt:string;applications:App[];servers:Server[];deployments:Deployment[];projects:Project[];errors:string[];message?:string;sources?:{applications:boolean;servers:boolean;deployments:boolean;projects:boolean}};
+type Section="command"|"overview"|"applications"|"deployments"|"servers"|"migration"|"foundation"|"setup";
+const empty:Snapshot={mode:"setup",updatedAt:"",applications:[],servers:[],deployments:[],projects:[],errors:[],sources:{applications:false,servers:false,deployments:false,projects:false}};
 const sections:{id:Section;label:string;symbol:string}[]=[
+ {id:"command",label:"Command Center",symbol:"✦"},
  {id:"overview",label:"Overview",symbol:"◫"},
  {id:"applications",label:"Applications",symbol:"▦"},
  {id:"deployments",label:"Deployments",symbol:"↗"},
@@ -25,8 +27,8 @@ const sections:{id:Section;label:string;symbol:string}[]=[
 const migration=cloudCatalog.map(project=>({name:project.name,type:project.type,repo:project.repository||"Repository not verified"}));
 function stateTone(status:string){
  const value=status.toLowerCase();
- if(/running|finished|success|healthy|ready/.test(value))return styles.good;
  if(/error|failed|stopped|exited|unhealthy|unreachable|not ready/.test(value))return styles.bad;
+ if(/running|finished|success|healthy/.test(value))return styles.good;
  return styles.pending;
 }
 function date(value:string){
@@ -35,7 +37,7 @@ function date(value:string){
  return Number.isNaN(d.getTime())?"—":new Intl.DateTimeFormat("en",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}).format(d);
 }
 export default function MarkarianCloud(){
- const [section,setSection]=useState<Section>("overview");
+ const [section,setSection]=useState<Section>("command");
  const [data,setData]=useState<Snapshot>(empty);
  const [loading,setLoading]=useState(true);
  const [filter,setFilter]=useState("");
@@ -83,6 +85,7 @@ export default function MarkarianCloud(){
     </div>
    </header>
    <div className={styles.body}>
+    {section==="command"&&<CommandCenter data={data} loading={loading} onRefresh={()=>void refresh()} onOpenSetup={()=>setSection("setup")} onOpenMigration={()=>setSection("migration")}/>}
     {section==="overview"&&<>
      <section className={styles.hero}>
       <div className={styles.heroCopy}><span className={styles.eyebrow}>INFRASTRUCTURE COMMAND CENTER · V1</span>
