@@ -59,6 +59,8 @@ jobs:
         run: npm run motion:test-score
       - name: Motion reference codec and evidence contract
         run: npm run motion:test-reference
+      - name: Cloud normalization, privacy and operator-auth contract tests
+        run: node --experimental-strip-types scripts/cloud/test-contract.mjs
       - name: Typecheck
         run: npm run typecheck
       - name: Production build

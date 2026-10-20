@@ -1,0 +1,44 @@
+/**
+ * Coolify REST response normalizers. Keep this the ONLY surface where
+ * third-party records are translated to browser-visible data.
+ *
+ * No upstream raw object or environment variables may be forwarded.
+ */
+type Raw=Record<string,unknown>;
+const str=(v:unknown)=>typeof v==="string"?v:"";
+const text=(v:unknown)=>str(v).slice(0,250);
+const urlText=(v:unknown)=>str(v).slice(0,500);
+export function safeList(input:unknown):Raw[]{
+ if(!Array.isArray(input))throw new Error("Unexpected Coolify response: expected a list");
+ return input.filter((x):x is Raw=>x!==null&&typeof x==="object"&&!Array.isArray(x)).slice(0,500);
+}
+export function appView(a:Raw){
+ return {
+  uuid:text(a.uuid),name:text(a.name),status:text(a.status),
+  domain:urlText(a.fqdn),gitRepository:text(a.git_repository),gitBranch:text(a.git_branch),
+  updatedAt:text(a.updated_at)
+ };
+}
+export function serverView(s:Raw){
+ return {uuid:text(s.uuid),name:text(s.name),ip:text(s.ip),status:text(s.status),
+  description:text(s.description)};
+}
+export function deploymentView(d:Raw){
+ return {uuid:text(d.deployment_uuid),applicationName:text(d.application_name),
+  status:text(d.status),commit:text(d.commit),serverName:text(d.server_name),
+  createdAt:text(d.created_at)};
+}
+export function projectView(p:Raw){
+ return {uuid:text(p.uuid),name:text(p.name),description:text(p.description)};
+}
+export function isValidCoolifyOrigin(value:string){
+ try{
+  const u=new URL(value);
+  if(!((u.protocol==="https:")||(u.protocol==="http:"&&["localhost","127.0.0.1"].includes(u.hostname))))return false;
+  if(u.username||u.password||u.search||u.hash)return false;
+  if(u.pathname!=="/")return false;
+  // Disallow inline escape fragments/authority trickery and accidental base-path aliases.
+  if(/[\s\\]/.test(value))return false;
+  return true;
+ }catch{return false;}
+}
