@@ -114,3 +114,7 @@ Command Center shows a four-provider status strip. **Coolify** is live only afte
 ## Legacy Provider Bridge (Vercel / Railway / hosted Supabase)
 
 Server-side read-only metadata adapters are implemented in `lib/cloud/providers.ts`, API `GET /api/cloud/providers`. They require explicit private environment tokens. See `docs/cloud/PROVIDER_BRIDGE.md` for scoping, limits and privacy. This is a migration observation bridge, **not** a replacement for self-hosted data hosting or production deploy operations.
+
+## API defense in depth
+
+Both `/api/cloud` and `/api/cloud/providers` independently validate operator HTTP Basic credentials in Node.js using timing-safe SHA-256 comparisons. The existing root proxy continues to protect all Cloud pages and nested API paths. No Basic username/password means HTTP 503; invalid/missing credentials mean HTTP 401. This is an **interim owner-only access scheme**: self-hosted multi-user operations require SSO/MFA, permission-scoped roles, tamper-evident audit trails and preferably private VPN/Zero Trust access.

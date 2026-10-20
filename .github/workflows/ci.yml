@@ -65,6 +65,8 @@ jobs:
         run: node --test scripts/cloud/prepare-supabase.test.mjs
       - name: Test cross-provider Cloud inventory isolation
         run: node --experimental-strip-types --test scripts/cloud/test-providers.mjs
+      - name: Cloud API operator defense-in-depth tests
+        run: node --experimental-strip-types --test scripts/cloud/test-operator-auth.mjs
       - name: Typecheck
         run: npm run typecheck
       - name: Production build
