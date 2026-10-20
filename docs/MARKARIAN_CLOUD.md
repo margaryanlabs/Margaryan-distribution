@@ -152,3 +152,7 @@ New `app/cloud/command-v2.tsx` replaces the default page's outdated many-card da
 ## Operator-only real staging importer
 
 `deploy-stage.mjs` prepares and, when explicitly approved, calls the actual Coolify `POST /api/v1/applications/public` endpoint to create a **new staging application record only**. No production write, deployment launch or secret value is exposed by the web UI. This is the first intentionally guarded external write flow for a secured future VPS; it has not been connected to a VPS in this repository. See `docs/cloud/STAGING_DEPLOY.md`.
+
+## Private GitHub staging import support
+
+The standalone operator-only staging importer now supports private `owner/repo` sources through a preconfigured Coolify GitHub App UUID. No GitHub private key, client secret or repository credential is in the manifest. It posts exclusively to the documented `/api/v1/applications/private-github-app` endpoint and remains `staging` only. See `docs/cloud/STAGING_DEPLOY.md`.

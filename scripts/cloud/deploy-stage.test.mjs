@@ -62,3 +62,32 @@ test("Coolify errors and unverified UUID never count as successful deployment",(
  assert.throws(()=>stagingReceipt({uuid:"../bad"}));
  assert.deepEqual(stagingReceipt({uuid:"staging12345"}),{applicationUuid:"staging12345",createdIn:"staging",deployed:false});
 });
+
+test("Private repo importer supports only a preconfigured Coolify GitHub App",()=>{
+ const privateInput={...config,source:"private-github-app",github_app_uuid:"githubapp000123",git_repository:"margaryanlabs/Margaryan-distribution"};
+ const req=createStagingRequest(privateInput);
+ assert.equal(req.github_app_uuid,"githubapp000123");
+ assert.equal(req.git_repository,"margaryanlabs/Margaryan-distribution");
+ assert.equal(req.environment_name,"staging");
+ assert.throws(()=>createStagingRequest({...privateInput,github_app_uuid:""}));
+ assert.throws(()=>createStagingRequest({...privateInput,git_repository:"https://github.com/margaryanlabs/Margaryan-distribution"}));
+});
+test("Private GitHub App staging uses exact private endpoint and never creates a deployment",async()=>{
+ const root=mkdtempSync(join(tmpdir(),"cloud-private-stage-"));
+ try{
+  const file=join(root,"token");writeFileSync(file,"TEST_ONLY_COOLIFY_TOKEN_1234567890",{mode:0o600});
+  let calls=0;
+  const fake=async(url,request)=>{
+   calls++;assert.equal(url.pathname,"/api/v1/applications/private-github-app");
+   const payload=JSON.parse(request.body);
+   assert.equal(payload.github_app_uuid,"githubapp000123");
+   assert.equal(payload.environment_name,"staging");
+   assert.doesNotMatch(JSON.stringify(payload),/private_key|client_secret|TOKEN_12345/);
+   return new Response(JSON.stringify({uuid:"privateapp002244"}),{status:201});
+  };
+  const input={...config,source:"private-github-app",github_app_uuid:"githubapp000123",git_repository:"margaryanlabs/Margaryan-distribution"};
+  const res=await stageApplication(createStagingRequest(input),{
+   CLOUD_COOLIFY_URL:"https://ops.example.com",CLOUD_COOLIFY_WRITE_TOKEN_FILE:file,CLOUD_DEPLOY_ENABLE:"staging-only"},fake);
+  assert.equal(calls,1);assert.equal(res.deployed,false);
+ }finally{rmSync(root,{recursive:true,force:true});}
+});

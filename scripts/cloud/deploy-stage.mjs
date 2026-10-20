@@ -14,13 +14,24 @@ const BRANCH=/^[a-zA-Z0-9_][a-zA-Z0-9_./-]{0,99}$/;
 const SLUG=/^[a-z][a-z0-9-]{1,47}$/;
 const DOMAIN=/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.([a-z0-9-]+\.)+[a-z]{2,63}$/;
 const PUBLIC_REPO=/^https:\/\/github\.com\/[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+(?:\.git)?$/;
+const PRIVATE_REPO=/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
 function fail(msg){throw new Error(msg);}
 export function createStagingRequest(input){
  if(!input||typeof input!=="object"||Array.isArray(input))fail("Expected a staging config JSON object");
  if(!ID.test(input.project_uuid||"")||!ID.test(input.server_uuid||""))
   fail("Project and server UUIDs must be explicitly supplied");
  if(input.environment_name!=="staging")fail("This tool only creates staging applications");
- if(!PUBLIC_REPO.test(input.git_repository||"")||input.git_repository.includes(".."))fail("Expected a canonical public GitHub HTTPS repository URL");
+ const privateSource=input.source==="private-github-app";
+ if(input.source&&input.source!=="private-github-app")fail("Unsupported repository source");
+ if(privateSource){
+  if(!ID.test(input.github_app_uuid||""))fail("Private repository requires a configured Coolify GitHub App UUID");
+  if(!PRIVATE_REPO.test(input.git_repository||"")||input.git_repository.includes(".."))
+   fail("Private GitHub repository must be owner/repo");
+ }else{
+  if(input.github_app_uuid)fail("GitHub App UUID belongs only to private repository imports");
+  if(!PUBLIC_REPO.test(input.git_repository||"")||input.git_repository.includes(".."))
+   fail("Expected a canonical public GitHub HTTPS repository URL");
+ }
  if(!BRANCH.test(input.git_branch||"")||input.git_branch.includes("..")||input.git_branch.includes("//")||input.git_branch.endsWith("/"))
   fail("Invalid Git branch");
  if(!["nixpacks","railpack","dockerfile","static"].includes(input.build_pack))fail("Unsupported Coolify build pack");
@@ -33,6 +44,7 @@ export function createStagingRequest(input){
   project_uuid:input.project_uuid,server_uuid:input.server_uuid,
   environment_name:"staging",git_repository:input.git_repository,git_branch:input.git_branch,
   build_pack:input.build_pack,ports_exposes:String(port),name:input.name,
+  ...(privateSource?{github_app_uuid:input.github_app_uuid}:{}),
   ...(input.domains?{domains:"https://"+input.domains}: {})
  };
 }
@@ -65,7 +77,7 @@ export async function stageApplication(request,env,fetcher=fetch){
  if(!base)fail("Secure HTTPS CLOUD_COOLIFY_URL required");
  if(env.CLOUD_DEPLOY_ENABLE!=="staging-only")fail("Set CLOUD_DEPLOY_ENABLE=staging-only explicitly");
  const token=readToken(env);
- const url=new URL("/api/v1/applications/public",base);
+ const url=new URL(request.github_app_uuid?"/api/v1/applications/private-github-app":"/api/v1/applications/public",base);
  const response=await fetcher(url,{
   method:"POST",headers:{Authorization:"Bearer "+token,"Content-Type":"application/json",Accept:"application/json"},
   body:JSON.stringify(request),cache:"no-store",redirect:"error",signal:AbortSignal.timeout(12000)
