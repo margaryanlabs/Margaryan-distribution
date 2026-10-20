@@ -15,3 +15,19 @@
 .form input:focus-visible,.form select:focus-visible{outline:2px solid #c7bbac}
 .card,.selected,.phase,.phaseActive,.layer,.active,.provider{background:#1c1d23;border-color:#393940}
 .selected,.phaseActive,.active{background:#313037;border-color:#b3a89b}
+
+
+/* Mission Control V3: align all main product workspaces with the control deck */
+.root{color:#edf4ff}
+.hero{background:radial-gradient(ellipse at 86% 13%,#203b60,#111e30 65%,#0d1521)!important;border-color:#355270!important}
+.kicker,.eyebrow{color:#9ac1ef!important}
+.hero h1 em{font-family:Inter,ui-sans-serif,system-ui,sans-serif!important;color:#afceff!important}
+.hero p{color:#a4bad5!important}
+.config,.review,.details,.host,.result,.workloads,.catalog,.gates,.deployment,.surface,.phase,.phaseActive,.selected,.card{
+ border-color:#344d69!important;background:#131f2e!important;color:#dce9fb!important
+}
+.selected,.phaseActive,.active{background:#203956!important;border-color:#8bbcff!important}
+.primary,.action{background:#b5d8ff!important;border-color:#b5d8ff!important;color:#102035!important}
+.secondary,.setup{background:#1d3350!important;border-color:#466689!important;color:#d8eaff!important}
+.form input,.form select,.search input{background:#0c1726!important;border-color:#3b5778!important;color:#eef5ff!important}
+.lock,.version,.stage,.planning,.readonly{color:#bbd6f3!important;border-color:#486482!important;background:#1b3048!important}

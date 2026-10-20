@@ -45,3 +45,25 @@
 }
 
 @media(max-width:720px){.sidebar nav .navSecondaryToggle{min-height:37px;flex-shrink:0;border:1px solid #404046;border-radius:7px;display:flex;white-space:nowrap;padding:7px 10px;margin:0;font-size:9px;gap:9px}}
+
+
+/* Mission Control V3: shared ink-blue operator navigation */
+.cloud{background:#090d14;color:#edf4ff;--cloud-border:#293a51;--cloud-blue:#a5caff}
+.sidebar{background:#0b121c;border-right-color:#26374a}
+.brand{border-bottom-color:#283a51}
+.brandGlyph{color:#102034!important;background:linear-gradient(125deg,#d6e8ff,#8abaff)!important;border-color:#b6d9ff!important;box-shadow:0 0 27px #90befe38;border-radius:11px}
+.brandGlyph span{color:#315f94!important}
+.brand strong{color:#eaf4ff}.brand small{color:#8ea9cc}
+.navLabel,.navSecondaryToggle{color:#7c9bbe}
+.navButton{color:#91a8c8}
+.navActive{background:#213653!important;border-color:#426186!important;color:#e7f3ff!important}
+.navActive .navIcon{color:#bfe0ff}
+.navButton:hover{background:#18283c}
+.navDivider,.sideBottom{border-color:#283b53}
+.topbar{background:#0c1420;border-bottom-color:#293c56}
+.breadcrumb{color:#829ebf}.breadcrumb span{color:#4b6381}
+.environment{background:#182a40;border-color:#3b5779;color:#bdd7f6}
+.refresh{background:#1f3450;border-color:#476587;color:#d0e4ff}
+.body{max-width:1600px}
+.cloud a:focus-visible,.cloud button:focus-visible{outline-color:#a3ccff}
+@media(max-width:720px){.sidebar{background:#0c1420;border-bottom-color:#2b4564}.navActive{background:#234061!important}.topbar{background:#0d1724}}
