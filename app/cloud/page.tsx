@@ -52,6 +52,7 @@ function date(value:string){
 }
 export default function MarkarianCloud(){
  const [section,setSection]=useState<Section>("command");
+ const [showTools,setShowTools]=useState(false);
  const [data,setData]=useState<Snapshot>(empty);
  const [loading,setLoading]=useState(true);
  const [filter,setFilter]=useState("");
@@ -76,11 +77,17 @@ export default function MarkarianCloud(){
     <span className={styles.brandGlyph}>M<span>✦</span></span>
     <span><strong>MARKARIAN</strong><small>CLOUD / PRIVATE PaaS</small></span>
    </a>
-   <div className={styles.navLabel}>WORKSPACE</div>
+   <div className={styles.navLabel}>CONTROL ROOM</div>
    <nav aria-label="Cloud navigation">
-    {sections.map(item=><button key={item.id} type="button" onClick={()=>{setSection(item.id);setFilter("");}} aria-current={section===item.id?"page":undefined} className={section===item.id?styles.navActive:styles.navButton}>
+    {sections.filter(item=>["command","owned","deploy-engine","capacity","recovery","telemetry","studio"].includes(item.id)).map(item=><button key={item.id} type="button" onClick={()=>{setSection(item.id);setFilter("");}} aria-current={section===item.id?"page":undefined} className={section===item.id?styles.navActive:styles.navButton}>
      <span className={styles.navIcon}>{item.symbol}</span>{item.label}
-     {item.id==="applications"&&isLive&&<span className={styles.navCount}>{data.applications.length}</span>}
+    </button>)}
+    <div className={styles.navDivider}/>
+    <button className={styles.navSecondaryToggle} type="button" onClick={()=>setShowTools(x=>!x)} aria-expanded={showTools}>
+     ALL SERVICES <span>{showTools?"−":"+"}</span>
+    </button>
+    {showTools&&sections.filter(item=>!["command","owned","deploy-engine","capacity","recovery","telemetry","studio"].includes(item.id)).map(item=><button key={item.id} type="button" onClick={()=>{setSection(item.id);setFilter("");}} aria-current={section===item.id?"page":undefined} className={section===item.id?styles.navActive:styles.navButton}>
+     <span className={styles.navIcon}>{item.symbol}</span>{item.label}
     </button>)}
    </nav>
    <div className={styles.sideBottom}>
