@@ -77,6 +77,8 @@ jobs:
         run: node --test scripts/cloud/recovery.test.mjs
       - name: Test safe deployment review plans
         run: node --experimental-strip-types --test scripts/cloud/test-deploy-plan.mjs
+      - name: Capacity planner arithmetic and safety tests
+        run: node --experimental-strip-types --test scripts/cloud/test-capacity.mjs
       - name: Typecheck
         run: npm run typecheck
       - name: Production build
