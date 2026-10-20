@@ -2,30 +2,25 @@
 
 import {useCallback,useEffect,useMemo,useState} from "react";
 import styles from "./cloud.module.css";
+import MigrationLab from "./migration-lab";
+import {cloudCatalog} from "@/lib/cloud/catalog";
 
 type App={uuid:string;name:string;status:string;domain:string;gitRepository:string;gitBranch:string;updatedAt:string};
 type Server={uuid:string;name:string;ip:string;status:string;description:string};
 type Deployment={uuid:string;applicationName:string;status:string;commit:string;createdAt:string;serverName:string};
 type Project={uuid:string;name:string;description:string};
 type Snapshot={mode:"setup"|"connected"|"degraded";updatedAt:string;applications:App[];servers:Server[];deployments:Deployment[];projects:Project[];errors:string[];message?:string};
-type Section="overview"|"applications"|"deployments"|"servers"|"setup";
+type Section="overview"|"applications"|"deployments"|"servers"|"migration"|"setup";
 const empty:Snapshot={mode:"setup",updatedAt:"",applications:[],servers:[],deployments:[],projects:[],errors:[]};
 const sections:{id:Section;label:string;symbol:string}[]=[
  {id:"overview",label:"Overview",symbol:"◫"},
  {id:"applications",label:"Applications",symbol:"▦"},
  {id:"deployments",label:"Deployments",symbol:"↗"},
  {id:"servers",label:"Servers",symbol:"▤"},
+ {id:"migration",label:"Migration Lab",symbol:"◇"},
  {id:"setup",label:"Infrastructure setup",symbol:"⚙"}
 ];
-const migration=[
- {name:"VETO Intelligence",type:"Trading / intelligence",repo:"decision-command"},
- {name:"Promptence",type:"AI visibility / SaaS",repo:"ai-revenue-navigator"},
- {name:"VETU Telegram",type:"Telegram mini app",repo:"Connect repository"},
- {name:"DAS / Booba",type:"AI education",repo:"das-speak-armenia"},
- {name:"RAIOS",type:"Restaurant intelligence",repo:"ai-os-foundation"},
- {name:"TUN",type:"Real estate",repo:"Connect repository"},
- {name:"Motion Studio",type:"Media / distribution",repo:"Margaryan-distribution"}
-];
+const migration=cloudCatalog.map(project=>({name:project.name,type:project.type,repo:project.repository||"Repository not verified"}));
 function stateTone(status:string){
  const value=status.toLowerCase();
  if(/running|finished|success|healthy|ready/.test(value))return styles.good;
@@ -56,7 +51,7 @@ export default function MarkarianCloud(){
  useEffect(()=>{void refresh();},[refresh]);
  const query=filter.trim().toLowerCase();
  const apps=useMemo(()=>data.applications.filter(a=>(a.name+" "+a.gitRepository+" "+a.domain).toLowerCase().includes(query)),[data.applications,query]);
- const isLive=data.mode!=="setup";
+ const isLive=data.mode==="connected";
  return <main className={styles.cloud}>
   <aside className={styles.sidebar}>
    <a className={styles.brand} href="/cloud" aria-label="Markarian Cloud home">
@@ -91,7 +86,7 @@ export default function MarkarianCloud(){
       <div className={styles.heroCopy}><span className={styles.eyebrow}>INFRASTRUCTURE COMMAND CENTER · V1</span>
        <h1>One cloud.<br/><em>Every ambition.</em></h1>
        <p>A private deployment control plane for Margaryan Labs. Connect your own server when you are ready. Your portfolio stays independent from hosting vendors.</p>
-       <div className={styles.heroActions}><button type="button" onClick={()=>setSection("setup")} className={styles.primary}>Configure infrastructure <span>↗</span></button><button type="button" className={styles.secondary} onClick={()=>setSection("applications")}>Explore applications →</button></div>
+       <div className={styles.heroActions}><button type="button" onClick={()=>setSection("setup")} className={styles.primary}>Configure infrastructure <span>↗</span></button><button type="button" className={styles.secondary} onClick={()=>setSection("migration")}>Plan migration →</button></div>
       </div>
       <div className={styles.orbit} aria-hidden="true"><div className={styles.orbitOuter}/><div className={styles.orbitMid}/><div className={styles.orbitCore}>M</div><span className={styles.orbitPointA}/><span className={styles.orbitPointB}/><span className={styles.orbitPointC}/></div>
      </section>
@@ -109,7 +104,7 @@ export default function MarkarianCloud(){
        <div className={styles.projectList}>{migration.slice(0,5).map((item,index)=><div key={item.name} className={styles.projectRow}>
         <span className={styles.projectIndex}>{String(index+1).padStart(2,"0")}</span><span className={styles.projectMain}><strong>{item.name}</strong><small>{item.type}</small></span><span className={styles.planned}>To migrate</span>
        </div>)}</div>
-       <button type="button" className={styles.textAction} onClick={()=>setSection("applications")}>Browse all projects →</button>
+       <button type="button" className={styles.textAction} onClick={()=>setSection("migration")}>Open Migration Lab →</button>
       </section>
       <section className={styles.panel}>
        <div className={styles.panelTitle}><div><span className={styles.eyebrow}>SYSTEM STATUS</span><h2>Infrastructure readiness</h2></div><span className={isLive?styles.connectedBadge:styles.setupBadge}>{isLive?"LIVE":"SETUP"}</span></div>
@@ -127,6 +122,7 @@ export default function MarkarianCloud(){
       <div className={styles.divider}/><div className={styles.panelTitle}><div><span className={styles.eyebrow}>NEXT MIGRATIONS</span><h2>Margaryan Labs portfolio</h2></div><span className={styles.hint}>PLANNING REFERENCES</span></div>
       <div className={styles.projectList}>{migration.map(m=><div key={m.name} className={styles.projectRow}><span className={styles.projectIndex}>◇</span><span className={styles.projectMain}><strong>{m.name}</strong><small>{m.repo}</small></span><span className={styles.planned}>Not migrated</span></div>)}</div>
      </section>}
+    {section==="migration"&&<MigrationLab/>}
     {section==="deployments"&&<section className={styles.panel}>
       <div className={styles.panelTitle}><div><span className={styles.eyebrow}>DEPLOYMENT ACTIVITY</span><h1>Deployments</h1></div><span className={styles.hint}>READ ONLY</span></div>
       <p className={styles.panelDescription}>Current running deployment records provided by Coolify. Build, rollback and trigger controls will be added after server authorization is configured.</p>

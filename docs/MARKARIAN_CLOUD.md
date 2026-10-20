@@ -9,7 +9,8 @@ Cloud is an isolated module within the existing Next.js 16 app. Motion Studio, i
 
 ## What works
 
-- Premium responsive /cloud workspace with Overview, Applications, Deployments, Servers and Setup.
+- Premium responsive /cloud workspace with Overview, Applications, Deployments, Servers, Migration Lab and Setup.
+- Migration Lab is an interactive, **browser-local only** preparation checklist with GitHub-confirmed repository references and CSV clipboard export; it never claims a project is deployed or that a review hypothesis is a finding.
 - Honest empty/setup states before infrastructure exists. A planning migration queue is **not** confused with actual deployments.
 - GET /api/cloud reads the Coolify self-hosted API from the server using a token kept in environment variables only.
 - API paths: /api/v1/applications, /servers, /deployments and /projects.
@@ -17,6 +18,10 @@ Cloud is an isolated module within the existing Next.js 16 app. Motion Studio, i
 - 8-second timeout, no-store headers, bounded results and partial-failure status.
 - Cloud is protected by the **existing Distribution `proxy.ts`**. Its established Motion/CRM/worker authorization behavior and matcher are preserved. If Distribution operator Basic credentials are configured, the UI and Cloud API require authentication. Without those credentials the Cloud API returns 503, and the static setup workspace may be displayed on deployments without sensitive-runtime protection.
 - No side effects. No start/stop/redeploy/delete actions.
+
+## Migration Lab / source-of-truth boundaries
+
+The migration catalog in `lib/cloud/catalog.ts` is a manually curated planning aid. `repositoryVerified=true` means repository existence/access was checked through the connected GitHub account on 2026-10-20; it is not a code or runtime audit. Projects without confirmed canonical repositories are labelled unverified. Checkmarks are stored only under the key `markarian-cloud-migration-v1` in the current browser's localStorage and never represent real completed migrations. The export copies a CSV planning report to the clipboard.
 
 ## Connect after VPS purchase
 
