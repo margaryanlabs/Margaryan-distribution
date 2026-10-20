@@ -6,7 +6,7 @@ import type {ProviderView} from "@/lib/cloud/providers";
 import type {ClickHouseStatus} from "@/lib/cloud/clickhouse";
 import styles from "./mission-control.module.css";
 
-type Props={data:CloudSnapshot;loading:boolean;onRefresh:()=>void;onOpenSetup:()=>void;onOpenOwned:()=>void;
+type Props={data:CloudSnapshot;loading:boolean;startView?:View;onRefresh:()=>void;onOpenSetup:()=>void;onOpenOwned:()=>void;
  onOpenDeploy:()=>void;onOpenRecovery:()=>void;onOpenStudio:()=>void;onOpenTelemetry:()=>void};
 type View="fleet"|"projects"|"data"|"agents";
 type ProjectFilter="all"|"hosted"|"issues"|"planned";
@@ -41,8 +41,8 @@ function when(raw:string){
 }
 function safeText(value:string){return value.length>105?value.slice(0,105)+"…":value;}
 function labelState(state:ProviderView["state"]){return state==="connected"?"Connected":state==="error"?"Connection error":"Not configured";}
-export default function MissionControl({data,loading,onRefresh,onOpenSetup,onOpenOwned,onOpenDeploy,onOpenRecovery,onOpenStudio,onOpenTelemetry}:Props){
- const [view,setView]=useState<View>("fleet");
+export default function MissionControl({data,loading,startView="fleet",onRefresh,onOpenSetup,onOpenOwned,onOpenDeploy,onOpenRecovery,onOpenStudio,onOpenTelemetry}:Props){
+ const [view,setView]=useState<View>(startView);
  const [projectFilter,setProjectFilter]=useState<ProjectFilter>("all");
  const [search,setSearch]=useState("");
  const [selected,setSelected]=useState("");
