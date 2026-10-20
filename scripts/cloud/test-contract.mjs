@@ -78,3 +78,14 @@ test("Unexpected path, failing HTTP and untrusted origin are rejected",async()=>
  const unauthorized=async()=>new Response("unauthorized",{status:401});
  await assert.rejects(readCoolifyList("https://cloud.example.com","secret","servers",unauthorized),/HTTP 401/);
 });
+
+test("Disposable Compose pilot has no host ports, secrets or privileged mode",()=>{
+ const source=readFileSync(new URL("../../deploy/cloud/pilot/compose.yaml",import.meta.url),"utf8");
+ assert.match(source,/nginxinc\/nginx-unprivileged:stable-alpine/);
+ assert.match(source,/read_only:\s*true/);
+ assert.match(source,/cap_drop:\s*\n\s*- ALL/);
+ assert.match(source,/no-new-privileges:true/);
+ assert.match(source,/expose:\s*\n\s*- "8080"/);
+ assert.match(source,/healthcheck:/);
+ assert.doesNotMatch(source,/^\s*(ports:|privileged:|secrets:|environment:|volumes:)/m);
+});

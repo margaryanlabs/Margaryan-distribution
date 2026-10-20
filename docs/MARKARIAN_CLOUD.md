@@ -38,6 +38,12 @@ node scripts/cloud/preflight.mjs --online
 
 Offline mode reports missing infrastructure as WAIT rather than generating fake deployments. `--strict` and `--online` exit nonzero if requirements fail.
 
+## Disposable pilot and CI recovery
+
+A safe NGINX Compose pilot is provided in `deploy/cloud/pilot/compose.yaml`. See `deploy/cloud/pilot/README.md` for exact Coolify setup, test domain routing and health verification. This has not been deployed anywhere.
+
+GitHub Actions pre-job failures and operator recovery steps are documented in `docs/cloud/GITHUB_ACTIONS_RECOVERY.md`; existing runner failures do not prove a Next.js compilation defect.
+
 ## Connect after VPS purchase
 
 1. Buy a Linux VPS. Prefer >= 4 vCPU and 8 GB for a first real-world installation, increasing resources for build jobs and databases; capacity-plan separately.
