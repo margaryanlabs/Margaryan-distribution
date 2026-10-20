@@ -104,3 +104,9 @@ test('inspection rejects unsafe snapshot selectors',()=>{
   }
  }finally{rmSync(path,{recursive:true,force:true});}
 });
+
+test('plaintext HTTP backup endpoints are refused',()=>{
+ const {env,path}=prep();
+ try{assert.throws(()=>validateRecoveryEnvironment({...env,RESTIC_REPOSITORY:'s3:http://insecure.example/bucket'}),/plaintext HTTP/);}
+ finally{rmSync(path,{recursive:true,force:true});}
+});

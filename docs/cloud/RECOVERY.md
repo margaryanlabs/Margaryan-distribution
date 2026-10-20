@@ -36,3 +36,6 @@ On a separate **empty staging PostgreSQL instance**, use a known-good Restic sna
 Logical dumps are NOT point-in-time recovery (PITR). For PITR, add tested base backups, WAL archiving, retention and restore points. Storage objects and separate Supabase configuration/secrets require their own secure backup lifecycle. The script does not implement object backups, retention/pruning, schedules, locks, offsite checks, or automated recovery verification. Archive inspection and restic check are not substitutes for an actual staging restore.
 
 Unit tests use mocks for pg_dump, pg_restore and restic. They validate program behavior, not real credentials, external storage, PostgreSQL client versions or actual restoration.
+## Transport restriction
+
+The backup CLI rejects explicitly plaintext `s3:http://` destinations. Confirm the actual transport and TLS for every remote backend, especially custom S3 endpoints or rclone remotes. Never presume encrypted transport merely because Restic encrypts its stored content.

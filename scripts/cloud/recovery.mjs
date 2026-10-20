@@ -24,6 +24,7 @@ export function validateRecoveryEnvironment(env,{postgres=false}={}){
  const repo=env.RESTIC_REPOSITORY?.trim()||'';
  if(!/^(s3:https:\/\/|s3:|sftp:|b2:|azure:|gs:|rclone:|rest:https:\/\/)/.test(repo))
   fail('Use an offsite restic repository (s3, sftp, b2, azure, gs, rclone or HTTPS REST).');
+ if(/^s3:http:\/\//.test(repo)||/^rest:http:\/\//.test(repo))fail('Refusing a plaintext HTTP backup destination');
  if(/[\s\x00-\x1f]/.test(repo))fail('Repository address contains invalid characters');
  privateFile('RESTIC_PASSWORD_FILE',env);
  if(postgres){
