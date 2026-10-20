@@ -71,6 +71,8 @@ jobs:
         run: node --test scripts/cloud/test-ops.mjs
       - name: Test self-owned platform readiness truthfulness
         run: node --experimental-strip-types --test scripts/cloud/test-owned.mjs
+      - name: Verify private Prometheus telemetry and auth
+        run: node --experimental-strip-types --test scripts/cloud/test-telemetry.mjs
       - name: Typecheck
         run: npm run typecheck
       - name: Production build
