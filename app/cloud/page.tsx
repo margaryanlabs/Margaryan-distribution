@@ -9,6 +9,7 @@ import ProviderConsole from "./provider-console";
 import CloudStudio from "./studio";
 import OwnedInfrastructure from "./owned-infrastructure";
 import TelemetryPanel from "./telemetry-panel";
+import RecoveryPanel from "./recovery-panel";
 import {cloudCatalog} from "@/lib/cloud/catalog";
 
 type App={uuid:string;name:string;status:string;domain:string;gitRepository:string;gitBranch:string;updatedAt:string};
@@ -16,12 +17,13 @@ type Server={uuid:string;name:string;ip:string;status:string;description:string}
 type Deployment={uuid:string;applicationName:string;status:string;commit:string;createdAt:string;serverName:string};
 type Project={uuid:string;name:string;description:string};
 type Snapshot={mode:"setup"|"connected"|"degraded";updatedAt:string;applications:App[];servers:Server[];deployments:Deployment[];projects:Project[];errors:string[];message?:string;sources?:{applications:boolean;servers:boolean;deployments:boolean;projects:boolean}};
-type Section="command"|"owned"|"telemetry"|"studio"|"overview"|"applications"|"deployments"|"servers"|"migration"|"foundation"|"providers"|"setup";
+type Section="command"|"owned"|"recovery"|"telemetry"|"studio"|"overview"|"applications"|"deployments"|"servers"|"migration"|"foundation"|"providers"|"setup";
 const empty:Snapshot={mode:"setup",updatedAt:"",applications:[],servers:[],deployments:[],projects:[],errors:[],sources:{applications:false,servers:false,deployments:false,projects:false}};
 const sections:{id:Section;label:string;symbol:string}[]=[
  {id:"command",label:"Command Center",symbol:"✦"},
  {id:"owned",label:"Our Infrastructure",symbol:"▤"},
  {id:"telemetry",label:"Observability",symbol:"⌁"},
+ {id:"recovery",label:"Recovery Center",symbol:"⇣"},
  {id:"studio",label:"Cloud Studio",symbol:"▧"},
  {id:"overview",label:"Overview",symbol:"◫"},
  {id:"applications",label:"Applications",symbol:"▦"},
@@ -140,6 +142,7 @@ export default function MarkarianCloud(){
     {section==="providers"&&<ProviderConsole/>}
     {section==="studio"&&<CloudStudio data={data} onOpenSetup={()=>setSection("setup")}/>}
     {section==="telemetry"&&<TelemetryPanel/>}
+    {section==="recovery"&&<RecoveryPanel/>}
     {section==="owned"&&<OwnedInfrastructure data={data} onOpenSetup={()=>setSection("setup")} onOpenStudio={()=>setSection("studio")} onOpenMigration={()=>setSection("migration")}/>}
     {section==="deployments"&&<section className={styles.panel}>
       <div className={styles.panelTitle}><div><span className={styles.eyebrow}>DEPLOYMENT ACTIVITY</span><h1>Deployments</h1></div><span className={styles.hint}>READ ONLY</span></div>
