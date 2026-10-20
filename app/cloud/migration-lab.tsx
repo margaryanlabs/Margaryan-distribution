@@ -2,6 +2,7 @@
 
 import {useEffect,useMemo,useState} from "react";
 import {cloudCatalog,migrationChecks,type CloudCatalogItem} from "@/lib/cloud/catalog";
+import {cloudSourceFacts} from "@/lib/cloud/source-facts";
 import styles from "./migration-lab.module.css";
 
 type CheckRecord=Record<string,boolean>;
@@ -43,6 +44,7 @@ export default function MigrationLab(){
   setLoaded(true);
  },[]);
  const item=cloudCatalog.find(p=>p.id===selected)||cloudCatalog[0];
+ const sourceFact=cloudSourceFacts[item.id];
  const checked=saved[item.id]||{};
  const count=steps.filter(step=>checked[step.id]).length;
  const completed=useMemo(()=>cloudCatalog.reduce((total,p)=>total+steps.filter(s=>saved[p.id]?.[s.id]).length,0),[saved]);
@@ -97,6 +99,13 @@ export default function MigrationLab(){
     <div className={styles.repoLine}><span>Repository</span>
      {item.repository&&item.repositoryVerified?<a href={repoUrl(item)||"#"} target="_blank" rel="noreferrer">{item.repository} ↗</a>:<strong>Needs verification</strong>}
     </div>
+    {sourceFact&&<div className={styles.review}>
+     <span>CONFIRMED SOURCE CONFIGURATION · 20 OCT 2026</span>
+     <ul><li>Framework: {sourceFact.stack}</li><li>Package manager: {sourceFact.packageManager}</li><li>Build: {sourceFact.build}</li>
+      {sourceFact.deploymentNotes.map(note=><li key={note}>{note}</li>)}
+     </ul>
+     <small>Build metadata was inspected in GitHub. This does not confirm the production start command, a healthy deployment or live secrets.</small>
+    </div>}
     <div className={styles.review}>
      <span>REVIEW BEFORE MIGRATION</span>
      <ul>{item.review.map(r=><li key={r}>{r}</li>)}</ul>

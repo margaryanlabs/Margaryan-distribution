@@ -24,6 +24,20 @@ Cloud is an isolated module within the existing Next.js 16 app. Motion Studio, i
 
 The migration catalog in `lib/cloud/catalog.ts` is a manually curated planning aid. `repositoryVerified=true` means repository existence/access was checked through the connected GitHub account on 2026-10-20; it is not a code or runtime audit. Projects without confirmed canonical repositories are labelled unverified. Checkmarks are stored only under the key `markarian-cloud-migration-v1` in the current browser's localStorage and never represent real completed migrations. The export copies a CSV planning report to the clipboard.
 
+## Source-based technical baseline and offline preflight
+
+See `docs/cloud/MIGRATION_SOURCE_AUDIT.md` for actual repository build metadata for Promptence, DAS, RAIOS, VETO Sport and Motion. The Migration Lab displays these as clearly dated source facts, not as deployment statuses.
+
+The zero-dependency operator preflight script checks local environment variable presence and optionally queries Coolify without logging credential values:
+
+```bash
+node scripts/cloud/preflight.mjs
+# after setting CLOUD_COOLIFY_URL, CLOUD_COOLIFY_TOKEN and operator credentials:
+node scripts/cloud/preflight.mjs --online
+```
+
+Offline mode reports missing infrastructure as WAIT rather than generating fake deployments. `--strict` and `--online` exit nonzero if requirements fail.
+
 ## Connect after VPS purchase
 
 1. Buy a Linux VPS. Prefer >= 4 vCPU and 8 GB for a first real-world installation, increasing resources for build jobs and databases; capacity-plan separately.
