@@ -101,6 +101,12 @@ export default function CommandCenter({data,loading,onRefresh,onOpenSetup,onOpen
    <article><small>MANAGED SERVERS</small><strong>{serverKnown?data.servers.length:"—"}</strong><span>{serverKnown?"Returned by Coolify":"Provider not connected"}</span></article>
    <article><small>NEEDS ATTENTION</small><strong>{appsKnown?issues.length:"—"}</strong><span>{appsKnown?"Based on reported statuses":"No live health signals"}</span></article>
   </div>
+  <section className={styles.providers} aria-label="Provider connection status">
+   <div className={styles.provider}><span>☷</span><div><strong>Coolify</strong><small>{data.mode==="connected"?"Live inventory connected":data.mode==="degraded"?"Partial connection":"Awaiting VPS"}</small></div><i className={data.mode==="connected"?styles.healthy:data.mode==="degraded"?styles.critical:styles.neutral}/></div>
+   <div className={styles.provider}><span>⌘</span><div><strong>Railway</strong><small>Legacy platform · not linked here</small></div><i className={styles.neutral}/></div>
+   <div className={styles.provider}><span>◇</span><div><strong>Vercel</strong><small>Legacy platform · not linked here</small></div><i className={styles.neutral}/></div>
+   <div className={styles.provider}><span>▦</span><div><strong>Supabase</strong><small>Legacy data · not linked here</small></div><i className={styles.neutral}/></div>
+  </section>
   <div className={styles.mainGrid}>
    <section className={styles.projects}>
     <div className={styles.panelHead}><div><span className={styles.kicker}>PROJECT OPERATIONS</span><h2>All projects</h2></div><button type="button" className={styles.addProject} onClick={()=>{setAdding(!adding);setProjectError("");}} aria-expanded={adding}>{adding?"Cancel":"＋ Add project"}</button></div>

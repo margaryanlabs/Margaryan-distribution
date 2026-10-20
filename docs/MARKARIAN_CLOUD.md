@@ -106,3 +106,7 @@ The /cloud UI and /api/cloud both fail closed with HTTP 503 until the existing D
 ## Self-hosted Supabase source preparation
 
 `node scripts/cloud/prepare-supabase.mjs --plan` displays the pinned release and operator instructions without side effects. `--prepare /absolute/new/path` downloads the exact official self-hosted Docker release to a **new directory**; it never starts a service or creates credentials. `--verify /absolute/path` checks configuration field presence without printing any values. See `docs/cloud/SELF_HOSTED_DATA.md` for manual secured deployment, backups and disaster recovery. Four new offline tests run in CI.
+
+## Provider connection statuses
+
+Command Center shows a four-provider status strip. **Coolify** is live only after its read-only API succeeds. **Railway, Vercel and Supabase** are explicitly marked not connected to this application; although external connector tools may be available to ChatGPT, they are not inherited by the deployed website. No fake cross-provider statuses, costs or aggregated customer counts are presented. The next stage requires separate server-side read-only integrations, strict token scopes and consistent provider schemas.
