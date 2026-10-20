@@ -24,7 +24,7 @@ const migration=cloudCatalog.map(project=>({name:project.name,type:project.type,
 function stateTone(status:string){
  const value=status.toLowerCase();
  if(/running|finished|success|healthy|ready/.test(value))return styles.good;
- if(/error|failed|stopped|exited|unhealthy/.test(value))return styles.bad;
+ if(/error|failed|stopped|exited|unhealthy|unreachable|not ready/.test(value))return styles.bad;
  return styles.pending;
 }
 function date(value:string){

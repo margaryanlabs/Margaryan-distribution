@@ -92,3 +92,7 @@ Coolify docs: https://coolify.io/docs/api/overview
 ## Verified offline API contract (2026-10-20)
 
 Eight independent Node 22 tests passed on the copied Cloud adapter using mocked fetch calls. No real Coolify server is required. This is **not** a production Next.js build or browser integration test.
+
+### Coolify server status mapping
+
+The Coolify `GET /api/v1/servers` response exposes `settings.is_reachable` and `settings.is_usable` booleans, not a standard top-level `status` field. Markarian Cloud now derives `healthy`, `unreachable`, `not ready` or `unknown` from those values, without assuming a server is healthy when data is missing. No server was contacted in this PR.

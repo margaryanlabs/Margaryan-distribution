@@ -20,7 +20,13 @@ export function appView(a:Raw){
  };
 }
 export function serverView(s:Raw){
- return {uuid:text(s.uuid),name:text(s.name),ip:text(s.ip),status:text(s.status),
+ const settings=s.settings&&typeof s.settings==="object"&&!Array.isArray(s.settings)
+  ?s.settings as Raw:{};
+ const reachable=settings.is_reachable;
+ const usable=settings.is_usable;
+ const status=reachable===false?"unreachable":usable===false?"not ready":
+  reachable===true&&usable===true?"healthy":text(s.status)||"unknown";
+ return {uuid:text(s.uuid),name:text(s.name),ip:text(s.ip),status,
   description:text(s.description)};
 }
 export function deploymentView(d:Raw){

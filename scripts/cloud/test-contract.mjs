@@ -89,3 +89,10 @@ test("Disposable Compose pilot has no host ports, secrets or privileged mode",()
  assert.match(source,/healthcheck:/);
  assert.doesNotMatch(source,/^\s*(ports:|privileged:|secrets:|environment:|volumes:)/m);
 });
+
+test("Server status follows Coolify settings, not a nonstandard status field",()=>{
+ assert.equal(serverView({settings:{is_reachable:true,is_usable:true}}).status,"healthy");
+ assert.equal(serverView({settings:{is_reachable:false,is_usable:true}}).status,"unreachable");
+ assert.equal(serverView({settings:{is_reachable:true,is_usable:false}}).status,"not ready");
+ assert.equal(serverView({settings:{}}).status,"unknown");
+});
