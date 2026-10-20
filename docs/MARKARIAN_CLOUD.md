@@ -126,3 +126,9 @@ Both `/api/cloud` and `/api/cloud/providers` independently validate operator HTT
 ## Our independently hosted infrastructure (primary direction)
 
 Command Center now links to **Our Infrastructure**. This workspace is the central readiness map for self-hosted Compute, Data, Queue, Metrics, Recovery and Trust. It separates inventory observed from the connected Coolify instance from repository source readiness. We are NOT depending on Vercel, Railway or hosted Supabase for this target architecture, though the existing Distribution web deployment currently needs a live host before migration. Operations Compose for Valkey + Prometheus + Grafana is in `deploy/cloud/ops`; no public ports, locally generated secrets, no default public admin UI. Operator runbook: `deploy/cloud/ops/README.md`. The managed provider bridge remains an optional migration tool, not the main hosting system.
+
+## Own Prometheus telemetry (read-only, no VPS required to develop)
+
+Cloud OS now includes **Observability** and a compact Prometheus status widget in Command Center. The server-side endpoint `GET /api/cloud/telemetry` supports `CLOUD_PROMETHEUS_URL` and optional `CLOUD_PROMETHEUS_TOKEN`. It validates the configured origin, authenticates operators independently of the root proxy, accepts only three fixed aggregation queries, and omits scrape labels, instance hostnames, tokens and raw upstream data. An unconfigured or unreachable Prometheus reports setup/degraded with null metrics, not manufactured uptime numbers.
+
+See `docs/cloud/SELF_HOSTED_TELEMETRY.md` for the secure connection and known limitations. The Ops Compose currently collects Prometheus self-metrics only, **not CPU/RAM/application health until exporters are installed**. Focused Node 22 offline tests of the telemetry parser and fetch adapter passed 5/5, plus a standalone TypeScript typecheck. The full repo build still requires a functioning runner.
