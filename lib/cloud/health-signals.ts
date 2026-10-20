@@ -1,4 +1,10 @@
-import {appHealth,type CloudSnapshot} from "./command-center";
+import type {CloudSnapshot} from "./command-center";
+function appHealth(status:string):"running"|"attention"|"unknown"{
+ const value=status.trim().toLowerCase();
+ if(/failed|error|stopped|exited|unhealthy|unreachable|not ready|degraded/.test(value))return "attention";
+ if(/running|healthy|finished|success/.test(value))return "running";
+ return "unknown";
+}
 export type Signal={id:string;severity:"critical"|"warning"|"info";area:"compute"|"deploy"|"connection"|"data";title:string;detail:string;source:string};
 export type ObservedHealth={online:number;attention:number;unknown:number;observed:number|null;signals:Signal[]};
 export function healthSignals(snapshot:CloudSnapshot):ObservedHealth{
