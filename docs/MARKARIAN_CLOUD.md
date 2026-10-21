@@ -17,7 +17,7 @@ Cloud is an isolated module within the existing Next.js 16 app. Motion Studio, i
 - Explicit allowlist of returned fields, preventing upstream secrets, environment values, DB credentials and internal configuration from reaching the browser.
 - 8-second timeout, no-store headers, bounded results and partial-failure status.
 - Regression tests in `scripts/cloud/test-contract.mjs` cover upstream-response normalization, prevention of leaking raw upstream secrets, trusted base-origin rules, HTTP error handling, GET-only adapter and preservation of the existing operator authorization policy. These tests run in the repository CI, when runners are available.
-- Cloud is protected by the **existing Distribution `proxy.ts`**. Its established Motion/CRM/worker authorization behavior and matcher are preserved. If Distribution operator Basic credentials are configured, the UI and Cloud API require authentication. Without those credentials the Cloud API returns 503, and the static setup workspace may be displayed on deployments without sensitive-runtime protection.
+- Cloud is protected by the **existing Distribution `proxy.ts`**. Its established Motion/CRM/worker authorization behavior and matcher are preserved. If Distribution operator Basic credentials are configured, the UI and Cloud API require authentication. Without operator Basic credentials, both the Cloud UI and API are deliberately unavailable (HTTP 503).
 - No side effects. No start/stop/redeploy/delete actions.
 
 ## Migration Lab / source-of-truth boundaries
@@ -164,3 +164,7 @@ Root /cloud now opens app/cloud/mission-control.tsx. Connected-source health, re
 ## Read-only Sentinel V1 observer
 
 A server-run, source-prepared one-shot infrastructure watcher is included at `scripts/cloud/sentinel.mjs`. It reads only three allowlisted Coolify inventories and emits incident changes. With a private operator-owned 0600 state file, `--diff` suppresses repeat notices and refuses to infer recovery during partial provider failures. No background deployment, notifications or autonomous remediation are active. Before setting up a VPS, see `docs/cloud/SENTINEL.md` and run the focused tests. Historical failed deployments older than 24h no longer count as current incidents.
+
+## Sentinel status in Mission Control
+
+The Agent Watch page now displays Sentinel V1's actual last complete observation after a private read-only status file is mounted with `CLOUD_SENTINEL_STATE_FILE`; the server route `GET /api/cloud/sentinel` rechecks operator authentication and returns a redacted, bounded status. It distinguishes setup, recent observation (within five minutes), stale data, and errors. A fresh poll is not an autonomous background agent, and no deployment or remediation writes are exposed. See `docs/cloud/SENTINEL.md`.
