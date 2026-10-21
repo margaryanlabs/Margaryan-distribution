@@ -1,0 +1,33 @@
+.root{display:grid;gap:15px;color:#e6effb}.hero{position:relative;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:33px;border:1px solid #344b6d;border-radius:16px;background:radial-gradient(ellipse at 88% 0%,#21375a,#0e1a2b 68%)}.kicker{font-size:9px;font-weight:800;letter-spacing:.17em;color:#9fc0ef}.hero h1{font-size:clamp(36px,4.7vw,58px);line-height:1.1;margin:12px 0;letter-spacing:-.055em}.hero h1 em{font-style:normal;color:#b5d3fb;font-weight:400}.hero p{max-width:590px;color:#a0b3ce;font-size:12px;line-height:1.8}.seal{height:150px;min-width:170px;display:grid;place-items:center;align-content:center;gap:10px;background:radial-gradient(circle,#1c3658,#101c2d);border:1px solid #3b5a81;border-radius:13px}.seal>span{font-size:38px;color:#a8cefa}.seal strong{font-size:11px;letter-spacing:.1em}.seal small{font-size:9px;color:#91a8c6}.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.metrics article{display:grid;gap:9px;min-width:0;padding:20px;background:#111b2b;border:1px solid #2e405a;border-radius:11px}.metrics article>span{font-size:9px;letter-spacing:.12em;color:#91a9c7}.metrics strong{font-size:24px;letter-spacing:-.03em}.metrics small{color:#91a4bd;font-size:10px;line-height:1.6}.content{display:grid;grid-template-columns:230px minmax(0,1fr);gap:13px}.phases,.detail{background:#111c2d;border:1px solid #2d4260;border-radius:12px;padding:14px}.phases{display:grid;gap:8px;align-content:start}.phase,.phaseActive{text-align:left;background:#142138;color:#d1e0f7;border:1px solid #2b4464;border-radius:9px;padding:15px;display:grid;gap:7px;cursor:pointer}.phaseActive{background:#213854;border-color:#8bb7eb}.phase>span,.phaseActive>span{font-size:9px;color:#99bbeb}.phase strong,.phaseActive strong{font-size:12px}.phase small,.phaseActive small{font-size:10px;color:#8ea6c5;line-height:1.5}.detail{padding:25px;background:#142238;border-color:#405a7a}.detailHeader{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}.readonly{font-size:9px;color:#d1ddf1;background:#253855;border-radius:7px;padding:8px;white-space:nowrap}.detail h2{font-size:27px;letter-spacing:-.04em;margin:15px 0 9px}.detail p{font-size:12px;line-height:1.75;color:#acc0da}.detail h3{font-size:12px;margin:22px 0 12px}.terminal{background:#0a121e;border:1px solid #345070;border-radius:10px;overflow:hidden}.terminal>div{display:flex;align-items:center;gap:6px;background:#16263d;padding:12px}.terminal>div span{width:6px;height:6px;border-radius:50%;background:#657d9c}.terminal>div small{margin-left:auto;color:#7f9fc7;font-size:9px;letter-spacing:.1em}.terminal pre{font:11px/1.8 ui-monospace,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:#c8dff9;padding:17px;margin:0}.actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:13px}.actions button{background:#b2d0fa;color:#172a41;border:1px solid #cce2fc;font-weight:750;padding:10px 13px;border-radius:7px;cursor:pointer;font-size:10px}.actions>span{font-size:10px;color:#849fbe}.detail ul{padding-left:20px;color:#a9bad3;font-size:11px;line-height:2}.boundary{display:flex;align-items:flex-start;gap:14px;padding:19px;background:#182c45;border:1px solid #4a6589;border-radius:10px}.boundaryIcon{font-size:24px;color:#aacff7}.boundary strong{font-size:12px}.boundary p{font-size:11px;line-height:1.7;color:#a4b8d3;margin:8px 0 0}.footer{font-size:9px;letter-spacing:.06em;color:#839bbc;line-height:1.7}@media(max-width:850px){.content{grid-template-columns:1fr}.phases{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.hero{padding:23px}.seal{display:none}}@media(max-width:630px){.metrics{grid-template-columns:1fr 1fr}.metrics article:last-child{grid-column:1/-1}.detail{padding:17px}.detailHeader{flex-wrap:wrap}.hero h1{font-size:42px}}
+/* 2026-10-21 Cloud OS V2 neutral graphite visual language */
+.root{color:#eeedf1}
+.hero{background:radial-gradient(ellipse at 87% 15%,#303039 0%,#1a1b20 53%,#121317 95%);border-color:#3b3b42;border-radius:15px}
+.kicker,.eyebrow{color:#afa69e}
+.hero h1 em{color:#e7dfd2;font-family:Georgia,serif;font-weight:400}
+.hero p{color:#a4a3ac}
+.config,.review,.catalog,.details,.workloads,.host,.result,.sidePanel,.gates,.deployment,.security,.head,.providers,.layers{border-color:#34353c}
+.config,.review,.details,.workloads,.host,.result,.catalog,.gates,.deployment{background:#16171c}
+.sectionTitle h2,.header h2,.head h2{font-weight:560;letter-spacing:-.035em}
+.primary,.action{background:#e5dfd4!important;border-color:#e5dfd4!important;color:#1e1e23!important}
+.secondary,.setup{background:#27282e!important;border-color:#4d4b50!important;color:#e5e2e7!important}
+.lock,.version,.stage,.planning,.readonly{background:#282830;color:#c6c1c1;border-color:#504f55}
+.form input,.form select,.search input{background:#101115;border-color:#424249;color:#e8e8ec}
+.form input:focus-visible,.form select:focus-visible{outline:2px solid #c7bbac}
+.card,.selected,.phase,.phaseActive,.layer,.active,.provider{background:#1c1d23;border-color:#393940}
+.selected,.phaseActive,.active{background:#313037;border-color:#b3a89b}
+
+
+/* Mission Control V3: align all main product workspaces with the control deck */
+.root{color:#edf4ff}
+.hero{background:radial-gradient(ellipse at 86% 13%,#203b60,#111e30 65%,#0d1521)!important;border-color:#355270!important}
+.kicker,.eyebrow{color:#9ac1ef!important}
+.hero h1 em{font-family:Inter,ui-sans-serif,system-ui,sans-serif!important;color:#afceff!important}
+.hero p{color:#a4bad5!important}
+.config,.review,.details,.host,.result,.workloads,.catalog,.gates,.deployment,.surface,.phase,.phaseActive,.selected,.card{
+ border-color:#344d69!important;background:#131f2e!important;color:#dce9fb!important
+}
+.selected,.phaseActive,.active{background:#203956!important;border-color:#8bbcff!important}
+.primary,.action{background:#b5d8ff!important;border-color:#b5d8ff!important;color:#102035!important}
+.secondary,.setup{background:#1d3350!important;border-color:#466689!important;color:#d8eaff!important}
+.form input,.form select,.search input{background:#0c1726!important;border-color:#3b5778!important;color:#eef5ff!important}
+.lock,.version,.stage,.planning,.readonly{color:#bbd6f3!important;border-color:#486482!important;background:#1b3048!important}

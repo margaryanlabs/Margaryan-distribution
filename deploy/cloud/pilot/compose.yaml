@@ -1,0 +1,21 @@
+# First Markarian Cloud smoke target: a stateless, disposable NGINX container.
+# Coolify should provide TLS proxy routing. Do not add host ports here.
+services:
+  pilot:
+    image: nginxinc/nginx-unprivileged:stable-alpine
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

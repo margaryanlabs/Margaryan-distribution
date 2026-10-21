@@ -23,6 +23,7 @@ const system=[
   ["Autopilot","/autopilot"],
   ["Quality","/quality"],
   ["Operations","/operations"],
+  ["Cloud","/cloud"],
   ["Analytics","/analytics"],
   ["Calls","/calls"],
   ["Brief","/brief"]

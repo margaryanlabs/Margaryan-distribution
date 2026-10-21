@@ -59,6 +59,38 @@ jobs:
         run: npm run motion:test-score
       - name: Motion reference codec and evidence contract
         run: npm run motion:test-reference
+      - name: Cloud normalization, privacy and operator-auth contract tests
+        run: node --experimental-strip-types scripts/cloud/test-contract.mjs
+      - name: Verify safe Data Foundation source preparation
+        run: node --test scripts/cloud/prepare-supabase.test.mjs
+      - name: Test cross-provider Cloud inventory isolation
+        run: node --experimental-strip-types --test scripts/cloud/test-providers.mjs
+      - name: Cloud API operator defense-in-depth tests
+        run: node --experimental-strip-types --test scripts/cloud/test-operator-auth.mjs
+      - name: Test owned private operations stack
+        run: node --test scripts/cloud/test-ops.mjs
+      - name: Test self-owned platform readiness truthfulness
+        run: node --experimental-strip-types --test scripts/cloud/test-owned.mjs
+      - name: Verify private Prometheus telemetry and auth
+        run: node --experimental-strip-types --test scripts/cloud/test-telemetry.mjs
+      - name: Test encrypted Postgres backup and recovery safeguards
+        run: node --test scripts/cloud/recovery.test.mjs
+      - name: Test safe deployment review plans
+        run: node --experimental-strip-types --test scripts/cloud/test-deploy-plan.mjs
+      - name: Capacity planner arithmetic and safety tests
+        run: node --experimental-strip-types --test scripts/cloud/test-capacity.mjs
+      - name: Safe owned staging importer tests
+        run: node --test scripts/cloud/deploy-stage.test.mjs
+      - name: Test infrastructure health and ClickHouse connector
+        run: node --experimental-strip-types --test scripts/cloud/test-health-signals.mjs
+      - name: Mission Control V3 navigation and auth contracts
+        run: node --test scripts/cloud/test-mission-control-v3.mjs
+      - name: Domain connection plan validation
+        run: node --experimental-strip-types --test scripts/cloud/test-domain-plan.mjs
+      - name: Read-only Sentinel agent regression tests
+        run: node --experimental-strip-types --test scripts/cloud/test-sentinel.mjs
+      - name: Sentinel status API freshness and auth tests
+        run: node --experimental-strip-types --test scripts/cloud/test-sentinel-status.mjs
       - name: Typecheck
         run: npm run typecheck
       - name: Production build
