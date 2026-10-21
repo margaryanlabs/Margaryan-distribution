@@ -42,12 +42,12 @@ export function readState(path){
    typeof s.severity==="string"&&typeof s.title==="string");
  }catch{refuse("Corrupted Sentinel state: refusing overwrite");}
 }
-export function storeState(path,signals){
+export function storeState(path,signals,checkedAt=new Date().toISOString()){
  const full=statePath(path);
  const tmp=join(dirname(full),".sentinel-"+randomBytes(10).toString("hex")+".tmp");
  const fd=openSync(tmp,"wx",0o600);
  try{
-  writeFileSync(fd,JSON.stringify({version:1,signals:signals.slice(0,CAP).map(s=>({
+  writeFileSync(fd,JSON.stringify({version:1,checkedAt,signals:signals.slice(0,CAP).map(s=>({
    id:String(s.id).slice(0,160),severity:s.severity,title:String(s.title).slice(0,160),area:s.area
   }))})+"\n");
  }finally{closeSync(fd);}
@@ -108,7 +108,7 @@ export async function main(args=process.argv.slice(2),env=process.env,fetcher=fe
   const observed=await pollCoolify(env,fetcher);
   const changes=compareSignals(previous,observed.signals,observed.complete);
   const updated=command==="--diff"&&observed.complete;
-  if(updated)storeState(path,observed.signals);
+  if(updated)storeState(path,observed.signals,observed.checkedAt);
   process.stdout.write(JSON.stringify({...observed,changes,stateUpdated:updated,
    readOnly:true,autonomousRemediation:false})+"\n");
   return observed.complete?0:1;
