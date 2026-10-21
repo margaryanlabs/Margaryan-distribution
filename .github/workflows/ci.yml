@@ -89,6 +89,8 @@ jobs:
         run: node --experimental-strip-types --test scripts/cloud/test-domain-plan.mjs
       - name: Read-only Sentinel agent regression tests
         run: node --experimental-strip-types --test scripts/cloud/test-sentinel.mjs
+      - name: Sentinel status API freshness and auth tests
+        run: node --experimental-strip-types --test scripts/cloud/test-sentinel-status.mjs
       - name: Typecheck
         run: npm run typecheck
       - name: Production build
