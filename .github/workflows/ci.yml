@@ -87,6 +87,8 @@ jobs:
         run: node --test scripts/cloud/test-mission-control-v3.mjs
       - name: Domain connection plan validation
         run: node --experimental-strip-types --test scripts/cloud/test-domain-plan.mjs
+      - name: Read-only Sentinel agent regression tests
+        run: node --experimental-strip-types --test scripts/cloud/test-sentinel.mjs
       - name: Typecheck
         run: npm run typecheck
       - name: Production build

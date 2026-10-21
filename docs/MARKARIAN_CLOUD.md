@@ -160,3 +160,7 @@ The standalone operator-only staging importer now supports private `owner/repo` 
 ## Mission Control V3
 
 Root /cloud now opens app/cloud/mission-control.tsx. Connected-source health, responsive views for infrastructure, projects, data/domains and Agent Watch, with 60-second browser-session refresh. See docs/cloud/MISSION_CONTROL_V3.md. Agent automations remain planned; there are no production write controls.
+
+## Read-only Sentinel V1 observer
+
+A server-run, source-prepared one-shot infrastructure watcher is included at `scripts/cloud/sentinel.mjs`. It reads only three allowlisted Coolify inventories and emits incident changes. With a private operator-owned 0600 state file, `--diff` suppresses repeat notices and refuses to infer recovery during partial provider failures. No background deployment, notifications or autonomous remediation are active. Before setting up a VPS, see `docs/cloud/SENTINEL.md` and run the focused tests. Historical failed deployments older than 24h no longer count as current incidents.
