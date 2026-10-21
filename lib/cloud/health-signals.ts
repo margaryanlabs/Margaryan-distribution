@@ -7,7 +7,7 @@ function appHealth(status:string):"running"|"attention"|"unknown"{
 }
 export type Signal={id:string;severity:"critical"|"warning"|"info";area:"compute"|"deploy"|"connection"|"data";title:string;detail:string;source:string};
 export type ObservedHealth={online:number;attention:number;unknown:number;observed:number|null;signals:Signal[]};
-export function healthSignals(snapshot:CloudSnapshot):ObservedHealth{
+export function healthSignals(snapshot:CloudSnapshot,nowMs:number=Date.now()):ObservedHealth{
  const signals:Signal[]=[];
  const observed=snapshot.sources?.applications===true?snapshot.applications.length:null;
  let online=0,attention=0,unknown=0;
@@ -32,7 +32,10 @@ export function healthSignals(snapshot:CloudSnapshot):ObservedHealth{
  }
  if(snapshot.sources?.deployments){
   for(const deployment of snapshot.deployments.slice(0,60)){
-   if(appHealth(deployment.status)==="attention")signals.push({id:"deploy:"+deployment.uuid,
+   const created=Date.parse(deployment.createdAt);
+   const ageMs=nowMs-created;
+   // Historical failures are not current outages: require a valid timestamp within 24h.
+   if(Number.isFinite(created)&&ageMs>=0&&ageMs<=86_400_000&&appHealth(deployment.status)==="attention")signals.push({id:"deploy:"+deployment.uuid,
     severity:"warning",area:"deploy",title:deployment.applicationName||"Deployment failure",
     detail:"Deployment status: "+deployment.status,source:"Coolify deployment"});
   }
