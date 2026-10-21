@@ -5,20 +5,21 @@ import {healthSignals,domainRecords,type Signal} from "@/lib/cloud/health-signal
 import type {ProviderView} from "@/lib/cloud/providers";
 import type {ClickHouseStatus} from "@/lib/cloud/clickhouse";
 import type {TelemetryOverview} from "@/lib/cloud/telemetry";
+import type {SentinelStatus} from "@/lib/cloud/sentinel-status";
 import styles from "./mission-control.module.css";
 
 type Props={data:CloudSnapshot;loading:boolean;startView?:View;onRefresh:()=>void;onOpenSetup:()=>void;onOpenOwned:()=>void;
  onOpenDeploy:()=>void;onOpenRecovery:()=>void;onOpenStudio:()=>void;onOpenTelemetry:()=>void;onOpenDomains:()=>void};
 type View="fleet"|"projects"|"data"|"agents";
 type ProjectFilter="all"|"hosted"|"issues"|"planned";
-type Auxiliary={providers:ProviderView[]|null;clickhouse:ClickHouseStatus|null;telemetry:TelemetryOverview|null;error:string};
+type Auxiliary={providers:ProviderView[]|null;clickhouse:ClickHouseStatus|null;telemetry:TelemetryOverview|null;sentinel:SentinelStatus|null;error:string};
 const sourceModes:{id:View;name:string;hint:string}[]=[
  {id:"fleet",name:"Infrastructure",hint:"Servers and releases"},
  {id:"projects",name:"Projects",hint:"All applications"},
  {id:"data",name:"Data & domains",hint:"Databases and DNS"},
  {id:"agents",name:"Agent Watch",hint:"Detection and automation"}
 ];
-const fallback:Auxiliary={providers:null,clickhouse:null,telemetry:null,error:""};
+const fallback:Auxiliary={providers:null,clickhouse:null,telemetry:null,sentinel:null,error:""};
 const indicators=[
  {id:"infrastructure",name:"Infrastructure Sentinel",scope:"Hosts · availability · incident detection"},
  {id:"deploy",name:"Release Guardian",scope:"Deployments · failures · rollback evidence"},
@@ -60,12 +61,14 @@ export default function MissionControl({data,loading,startView="fleet",onRefresh
   const results=await Promise.allSettled([
    fetch("/api/cloud/providers",{cache:"no-store",credentials:"same-origin"}).then(async r=>{if(!r.ok)throw Error("Provider inventory unavailable");return r.json() as Promise<{providers:ProviderView[]}>;}),
    fetch("/api/cloud/clickhouse",{cache:"no-store",credentials:"same-origin"}).then(async r=>{if(!r.ok)throw Error("ClickHouse status unavailable");return r.json() as Promise<ClickHouseStatus>;}),
-   fetch("/api/cloud/telemetry",{cache:"no-store",credentials:"same-origin"}).then(async r=>{if(!r.ok)throw Error("Prometheus unavailable");return r.json() as Promise<TelemetryOverview>;})
+   fetch("/api/cloud/telemetry",{cache:"no-store",credentials:"same-origin"}).then(async r=>{if(!r.ok)throw Error("Prometheus unavailable");return r.json() as Promise<TelemetryOverview>;}),
+   fetch("/api/cloud/sentinel",{cache:"no-store",credentials:"same-origin"}).then(async r=>{if(!r.ok)throw Error("Sentinel status unavailable");return r.json() as Promise<SentinelStatus>;})
   ]);
   setAux({
    providers:results[0].status==="fulfilled"&&Array.isArray(results[0].value.providers)?results[0].value.providers:null,
    clickhouse:results[1].status==="fulfilled"&&["setup","connected","error"].includes(results[1].value.state)?results[1].value:null,
    telemetry:results[2].status==="fulfilled"&&["setup","connected","degraded"].includes(results[2].value.mode)?results[2].value:null,
+   sentinel:results[3].status==="fulfilled"&&["not_configured","connected","stale","error"].includes(results[3].value.state)?results[3].value:null,
    error:results.some(x=>x.status==="rejected")?"Some external status sources are unavailable.":""});
   setAuxLoading(false);
  },[]);
@@ -254,7 +257,7 @@ export default function MissionControl({data,loading,startView="fleet",onRefresh
   {view==="agents"&&<div className={styles.agentGrid}>
    <section className={styles.surface}>
     <div className={styles.sectionHeader}><div><span className={styles.overline}>INFRASTRUCTURE INTELLIGENCE</span><h2>Agent operations</h2></div>
-     <span className={styles.notReady}>READ-ONLY RULES ACTIVE</span></div>
+     <span className={styles.notReady}>{aux.sentinel?.state==="connected"?"SENTINEL RECENT POLL":"RULES · READ ONLY"}</span></div>
     <p className={styles.lead}>Start with deterministic, inspectable health rules. Future agents can investigate anomalies and propose repairs, but cannot modify production without explicit approval and an audit trail.</p>
     <div className={styles.rulesHeader}><strong>Current rule findings</strong><button type="button" className={styles.smallToggle} aria-pressed={severeOnly} onClick={()=>setSevereOnly(v=>!v)}>{severeOnly?"Critical":"All severities"} ⌄</button></div>
     {alerts.length===0?<p className={styles.empty}>No rule findings in available data. Sources may be disconnected.</p>:<div className={styles.ruleList}>
@@ -264,8 +267,14 @@ export default function MissionControl({data,loading,startView="fleet",onRefresh
    <section className={styles.surface}>
     <div className={styles.sectionHeader}><div><span className={styles.overline}>AUTOMATION ROADMAP</span><h2>Future AI agents</h2></div></div>
     <div className={styles.agentList}>{indicators.map(a=><div key={a.id}><span className={styles.agentMark}>✳</span>
-      <span><strong>{a.name}</strong><small>{a.scope}</small></span><span className={styles.notReady}>{a.id==="infrastructure"?"CLI READY · OFFLINE":"PLANNED"}</span></div>)}</div>
-    <div className={styles.sentinelReady}><div><span className={styles.overline}>SENTINEL V1 / SERVER SIDE</span><strong>Read-only watcher is in source</strong><small>Can detect new incidents and track recovery after scheduling on our VPS. It is not running 24/7 yet.</small></div>
+      <span><strong>{a.name}</strong><small>{a.scope}</small></span><span className={styles.notReady}>{a.id==="infrastructure"?(aux.sentinel?.state==="connected"?"RECENT POLL":aux.sentinel?.state==="stale"?"STALE": "SOURCE READY"):"PLANNED"}</span></div>)}</div>
+    <div className={styles.sentinelReady}><div><span className={styles.overline}>SENTINEL V1 / SERVER SIDE</span>
+     <strong>{aux.sentinel?.state==="connected"?"Recent server-side Sentinel poll":aux.sentinel?.state==="stale"?"Sentinel's last poll is stale":"Read-only watcher source prepared"}</strong>
+     <small>{aux.sentinel?.state==="connected"?
+      "Last check "+when(aux.sentinel.checkedAt||"")+" · "+aux.sentinel.activeIncidents+" observed findings ("+aux.sentinel.criticalCount+" critical)."+
+      " This is a read-only poll, not autonomous repair.":
+      aux.sentinel?.state==="stale"?"The last completed check is older than five minutes. Freshness is not guaranteed.":
+      "Server-side scheduling is not configured. Source-only, no 24/7 monitoring yet."}</small></div>
      <code>node --experimental-strip-types scripts/cloud/sentinel.mjs --plan</code>
      <button type="button" onClick={()=>{void navigator.clipboard.writeText("node --experimental-strip-types scripts/cloud/sentinel.mjs --plan").then(()=>setSentinelCopy("Setup command copied")).catch(()=>setSentinelCopy("Clipboard unavailable"));}}>Copy setup command ↗</button>
      <span role="status">{sentinelCopy}</span></div>
