@@ -4,20 +4,21 @@ import {buildPortfolio,appHealth,githubRepository,type CloudSnapshot,type LocalP
 import {healthSignals,domainRecords,type Signal} from "@/lib/cloud/health-signals";
 import type {ProviderView} from "@/lib/cloud/providers";
 import type {ClickHouseStatus} from "@/lib/cloud/clickhouse";
+import type {TelemetryOverview} from "@/lib/cloud/telemetry";
 import styles from "./mission-control.module.css";
 
 type Props={data:CloudSnapshot;loading:boolean;startView?:View;onRefresh:()=>void;onOpenSetup:()=>void;onOpenOwned:()=>void;
  onOpenDeploy:()=>void;onOpenRecovery:()=>void;onOpenStudio:()=>void;onOpenTelemetry:()=>void;onOpenDomains:()=>void};
 type View="fleet"|"projects"|"data"|"agents";
 type ProjectFilter="all"|"hosted"|"issues"|"planned";
-type Auxiliary={providers:ProviderView[]|null;clickhouse:ClickHouseStatus|null;error:string};
+type Auxiliary={providers:ProviderView[]|null;clickhouse:ClickHouseStatus|null;telemetry:TelemetryOverview|null;error:string};
 const sourceModes:{id:View;name:string;hint:string}[]=[
  {id:"fleet",name:"Infrastructure",hint:"Servers and releases"},
  {id:"projects",name:"Projects",hint:"All applications"},
  {id:"data",name:"Data & domains",hint:"Databases and DNS"},
  {id:"agents",name:"Agent Watch",hint:"Detection and automation"}
 ];
-const fallback:Auxiliary={providers:null,clickhouse:null,error:""};
+const fallback:Auxiliary={providers:null,clickhouse:null,telemetry:null,error:""};
 const indicators=[
  {id:"infrastructure",name:"Infrastructure Sentinel",scope:"Hosts · availability · incident detection"},
  {id:"deploy",name:"Release Guardian",scope:"Deployments · failures · rollback evidence"},
@@ -52,16 +53,19 @@ export default function MissionControl({data,loading,startView="fleet",onRefresh
  const [ready,setReady]=useState(false);
  const [watch,setWatch]=useState(false);
  const [severeOnly,setSevereOnly]=useState(false);
+ const [sentinelCopy,setSentinelCopy]=useState("");
  const [aux,setAux]=useState<Auxiliary>(fallback);
  const [auxLoading,setAuxLoading]=useState(true);
  const readAux=useCallback(async()=>{
   const results=await Promise.allSettled([
    fetch("/api/cloud/providers",{cache:"no-store",credentials:"same-origin"}).then(async r=>{if(!r.ok)throw Error("Provider inventory unavailable");return r.json() as Promise<{providers:ProviderView[]}>;}),
-   fetch("/api/cloud/clickhouse",{cache:"no-store",credentials:"same-origin"}).then(async r=>{if(!r.ok)throw Error("ClickHouse status unavailable");return r.json() as Promise<ClickHouseStatus>;})
+   fetch("/api/cloud/clickhouse",{cache:"no-store",credentials:"same-origin"}).then(async r=>{if(!r.ok)throw Error("ClickHouse status unavailable");return r.json() as Promise<ClickHouseStatus>;}),
+   fetch("/api/cloud/telemetry",{cache:"no-store",credentials:"same-origin"}).then(async r=>{if(!r.ok)throw Error("Prometheus unavailable");return r.json() as Promise<TelemetryOverview>;})
   ]);
   setAux({
    providers:results[0].status==="fulfilled"&&Array.isArray(results[0].value.providers)?results[0].value.providers:null,
    clickhouse:results[1].status==="fulfilled"&&["setup","connected","error"].includes(results[1].value.state)?results[1].value:null,
+   telemetry:results[2].status==="fulfilled"&&["setup","connected","degraded"].includes(results[2].value.mode)?results[2].value:null,
    error:results.some(x=>x.status==="rejected")?"Some external status sources are unavailable.":""});
   setAuxLoading(false);
  },[]);
@@ -227,6 +231,7 @@ export default function MissionControl({data,loading,startView="fleet",onRefresh
      <div><span className={styles.sourceIcon}>▥</span><span><strong>PostgreSQL + Supabase stack</strong><small>Auth · Realtime · Storage · Functions</small></span><span className={styles.notReady}>SELF-HOST NOT VERIFIED</span></div>
      <div><span className={styles.sourceIcon}>▤</span><span><strong>ClickHouse</strong><small>{aux.clickhouse?.state==="connected"?"Version "+aux.clickhouse.version+" · uptime "+Math.floor((aux.clickhouse.uptimeSeconds||0)/3600)+"h":aux.clickhouse?.notice||"Not configured"}</small></span>
       <span className={aux.clickhouse?.state==="connected"?styles.connected:styles.notReady}>{aux.clickhouse?.state==="connected"?"CONNECTED":aux.clickhouse?.state==="error"?"ERROR":"NOT CONFIGURED"}</span></div>
+     <div><span className={styles.sourceIcon}>⌁</span><span><strong>Prometheus monitoring</strong><small>{aux.telemetry?.mode==="connected"?aux.telemetry.metrics.map(m=>m.name==="healthyTargets"?"Reachable: "+(m.value===null?"—":m.value):m.name==="scrapeTargets"?"Targets: "+(m.value===null?"—":m.value):"").filter(Boolean).join(" · "):aux.telemetry?.notice||"Private metrics endpoint not connected"}</small></span><span className={aux.telemetry?.mode==="connected"?styles.connected:styles.notReady}>{aux.telemetry?.mode==="connected"?"CONNECTED":aux.telemetry?.mode==="degraded"?"PARTIAL":"NOT CONFIGURED"}</span></div>
      <div><span className={styles.sourceIcon}>⌁</span><span><strong>Object Storage + Backups</strong><small>Separate encrypted backup and restore verification required</small></span><span className={styles.notReady}>UNVERIFIED</span></div>
     </div>
     <div className={styles.bridgeTitle}><span className={styles.overline}>LEGACY PROVIDER BRIDGE</span><span>{auxLoading?"Refreshing…":"Read-only project discovery"}</span></div>
@@ -259,7 +264,11 @@ export default function MissionControl({data,loading,startView="fleet",onRefresh
    <section className={styles.surface}>
     <div className={styles.sectionHeader}><div><span className={styles.overline}>AUTOMATION ROADMAP</span><h2>Future AI agents</h2></div></div>
     <div className={styles.agentList}>{indicators.map(a=><div key={a.id}><span className={styles.agentMark}>✳</span>
-      <span><strong>{a.name}</strong><small>{a.scope}</small></span><span className={styles.notReady}>PLANNED</span></div>)}</div>
+      <span><strong>{a.name}</strong><small>{a.scope}</small></span><span className={styles.notReady}>{a.id==="infrastructure"?"CLI READY · OFFLINE":"PLANNED"}</span></div>)}</div>
+    <div className={styles.sentinelReady}><div><span className={styles.overline}>SENTINEL V1 / SERVER SIDE</span><strong>Read-only watcher is in source</strong><small>Can detect new incidents and track recovery after scheduling on our VPS. It is not running 24/7 yet.</small></div>
+     <code>node --experimental-strip-types scripts/cloud/sentinel.mjs --plan</code>
+     <button type="button" onClick={()=>{void navigator.clipboard.writeText("node --experimental-strip-types scripts/cloud/sentinel.mjs --plan").then(()=>setSentinelCopy("Setup command copied")).catch(()=>setSentinelCopy("Clipboard unavailable"));}}>Copy setup command ↗</button>
+     <span role="status">{sentinelCopy}</span></div>
     <div className={styles.gate}><strong>Execution permission boundary</strong><p>AI agents will start with read-only diagnostics. Restart, deploy, DNS and database write operations require scoped roles, approval and an immutable audit trail.</p></div>
     <button type="button" className={styles.agentAction} onClick={onOpenTelemetry}>Open observability ↗</button>
    </section>
