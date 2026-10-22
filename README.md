@@ -230,3 +230,11 @@ npm run dev
 External side effects are disabled by default with `EXECUTION_ENABLED=false`.
 
 Realtime voice runs separately in `voice-gateway` because Twilio Media Streams use a long-lived WebSocket connection.
+
+## Independent Motion Studio vs Promptence brand demos
+
+**Margaryan Motion Studio is an independent video product.** Its editor is deployed under the Margaryan Distribution Motion route (`/motion?mode=cinematic`), not `promptence.tech`. `promptence.tech` is a separate AI-visibility SaaS and its public landing/brand SVG were used only as an early, real-world **example** for product films, director proof footage and 120-second/300-second demo storyboards. The independent Motion software does not require a Promptence subscription, domain, account, infrastructure or OpenRouter/OpenAI credits.
+
+The UI now begins with **START ORIGINAL MOTION FILM** (neutral `labs` identity), and clearly distinguishes **PROMPTENCE BRAND DEMO / 120s** and **PROMPTENCE BRAND DEMO / 300s**. The generic director and brand selector also support VETO, RAIOS, INGU, MEQENA and other configured brand kits; an example storyboard is not automatically a validated customer film. The Promptence public-site capture scripts make local screenshots/10-second proof candidates only after explicit operator action, and require owner review/approval before use. They do **not** host the Motion engine.
+
+A future ChatGPT MCP plugin should use a **separate public, owned HTTPS endpoint on the Motion/Content Studio product**, not the Promptence domain. No provider-level Vercel deployment protection is bypassed, and the Draft MCP integration in PR #61 is not yet publicly installed/approved.
