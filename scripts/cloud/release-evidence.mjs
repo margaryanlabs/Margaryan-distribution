@@ -89,8 +89,10 @@ export async function stagingProof(request,env,fetcher=fetch){
   const marker=await boundedJson(origin+'/.well-known/markarian-release.json',{fetcher,limit:4096});
   const identity=markerStatus(marker,request);
   if(identity!=='MATCH')return {status:'BLOCKED',marker:identity,health:'UNKNOWN'};
-  const health=await boundedJson(origin+'/healthz',{fetcher,limit:4096});
-  const ok=health?.status==='ok'||health?.status==='ready';
+  const healthPath=env.CLOUD_RELEASE_STAGING_HEALTH_PATH||'/healthz';
+  if(!['/healthz','/api/health'].includes(healthPath))return {status:'BLOCKED',marker:identity,health:'INVALID_CONFIG'};
+  const health=await boundedJson(origin+healthPath,{fetcher,limit:4096});
+  const ok=health?.status==='ok'||health?.status==='ready'||(healthPath==='/api/health'&&health?.ok===true);
   return {status:ok?'OBSERVED':'BLOCKED',marker:identity,health:ok?'RESPONDED_OK':'FAILED',
    note:'Both endpoints are self-reported by a configured staging host; no independent build, data or security attestation.'};
  }catch{return {status:'UNAVAILABLE',marker:'UNKNOWN',health:'UNKNOWN'}}
