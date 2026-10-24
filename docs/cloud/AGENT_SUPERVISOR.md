@@ -23,7 +23,7 @@ The scripts have no GitHub Action runner dependency. They do not deploy code.
 
 ## Example operator setup — manually on a future secured Linux VPS
 
-1. Create a non-root Linux service account "markarian"; clone the reviewed Cloud branch in /opt/margaryan-distribution. Ensure /usr/bin/node is Node 22+ or adjust the unit ExecStart to the reviewed Node binary.
+1. Create a non-root Linux service account "markarian"; clone the reviewed Cloud branch in /opt/margaryan-distribution. Verify that the systemd service user's PATH resolves `node` to Node.js 22+ (`/usr/bin/env node`); if not, explicitly configure a reviewed absolute Node path in each unit. The template unit files passed an offline systemd-analyze syntax check, but have not been installed on a VPS.
 2. Create /var/lib/margaryan-cloud/agents with **0700 permissions and markarian ownership**. Keep all snapshots **0600**. Do not put state in Git, public logs or a web-accessible directory.
 3. Create /etc/margaryan-cloud/agents.env, private root-owned 0600, with the following **paths only** (no token values):
 
