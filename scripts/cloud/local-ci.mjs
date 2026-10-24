@@ -15,7 +15,7 @@ export const CLOUD_TESTS=Object.freeze([
  'test-telemetry.mjs', 'recovery.test.mjs', 'restore-lab.test.mjs', 'test-deploy-plan.mjs',
  'test-capacity.mjs', 'deploy-stage.test.mjs', 'test-health-signals.mjs',
  'test-mission-control-v3.mjs', 'test-domain-plan.mjs', 'test-sentinel.mjs',
- 'test-sentinel-status.mjs', 'first-node.test.mjs'
+ 'test-sentinel-status.mjs', 'first-node.test.mjs', 'portfolio-guardian.test.mjs'
 ]);
 const SLOW_TESTS=new Set([
  'test-contract.mjs', 'test-providers.mjs','test-operator-auth.mjs',
