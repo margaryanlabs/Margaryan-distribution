@@ -15,8 +15,8 @@ const passFile=join(secrets,'restic-password');
 writeFileSync(passFile,'test-only-password',{mode:0o600});
 after(()=>rmSync(secrets,{recursive:true,force:true}));
 const env={RESTIC_REPOSITORY:'s3:https://backup.example.invalid/private',RESTIC_PASSWORD_FILE:passFile};
-const metadata={State:{Running:true},Config:{Labels:{'com.docker.compose.project':'markarian-restore-lab','com.docker.compose.service':'db'}},
- HostConfig:{NetworkMode:'markarian-restore-lab_restore_private',Privileged:false,PortBindings:{'5432/tcp':null},Tmpfs:{'/var/lib/postgresql/data':'rw,nosuid,nodev,noexec'}},
+const metadata={Id:id,State:{Running:true,Health:{Status:'healthy'}},Config:{Image:'postgres:16-alpine',Labels:{'com.docker.compose.project':'markarian-restore-lab','com.docker.compose.service':'db'}},
+ HostConfig:{NetworkMode:'markarian-restore-lab_restore_private',Privileged:false,SecurityOpt:['no-new-privileges:true'],PortBindings:{'5432/tcp':null},Tmpfs:{'/var/lib/postgresql/data':'rw,nosuid,nodev,noexec'}},
  NetworkSettings:{Networks:{'markarian-restore-lab_restore_private':{}},Ports:{'5432/tcp':null}},
  Mounts:[{Destination:'/run/secrets/lab_password',Type:'bind',RW:false}]};
 const inspect=JSON.stringify(metadata);
@@ -67,6 +67,28 @@ test('container must be running, correctly labeled, isolated and non-privileged'
  ])assert.throws(()=>validateContainerMetadata(id,m));
  assert.throws(()=>validateContainerMetadata('not-an-id',metadata));
 });
+test('restore gate rejects substituted containers, untrusted images, unhealthy state and extra capabilities',()=>{
+  const tamper=[
+    {...metadata,Id:'b'.repeat(64)},
+    {...metadata,State:{Running:true,Health:{Status:'starting'}}},
+    {...metadata,Config:{...metadata.Config,Image:'custom/postgres:latest'}},
+    {...metadata,HostConfig:{...metadata.HostConfig,NetworkMode:'container:production'}},
+    {...metadata,HostConfig:{...metadata.HostConfig,PidMode:'host'}},
+    {...metadata,HostConfig:{...metadata.HostConfig,IpcMode:'container:production'}},
+    {...metadata,HostConfig:{...metadata.HostConfig,CapAdd:['SYS_ADMIN']}},
+    {...metadata,HostConfig:{...metadata.HostConfig,Devices:[{PathOnHost:'/dev/sda'}]}},
+    {...metadata,HostConfig:{...metadata.HostConfig,SecurityOpt:[]}},
+    {...metadata,HostConfig:{...metadata.HostConfig,RestartPolicy:{Name:'always'}}},
+    {...metadata,HostConfig:{...metadata.HostConfig,PortBindings:{'5432/tcp':{HostPort:'5432'}}}},
+    {...metadata,HostConfig:{...metadata.HostConfig,Binds:['/var/run/docker.sock:/var/run/docker.sock:ro']}},
+    {...metadata,Mounts:undefined},
+    {...metadata,Mounts:[]},
+    {...metadata,Mounts:[{Destination:'/run/secrets/lab_password',Type:'bind',RW:false},{Destination:'/srv',Type:'bind',RW:false}]},
+    {...metadata,Mounts:[{Destination:'/run/secrets/lab_password',Type:'volume',RW:false}]},
+  ];
+  for(const candidate of tamper)assert.throws(()=>validateContainerMetadata(id,candidate));
+});
+
 test('CLI syntax and review never run a process',async()=>{
  assert.equal(parseArgs(['--plan']).mode,'plan');
  assert.equal(parseArgs(['--review',snapshot,filename]).mode,'review');
