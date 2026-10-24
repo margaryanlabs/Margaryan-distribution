@@ -35,7 +35,7 @@ test('fresh empty snapshots are observed-no-findings but not production ready',(
  write(guardian,[]);write(sentinel,[]);write(decision,[]);
  const r=composeSupervisor(env,NOW);
  assert.equal(r.status,'observed_no_findings');assert.equal(r.canMigrateProduction,false);
- assert.match(r.note,/not live production uptime/);
+ assert.match(r.note,/not independent production uptime/);
 }));
 test('stale snapshot blocks completeness even with a fresh second source',()=>fixture(({guardian,sentinel,decision,write,env})=>{
  write(guardian,[], '2026-10-24T09:00:00.000Z');write(sentinel,[]);write(decision,[]);
