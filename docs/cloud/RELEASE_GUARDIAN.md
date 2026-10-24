@@ -39,7 +39,7 @@ Then inspect:
 
     node scripts/cloud/release-guardian.mjs --assess /absolute/private/release.json
 
-All omitted checks are blockers. GitHub evidence links are operator-provided references, NOT cryptographic attestations, and cannot prove actual database restores, fresh markets, valid OAuth or isolated credentials. A manually claimed pass does not grant permissions. Never paste secrets, credentials, live trading data, customer PII or database dumps in evidence or CLI output.
+All omitted checks are blockers. GitHub evidence links are operator-provided references, NOT cryptographic attestations, and cannot prove actual database restores, fresh markets, valid OAuth or isolated credentials. A manually claimed pass does not grant permissions. Assessment exits 1 on BLOCKED and 3 on REVIEW_REQUIRED, never 0 as release authorization. Only --catalog and --blueprint return 0 for valid offline listing. Never paste secrets, credentials, live trading data, customer PII or database dumps in evidence or CLI output.
 
 ## Mandatory high-risk project checks
 
