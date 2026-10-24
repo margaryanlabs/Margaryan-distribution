@@ -18,11 +18,11 @@ const protectedFile=(file,{mayBeNew=false}={})=>{
  if(!parent.isDirectory()||(parent.mode&0o077)!==0||
     (typeof process.getuid==='function'&&parent.uid!==process.getuid()))
    throw Error('Private operator-owned directory with mode 0700 required');
- if(!existsSync(file)){
-   if(mayBeNew)return false;
-   throw Error('State file missing');
+ let info;
+ try{info=lstatSync(file);}catch(e){
+   if(mayBeNew&&e?.code==='ENOENT')return false;
+   throw Error('State file missing or inaccessible');
  }
- const info=lstatSync(file);
  if(!info.isFile()||(info.mode&0o077)!==0||info.size>LIMIT||
     (typeof process.getuid==='function'&&info.uid!==process.getuid()))
    throw Error('State file is not a bounded operator-owned 0600 regular file');
