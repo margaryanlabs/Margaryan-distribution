@@ -80,7 +80,19 @@ export async function inspectDecision(origin,fetcher=fetch,now=Date.now()){
   marketDataIndependentlyVerified:false,canAuthorizeTrading:false,readOnly:true};
 }
 export function compare(previous,current,complete){const a=new Map(previous.map(x=>[x.id,x])),b=new Map(current.map(x=>[x.id,x]));return {new:current.filter(x=>!a.has(x.id)),changed:current.filter(x=>a.has(x.id)&&a.get(x.id).severity!==x.severity),resolved:complete?previous.filter(x=>!b.has(x.id)):[]};}
-function stored(path){privatePath(path,true);try{return JSON.parse(readFileSync(path,'utf8'));}catch(e){if(e.code==='ENOENT')return null;throw Error('Corrupt prior state');}}
+function stored(path){
+ privatePath(path,true);
+ let raw;
+ try{raw=readFileSync(path,'utf8');}catch(e){if(e.code==='ENOENT')return null;throw Error('Unreadable prior state');}
+ try{
+  const prev=JSON.parse(raw);
+  if(prev?.version!==1||prev.schema!=='markarian-decision-specialist/v1'||prev.complete!==true||
+     !Array.isArray(prev.signals)||prev.signals.length>CHECKS.length||
+     prev.signals.some(x=>!x||typeof x.id!=='string'||!/^veto:[a-z-]{1,50}$/.test(x.id)||
+       typeof x.title!=='string'||x.title.length>180||!['critical','warning'].includes(x.severity)))throw Error('Invalid prior state');
+  return prev;
+ }catch{throw Error('Corrupt prior state');}
+}
 function save(path,report){privatePath(path,true);const filename=join(dirname(path),'.veto-specialist-'+randomBytes(9).toString('hex'));const fd=openSync(filename,'wx',0o600);try{writeFileSync(fd,JSON.stringify(report)+'\n');}finally{closeSync(fd);}try{renameSync(filename,path);}catch(e){rmSync(filename,{force:true});throw e;}}
 export async function main(args=process.argv.slice(2),env=process.env,fetcher=fetch,out=process.stdout,err=process.stderr){
  const [mode,path,...extra]=args;
