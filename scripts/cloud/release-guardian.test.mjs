@@ -91,6 +91,15 @@ test("assess CLI requires private non-symlink manifest and never approves execut
   assert.equal(main(["--assess","relative.json"],o,e),1);
  }finally{rmSync(dir,{force:true,recursive:true});}
 });
+test("operator-attested checks can never produce a successful release-process exit",()=>{
+ const dir=mkdtempSync(join(tmpdir(),"mc-review-")),path=join(dir,"release.json");
+ try{
+  writeFileSync(path,JSON.stringify({...sample,evidence:filled}),{mode:0o600});
+  let out="",err="";const o={write:s=>out+=s},e={write:s=>err+=s};
+  assert.equal(main(["--assess",path],o,e),3);
+  assert.equal(JSON.parse(out).verdict,"REVIEW_REQUIRED");
+ }finally{rmSync(dir,{force:true,recursive:true});}
+});
 test("project reviews do not include repository write endpoints or credentials",()=>{
  const source=JSON.stringify(assess(sample));
  assert.doesNotMatch(source,/CLOUD_COOLIFY_WRITE_TOKEN|CLOUD_DEPLOY_ENABLE|private_key|password|Bearer /);
