@@ -252,7 +252,7 @@ export function main(args=process.argv.slice(2),out=process.stdout,err=process.s
   if(!info.isFile()||(info.mode&0o077)!==0||info.size>32768||
     (typeof process.getuid==="function"&&info.uid!==process.getuid()))throw Error("Manifest requires operator-owned private 0600 regular file <=32KB");
   const data=JSON.parse(readFileSync(arg,"utf8"));const result=assess(data);
-  out.write(JSON.stringify(result,null,2)+"\n");return result.verdict==="BLOCKED"?1:0;
+  out.write(JSON.stringify(result,null,2)+"\n");return result.verdict==="BLOCKED"?1:3; // REVIEW_REQUIRED is NOT a passing release gate
  }catch{err.write("RELEASE NOT APPROVED: invalid project, missing evidence or unsafe manifest. No deployment.\n");return 1;}
 }
 if(process.argv[1]&&pathToFileURL(process.argv[1]).href===import.meta.url)process.exitCode=main();
