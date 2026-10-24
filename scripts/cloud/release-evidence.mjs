@@ -31,7 +31,7 @@ export function stagingOrigin(raw){
  try{
   const u=new URL(raw),host=u.hostname.toLowerCase();
   if(u.protocol!=='https:'||u.username||u.password||u.search||u.hash||u.pathname!=='/'||
-    (u.port&&u.port!=='443')||isIP(host)||!host.includes('.')||
+    (u.port&&u.port!=='443')||isIP(host)||host.startsWith('[')||host.endsWith('.')||!host.includes('.')||
     ['localhost','local','internal','test','invalid','example'].some(x=>host===x||host.endsWith('.'+x))||
     host.endsWith('.example.com'))return null;
   return u.origin;
