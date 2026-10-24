@@ -47,6 +47,12 @@ No timers have been enabled by this PR. Service stdout is suppressed to avoid wr
 
 7. Mount ONLY the private supervisor report into the authenticated Next.js server, set CLOUD_SUPERVISOR_REPORT_FILE there, and verify GET /api/cloud/agent-supervisor requires cloudOperatorAccess. The browser cannot supply a file path and receives only bounded sanitized findings.
 
+## Decision Command Specialist (source prepared, not active)
+
+The VETO specialist uses **existing** four worker endpoints on an operator-local loopback connection: /healthz, /readyz, /market-readyz and /governed-paper-readyz. It emits a private report at CLOUD_DECISION_STATE_FILE. The Supervisor now requires this third source alongside Portfolio Guardian and Infrastructure Sentinel. Missing or stale Decision evidence blocks a full recent verdict. This is read-only worker-reported evidence, NOT independent exchange data validation or trading authorization.
+
+Review docs/cloud/DECISION_SPECIALIST.md and the two additional markarian-decision-specialist systemd templates. On an actual secured VPS, add CLOUD_DECISION_HEALTH_ORIGIN=http://127.0.0.1:VERIFIED_PORT and CLOUD_DECISION_STATE_FILE=/var/lib/margaryan-cloud/agents/decision.json to the private agents.env, test it manually and explicitly approve enabling its timer. No new timer has been enabled by this code change.
+
 ## Future Decision Command specialist
 
 A subsequent independent **read-only** adapter must inspect evidence from Decision Command on worker heartbeat, market data freshness, failed ingest, scoring/backtest/paper-trading consistency and scoped exchange permissions. It must never execute live orders, receive withdrawal credentials or mark a trading strategy safe/profitable. No such pipeline monitor is active yet.
