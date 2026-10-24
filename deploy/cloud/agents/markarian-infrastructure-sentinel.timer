@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodically run Private Coolify infrastructure signals
+
+[Timer]
+OnCalendar=*-*-* *:00/2:00
+AccuracySec=10s
+Persistent=true
+Unit=markarian-infrastructure-sentinel.service
+
+[Install]
+WantedBy=timers.target
