@@ -92,11 +92,11 @@ export function classify(repo,actions,prs,nowMs=Date.now()){
  if(actions!==null&&!Array.isArray(actions?.workflow_runs))refuse("Invalid Actions response");
  if(prs!==null&&!Array.isArray(prs))refuse("Invalid PR response");
  const latest=actions?.workflow_runs?.[0]||null,important=CRITICAL.has(name);
- const failed=latest?.status==="completed"&&["failure","timed_out","action_required"].includes(latest?.conclusion);
+ const failed=latest?.status==="completed"&&["failure","timed_out","action_required","startup_failure"].includes(latest?.conclusion);
  const url="https://github.com/"+name;
  const runLink=typeof latest?.html_url==="string"&&latest.html_url.startsWith(url+"/actions/runs/")?latest.html_url:url+"/actions";
- const signals=failed?[{id:"ci:"+name,severity:important?"critical":"high",title:"Latest GitHub Actions run failed",repo:name,url:runLink,
-   action:"Inspect CI failure; verify a build before release"}]:[];
+ const signals=failed?[{id:"ci:"+name,severity:important?"critical":"high",title:latest?.conclusion==="startup_failure"?"GitHub Actions failed to start":"Latest GitHub Actions run failed",repo:name,url:runLink,
+   action:latest?.conclusion==="startup_failure"?"Inspect runner, repository Actions permissions or billing; build has not been verified":"Inspect CI failure; verify a build before release"}]:[];
  const date=Date.parse(repo.pushed_at||"");
  const pushAge=Number.isFinite(date)&&date<=nowMs?Math.floor((nowMs-date)/86400000):null;
  return {repo:name,priority:important?"critical":"standard",private:repo.private===true,archived:repo.archived===true,
