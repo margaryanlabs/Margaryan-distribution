@@ -6,21 +6,24 @@ import type {ProviderView} from "@/lib/cloud/providers";
 import type {ClickHouseStatus} from "@/lib/cloud/clickhouse";
 import type {TelemetryOverview} from "@/lib/cloud/telemetry";
 import type {SentinelStatus} from "@/lib/cloud/sentinel-status";
+import type {SupervisorStatus} from "@/lib/cloud/agent-supervisor-status";
 import styles from "./mission-control.module.css";
 
 type Props={data:CloudSnapshot;loading:boolean;startView?:View;onRefresh:()=>void;onOpenSetup:()=>void;onOpenOwned:()=>void;
  onOpenDeploy:()=>void;onOpenRecovery:()=>void;onOpenStudio:()=>void;onOpenTelemetry:()=>void;onOpenDomains:()=>void};
 type View="fleet"|"projects"|"data"|"agents";
 type ProjectFilter="all"|"hosted"|"issues"|"planned";
-type Auxiliary={providers:ProviderView[]|null;clickhouse:ClickHouseStatus|null;telemetry:TelemetryOverview|null;sentinel:SentinelStatus|null;error:string};
+type Auxiliary={providers:ProviderView[]|null;clickhouse:ClickHouseStatus|null;telemetry:TelemetryOverview|null;sentinel:SentinelStatus|null;supervisor:SupervisorStatus|null;error:string};
 const sourceModes:{id:View;name:string;hint:string}[]=[
  {id:"fleet",name:"Infrastructure",hint:"Servers and releases"},
  {id:"projects",name:"Projects",hint:"All applications"},
  {id:"data",name:"Data & domains",hint:"Databases and DNS"},
  {id:"agents",name:"Agent Watch",hint:"Detection and automation"}
 ];
-const fallback:Auxiliary={providers:null,clickhouse:null,telemetry:null,sentinel:null,error:""};
+const fallback:Auxiliary={providers:null,clickhouse:null,telemetry:null,sentinel:null,supervisor:null,error:""};
 const indicators=[
+ {id:"supervisor",name:"Agent Supervisor",scope:"Portfolio + infrastructure findings · source freshness · safe triage"},
+ {id:"decision",name:"Decision Command Observer",scope:"CI readiness now · pipeline freshness and paper-trading checks planned"},
  {id:"portfolio",name:"Portfolio Guardian",scope:"All GitHub projects · Decision Command · CI and pull requests"},
  {id:"infrastructure",name:"Infrastructure Sentinel",scope:"Hosts · availability · incident detection"},
  {id:"deploy",name:"Release Guardian",scope:"Deployments · failures · rollback evidence"},
@@ -63,13 +66,15 @@ export default function MissionControl({data,loading,startView="fleet",onRefresh
    fetch("/api/cloud/providers",{cache:"no-store",credentials:"same-origin"}).then(async r=>{if(!r.ok)throw Error("Provider inventory unavailable");return r.json() as Promise<{providers:ProviderView[]}>;}),
    fetch("/api/cloud/clickhouse",{cache:"no-store",credentials:"same-origin"}).then(async r=>{if(!r.ok)throw Error("ClickHouse status unavailable");return r.json() as Promise<ClickHouseStatus>;}),
    fetch("/api/cloud/telemetry",{cache:"no-store",credentials:"same-origin"}).then(async r=>{if(!r.ok)throw Error("Prometheus unavailable");return r.json() as Promise<TelemetryOverview>;}),
-   fetch("/api/cloud/sentinel",{cache:"no-store",credentials:"same-origin"}).then(async r=>{if(!r.ok)throw Error("Sentinel status unavailable");return r.json() as Promise<SentinelStatus>;})
+   fetch("/api/cloud/sentinel",{cache:"no-store",credentials:"same-origin"}).then(async r=>{if(!r.ok)throw Error("Sentinel status unavailable");return r.json() as Promise<SentinelStatus>;}),
+   fetch("/api/cloud/agent-supervisor",{cache:"no-store",credentials:"same-origin"}).then(async r=>{if(!r.ok)throw Error("Supervisor status unavailable");return r.json() as Promise<SupervisorStatus>;})
   ]);
   setAux({
    providers:results[0].status==="fulfilled"&&Array.isArray(results[0].value.providers)?results[0].value.providers:null,
    clickhouse:results[1].status==="fulfilled"&&["setup","connected","error"].includes(results[1].value.state)?results[1].value:null,
    telemetry:results[2].status==="fulfilled"&&["setup","connected","degraded"].includes(results[2].value.mode)?results[2].value:null,
    sentinel:results[3].status==="fulfilled"&&["not_configured","connected","stale","error"].includes(results[3].value.state)?results[3].value:null,
+   supervisor:results[4].status==="fulfilled"&&["not_configured","recent","stale","error"].includes(results[4].value.state)?results[4].value:null,
    error:results.some(x=>x.status==="rejected")?"Some external status sources are unavailable.":""});
   setAuxLoading(false);
  },[]);
@@ -257,6 +262,23 @@ export default function MissionControl({data,loading,startView="fleet",onRefresh
   </div>}
   {view==="agents"&&<div className={styles.agentGrid}>
    <section className={styles.surface}>
+    <div className={styles.sectionHeader}><div><span className={styles.overline}>MARGARYAN CLOUD / COMMAND LAYER</span><h2>Agent Supervisor</h2></div>
+      <span className={aux.supervisor?.state==="recent"?styles.ok:styles.notReady}>{aux.supervisor?.state==="recent"?"RECENT AUDIT":aux.supervisor?.state==="stale"?"STALE EVIDENCE":"NOT CONNECTED"}</span></div>
+    <p className={styles.lead}>Unified read-only intelligence from GitHub Portfolio Guardian and Coolify Sentinel. Missing evidence is never a green status.</p>
+    <div className={styles.supervisorMetrics}>
+      <div><span>Observed findings</span><strong>{aux.supervisor?.state==="recent"?aux.supervisor.incidentCount:"—"}</strong></div>
+      <div><span>Critical</span><strong>{aux.supervisor?.state==="recent"?aux.supervisor.criticalCount:"—"}</strong></div>
+      <div><span>Last audit</span><strong>{aux.supervisor?.checkedAt?when(aux.supervisor.checkedAt):"Not verified"}</strong></div>
+    </div>
+    <div className={styles.supervisorSources}>{(aux.supervisor?.sources||[]).map(src=><div key={src.id}><span>{src.id==="portfolio"?"GitHub / Portfolio":"Coolify / Infrastructure"}</span><b>{src.state.toUpperCase()}</b></div>)}</div>
+    {aux.supervisor?.state==="recent"&&aux.supervisor.incidents.length>0?<div className={styles.supervisorFeed}>{aux.supervisor.incidents.map(item=><div key={item.id}>
+      <span className={item.severity==="critical"?styles.bad:item.severity==="warning"?styles.warnDot:styles.off}/>
+      <div><strong>{safeText(item.title)}</strong><small>{item.project||item.origin} · {item.severity.toUpperCase()}</small></div>
+    </div>)}</div>:<p className={styles.disclaimer}>{aux.supervisor?.notice||"A private server report is required. No scheduled audit has been verified."}</p>}
+    <div className={styles.supervisorDecision}><strong>VETO Decision Command</strong><small>GitHub CI: {aux.supervisor?.decisionCommand?aux.supervisor.decisionCommand.pipelineFreshness:"not checked"} · trading pipelines, paper trading and exchange permissions: NOT CHECKED</small></div>
+    <p className={styles.disclaimer}>Source setup only until an owner-operated scheduler produces fresh snapshots. No trading, production edits or automatic recovery permissions.</p>
+   </section>
+   <section className={styles.surface}>
     <div className={styles.sectionHeader}><div><span className={styles.overline}>INFRASTRUCTURE INTELLIGENCE</span><h2>Agent operations</h2></div>
      <span className={styles.notReady}>{aux.sentinel?.state==="connected"?"SENTINEL RECENT POLL":"RULES · READ ONLY"}</span></div>
     <p className={styles.lead}>Start with deterministic, inspectable health rules. Future agents can investigate anomalies and propose repairs, but cannot modify production without explicit approval and an audit trail.</p>
@@ -268,7 +290,7 @@ export default function MissionControl({data,loading,startView="fleet",onRefresh
    <section className={styles.surface}>
     <div className={styles.sectionHeader}><div><span className={styles.overline}>AUTOMATION ROADMAP</span><h2>Future AI agents</h2></div></div>
     <div className={styles.agentList}>{indicators.map(a=><div key={a.id}><span className={styles.agentMark}>✳</span>
-      <span><strong>{a.name}</strong><small>{a.scope}</small></span><span className={styles.notReady}>{a.id==="portfolio"?"SOURCE READY":a.id==="infrastructure"?(aux.sentinel?.state==="connected"?"RECENT POLL":aux.sentinel?.state==="stale"?"STALE": "SOURCE READY"):"PLANNED"}</span></div>)}</div>
+      <span><strong>{a.name}</strong><small>{a.scope}</small></span><span className={styles.notReady}>{a.id==="supervisor"?(aux.supervisor?.state==="recent"?"RECENT AUDIT":"SOURCE READY"):a.id==="portfolio"?"SOURCE READY":a.id==="infrastructure"?(aux.sentinel?.state==="connected"?"RECENT POLL":aux.sentinel?.state==="stale"?"STALE": "SOURCE READY"):"PLANNED"}</span></div>)}</div>
     <div className={styles.sentinelReady}><div><span className={styles.overline}>SENTINEL V1 / SERVER SIDE</span>
      <strong>{aux.sentinel?.state==="connected"?"Recent server-side Sentinel poll":aux.sentinel?.state==="stale"?"Sentinel's last poll is stale":"Read-only watcher source prepared"}</strong>
      <small>{aux.sentinel?.state==="connected"?
