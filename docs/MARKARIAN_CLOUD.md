@@ -172,3 +172,7 @@ The Agent Watch page now displays Sentinel V1's actual last complete observation
 ## First-owned-node staging evidence gate (2026-10-24)
 
 `node scripts/cloud/first-node.mjs --plan` prints the steps before VPS purchase, without network calls. After an owned VPS has been secured and an isolated identified pilot deployed, `node scripts/cloud/first-node.mjs --verify --json` checks the explicitly selected Coolify server UUID using a private read-only token, plus HTTPS and the public marker of the disposable pilot. This gate is **staging-only** and never deploys, mutates resources, or authorizes production migrations. The command and 9 Node tests have been run locally; full CI/Next.js integration remains unverified. See `docs/cloud/FIRST_NODE.md`.
+
+## Local release gate (no GitHub runner)
+
+The owner can now run `node scripts/cloud/local-ci.mjs --plan`, `--cloud`, or `--full` from a trusted Node 22+ checkout. Cloud mode runs 17 regression suites. Full mode additionally requires preinstalled web dependencies and verifies TypeScript and the actual Next.js build locally. This is an optional independent alternative while hosted GitHub Actions runners are unavailable; it does not change production, deploy resources or waive first-node/backup/restore/rollback prerequisites. The harness itself has offline tests in `scripts/cloud/local-ci.test.mjs`. Runbook: `docs/cloud/LOCAL_RELEASE.md`.
