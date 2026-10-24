@@ -64,7 +64,8 @@
     "motion:test-voice-contract": "node scripts/motion/test-offline-narration-contract.mjs",
     "motion:test-public-creator": "node scripts/motion/test-public-creator.mjs",
     "motion:test-ai-director": "node scripts/motion/test-ai-director.mjs",
-    "motion:test-owner-ai-master": "node scripts/motion/test-owner-ai-master.mjs"
+    "motion:test-owner-ai-master": "node scripts/motion/test-owner-ai-master.mjs",
+    "motion:test-ai-cinematic": "node --experimental-strip-types scripts/motion/test-ai-cinematic-bridge.mjs"
   },
   "dependencies": {
     "next": "16.3.3",
