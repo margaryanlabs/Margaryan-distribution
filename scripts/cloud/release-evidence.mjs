@@ -37,7 +37,7 @@ export function stagingOrigin(raw){
   return u.origin;
  }catch{return null}
 }
-export async function boundedJson(url,{token,fetcher=fetch,limit=131072}={}){
+export async function boundedJson(url,{token,fetcher=fetch,limit=524288}={}){
  const headers={Accept:'application/json','User-Agent':'Margaryan-Release-Evidence'};
  if(token)headers.Authorization='Bearer '+token;
  const res=await fetcher(url,{method:'GET',headers,cache:'no-store',redirect:'error',signal:AbortSignal.timeout(9000)});
@@ -55,7 +55,7 @@ export async function boundedJson(url,{token,fetcher=fetch,limit=131072}={}){
  try{return JSON.parse(body)}catch{refuse('Invalid JSON evidence')}
 }
 export function checkWorkflow(body,request){
- if(!body||!Array.isArray(body.workflow_runs)||body.workflow_runs.length>10)refuse('Invalid workflow run collection');
+ if(!body||!Array.isArray(body.workflow_runs)||body.workflow_runs.length>5)refuse('Invalid workflow run collection');
  const path='.github/workflows/'+request.workflowFile+'@';
  const candidates=body.workflow_runs.filter(r=>r&&r.head_sha===request.commit&&
    typeof r.path==='string'&&r.path.startsWith(path)&&Number.isSafeInteger(r.id)&&r.id>0);
@@ -73,7 +73,7 @@ export async function githubProof(request,env,fetcher=fetch){
  const root='https://api.github.com/repos/'+request.repository;
  const commit=await boundedJson(root+'/commits/'+request.commit,{token,fetcher});
  if(commit?.sha!==request.commit)refuse('Commit identity mismatch');
- const runs=await boundedJson(root+'/actions/workflows/'+request.workflowFile+'/runs?head_sha='+request.commit+'&per_page=10',{token,fetcher});
+ const runs=await boundedJson(root+'/actions/workflows/'+request.workflowFile+'/runs?head_sha='+request.commit+'&per_page=5',{token,fetcher});
  return {source:{status:'OBSERVED',sha:request.commit,url:'https://github.com/'+request.repository+'/commit/'+request.commit},
   ci:checkWorkflow(runs,request)};
 }
