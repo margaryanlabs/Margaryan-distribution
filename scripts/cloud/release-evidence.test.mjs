@@ -39,7 +39,7 @@ test('staging target must be an operator-configured HTTPS origin, not localhost 
  assert.equal(stagingOrigin('https://stage.margaryan.cloud'),'https://stage.margaryan.cloud');
  for(const url of ['http://stage.margaryan.cloud','https://127.0.0.1','https://localhost','https://example.com',
   'https://abc.internal','https://user:pass@stage.margaryan.cloud','https://stage.margaryan.cloud/path',
-  'https://stage.margaryan.cloud?token=x','https://[::1]']){
+  'https://stage.margaryan.cloud?token=x','https://[::1]','https://[::ffff:127.0.0.1]','https://localhost.']){
   assert.equal(stagingOrigin(url),null,url);
  }
 });
