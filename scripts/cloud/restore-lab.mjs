@@ -52,6 +52,15 @@ export function validateContainerMetadata(id,metadata){
      (Array.isArray(metadata.NetworkSettings?.Ports)&&metadata.NetworkSettings.Ports.length))
     throw Error('Published ports prohibited for restore lab');
   if(metadata.HostConfig?.Privileged===true)throw Error('Privileged container prohibited');
+  const net=Object.keys(metadata.NetworkSettings?.Networks||{});
+  if(net.length!==1||net[0]!==PROJECT+'_restore_private')
+    throw Error('Restore lab must use only the dedicated private Docker network');
+  const ports=Object.values(metadata.NetworkSettings?.Ports||{});
+  if(ports.some(v=>Array.isArray(v)&&v.length>0))throw Error('Published Docker port detected');
+  if(!Object.hasOwn(metadata.HostConfig?.Tmpfs||{},'/var/lib/postgresql/data'))
+    throw Error('Restore lab database must use temporary storage');
+  if((metadata.Mounts||[]).some(m=>(m.Destination!=='/run/secrets/lab_password'||m.RW!==false)))
+    throw Error('Unreviewed host or persistent Docker mount detected');
   return true;
 }
 
