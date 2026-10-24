@@ -6,6 +6,8 @@ on:
   push:
     branches:
       - feat/cloud-stack-validation-20261024
+    paths:
+      - '.github/workflows/cloud-stack-ci.yml'
   pull_request:
     branches:
       - 'feat/cloud-*'
@@ -40,6 +42,8 @@ jobs:
           node-version: '22'
       - name: Verify release evidence and project safety (offline, no secrets)
         run: node --test scripts/cloud/release-guardian.test.mjs scripts/cloud/release-evidence.test.mjs scripts/cloud/deploy-stage.test.mjs
+      - name: Classify runner startup failures without mislabeling application code
+        run: node --test scripts/cloud/ci-run-gate.test.mjs scripts/cloud/test-cloud-stack-workflow.mjs
       - name: Verify staging marker is opt-in and private secrets stay private
         run: node --experimental-strip-types --test scripts/cloud/test-release-marker.mjs
       - name: Verify agent supervision, rollback lab and first-node guards
