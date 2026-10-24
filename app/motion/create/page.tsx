@@ -225,6 +225,14 @@ export default function PublicMotionCreator(){
   setPhase("idea");setPlaying(true);setSeek(0);seekTime.current=0;setImportJson("");setError("");
   setNotice("НОВЫЙ ФИЛЬМ: никаких материалов из предыдущего проекта не импортировано.");
  };
+ const openAiCinematic=()=>{
+  const draft={concept:brief.trim().length>=12?brief:SAMPLES[0],
+   brandLabel:BRAND_INFO[brand].name,project};
+  try{
+   localStorage.setItem("motion-ai-cinematic-draft-v1",JSON.stringify(draft));
+   window.location.assign("/motion/ai-cinematic");
+  }catch{setError("Невозможно перенести черновик в браузере. Сначала скачай Motion JSON или открой AI Cinematic отдельно.");}
+ };
  const openEditor=()=>{
   if(!project)return;
   try{
@@ -293,6 +301,7 @@ export default function PublicMotionCreator(){
         <strong>Хочешь по-настоящему авторский ролик?</strong>
         <p>Обычный режим создаёт анимацию нашим шаблонным движком. Для уникальных сцен и режиссуры через код скопируй бриф и <b>вставь его вручную в этот чат ChatGPT</b>. Я смогу работать в существующем GitHub-проекте, а не просто менять надписи.</p>
         <button type="button" onClick={()=>void copyForChatGPT()}>✳ СКОПИРОВАТЬ ЗАДАНИЕ ДЛЯ CHATGPT ↗</button>
+        <button type="button" onClick={openAiCinematic}>✦ AI CINEMATIC / ПОКАДРОВАЯ РЕЖИССУРА ↗</button>
         <em>Ничего не отправляется автоматически. Исходники и старые видео не прикладываются.</em>
        </div>
      </section>}
@@ -356,6 +365,7 @@ export default function PublicMotionCreator(){
        <strong>Сделать этот ролик оригинальным через код</strong>
        <p>Этот предпросмотр собран нашим процедурным движком. Скопируй задание и вставь его в чат со мной: я смогу изучить код Motion Engine, спроектировать уникальные кадры и подготовить изменения в GitHub. Видео не передаётся автоматически.</p>
        <button type="button" onClick={()=>void copyForChatGPT()}>✳ ЗАДАНИЕ ДЛЯ РЕЖИССЁРА В CHATGPT ↗</button>
+       <button type="button" onClick={openAiCinematic}>✦ ОТКРЫТЬ AI CINEMATIC / ЭТИ СЦЕНЫ ↗</button>
       </div>
       <p className={styles.truth}>Не готовый рекламный MP4: озвучку, музыку, реальные кадры и финальный экспорт необходимо подтвердить в студии. Для коммерческой публикации обязателен просмотр качества.</p>
      </section>}
