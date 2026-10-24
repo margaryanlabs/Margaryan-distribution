@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodically verify local VETO Decision Command worker health
+
+[Timer]
+OnCalendar=*-*-* *:00/2:00
+AccuracySec=10s
+Persistent=true
+Unit=markarian-decision-specialist.service
+
+[Install]
+WantedBy=timers.target

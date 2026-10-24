@@ -5,14 +5,14 @@ export type SupervisorStatus={
  state:'not_configured'|'recent'|'stale'|'error';
  status:'unknown'|'observed_attention'|'observed_no_findings';
  checkedAt:string|null;incidentCount:number|null;criticalCount:number|null;
- sources:{id:'portfolio'|'infrastructure';state:'recent'|'stale'|'error'|'not_configured';checkedAt:string|null}[];
- incidents:{id:string;origin:'portfolio'|'infrastructure';title:string;severity:'critical'|'warning'|'info';project?:string}[];
- decisionCommand:{repository:string;pipelineFreshness:'not_checked';paperTrading:'not_checked';liveOrderPermissions:'not_checked'};
+ sources:{id:'portfolio'|'infrastructure'|'decision';state:'recent'|'stale'|'error'|'not_configured';checkedAt:string|null}[];
+ incidents:{id:string;origin:'portfolio'|'infrastructure'|'decision';title:string;severity:'critical'|'warning'|'info';project?:string}[];
+ decisionCommand:{repository:string;pipelineFreshness:'not_independently_verified';paperTrading:'not_independently_verified';workerProbe:'recent'|'stale'|'error'|'not_configured';liveOrderPermissions:'not_checked'};
  notice:string;productionReady:false;autonomousRemediation:false
 };
 const fail=(state:SupervisorStatus['state'],notice:string):SupervisorStatus=>({
  state,status:'unknown',checkedAt:null,incidentCount:null,criticalCount:null,sources:[],incidents:[],
- decisionCommand:{repository:'margaryanlabs/decision-command',pipelineFreshness:'not_checked',paperTrading:'not_checked',liveOrderPermissions:'not_checked'},
+ decisionCommand:{repository:'margaryanlabs/decision-command',pipelineFreshness:'not_independently_verified',paperTrading:'not_independently_verified',workerProbe:'not_configured',liveOrderPermissions:'not_checked'},
  notice,productionReady:false,autonomousRemediation:false
 });
 const iso=(s:unknown,now:number)=>{
@@ -33,24 +33,24 @@ export function readAgentSupervisorStatus(env:Record<string,string|undefined>,no
   if(!doc||typeof doc!=='object')throw Error('Invalid report');
   const v=doc as Record<string,unknown>;
   if(v.version!==1||v.schema!=='markarian-agent-supervisor/v1'||v.complete!==true||
-    !Array.isArray(v.sources)||v.sources.length!==2||!Array.isArray(v.signals)||v.signals.length>240)
+    !Array.isArray(v.sources)||v.sources.length!==3||!Array.isArray(v.signals)||v.signals.length>240)
     throw Error('Report schema');
   const time=iso(v.checkedAt,now);
   const channels=v.sources.map((s:unknown)=>{
     if(!s||typeof s!=='object')throw Error('Source schema');
     const item=s as Record<string,unknown>;
-    if(!['portfolio','infrastructure'].includes(String(item.id))||item.state!=='recent')throw Error('Source schema');
+    if(!['portfolio','infrastructure','decision'].includes(String(item.id))||item.state!=='recent')throw Error('Source schema');
     const at=iso(item.checkedAt,now);
-    return {id:item.id as 'portfolio'|'infrastructure',state:item.state as 'recent',checkedAt:new Date(at).toISOString()};
+    return {id:item.id as 'portfolio'|'infrastructure'|'decision',state:item.state as 'recent',checkedAt:new Date(at).toISOString()};
   });
-  if(channels[0].id!=='portfolio'||channels[1].id!=='infrastructure')throw Error('Source order');
+  if(channels[0].id!=='portfolio'||channels[1].id!=='infrastructure'||channels[2].id!=='decision')throw Error('Source order');
   const fresh=time>=now-10*60000&&iso(channels[0].checkedAt,now)>=now-6*3600000&&
-   iso(channels[1].checkedAt,now)>=now-5*60000;
+   iso(channels[1].checkedAt,now)>=now-5*60000&&iso(channels[2].checkedAt,now)>=now-5*60000;
   const records=v.signals.map((s:unknown)=>{
    if(!s||typeof s!=='object')throw Error('Signal');
    const item=s as Record<string,unknown>;
    if(typeof item.id!=='string'||typeof item.title!=='string'||item.id.length>220||item.title.length>180||
-      !['portfolio','infrastructure'].includes(String(item.origin))||!['critical','warning','info'].includes(String(item.severity)))throw Error('Signal');
+      !['portfolio','infrastructure','decision'].includes(String(item.origin))||!['critical','warning','info'].includes(String(item.severity)))throw Error('Signal');
    return {id:item.id,origin:item.origin as 'portfolio'|'infrastructure',severity:item.severity as 'critical'|'warning'|'info',
     title:item.title.slice(0,140),...(typeof item.project==='string'&&/^(margaryanlabs|margaryan-labs)\/[\w.-]{1,100}$/.test(item.project)?{project:item.project}:{})};
   });
@@ -60,8 +60,8 @@ export function readAgentSupervisorStatus(env:Record<string,string|undefined>,no
   return {state:fresh?'recent':'stale',status:fresh?v.status as SupervisorStatus['status']:'unknown',
    checkedAt:new Date(time).toISOString(),incidentCount:records.length,criticalCount:v.criticalCount as number,
    sources:channels.map(s=>({...s,state:(fresh?'recent':'stale') as 'recent'|'stale'})),incidents:records.slice(0,8),
-   decisionCommand:{repository:'margaryanlabs/decision-command',pipelineFreshness:'not_checked',paperTrading:'not_checked',liveOrderPermissions:'not_checked'},
-   notice:fresh?'Recent completed supervisor audit. Not a production uptime, database or trading pipeline check.':
+   decisionCommand:{repository:'margaryanlabs/decision-command',pipelineFreshness:'not_independently_verified',paperTrading:'not_independently_verified',workerProbe:fresh?'recent':'stale',liveOrderPermissions:'not_checked'},
+   notice:fresh?'Recent completed supervisor audit. Not independent uptime, database, source-integrity or trading-authority verification.':
      'Supervisor or underlying source evidence is stale; current status is unknown.',productionReady:false,autonomousRemediation:false};
  }catch{return fail('error','Supervisor report is missing, inaccessible or invalid.');}
 }

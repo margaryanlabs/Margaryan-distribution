@@ -59,3 +59,10 @@ test("Agent Supervisor appears as a protected read-only status source, not a fak
  assert.match(route,/cloudOperatorAccess\(request\.headers,process\.env\)/);
  assert.doesNotMatch(route,/export async function (POST|PUT|PATCH|DELETE)/);
 });
+
+test("VETO Decision Specialist evidence is shown separately from live trading permission",()=>{
+ const ui=read("app/cloud/mission-control.tsx");
+ assert.ok(ui.includes('VETO / Decision Specialist'));
+ assert.ok(ui.includes('Feed integrity, profitability and live trading authority: NOT VERIFIED'));
+ assert.doesNotMatch(ui,/fetch\(["']\/api\/cloud\/decision-specialist/);
+});
