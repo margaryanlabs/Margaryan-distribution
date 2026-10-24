@@ -1,0 +1,27 @@
+# Disposable isolated PostgreSQL restore lab. No host ports or production volumes.
+name: markarian-restore-lab
+services:
+  db:
+    image: postgres:16-alpine
+    restart: 'no'
+    environment:
+      POSTGRES_DB: restore_lab
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/lab_password
+    secrets:
+      - lab_password
+    tmpfs:
+      - /var/lib/postgresql/data:rw,nosuid,nodev,noexec
+    security_opt: [no-new-privileges:true]
+    networks: [restore_private]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U postgres -d restore_lab']
+      interval: 10s
+      timeout: 5s
+      retries: 8
+secrets:
+  lab_password:
+    file: ./secrets/lab_password
+networks:
+  restore_private:
+    internal: true
