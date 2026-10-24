@@ -168,3 +168,15 @@ A server-run, source-prepared one-shot infrastructure watcher is included at `sc
 ## Sentinel status in Mission Control
 
 The Agent Watch page now displays Sentinel V1's actual last complete observation after a private read-only status file is mounted with `CLOUD_SENTINEL_STATE_FILE`; the server route `GET /api/cloud/sentinel` rechecks operator authentication and returns a redacted, bounded status. It distinguishes setup, recent observation (within five minutes), stale data, and errors. A fresh poll is not an autonomous background agent, and no deployment or remediation writes are exposed. See `docs/cloud/SENTINEL.md`.
+
+## First-owned-node staging evidence gate (2026-10-24)
+
+`node scripts/cloud/first-node.mjs --plan` prints the steps before VPS purchase, without network calls. After an owned VPS has been secured and an isolated identified pilot deployed, `node scripts/cloud/first-node.mjs --verify --json` checks the explicitly selected Coolify server UUID using a private read-only token, plus HTTPS and the public marker of the disposable pilot. This gate is **staging-only** and never deploys, mutates resources, or authorizes production migrations. The command and 9 Node tests have been run locally; full CI/Next.js integration remains unverified. See `docs/cloud/FIRST_NODE.md`.
+
+## Local release gate (no GitHub runner)
+
+The owner can now run `node scripts/cloud/local-ci.mjs --plan`, `--cloud`, or `--full` from a trusted Node 22+ checkout. Cloud mode runs 17 regression suites. Full mode additionally requires preinstalled web dependencies and verifies TypeScript and the actual Next.js build locally. This is an optional independent alternative while hosted GitHub Actions runners are unavailable; it does not change production, deploy resources or waive first-node/backup/restore/rollback prerequisites. The harness itself has offline tests in `scripts/cloud/local-ci.test.mjs`. Runbook: `docs/cloud/LOCAL_RELEASE.md`.
+
+## Dedicated PostgreSQL Restore Lab (staging; source only)
+
+`scripts/cloud/restore-lab.mjs` and `deploy/cloud/restore/compose.yaml` provide an explicitly approved, local-Docker-only Restic archive restore into an empty, isolated PostgreSQL lab. No production DB hostname can be selected. The container's Compose labels, no-ports and no-host-network policy must pass before restoration; errors fail closed. Nine offline mock regression tests run locally and in CI when available. **There has been no actual VPS restore** and the proof does not certify application-level recovery or production migration. Follow `docs/cloud/RESTORE_LAB.md`.

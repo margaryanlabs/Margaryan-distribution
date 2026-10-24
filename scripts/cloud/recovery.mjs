@@ -3,7 +3,7 @@
  * No unencrypted dump file, shell execution, DB writes or automated restore.
  */
 import {spawn} from 'node:child_process';
-import {statSync} from 'node:fs';
+import {lstatSync} from 'node:fs';
 import {isAbsolute} from 'node:path';
 import {pathToFileURL} from 'node:url';
 const COMMANDS=new Set(['--plan','--preflight','--backup-postgres','--check-repository','--inspect-snapshot']);
@@ -13,8 +13,9 @@ function privateFile(name,env){
  const file=env[name];
  if(!file||!isAbsolute(file))fail(name+' must be an absolute file path');
  try{
-  const s=statSync(file);
+  const s=lstatSync(file);
   if(!s.isFile()||(s.mode&0o077)!==0)fail(name+' must be a private regular file (chmod 600)');
+  if(typeof process.getuid==='function'&&s.uid!==process.getuid())fail(name+' must be owned by the operator');
  }catch(e){
   if(e instanceof Error&&e.message.startsWith(name+' must'))throw e;
   fail(name+' is missing or unreadable');

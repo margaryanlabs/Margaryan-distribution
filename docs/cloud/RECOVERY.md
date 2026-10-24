@@ -16,9 +16,9 @@ Create an encrypted Restic repository in genuinely separate offsite storage, wit
 
 Set the following in the SERVER-ONLY environment (no NEXT_PUBLIC variables, no GitHub secrets committed):
 - RESTIC_REPOSITORY: remote s3:, sftp:, b2:, azure:, gs:, rclone: or rest:https:// URI. Verify your actual transport uses TLS or SSH, regardless of accepted syntax.
-- RESTIC_PASSWORD_FILE: absolute file with restrictive 0600 permissions.
+- RESTIC_PASSWORD_FILE: absolute file with restrictive 0600 permissions. It must be a real (non-symlink) regular file owned by the operator on POSIX hosts.
 - PGHOST / PGPORT / PGUSER / PGDATABASE: staging PostgreSQL connection fields.
-- PGPASSFILE: protected absolute PostgreSQL password file (chmod 600); do not set PGPASSWORD.
+- PGPASSFILE: protected absolute PostgreSQL password file (chmod 600), non-symlink and operator-owned on POSIX hosts; do not set PGPASSWORD.
 - CLOUD_BACKUP_PROJECT: lowercase project slug, e.g. promptence.
 
 Run these ONLY on the protected machine:
@@ -39,3 +39,7 @@ Unit tests use mocks for pg_dump, pg_restore and restic. They validate program b
 ## Transport restriction
 
 The backup CLI rejects explicitly plaintext `s3:http://` destinations. Confirm the actual transport and TLS for every remote backend, especially custom S3 endpoints or rclone remotes. Never presume encrypted transport merely because Restic encrypts its stored content.
+
+## Isolated Docker restore lab (added after this backup CLI)
+
+A separate operator-only Restore Lab is available at `scripts/cloud/restore-lab.mjs` with `deploy/cloud/restore/compose.yaml`. It takes an exact snapshot and archive filename, requires explicit digest approval, and streams `restic dump` into a dedicated disposable local Docker PostgreSQL container only. It verifies an empty target before writing and at least one restored table afterward. **Not deployed or verified on actual backup data.** The `ISOLATED_RESTORE_OBSERVED` result does not establish app sign-in, data integrity, RLS, object storage recovery, PITR or permission for production cutover. See `docs/cloud/RESTORE_LAB.md` and `deploy/cloud/restore/README.md`.

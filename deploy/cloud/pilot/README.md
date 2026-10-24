@@ -1,6 +1,8 @@
 # Markarian Cloud · Stage 0 disposable pilot
 
-**No server has been purchased or deployed by this PR.** This is a safe launch target for validating Coolify once the operator owns a VPS.
+**No server has been purchased or deployed by this PR.**
+
+The pilot now mounts `./index.html` as a read-only landing page containing the public marker `markarian-cloud-pilot:v1:disposable`. Keep `index.html` adjacent to `compose.yaml` in the same Git checkout. After live deployment, execute the operator-only read-only verification gate described in `docs/cloud/FIRST_NODE.md`. A generic HTTP 200 is not sufficient, and neither the marker nor this gate proves production readiness. This is a safe launch target for validating Coolify once the operator owns a VPS.
 
 The pilot is a stateless unprivileged NGINX container. It deliberately has:
 - no host port mapping, no database, no secrets and no persistent storage;
