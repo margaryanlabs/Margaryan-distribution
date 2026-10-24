@@ -59,7 +59,7 @@ export function readAgentSupervisorStatus(env:Record<string,string|undefined>,no
     (records.length>0)!==(v.status==='observed_attention'))throw Error('Incorrect status');
   return {state:fresh?'recent':'stale',status:fresh?v.status as SupervisorStatus['status']:'unknown',
    checkedAt:new Date(time).toISOString(),incidentCount:records.length,criticalCount:v.criticalCount as number,
-   sources:channels.map(s=>({...s,state:fresh?'recent':'stale'})),incidents:records.slice(0,8),
+   sources:channels.map(s=>({...s,state:(fresh?'recent':'stale') as 'recent'|'stale'})),incidents:records.slice(0,8),
    decisionCommand:{repository:'margaryanlabs/decision-command',pipelineFreshness:'not_checked',paperTrading:'not_checked',liveOrderPermissions:'not_checked'},
    notice:fresh?'Recent completed supervisor audit. Not a production uptime, database or trading pipeline check.':
      'Supervisor or underlying source evidence is stale; current status is unknown.',productionReady:false,autonomousRemediation:false};
