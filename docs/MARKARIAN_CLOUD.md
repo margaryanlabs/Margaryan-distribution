@@ -185,3 +185,14 @@ The owner can now run `node scripts/cloud/local-ci.mjs --plan`, `--cloud`, or `-
 ## Portfolio Guardian V1 (GitHub read-only; NOT running 24/7)
 
 Cloud now includes scripts/cloud/portfolio-guardian.mjs, which discovers authorized repositories in both margaryanlabs and margaryan-labs, including critical VETO Decision Command, VETOGRAM, SOFIA, Promptence and other reachable projects. It reads latest Actions outcomes and sampled open PRs (at most ten per repo). A fail-closed --diff mode persists minimal incident history in an owner-only private file, without false recoveries on partial API failure. Source-only until an operator provides a private fine-grained read token and host scheduler. The output explicitly does not establish production uptime, infrastructure health, or deployment readiness. No autonomous writes, CI bypass, alerts or AI repairs exist. See docs/cloud/PORTFOLIO_GUARDIAN.md.
+
+
+## Agent Supervisor V1 — unified audit evidence (2026-10-24)
+
+- Read-only operator CLI: scripts/cloud/agent-supervisor.mjs; incorporates completed private Portfolio Guardian and Sentinel snapshots. Decision Command is explicitly critical in the portfolio; trading data ingestion, paper trading and live order permissions remain UNCHECKED.
+- Strict source TTL: Guardian 6h and Sentinel 5 min, 10-minute report display freshness; missing/stale data produces UNKNOWN rather than false healthy or resolved events.
+- Protected GET-only /api/cloud/agent-supervisor uses the existing operator-auth guard and server-only CLOUD_SUPERVISOR_REPORT_FILE. The browser sees bounded, redacted incident metadata, not token file paths or provider secrets.
+- Mission Control > Agent Watch now shows Supervisor reports and source freshness with no claims of continuous operation before a real schedule is installed.
+- Three least-privilege systemd service/timer pairs staged under deploy/cloud/agents: GitHub hourly, Sentinel every 2 min, Supervisor every 2 min staggered after Sentinel. They have NOT been installed or enabled.
+- 12 dedicated supervisor CLI tests and 7 API/status tests passed in an isolated Node 22 checkout; offline systemd unit syntax verification and isolated TypeScript module check passed. Full repo build/CI remains unverified. No VPS or production data modified.
+- Runbook: docs/cloud/AGENT_SUPERVISOR.md. Next release gates: full Next.js typecheck/build, real VPS and operator tokens, successful scheduler operation, offsite restore test, staged deployments and manual cutover approval.

@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodically run Private read-only GitHub portfolio scan
+
+[Timer]
+OnCalendar=*-*-* *:00:00
+AccuracySec=10s
+Persistent=true
+Unit=markarian-portfolio-guardian.service
+
+[Install]
+WantedBy=timers.target

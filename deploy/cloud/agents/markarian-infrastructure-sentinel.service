@@ -1,0 +1,28 @@
+[Unit]
+Description=Private Coolify infrastructure signals
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=/etc/margaryan-cloud/agents.env
+
+[Service]
+Type=oneshot
+User=markarian
+Group=markarian
+WorkingDirectory=/opt/margaryan-distribution
+EnvironmentFile=/etc/margaryan-cloud/agents.env
+ExecStart=/usr/bin/env node --experimental-strip-types /opt/margaryan-distribution/scripts/cloud/sentinel.mjs --diff /var/lib/margaryan-cloud/agents/sentinel.json
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+ReadWritePaths=/var/lib/margaryan-cloud/agents
+StandardOutput=null
+StandardError=journal
+TimeoutStartSec=90
+
+[Install]
+WantedBy=multi-user.target
