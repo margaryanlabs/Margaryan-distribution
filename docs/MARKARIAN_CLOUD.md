@@ -176,3 +176,7 @@ The Agent Watch page now displays Sentinel V1's actual last complete observation
 ## Local release gate (no GitHub runner)
 
 The owner can now run `node scripts/cloud/local-ci.mjs --plan`, `--cloud`, or `--full` from a trusted Node 22+ checkout. Cloud mode runs 17 regression suites. Full mode additionally requires preinstalled web dependencies and verifies TypeScript and the actual Next.js build locally. This is an optional independent alternative while hosted GitHub Actions runners are unavailable; it does not change production, deploy resources or waive first-node/backup/restore/rollback prerequisites. The harness itself has offline tests in `scripts/cloud/local-ci.test.mjs`. Runbook: `docs/cloud/LOCAL_RELEASE.md`.
+
+## Dedicated PostgreSQL Restore Lab (staging; source only)
+
+`scripts/cloud/restore-lab.mjs` and `deploy/cloud/restore/compose.yaml` provide an explicitly approved, local-Docker-only Restic archive restore into an empty, isolated PostgreSQL lab. No production DB hostname can be selected. The container's Compose labels, no-ports and no-host-network policy must pass before restoration; errors fail closed. Nine offline mock regression tests run locally and in CI when available. **There has been no actual VPS restore** and the proof does not certify application-level recovery or production migration. Follow `docs/cloud/RESTORE_LAB.md`.
