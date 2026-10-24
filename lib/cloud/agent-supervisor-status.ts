@@ -7,7 +7,7 @@ export type SupervisorStatus={
  checkedAt:string|null;incidentCount:number|null;criticalCount:number|null;
  sources:{id:'portfolio'|'infrastructure'|'decision';state:'recent'|'stale'|'error'|'not_configured';checkedAt:string|null}[];
  incidents:{id:string;origin:'portfolio'|'infrastructure'|'decision';title:string;severity:'critical'|'warning'|'info';project?:string}[];
- decisionCommand:{repository:string;pipelineFreshness:'not_independently_verified';paperTrading:'not_independently_verified';workerProbe:'recent'|'stale'|'error'|'not_configured';workerProbe:'not_configured',liveOrderPermissions:'not_checked'};
+ decisionCommand:{repository:string;pipelineFreshness:'not_independently_verified';paperTrading:'not_independently_verified';workerProbe:'recent'|'stale'|'error'|'not_configured';liveOrderPermissions:'not_checked'};
  notice:string;productionReady:false;autonomousRemediation:false
 };
 const fail=(state:SupervisorStatus['state'],notice:string):SupervisorStatus=>({
