@@ -95,6 +95,8 @@ jobs:
         run: node --experimental-strip-types --test scripts/cloud/test-domain-plan.mjs
       - name: Portfolio Guardian GitHub read-only discovery and incident tests
         run: node --test scripts/cloud/portfolio-guardian.test.mjs
+      - name: Verify stacked Cloud pull request graph and CI provenance (offline)
+        run: node --test scripts/cloud/cloud-stack-readiness.test.mjs
       - name: Classify incomplete GitHub Actions runs without treating runner errors as source failures
         run: node --test scripts/cloud/ci-run-gate.test.mjs
       - name: Validate isolated Cloud stack CI workflow contracts
