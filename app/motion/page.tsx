@@ -877,7 +877,15 @@ export default function MotionStudioPage() {
       <strong>✳ CHATGPT · РЕЖИССЁР В КОДЕ ↗</strong>
       <span>Скопируй бриф → вставь в чат → авторские сцены в существующем GitHub. Автоматической отправки нет.</span>
     </button>
-    <button type="button" className={styles.proofLaunch} onClick={()=>{\n      try{localStorage.setItem("motion-ai-cinematic-draft-v1",JSON.stringify({concept:brief,brandLabel:info.name,project}));\n        window.location.assign("/motion/ai-cinematic");}\n      catch{setNotice("Не удалось сохранить черновик для AI Cinematic. Сначала скачай Motion JSON.");}\n    }}>\n      <strong>✦ AI CINEMATIC · SHOT STUDIO ↗</strong>\n      <span>Покадровая режиссура для Higgsfield → бесплатная сборка в Quick Studio. Без списаний.</span>\n    </button>\n    <a className={styles.proofLaunch} href="/motion/render"><strong>☁ НАШ RENDER ENGINE ↗</strong><span>Свой Chromium и FFmpeg · защищённый MP4</span></a>
+    <button type="button" className={styles.proofLaunch} onClick={()=>{
+      try{localStorage.setItem("motion-ai-cinematic-draft-v1",JSON.stringify({concept:brief,brandLabel:info.name,project}));
+        window.location.assign("/motion/ai-cinematic");}
+      catch{setNotice("Не удалось сохранить черновик для AI Cinematic. Сначала скачай Motion JSON.");}
+    }}>
+      <strong>✦ AI CINEMATIC · SHOT STUDIO ↗</strong>
+      <span>Покадровая режиссура для Higgsfield → бесплатная сборка в Quick Studio. Без списаний.</span>
+    </button>
+    <a className={styles.proofLaunch} href="/motion/render"><strong>☁ НАШ RENDER ENGINE ↗</strong><span>Свой Chromium и FFmpeg · защищённый MP4</span></a>
   </nav>;
   if(launcherOpen)return <MotionStart initialBrand={project.brand}
     currentTitle={project.title} hasSavedDraft={hasSavedFilm}
