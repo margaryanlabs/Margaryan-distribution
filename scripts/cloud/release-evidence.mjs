@@ -58,6 +58,7 @@ export function checkWorkflow(body,request){
  if(!body||!Array.isArray(body.workflow_runs)||body.workflow_runs.length>5)refuse('Invalid workflow run collection');
  const path='.github/workflows/'+request.workflowFile+'@';
  const candidates=body.workflow_runs.filter(r=>r&&r.head_sha===request.commit&&
+   r.repository?.full_name===request.repository&&r.head_repository?.full_name===request.repository&&
    typeof r.path==='string'&&r.path.startsWith(path)&&Number.isSafeInteger(r.id)&&r.id>0);
  candidates.sort((a,b)=>(Date.parse(b.created_at||'')||0)-(Date.parse(a.created_at||'')||0)||
    (b.run_attempt||0)-(a.run_attempt||0)||b.id-a.id);
