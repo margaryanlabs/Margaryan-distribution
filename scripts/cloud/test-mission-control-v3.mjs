@@ -46,3 +46,16 @@ test("Portfolio Guardian is presented as source-ready without imaginary live sca
  assert.ok(src.includes('node scripts/cloud/portfolio-guardian.mjs --plan'));
  assert.doesNotMatch(src,/fetch\(["']\/api\/cloud\/portfolio/);
 });
+
+test("Agent Supervisor appears as a protected read-only status source, not a fake running agent",()=>{
+ const src=read("app/cloud/mission-control.tsx");
+ const css=read("app/cloud/mission-control.module.css");
+ const route=read("app/api/cloud/agent-supervisor/route.ts");
+ assert.ok(src.includes('name:"Agent Supervisor"'));
+ assert.ok(src.includes('fetch("/api/cloud/agent-supervisor"'));
+ assert.ok(src.includes('decisionCommand'));
+ assert.ok(src.includes('NOT CHECKED'));
+ assert.ok(css.includes(".supervisorMetrics"));
+ assert.match(route,/cloudOperatorAccess\(request\.headers,process\.env\)/);
+ assert.doesNotMatch(route,/export async function (POST|PUT|PATCH|DELETE)/);
+});
