@@ -19,7 +19,7 @@ function fake({ci='success',sha=SHA,markerValue=marker,health={status:'ok'},comm
   const path=new URL(url).pathname;calls.push({url:String(url),options});
   if(path.includes('/commits/'))return Response.json({sha:commitValue});
   if(path.includes('/actions/workflows/'))return Response.json({workflow_runs:ci==='missing'?[]:[{
-   id:501,head_sha:sha,path:'.github/workflows/ci.yml@main',created_at:'2026-10-24T12:00:00Z',status:'completed',conclusion:ci,run_attempt:1
+   id:501,head_sha:sha,repository:{full_name:request.repository},head_repository:{full_name:request.repository},path:'.github/workflows/ci.yml@main',created_at:'2026-10-24T12:00:00Z',status:'completed',conclusion:ci,run_attempt:1
   }]});
   if(path==='/.well-known/markarian-release.json')return Response.json(markerValue);
   if(path==='/healthz'||path==='/api/health')return Response.json(health);
@@ -44,14 +44,20 @@ test('staging target must be an operator-configured HTTPS origin, not localhost 
  }
 });
 test('workflow SHA and exact workflow path are mandatory',()=>{
- const fakeRun={id:5,head_sha:SHA,path:'.github/workflows/ci.yml@main',created_at:'2026-10-24T14:00:00Z',status:'completed',conclusion:'success'};
+ const fakeRun={id:5,head_sha:SHA,repository:{full_name:request.repository},head_repository:{full_name:request.repository},path:'.github/workflows/ci.yml@main',created_at:'2026-10-24T14:00:00Z',status:'completed',conclusion:'success'};
  assert.equal(checkWorkflow({workflow_runs:[fakeRun]},request).status,'SUCCESS');
  assert.equal(checkWorkflow({workflow_runs:[{...fakeRun,head_sha:OLD}]},request).status,'NOT_OBSERVED');
  assert.equal(checkWorkflow({workflow_runs:[{...fakeRun,path:'.github/workflows/other.yml@main'}]},request).status,'NOT_OBSERVED');
  assert.equal(checkWorkflow({workflow_runs:[{...fakeRun,status:'queued',conclusion:null}]},request).status,'PENDING');
 });
+test('workflow evidence from another head repository is never accepted',()=>{
+ const run={id:5,head_sha:SHA,repository:{full_name:request.repository},
+  head_repository:{full_name:'untrusted/fork'},path:'.github/workflows/ci.yml@main',
+  created_at:'2026-10-24T12:00:00Z',status:'completed',conclusion:'success'};
+ assert.equal(checkWorkflow({workflow_runs:[run]},request).status,'NOT_OBSERVED');
+});
 test('newer failure on same SHA prevents stale success from being considered green',()=>{
- const ok={id:1,head_sha:SHA,path:'.github/workflows/ci.yml@main',created_at:'2026-10-24T12:00:00Z',status:'completed',conclusion:'success'};
+ const ok={id:1,head_sha:SHA,repository:{full_name:request.repository},head_repository:{full_name:request.repository},path:'.github/workflows/ci.yml@main',created_at:'2026-10-24T12:00:00Z',status:'completed',conclusion:'success'};
  const bad={...ok,id:2,created_at:'2026-10-24T13:00:00Z',conclusion:'failure'};
  assert.equal(checkWorkflow({workflow_runs:[ok,bad]},request).status,'FAILED_OR_INCOMPLETE');
 });
