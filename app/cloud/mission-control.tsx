@@ -21,6 +21,7 @@ const sourceModes:{id:View;name:string;hint:string}[]=[
 ];
 const fallback:Auxiliary={providers:null,clickhouse:null,telemetry:null,sentinel:null,error:""};
 const indicators=[
+ {id:"portfolio",name:"Portfolio Guardian",scope:"All GitHub projects · Decision Command · CI and pull requests"},
  {id:"infrastructure",name:"Infrastructure Sentinel",scope:"Hosts · availability · incident detection"},
  {id:"deploy",name:"Release Guardian",scope:"Deployments · failures · rollback evidence"},
  {id:"data",name:"Database Observer",scope:"PostgreSQL · ClickHouse · storage health"},
@@ -267,7 +268,7 @@ export default function MissionControl({data,loading,startView="fleet",onRefresh
    <section className={styles.surface}>
     <div className={styles.sectionHeader}><div><span className={styles.overline}>AUTOMATION ROADMAP</span><h2>Future AI agents</h2></div></div>
     <div className={styles.agentList}>{indicators.map(a=><div key={a.id}><span className={styles.agentMark}>✳</span>
-      <span><strong>{a.name}</strong><small>{a.scope}</small></span><span className={styles.notReady}>{a.id==="infrastructure"?(aux.sentinel?.state==="connected"?"RECENT POLL":aux.sentinel?.state==="stale"?"STALE": "SOURCE READY"):"PLANNED"}</span></div>)}</div>
+      <span><strong>{a.name}</strong><small>{a.scope}</small></span><span className={styles.notReady}>{a.id==="portfolio"?"SOURCE READY":a.id==="infrastructure"?(aux.sentinel?.state==="connected"?"RECENT POLL":aux.sentinel?.state==="stale"?"STALE": "SOURCE READY"):"PLANNED"}</span></div>)}</div>
     <div className={styles.sentinelReady}><div><span className={styles.overline}>SENTINEL V1 / SERVER SIDE</span>
      <strong>{aux.sentinel?.state==="connected"?"Recent server-side Sentinel poll":aux.sentinel?.state==="stale"?"Sentinel's last poll is stale":"Read-only watcher source prepared"}</strong>
      <small>{aux.sentinel?.state==="connected"?
@@ -278,6 +279,10 @@ export default function MissionControl({data,loading,startView="fleet",onRefresh
      <code>node --experimental-strip-types scripts/cloud/sentinel.mjs --plan</code>
      <button type="button" onClick={()=>{void navigator.clipboard.writeText("node --experimental-strip-types scripts/cloud/sentinel.mjs --plan").then(()=>setSentinelCopy("Setup command copied")).catch(()=>setSentinelCopy("Clipboard unavailable"));}}>Copy setup command ↗</button>
      <span role="status">{sentinelCopy}</span></div>
+    <div className={styles.sentinelReady}><div><span className={styles.overline}>PORTFOLIO GUARDIAN V1 / SOURCE ONLY</span>
+     <strong>GitHub portfolio audits — prepared, not scheduled</strong>
+     <small>Includes VETO Decision Command, VETOGRAM, SOFIA, Promptence and all GitHub repositories accessible to a scoped operator token. CI and PR metadata only. An actual runner, secret and scheduling are not configured; no live scan is claimed.</small></div>
+     <code>node scripts/cloud/portfolio-guardian.mjs --plan</code></div>
     <div className={styles.gate}><strong>Execution permission boundary</strong><p>AI agents will start with read-only diagnostics. Restart, deploy, DNS and database write operations require scoped roles, approval and an immutable audit trail.</p></div>
     <button type="button" className={styles.agentAction} onClick={onOpenTelemetry}>Open observability ↗</button>
    </section>
