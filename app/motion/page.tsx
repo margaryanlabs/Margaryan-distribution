@@ -878,7 +878,7 @@ export default function MotionStudioPage() {
       <span>Скопируй бриф → вставь в чат → авторские сцены в существующем GitHub. Автоматической отправки нет.</span>
     </button>
     <button type="button" className={styles.proofLaunch} onClick={()=>{
-      try{localStorage.setItem("motion-ai-cinematic-draft-v1",JSON.stringify({concept:brief,brandLabel:info.name,project}));
+      try{localStorage.setItem("motion-ai-cinematic-draft-v1",JSON.stringify({concept:brief,brandLabel:info.name,project:mode==="cinematic"?project:null}));
         window.location.assign("/motion/ai-cinematic");}
       catch{setNotice("Не удалось сохранить черновик для AI Cinematic. Сначала скачай Motion JSON.");}
     }}>
