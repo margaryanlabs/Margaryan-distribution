@@ -9,7 +9,8 @@ import {pathToFileURL} from 'node:url';
 const LIMIT=512*1024,MAX=240;
 const PROVIDERS=[
  {id:'portfolio',key:'CLOUD_GUARDIAN_STATE_FILE',maxAge:6*3600_000,limit:200},
- {id:'infrastructure',key:'CLOUD_SENTINEL_STATE_FILE',maxAge:5*60_000,limit:40}
+ {id:'infrastructure',key:'CLOUD_SENTINEL_STATE_FILE',maxAge:5*60_000,limit:40},
+ {id:'decision',key:'CLOUD_DECISION_STATE_FILE',maxAge:5*60_000,limit:8}
 ];
 const severityRank={critical:0,warning:1,info:2};
 const protectedFile=(file,{mayBeNew=false}={})=>{
@@ -43,6 +44,7 @@ function normalizeSignals(input,origin){
   const severity=item.severity==='high'?'warning':item.severity,id=origin+':'+item.id;
   const record={id,origin,severity,title:item.title.slice(0,140),
    recommendedAction:origin==='portfolio'?(item.title.includes('failed to start')?'Check GitHub Actions runner and permissions':'Investigate CI and verify the failing run'):
+    origin==='decision'?'Inspect Decision Command worker source evidence; no trading authority is granted':
     'Inspect the affected Coolify service and its deployment logs'};
   if(origin==='portfolio'&&typeof item.repo==='string'&&/^(margaryanlabs|margaryan-labs)\/[\w.-]{1,100}$/.test(item.repo))record.project=item.repo;
   if(origin==='portfolio'&&typeof item.url==='string'&&/^https:\/\/github\.com\/(?:margaryanlabs|margaryan-labs)\/[\w.-]+\/(?:actions(?:\/runs\/\d+)?|pull\/\d+|issues\/\d+)$/.test(item.url))record.url=item.url;
@@ -55,7 +57,8 @@ export function readAgentSource(file,id,maxAge,limit,now=Date.now()){
  try{
   protectedFile(file);
   const raw=JSON.parse(readFileSync(file,'utf8'));
-  if(raw?.version!==1||!Array.isArray(raw.signals)||raw.signals.length>limit)throw Error('Invalid state schema');
+  if(raw?.version!==1||!Array.isArray(raw.signals)||raw.signals.length>limit||
+     (id==='decision'&&(raw.schema!=='markarian-decision-specialist/v1'||raw.complete!==true)))throw Error('Invalid state schema');
   const checked=timestamp(raw.checkedAt,now),signals=normalizeSignals(raw.signals,id);
   return {id,state:now-checked<=maxAge?'recent':'stale',checkedAt:new Date(checked).toISOString(),signals,count:signals.length};
  }catch{return {id,state:'error',checkedAt:null,signals:[],count:null};}
@@ -70,8 +73,9 @@ export function composeSupervisor(env=process.env,now=Date.now()){
    sources:sources.map(({id,state,checkedAt,count})=>({id,state,checkedAt,count})),
    incidentCount:incidents.length,criticalCount:count,signals:incidents,
    decisionCommand:{repository:'margaryanlabs/decision-command',ciSource:sources[0].state,
-    pipelineFreshness:'not_checked',paperTrading:'not_checked',liveOrderPermissions:'not_checked'},
-   note:'This is completed-snapshot evidence, not live production uptime or pipeline verification.',
+    pipelineFreshness:'not_independently_verified',paperTrading:'not_independently_verified',
+    workerProbe:sources[2].state,liveOrderPermissions:'not_checked'},
+   note:'This is completed-snapshot evidence, not independent production uptime, feed integrity, profitable paper trading or live order verification.',
    readOnly:true,productionReady:false,canMigrateProduction:false,autonomousRemediation:false};
 }
 export function compareSupervisor(before,after,complete){
