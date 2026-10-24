@@ -37,3 +37,12 @@ test("ClickHouse endpoint requires owner auth and exposes GET only",()=>{
  assert.ok(connector.includes('endpoint.searchParams.set("readonly","1")'));
  assert.ok(connector.includes("redirect:\"error\""));
 });
+
+test("Portfolio Guardian is presented as source-ready without imaginary live scans",()=>{
+ const src=read("app/cloud/mission-control.tsx");
+ assert.ok(src.includes('name:"Portfolio Guardian"'));
+ assert.ok(src.includes('PORTFOLIO GUARDIAN V1 / SOURCE ONLY'));
+ assert.ok(src.includes('prepared, not scheduled'));
+ assert.ok(src.includes('node scripts/cloud/portfolio-guardian.mjs --plan'));
+ assert.doesNotMatch(src,/fetch\(["']\/api\/cloud\/portfolio/);
+});
