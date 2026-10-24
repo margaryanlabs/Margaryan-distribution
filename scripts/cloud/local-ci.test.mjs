@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import {CLOUD_TESTS,releaseSteps,runLocalGate,parseArgs} from './local-ci.mjs';
 
 test('Cloud suite includes first node, backup, auth, monitoring and deploy regressions',()=>{
- assert.equal(CLOUD_TESTS.length,22);
- for(const x of ['first-node.test.mjs','recovery.test.mjs','restore-lab.test.mjs','portfolio-guardian.test.mjs','agent-supervisor.test.mjs','test-agent-supervisor-status.mjs','decision-specialist.test.mjs','test-operator-auth.mjs','test-sentinel.mjs','deploy-stage.test.mjs'])
+ assert.equal(CLOUD_TESTS.length,23);
+ for(const x of ['first-node.test.mjs','recovery.test.mjs','restore-lab.test.mjs','portfolio-guardian.test.mjs', 'release-guardian.test.mjs','agent-supervisor.test.mjs','test-agent-supervisor-status.mjs','decision-specialist.test.mjs','test-operator-auth.mjs','test-sentinel.mjs','deploy-stage.test.mjs'])
   assert.ok(CLOUD_TESTS.includes(x));
  assert.equal(new Set(CLOUD_TESTS).size,CLOUD_TESTS.length);
 });
@@ -13,14 +13,14 @@ test('plan never executes anything and never claims release readiness',()=>{
  const r=runLocalGate('plan',{runner:()=>{called++;return {ok:true};}});
  assert.equal(called,0);
  assert.equal(r.gate,'PLAN_ONLY');
- assert.equal(r.checks.length,22);
+ assert.equal(r.checks.length,23);
  assert.ok(r.checks.every(c=>c.status==='NOT_RUN'));
  assert.equal(r.productionReady,false);
 });
 test('cloud mode can pass but never authorizes production migration',()=>{
  let called=0;
  const r=runLocalGate('cloud',{fileExists:()=>true,runner:()=>{called++;return {ok:true};},nodeVersion:'22.16.0'});
- assert.equal(called,22);
+ assert.equal(called,23);
  assert.equal(r.gate,'CLOUD_TESTS_VERIFIED');
  assert.equal(r.canMigrateProduction,false);
 });
@@ -42,7 +42,7 @@ test('a failed mandatory check blocks the rest including build',()=>{
 test('full mode only passes after actual Cloud tests, typecheck and build',()=>{
  const r=runLocalGate('full',{fileExists:()=>true,runner:()=>({ok:true}),nodeVersion:'22.0.0'});
  assert.equal(r.gate,'LOCAL_BUILD_VERIFIED');
- assert.equal(r.checks.length,25);
+ assert.equal(r.checks.length,26);
  assert.equal(r.checks.at(-2).id,'web/typecheck');
  assert.equal(r.checks.at(-1).id,'web/build');
  assert.equal(r.productionReady,false);

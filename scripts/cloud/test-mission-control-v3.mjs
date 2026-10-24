@@ -66,3 +66,15 @@ test("VETO Decision Specialist evidence is shown separately from live trading pe
  assert.ok(ui.includes('Feed integrity, profitability and live trading authority: NOT VERIFIED'));
  assert.doesNotMatch(ui,/fetch\(["']\/api\/cloud\/decision-specialist/);
 });
+
+test("Project Engine presents only reviewable registered blueprints, never an auto-deploy action",()=>{
+ const src=read("app/cloud/mission-control.tsx"),styles=read("app/cloud/mission-control.module.css");
+ assert.ok(src.includes("PROJECT ENGINE / RELEASE GUARDIAN V1"));
+ for(const repo of ["margaryanlabs/decision-command","margaryanlabs/Telegram-story-bot","margaryan-labs/das-speak-armenia","margaryan-labs/ai-revenue-navigator"])
+   assert.ok(src.includes(repo));
+ assert.ok(src.includes("REVIEW ONLY"));
+ assert.ok(src.includes("NOT VERIFIED"));
+ assert.ok(src.includes("release-guardian.mjs --blueprint"));
+ assert.ok(styles.includes(".releaseEngineGates"));
+ assert.doesNotMatch(src,/fetch\(["']\/api\/cloud\/release-create/);
+});

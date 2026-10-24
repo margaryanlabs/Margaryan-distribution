@@ -1,5 +1,5 @@
 import test from "node:test";import assert from "node:assert/strict";
-import {mkdtempSync,writeFileSync,rmSync} from "node:fs";
+import {mkdtempSync,writeFileSync,symlinkSync,rmSync} from "node:fs";
 import {join} from "node:path";import {tmpdir} from "node:os";
 import {createStagingRequest,validateCoolifyUrl,approvalDigest,stagingReceipt,stageApplication} from "./deploy-stage.mjs";
 const config={project_uuid:"aabbccdd00112233",server_uuid:"server00001111",environment_name:"staging",
@@ -90,4 +90,18 @@ test("Private GitHub App staging uses exact private endpoint and never creates a
    CLOUD_COOLIFY_URL:"https://ops.example.com",CLOUD_COOLIFY_WRITE_TOKEN_FILE:file,CLOUD_DEPLOY_ENABLE:"staging-only"},fake);
   assert.equal(calls,1);assert.equal(res.deployed,false);
  }finally{rmSync(root,{recursive:true,force:true});}
+});
+
+test("staging importer rejects symlinked write credentials before any network access",async()=>{
+ const dir=mkdtempSync(join(tmpdir(),"cloud-stage-symlink-"));
+ try{
+  const real=join(dir,"token");const alias=join(dir,"alias");
+  writeFileSync(real,"TEST_ONLY_COOLIFY_TOKEN_1234567890",{mode:0o600});
+  symlinkSync(real,alias);
+  let called=0;
+  const request=createStagingRequest(config);
+  await assert.rejects(stageApplication(request,{CLOUD_COOLIFY_URL:"https://ops.example.com",
+   CLOUD_COOLIFY_WRITE_TOKEN_FILE:alias,CLOUD_DEPLOY_ENABLE:"staging-only"},async()=>{called++;throw Error("Unreachable");}),/private regular file|symlink/);
+  assert.equal(called,0);
+ }finally{rmSync(dir,{force:true,recursive:true});}
 });

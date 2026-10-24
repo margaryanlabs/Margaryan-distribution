@@ -6,6 +6,7 @@ import type {ProviderView} from "@/lib/cloud/providers";
 import type {ClickHouseStatus} from "@/lib/cloud/clickhouse";
 import type {TelemetryOverview} from "@/lib/cloud/telemetry";
 import type {SentinelStatus} from "@/lib/cloud/sentinel-status";
+import {cloudCatalog} from "@/lib/cloud/catalog";
 import type {SupervisorStatus} from "@/lib/cloud/agent-supervisor-status";
 import styles from "./mission-control.module.css";
 
@@ -21,6 +22,19 @@ const sourceModes:{id:View;name:string;hint:string}[]=[
  {id:"agents",name:"Agent Watch",hint:"Detection and automation"}
 ];
 const fallback:Auxiliary={providers:null,clickhouse:null,telemetry:null,sentinel:null,supervisor:null,error:""};
+const releaseProfileIds:Record<string,string>={
+ "margaryanlabs/decision-command":"decision-command",
+ "margaryanlabs/Telegram-story-bot":"vetogram",
+ "margaryan-labs/das-speak-armenia":"sofia",
+ "margaryan-labs/ai-revenue-navigator":"promptence",
+ "margaryanlabs/Vetosport":"veto-sport",
+ "margaryan-labs/ingu-stone-sourcing":"ingu-shop",
+ "margaryanlabs/Shtapauto":"meqena",
+ "margaryanlabs/Margaryan-distribution":"margaryan-cloud",
+ "margaryan-labs/ai-os-foundation":"raios"
+};
+const releaseProfiles=cloudCatalog.filter(item=>item.repository!==null&&item.repositoryVerified&&Boolean(releaseProfileIds[item.repository]));
+const releaseCoreGates=["Source commit + CI","Staging smoke","Encrypted offsite backup","Isolated restore test","Rollback evidence"];
 const indicators=[
  {id:"supervisor",name:"Agent Supervisor",scope:"Portfolio + infrastructure findings · source freshness · safe triage"},
  {id:"decision",name:"Decision Command Observer",scope:"VETO worker liveness, market-readyz, governed PAPER cycle evidence"},
@@ -50,6 +64,8 @@ function labelState(state:ProviderView["state"]){return state==="connected"?"Con
 export default function MissionControl({data,loading,startView="fleet",onRefresh,onOpenSetup,onOpenOwned,onOpenDeploy,onOpenRecovery,onOpenStudio,onOpenTelemetry,onOpenDomains}:Props){
  const [view,setView]=useState<View>(startView);
  const [projectFilter,setProjectFilter]=useState<ProjectFilter>("all");
+ const [releaseRepo,setReleaseRepo]=useState("margaryanlabs/decision-command");
+ const [releaseCopied,setReleaseCopied]=useState("");
  const [search,setSearch]=useState("");
  const [selected,setSelected]=useState("");
  const [local,setLocal]=useState<LocalProject[]>([]);
@@ -101,6 +117,8 @@ export default function MissionControl({data,loading,startView="fleet",onRefresh
   (p.name+" "+(p.repository||"")+" "+p.type).toLowerCase().includes(search.toLowerCase().trim())
  ),[projects,projectFilter,search]);
  const active=projects.find(p=>p.key===selected);
+ const releaseTarget=releaseProfiles.find(p=>p.repository===releaseRepo);
+ const releaseId=releaseProfileIds[releaseRepo];
  const serversReady=data.sources?.servers===true;
  const appsReady=data.sources?.applications===true;
  const deploysReady=data.sources?.deployments===true;
@@ -205,6 +223,27 @@ export default function MissionControl({data,loading,startView="fleet",onRefresh
   {view==="projects"&&<section className={styles.surface}>
    <div className={styles.sectionHeader}><div><span className={styles.overline}>APPLICATION OPERATIONS</span><h2>Our projects <small className={styles.count}>{projects.length}</small></h2></div>
     <button type="button" className={styles.smallAction} onClick={()=>setAdding(x=>!x)}>{adding?"Cancel":"+ Add project"}</button></div>
+   <div className={styles.releaseEngine}>
+     <div className={styles.releaseEngineHead}><div><span className={styles.overline}>PROJECT ENGINE / RELEASE GUARDIAN V1</span><h3>Release intelligence</h3>
+       <p>Select a verified GitHub project to inspect its source-only staging blueprint and mandatory release evidence.</p></div>
+       <span className={styles.notReady}>REVIEW ONLY</span></div>
+     <div className={styles.releaseEngineControl}><label htmlFor="cloud-release-project">Product blueprint</label>
+       <select id="cloud-release-project" value={releaseRepo} onChange={e=>{setReleaseRepo(e.target.value);setReleaseCopied("");}}>
+         {releaseProfiles.map(p=><option key={p.repository||p.id} value={p.repository||""}>{p.name}</option>)}
+       </select></div>
+     {releaseTarget&&<div className={styles.releaseEngineBody}>
+       <div className={styles.releaseEngineIdentity}><div><strong>{releaseTarget.name}</strong><small>{releaseTarget.repository}</small></div>
+         <span>{releaseTarget.level.toUpperCase()} RISK</span></div>
+       <div className={styles.releaseEngineGates}>
+         {releaseCoreGates.map(k=><span key={k}><i aria-hidden="true"/> {k} <small>NOT VERIFIED</small></span>)}
+         {releaseTarget.review.map(k=><span key={k}><i aria-hidden="true"/> {k} <small>REQUIRES AUDIT</small></span>)}
+       </div>
+       <div className={styles.releaseEngineBottom}><code>node scripts/cloud/release-guardian.mjs --blueprint {releaseId}</code>
+         <button type="button" onClick={()=>{void navigator.clipboard.writeText("node scripts/cloud/release-guardian.mjs --blueprint "+releaseId).then(()=>setReleaseCopied("Command copied")).catch(()=>setReleaseCopied("Clipboard unavailable"));}}>Copy blueprint command ↗</button></div>
+       <span role="status" className={styles.releaseEngineStatus}>{releaseCopied}</span>
+     </div>}
+     <p className={styles.disclaimer}>No source commit, CI result, restore, DNS, TLS, health or rollback check is verified in this offline blueprint. Staging imports still require a separate operator-reviewed Coolify action.</p>
+   </div>
    {adding&&<form className={styles.addForm} onSubmit={e=>{e.preventDefault();addProject();}}>
     <span>Local migration entry only — no repository, database or server is changed.</span>
     <input aria-label="Project name" value={name} onChange={e=>setName(e.target.value)} placeholder="Project name" required maxLength={80}/>
