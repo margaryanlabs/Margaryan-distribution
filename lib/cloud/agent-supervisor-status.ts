@@ -41,7 +41,7 @@ export function readAgentSupervisorStatus(env:Record<string,string|undefined>,no
     const item=s as Record<string,unknown>;
     if(!['portfolio','infrastructure','decision'].includes(String(item.id))||item.state!=='recent')throw Error('Source schema');
     const at=iso(item.checkedAt,now);
-    return {id:item.id as 'portfolio'|'infrastructure',state:item.state as 'recent',checkedAt:new Date(at).toISOString()};
+    return {id:item.id as 'portfolio'|'infrastructure'|'decision',state:item.state as 'recent',checkedAt:new Date(at).toISOString()};
   });
   if(channels[0].id!=='portfolio'||channels[1].id!=='infrastructure'||channels[2].id!=='decision')throw Error('Source order');
   const fresh=time>=now-10*60000&&iso(channels[0].checkedAt,now)>=now-6*3600000&&
