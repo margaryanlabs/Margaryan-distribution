@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,mkdirSync,writeFileSync,chmodSync,rmSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,writeFileSync,chmodSync,symlinkSync,rmSync} from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {spawnSync} from 'node:child_process';
@@ -42,6 +42,17 @@ test('local repository and world-readable secret files refused',()=>{
   chmodSync(env.RESTIC_PASSWORD_FILE,0o644);
   assert.throws(()=>validateRecoveryEnvironment(env,{postgres:true}),/private regular file/);
  }finally{rmSync(path,{recursive:true,force:true});}
+});
+test('symlinked backup secret files fail closed even when their targets are private',()=>{
+ const {env,path}=prep();
+ try {
+  const resticAlias=join(path,'restic-alias');
+  const pgAlias=join(path,'pg-alias');
+  symlinkSync(env.RESTIC_PASSWORD_FILE,resticAlias);
+  symlinkSync(env.PGPASSFILE,pgAlias);
+  assert.throws(()=>validateRecoveryEnvironment({...env,RESTIC_PASSWORD_FILE:resticAlias}),/private regular file/);
+  assert.throws(()=>validateRecoveryEnvironment({...env,PGPASSFILE:pgAlias},{postgres:true}),/private regular file/);
+ } finally {rmSync(path,{recursive:true,force:true});}
 });
 test('rejects missing DB config and inline PGPASSWORD',()=>{
  const {env,path}=prep();
