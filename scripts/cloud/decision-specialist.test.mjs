@@ -16,3 +16,9 @@ test('untrusted response structure is unknown instead of healthy',async()=>{cons
 test('CLI plan does not access network; bad usage refused',async()=>{let n=0;const fake=()=>{n++;throw Error('unexpected');};let o='',e='';const out={write:s=>o+=s},err={write:s=>e+=s};assert.equal(await main(['--plan'],{},fake,out,err),0);assert.equal(n,0);assert.equal(await main(['--trade'],{},fake,out,err),2);});
 test('diff stores bounded private report after complete scan, never after partial scan',()=>fixture(async({path})=>{const out={write:()=>{}},err={write:()=>{}};assert.equal(await main(['--diff',path],{CLOUD_DECISION_HEALTH_ORIGIN:'http://127.0.0.1:8787'},fetchMock(good).fetcher,out,err),0);const record=JSON.parse(readFileSync(path,'utf8'));assert.equal(record.schema,'markarian-decision-specialist/v1');const before=readFileSync(path,'utf8');assert.equal(await main(['--diff',path],{CLOUD_DECISION_HEALTH_ORIGIN:'http://127.0.0.1:8787'},fetchMock(good,['readyz']).fetcher,out,err),1);assert.equal(readFileSync(path,'utf8'),before);}));
 test('diff refuses dangling symlink state files',()=>fixture(async({path})=>{symlinkSync(join(path+'-missing'),path);const out={write:()=>{}},err={write:()=>{}};assert.equal(await main(['--diff',path],{CLOUD_DECISION_HEALTH_ORIGIN:'http://127.0.0.1:8787'},fetchMock().fetcher,out,err),1);}));
+test('corrupt private historical receipt does not cause false incident resolution',()=>fixture(async({path})=>{
+ writeFileSync(path,JSON.stringify({version:1,schema:'markarian-decision-specialist/v1',complete:false,signals:[{id:'veto:market',severity:'critical',title:'Market not ready'}]}),{mode:0o600});
+ const before=readFileSync(path,'utf8');let errors='';
+ const rc=await main(['--diff',path],{CLOUD_DECISION_HEALTH_ORIGIN:'http://127.0.0.1:8787'},fetchMock().fetcher,{write:()=>{}},{write:s=>errors+=s});
+ assert.equal(rc,1);assert.equal(readFileSync(path,'utf8'),before);assert.match(errors,/NOT READY/);
+}));
