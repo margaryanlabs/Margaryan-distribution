@@ -39,3 +39,7 @@ Unit tests use mocks for pg_dump, pg_restore and restic. They validate program b
 ## Transport restriction
 
 The backup CLI rejects explicitly plaintext `s3:http://` destinations. Confirm the actual transport and TLS for every remote backend, especially custom S3 endpoints or rclone remotes. Never presume encrypted transport merely because Restic encrypts its stored content.
+
+## Isolated Docker restore lab (added after this backup CLI)
+
+A separate operator-only Restore Lab is available at `scripts/cloud/restore-lab.mjs` with `deploy/cloud/restore/compose.yaml`. It takes an exact snapshot and archive filename, requires explicit digest approval, and streams `restic dump` into a dedicated disposable local Docker PostgreSQL container only. It verifies an empty target before writing and at least one restored table afterward. **Not deployed or verified on actual backup data.** The `ISOLATED_RESTORE_OBSERVED` result does not establish app sign-in, data integrity, RLS, object storage recovery, PITR or permission for production cutover. See `docs/cloud/RESTORE_LAB.md` and `deploy/cloud/restore/README.md`.
