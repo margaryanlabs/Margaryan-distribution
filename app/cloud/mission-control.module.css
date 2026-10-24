@@ -4,3 +4,23 @@
 .sentinelReady code{display:block;padding:12px;border:1px solid #3d5677;border-radius:7px;background:#0c1a29;color:#bfdcfb;font-size:10px;line-height:1.6;overflow-wrap:anywhere}
 .sentinelReady button{justify-self:start;background:#b0d4fc;border:1px solid #c5e1ff;border-radius:7px;color:#112238;padding:10px 12px;font-size:10px;font-weight:750;cursor:pointer}
 .sentinelReady>span{font-size:10px;color:#95b6d9}
+
+
+/* Unified Agent Supervisor; real status from protected state endpoint only */
+.supervisorMetrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:18px 0}
+.supervisorMetrics>div{padding:14px 12px;border:1px solid #30465c;border-radius:10px;background:#101f31;display:grid;gap:8px;min-width:0}
+.supervisorMetrics span{font-size:10px;color:#9db4ce}
+.supervisorMetrics strong{font-size:17px;line-height:1.3;color:#e6f2ff;overflow-wrap:anywhere}
+.supervisorSources{display:grid;gap:9px;margin:14px 0}
+.supervisorSources>div{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid #263d53;padding:8px 0;font-size:11px;color:#b1c6db}
+.supervisorSources b{font-size:9px;letter-spacing:.09em;color:#e0ebf7}
+.supervisorFeed{display:grid;gap:8px;margin:12px 0}
+.supervisorFeed>div{display:flex;align-items:flex-start;gap:9px;border:1px solid #344a64;border-radius:9px;background:#111f30;padding:11px}
+.supervisorFeed>div>span{flex:none;margin-top:5px}
+.supervisorFeed>div>div{display:grid;gap:5px}
+.supervisorFeed strong{font-size:11px;color:#e4eef9}
+.supervisorFeed small{font-size:10px;color:#9ab0c5}
+.supervisorDecision{display:grid;gap:5px;padding:13px 14px;border-left:2px solid #86b7f0;background:#14263b;border-radius:3px 9px 9px 3px;margin:14px 0}
+.supervisorDecision strong{font-size:12px;color:#dfecfb}
+.supervisorDecision small{font-size:10px;color:#a4bad1;line-height:1.7}
+@media(max-width:520px){.supervisorMetrics{grid-template-columns:repeat(2,minmax(0,1fr))}.supervisorMetrics>div:last-child{grid-column:1/-1}}
