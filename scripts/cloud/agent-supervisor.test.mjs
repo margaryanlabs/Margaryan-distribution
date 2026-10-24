@@ -90,3 +90,24 @@ test('plan is offline, read-only and unknown commands rejected',()=>{
  assert.equal(main(['--trade'],{},out,err,NOW),2);
  assert.match(errors,/Usage/);
 });
+
+test('dangling supervisor output symlink is refused, not silently replaced',()=>fixture(({guardian,sentinel,dir,write,env})=>{
+ write(guardian,[]);write(sentinel,[]);
+ const dangling=join(dir,'dangling');symlinkSync(join(dir,'missing.json'),dangling);
+ let stderr='';
+ const rc=main(['--diff',dangling],env,{write:()=>{}},{write:s=>stderr+=s},NOW);
+ assert.equal(rc,1);assert.match(stderr,/NOT READY/);
+}));
+test('operator-installed timer templates remain least-privilege and never store token values',()=>{
+ for(const name of ['portfolio-guardian','infrastructure-sentinel','agent-supervisor']){
+  const root=new URL('../../deploy/cloud/agents/',import.meta.url);
+  const service=readFileSync(new URL('markarian-'+name+'.service',root),'utf8');
+  const timer=readFileSync(new URL('markarian-'+name+'.timer',root),'utf8');
+  assert.match(service,/Type=oneshot/);assert.match(service,/User=markarian/);
+  assert.match(service,/NoNewPrivileges=true/);assert.match(service,/StandardOutput=null/);
+  assert.match(service,/ReadWritePaths=\/var\/lib\/margaryan-cloud\/agents/);
+  assert.doesNotMatch(service,/curl |sudo |PGPASSWORD=|github_pat_/);
+  assert.match(timer,/OnCalendar=/);assert.match(timer,/Persistent=true/);
+  assert.ok(timer.includes('Unit=markarian-'+name+'.service'));
+ }
+});
