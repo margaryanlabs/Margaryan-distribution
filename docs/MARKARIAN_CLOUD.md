@@ -168,3 +168,7 @@ A server-run, source-prepared one-shot infrastructure watcher is included at `sc
 ## Sentinel status in Mission Control
 
 The Agent Watch page now displays Sentinel V1's actual last complete observation after a private read-only status file is mounted with `CLOUD_SENTINEL_STATE_FILE`; the server route `GET /api/cloud/sentinel` rechecks operator authentication and returns a redacted, bounded status. It distinguishes setup, recent observation (within five minutes), stale data, and errors. A fresh poll is not an autonomous background agent, and no deployment or remediation writes are exposed. See `docs/cloud/SENTINEL.md`.
+
+## First-owned-node staging evidence gate (2026-10-24)
+
+`node scripts/cloud/first-node.mjs --plan` prints the steps before VPS purchase, without network calls. After an owned VPS has been secured and an isolated identified pilot deployed, `node scripts/cloud/first-node.mjs --verify --json` checks the explicitly selected Coolify server UUID using a private read-only token, plus HTTPS and the public marker of the disposable pilot. This gate is **staging-only** and never deploys, mutates resources, or authorizes production migrations. The command and 9 Node tests have been run locally; full CI/Next.js integration remains unverified. See `docs/cloud/FIRST_NODE.md`.
