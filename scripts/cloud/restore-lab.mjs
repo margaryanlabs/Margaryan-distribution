@@ -29,6 +29,7 @@ const safeEnv=(env)=>{
   // Force local Docker only; user Docker contexts and remote engines are not trusted.
   delete result.DOCKER_HOST;
   delete result.DOCKER_CONTEXT;
+  for(const key of ['DOCKER_CONFIG','DOCKER_CERT_PATH','DOCKER_TLS_VERIFY','DOCKER_API_VERSION','DOCKER_CUSTOM_HEADERS','COMPOSE_FILE','COMPOSE_PROJECT_NAME','COMPOSE_PROFILES']) delete result[key];
   return result;
 };
 
@@ -43,27 +44,50 @@ export function approvalDigest(snapshot,filename){
 }
 export function validateContainerMetadata(id,metadata){
   if(!CONTAINER.test(id||''))throw Error('No unique local lab container ID');
-  if(!metadata||metadata.State?.Running!==true)throw Error('Restore lab container is not running');
+  if(!metadata||metadata.Id!==id||metadata.State?.Running!==true||metadata.State?.Paused===true||
+     metadata.State?.Restarting===true)throw Error('Restore lab container is not the verified running container');
+  if(metadata.State?.Health?.Status!=='healthy')throw Error('Restore lab container health must be healthy');
   const labels=metadata.Config?.Labels;
   if(labels?.['com.docker.compose.project']!==PROJECT||labels?.['com.docker.compose.service']!==SERVICE)
     throw Error('Refusing container not owned by dedicated restore lab');
-  if(metadata.HostConfig?.NetworkMode==='host')throw Error('Host network prohibited for restore lab');
-  if((metadata.HostConfig?.PortBindings && Object.values(metadata.HostConfig.PortBindings).some(x=>Array.isArray(x)&&x.length)) ||
-     (Array.isArray(metadata.NetworkSettings?.Ports)&&metadata.NetworkSettings.Ports.length))
-    throw Error('Published ports prohibited for restore lab');
-  if(metadata.HostConfig?.Privileged===true)throw Error('Privileged container prohibited');
+  if(!['postgres:16-alpine','docker.io/library/postgres:16-alpine'].includes(metadata.Config?.Image))
+    throw Error('Restore lab must use the reviewed PostgreSQL image');
+  const host=metadata.HostConfig;
+  if(!host||host.NetworkMode!==PROJECT+'_restore_private')
+    throw Error('Restore lab must use its exact private Docker network');
+  if(host.Privileged!==false||!Array.isArray(host.SecurityOpt)||
+     !host.SecurityOpt.includes('no-new-privileges:true'))
+    throw Error('Restore lab must prohibit privileged escalation');
+  for(const key of ['CapAdd','Devices','DeviceRequests','VolumesFrom']){
+    if(host[key]!=null&&(!Array.isArray(host[key])||host[key].length!==0))
+      throw Error('Unexpected restore lab host capability or volume attachment');
+  }
+  for(const key of ['PidMode','IpcMode','UTSMode','CgroupnsMode']){
+    if(host[key]&&!['private'].includes(host[key]))
+      throw Error('Host or shared namespace prohibited for restore lab');
+  }
+  if(host.RestartPolicy?.Name&&host.RestartPolicy.Name!=='no')
+    throw Error('Restore lab must remain disposable');
+  const ports=Object.values(host.PortBindings||{});
+  if(ports.some(v=>v!==null&&(!Array.isArray(v)||v.length!==0)))
+    throw Error('Published Docker port detected');
   const net=Object.keys(metadata.NetworkSettings?.Networks||{});
   if(net.length!==1||net[0]!==PROJECT+'_restore_private')
     throw Error('Restore lab must use only the dedicated private Docker network');
-  const ports=Object.values(metadata.NetworkSettings?.Ports||{});
-  if(ports.some(v=>Array.isArray(v)&&v.length>0))throw Error('Published Docker port detected');
-  if(!Object.hasOwn(metadata.HostConfig?.Tmpfs||{},'/var/lib/postgresql/data'))
+  if(Object.values(metadata.NetworkSettings?.Ports||{}).some(v=>v!==null&&(!Array.isArray(v)||v.length!==0)))
+    throw Error('Published Docker port detected');
+  if(!Object.hasOwn(host.Tmpfs||{},'/var/lib/postgresql/data'))
     throw Error('Restore lab database must use temporary storage');
-  if((metadata.Mounts||[]).some(m=>(m.Destination!=='/run/secrets/lab_password'||m.RW!==false)))
+  // Docker Compose secrets appear as precisely one read-only bind mount.
+  if(!Array.isArray(metadata.Mounts)||metadata.Mounts.length!==1||
+     metadata.Mounts[0]?.Destination!=='/run/secrets/lab_password'||
+     metadata.Mounts[0]?.Type!=='bind'||metadata.Mounts[0]?.RW!==false)
     throw Error('Unreviewed host or persistent Docker mount detected');
+  if(host.Binds!=null&&(!Array.isArray(host.Binds)||host.Binds.some(v=>
+     typeof v!=='string'||!v.endsWith(':/run/secrets/lab_password:ro'))))
+    throw Error('Unexpected host bind mounting in restore lab');
   return true;
 }
-
 // Allow only fixed command+arguments, no shell or user-supplied target host/database.
 async function output(binary,args,env,spawnFn=spawn){
   const fixedArgs=binary==='docker'?['--host',DOCKER_HOST,...args]:args;
