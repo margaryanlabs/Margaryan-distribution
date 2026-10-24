@@ -95,6 +95,8 @@ jobs:
         run: node --experimental-strip-types --test scripts/cloud/test-domain-plan.mjs
       - name: Portfolio Guardian GitHub read-only discovery and incident tests
         run: node --test scripts/cloud/portfolio-guardian.test.mjs
+      - name: Review Project Engine release gates for all nine products (no deployment)
+        run: node --test scripts/cloud/release-guardian.test.mjs
       - name: Decision Command read-only worker evidence regression tests
         run: node --test scripts/cloud/decision-specialist.test.mjs
       - name: Unified Agent Supervisor offline federation tests
