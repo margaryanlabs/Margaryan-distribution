@@ -83,6 +83,8 @@ jobs:
         run: node --test scripts/cloud/deploy-stage.test.mjs
       - name: Verify first owned staging node and identified disposable pilot (offline)
         run: node --test scripts/cloud/first-node.test.mjs
+      - name: Validate owner-run local release gate (offline)
+        run: node --test scripts/cloud/local-ci.test.mjs
       - name: Test infrastructure health and ClickHouse connector
         run: node --experimental-strip-types --test scripts/cloud/test-health-signals.mjs
       - name: Mission Control V3 navigation and auth contracts
