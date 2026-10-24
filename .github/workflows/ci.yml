@@ -93,6 +93,8 @@ jobs:
         run: node --test scripts/cloud/test-mission-control-v3.mjs
       - name: Domain connection plan validation
         run: node --experimental-strip-types --test scripts/cloud/test-domain-plan.mjs
+      - name: Portfolio Guardian GitHub read-only discovery and incident tests
+        run: node --test scripts/cloud/portfolio-guardian.test.mjs
       - name: Read-only Sentinel agent regression tests
         run: node --experimental-strip-types --test scripts/cloud/test-sentinel.mjs
       - name: Sentinel status API freshness and auth tests
