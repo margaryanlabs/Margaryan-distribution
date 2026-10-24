@@ -275,7 +275,7 @@ export default function MissionControl({data,loading,startView="fleet",onRefresh
       <span className={item.severity==="critical"?styles.bad:item.severity==="warning"?styles.warnDot:styles.off}/>
       <div><strong>{safeText(item.title)}</strong><small>{item.project||item.origin} · {item.severity.toUpperCase()}</small></div>
     </div>)}</div>:<p className={styles.disclaimer}>{aux.supervisor?.notice||"A private server report is required. No scheduled audit has been verified."}</p>}
-    <div className={styles.supervisorDecision}><strong>VETO Decision Command</strong><small>GitHub CI: {aux.supervisor?.decisionCommand?aux.supervisor.decisionCommand.pipelineFreshness:"not checked"} · trading pipelines, paper trading and exchange permissions: NOT CHECKED</small></div>
+    <div className={styles.supervisorDecision}><strong>VETO Decision Command</strong><small>GitHub evidence: {aux.supervisor?.sources.find(s=>s.id==="portfolio")?.state.toUpperCase()||"NOT CONNECTED"} · pipeline freshness, paper trading and exchange permissions: NOT CHECKED</small></div>
     <p className={styles.disclaimer}>Source setup only until an owner-operated scheduler produces fresh snapshots. No trading, production edits or automatic recovery permissions.</p>
    </section>
    <section className={styles.surface}>
