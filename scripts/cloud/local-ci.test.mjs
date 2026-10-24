@@ -20,7 +20,7 @@ test('plan never executes anything and never claims release readiness',()=>{
 test('cloud mode can pass but never authorizes production migration',()=>{
  let called=0;
  const r=runLocalGate('cloud',{fileExists:()=>true,runner:()=>{called++;return {ok:true};},nodeVersion:'22.16.0'});
- assert.equal(called,17);
+ assert.equal(called,18);
  assert.equal(r.gate,'CLOUD_TESTS_VERIFIED');
  assert.equal(r.canMigrateProduction,false);
 });
