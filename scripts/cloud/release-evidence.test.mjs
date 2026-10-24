@@ -21,7 +21,6 @@ function fake({ci='success',sha=SHA,markerValue=marker,health={status:'ok'},comm
   if(path.includes('/actions/workflows/'))return Response.json({workflow_runs:ci==='missing'?[]:[{
    id:501,head_sha:sha,path:'.github/workflows/ci.yml@main',created_at:'2026-10-24T12:00:00Z',status:'completed',conclusion:ci,run_attempt:1
   }]});
-  if(path==='/\.well-known/markarian-release.json')throw Error('unreachable'); // exact path checked below
   if(path==='/.well-known/markarian-release.json')return Response.json(markerValue);
   if(path==='/healthz'||path==='/api/health')return Response.json(health);
   throw Error('Unexpected URL '+String(url));
