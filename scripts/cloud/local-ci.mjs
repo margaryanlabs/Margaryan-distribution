@@ -90,8 +90,8 @@ export function main(args=process.argv.slice(2),deps={}){
  const report=runLocalGate(parsed.mode,deps);
  if(parsed.json) process.stdout.write(JSON.stringify(report,null,2)+'\n');
  else{
-   for(const item of report.checks)process.stdout.write(`[\${item.status}] \${item.id}\n`);
-   process.stdout.write(`Gate: \${report.gate}. Production migration is NOT authorized.\n`);
+   for(const item of report.checks)process.stdout.write(`[${item.status}] ${item.id}\n`);
+   process.stdout.write(`Gate: ${report.gate}. Production migration is NOT authorized.\n`);
  }
  return ['CLOUD_TESTS_VERIFIED','LOCAL_BUILD_VERIFIED','PLAN_ONLY'].includes(report.gate)?0:1;
 }
