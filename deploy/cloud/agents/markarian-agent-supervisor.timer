@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodically run Private Portfolio and Sentinel evidence federation
+
+[Timer]
+OnCalendar=*-*-* *:01/2:00
+AccuracySec=10s
+Persistent=true
+Unit=markarian-agent-supervisor.service
+
+[Install]
+WantedBy=timers.target
