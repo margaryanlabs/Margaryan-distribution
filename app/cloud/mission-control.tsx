@@ -241,6 +241,11 @@ export default function MissionControl({data,loading,startView="fleet",onRefresh
        <div className={styles.releaseEngineBottom}><code>node scripts/cloud/release-guardian.mjs --blueprint {releaseId}</code>
          <button type="button" onClick={()=>{void navigator.clipboard.writeText("node scripts/cloud/release-guardian.mjs --blueprint "+releaseId).then(()=>setReleaseCopied("Command copied")).catch(()=>setReleaseCopied("Clipboard unavailable"));}}>Copy blueprint command ↗</button></div>
        <span role="status" className={styles.releaseEngineStatus}>{releaseCopied}</span>
+       <div className={styles.releaseEvidenceHint}><strong>Release Evidence V1</strong>
+         <small>Automatic read-only source-SHA, selected workflow and owner-configured staging checks. No running monitor, deployment or rollback is implied.</small>
+         <code>node scripts/cloud/release-evidence.mjs --verify /absolute/private/release.json</code>
+         <button type="button" onClick={()=>{void navigator.clipboard.writeText("node scripts/cloud/release-evidence.mjs --verify /absolute/private/release.json").then(()=>setReleaseCopied("Evidence command copied")).catch(()=>setReleaseCopied("Clipboard unavailable"));}}>Copy verification command ↗</button>
+       </div>
      </div>}
      <p className={styles.disclaimer}>No source commit, CI result, restore, DNS, TLS, health or rollback check is verified in this offline blueprint. Staging imports still require a separate operator-reviewed Coolify action.</p>
    </div>

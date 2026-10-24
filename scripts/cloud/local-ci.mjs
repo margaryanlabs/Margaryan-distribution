@@ -17,13 +17,13 @@ export const CLOUD_TESTS=Object.freeze([
  'test-mission-control-v3.mjs', 'test-domain-plan.mjs', 'test-sentinel.mjs',
  'test-sentinel-status.mjs', 'first-node.test.mjs', 'portfolio-guardian.test.mjs',
  'agent-supervisor.test.mjs', 'test-agent-supervisor-status.mjs',
- 'decision-specialist.test.mjs', 'release-guardian.test.mjs'
+ 'decision-specialist.test.mjs', 'release-guardian.test.mjs', 'release-evidence.test.mjs', 'test-release-marker.mjs'
 ]);
 const SLOW_TESTS=new Set([
  'test-contract.mjs', 'test-providers.mjs','test-operator-auth.mjs',
  'test-owned.mjs','test-telemetry.mjs','test-deploy-plan.mjs',
  'test-capacity.mjs','test-health-signals.mjs','test-domain-plan.mjs',
- 'test-sentinel.mjs','test-sentinel-status.mjs'
+ 'test-sentinel.mjs','test-sentinel-status.mjs','test-release-marker.mjs'
 ]);
 const state=(id,status)=>({id,status});
 
