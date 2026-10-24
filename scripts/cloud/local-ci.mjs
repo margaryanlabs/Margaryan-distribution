@@ -12,7 +12,7 @@ const ROOT=join(dirname(fileURLToPath(import.meta.url)),'../..');
 export const CLOUD_TESTS=Object.freeze([
  'test-contract.mjs', 'prepare-supabase.test.mjs', 'test-providers.mjs',
  'test-operator-auth.mjs', 'test-ops.mjs', 'test-owned.mjs',
- 'test-telemetry.mjs', 'recovery.test.mjs', 'test-deploy-plan.mjs',
+ 'test-telemetry.mjs', 'recovery.test.mjs', 'restore-lab.test.mjs', 'test-deploy-plan.mjs',
  'test-capacity.mjs', 'deploy-stage.test.mjs', 'test-health-signals.mjs',
  'test-mission-control-v3.mjs', 'test-domain-plan.mjs', 'test-sentinel.mjs',
  'test-sentinel-status.mjs', 'first-node.test.mjs'
