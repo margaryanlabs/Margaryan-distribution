@@ -4,7 +4,7 @@
  * Does NOT trigger deployment or change existing resources.
  * Production, environment credentials and browser invocations are not supported.
  */
-import {readFileSync,statSync} from "node:fs";
+import {readFileSync,lstatSync} from "node:fs";
 import {createHash} from "node:crypto";
 import {isAbsolute} from "node:path";
 import {pathToFileURL} from "node:url";
@@ -63,8 +63,10 @@ export function stagingReceipt(body){
 function readToken(env){
  const file=env.CLOUD_COOLIFY_WRITE_TOKEN_FILE;
  if(!file||!isAbsolute(file))fail("Use an absolute CLOUD_COOLIFY_WRITE_TOKEN_FILE path on the operator host");
- const s=statSync(file);
- if(!s.isFile()||(s.mode&0o077)!==0)fail("Write token must be a private regular file (chmod 600)");
+ const s=lstatSync(file);
+ if(!s.isFile()||(s.mode&0o077)!==0||
+   (typeof process.getuid==="function"&&s.uid!==process.getuid()))
+  fail("Write token must be operator-owned private regular file (chmod 600), not a symlink");
  const token=readFileSync(file,"utf8").trim();
  if(!/^[a-zA-Z0-9_.|:-]{16,512}$/.test(token))fail("Invalid Coolify write-token file");
  return token;
