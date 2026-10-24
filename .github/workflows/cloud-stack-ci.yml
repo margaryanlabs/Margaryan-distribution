@@ -1,0 +1,72 @@
+name: Margaryan Cloud Stack Verification
+
+# Stacked Cloud pull requests target feature branches, not main. This workflow
+# makes those reviews observable without deploying anything or requiring tokens.
+on:
+  push:
+    branches:
+      - feat/cloud-stack-validation-20261024
+  pull_request:
+    branches:
+      - 'feat/cloud-*'
+      - 'feat/markarian-cloud-*'
+    paths:
+      - 'scripts/cloud/**'
+      - 'lib/cloud/**'
+      - 'app/cloud/**'
+      - 'app/api/cloud/**'
+      - 'app/.well-known/**'
+      - 'deploy/cloud/**'
+      - 'docs/cloud/**'
+      - '.github/workflows/cloud-stack-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloud-stack-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cloud-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify release evidence and project safety (offline, no secrets)
+        run: node --test scripts/cloud/release-guardian.test.mjs scripts/cloud/release-evidence.test.mjs scripts/cloud/deploy-stage.test.mjs
+      - name: Verify staging marker is opt-in and private secrets stay private
+        run: node --experimental-strip-types --test scripts/cloud/test-release-marker.mjs
+      - name: Verify agent supervision, rollback lab and first-node guards
+        run: node --test scripts/cloud/portfolio-guardian.test.mjs scripts/cloud/agent-supervisor.test.mjs scripts/cloud/decision-specialist.test.mjs scripts/cloud/recovery.test.mjs scripts/cloud/restore-lab.test.mjs scripts/cloud/first-node.test.mjs
+      - name: Verify local release gate registration and Mission Control contracts
+        run: node --test scripts/cloud/local-ci.test.mjs scripts/cloud/test-mission-control-v3.mjs
+
+  # Only one branch-specific push attempts the full build. No automatic releases
+  # or paid infrastructure; can be removed after an independently observed pass.
+  web-build:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install exactly locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Full TypeScript check
+        run: npm run typecheck
+      - name: Production build with existing Motion prebuild tests
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+          EXECUTION_ENABLED: 'false'
+        run: npm run build
