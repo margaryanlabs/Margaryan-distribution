@@ -180,3 +180,8 @@ The owner can now run `node scripts/cloud/local-ci.mjs --plan`, `--cloud`, or `-
 ## Dedicated PostgreSQL Restore Lab (staging; source only)
 
 `scripts/cloud/restore-lab.mjs` and `deploy/cloud/restore/compose.yaml` provide an explicitly approved, local-Docker-only Restic archive restore into an empty, isolated PostgreSQL lab. No production DB hostname can be selected. The container's Compose labels, no-ports and no-host-network policy must pass before restoration; errors fail closed. Nine offline mock regression tests run locally and in CI when available. **There has been no actual VPS restore** and the proof does not certify application-level recovery or production migration. Follow `docs/cloud/RESTORE_LAB.md`.
+
+
+## Portfolio Guardian V1 (GitHub read-only; NOT running 24/7)
+
+Cloud now includes scripts/cloud/portfolio-guardian.mjs, which discovers authorized repositories in both margaryanlabs and margaryan-labs, including critical VETO Decision Command, VETOGRAM, SOFIA, Promptence and other reachable projects. It reads latest Actions outcomes and sampled open PRs (at most ten per repo). A fail-closed --diff mode persists minimal incident history in an owner-only private file, without false recoveries on partial API failure. Source-only until an operator provides a private fine-grained read token and host scheduler. The output explicitly does not establish production uptime, infrastructure health, or deployment readiness. No autonomous writes, CI bypass, alerts or AI repairs exist. See docs/cloud/PORTFOLIO_GUARDIAN.md.
