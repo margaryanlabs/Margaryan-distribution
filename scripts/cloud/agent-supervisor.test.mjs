@@ -8,10 +8,10 @@ const NOW=Date.parse('2026-10-24T18:00:00.000Z');
 function fixture(run){
  const root=mkdtempSync(join(tmpdir(),'mc-supervisor-'));
  const dir=join(root,'secure');mkdirSync(dir,{mode:0o700});
- const guardian=join(dir,'guardian.json'),sentinel=join(dir,'sentinel.json'),report=join(dir,'supervisor.json');
- const write=(file,signals,checkedAt='2026-10-24T17:59:00.000Z')=>writeFileSync(file,JSON.stringify({version:1,checkedAt,signals}),{mode:0o600});
- const env={CLOUD_GUARDIAN_STATE_FILE:guardian,CLOUD_SENTINEL_STATE_FILE:sentinel};
- return Promise.resolve().then(()=>run({root,dir,guardian,sentinel,report,write,env})).finally(()=>rmSync(root,{force:true,recursive:true}));
+ const guardian=join(dir,'guardian.json'),sentinel=join(dir,'sentinel.json'),decision=join(dir,'decision.json'),report=join(dir,'supervisor.json');
+ const write=(file,signals,checkedAt='2026-10-24T17:59:00.000Z')=>writeFileSync(file,JSON.stringify({version:1,checkedAt,signals,...(file===decision?{schema:'markarian-decision-specialist/v1',complete:true}: {})}),{mode:0o600});
+ const env={CLOUD_GUARDIAN_STATE_FILE:guardian,CLOUD_SENTINEL_STATE_FILE:sentinel,CLOUD_DECISION_STATE_FILE:decision};
+ return Promise.resolve().then(()=>run({root,dir,guardian,sentinel,decision,report,write,env})).finally(()=>rmSync(root,{force:true,recursive:true}));
 }
 const ci={id:'ci:margaryanlabs/decision-command',severity:'critical',title:'Latest GitHub Actions run failed',repo:'margaryanlabs/decision-command',url:'https://github.com/margaryanlabs/decision-command/actions/runs/123',secret:'DONOTREPEAT'};
 const host={id:'server:1',severity:'warning',title:'Server unreachable',area:'infra',secret:'DONOTREPEAT'};
@@ -19,11 +19,11 @@ test('absent sources return unknown, never report infrastructure healthy',()=>{
  const v=composeSupervisor({},NOW);
  assert.equal(v.status,'unknown');assert.equal(v.complete,false);
  assert.equal(v.incidentCount,0);assert.equal(v.sources[0].state,'not_configured');
- assert.equal(v.decisionCommand.pipelineFreshness,'not_checked');
+ assert.equal(v.decisionCommand.pipelineFreshness,'not_independently_verified');
  assert.equal(v.autonomousRemediation,false);assert.equal(v.productionReady,false);
 });
-test('federates fresh completed snapshots with severity and safe Decision Command labels',()=>fixture(({guardian,sentinel,write,env})=>{
- write(guardian,[ci]);write(sentinel,[host]);
+test('federates fresh completed snapshots with severity and safe Decision Command labels',()=>fixture(({guardian,sentinel,decision,write,env})=>{
+ write(guardian,[ci]);write(sentinel,[host]);write(decision,[]);
  const r=composeSupervisor(env,NOW);
  assert.equal(r.complete,true);assert.equal(r.status,'observed_attention');assert.equal(r.incidentCount,2);
  assert.equal(r.criticalCount,1);assert.equal(r.signals[0].origin,'portfolio');
@@ -31,14 +31,14 @@ test('federates fresh completed snapshots with severity and safe Decision Comman
  assert.equal(r.signals[0].url,ci.url);assert.equal(r.decisionCommand.liveOrderPermissions,'not_checked');
  assert.doesNotMatch(JSON.stringify(r),/DONOTREPEAT|secure\/|supervisor\.json/);
 }));
-test('fresh empty snapshots are observed-no-findings but not production ready',()=>fixture(({guardian,sentinel,write,env})=>{
- write(guardian,[]);write(sentinel,[]);
+test('fresh empty snapshots are observed-no-findings but not production ready',()=>fixture(({guardian,sentinel,decision,write,env})=>{
+ write(guardian,[]);write(sentinel,[]);write(decision,[]);
  const r=composeSupervisor(env,NOW);
  assert.equal(r.status,'observed_no_findings');assert.equal(r.canMigrateProduction,false);
  assert.match(r.note,/not live production uptime/);
 }));
-test('stale snapshot blocks completeness even with a fresh second source',()=>fixture(({guardian,sentinel,write,env})=>{
- write(guardian,[], '2026-10-24T09:00:00.000Z');write(sentinel,[]);
+test('stale snapshot blocks completeness even with a fresh second source',()=>fixture(({guardian,sentinel,decision,write,env})=>{
+ write(guardian,[], '2026-10-24T09:00:00.000Z');write(sentinel,[]);write(decision,[]);
  const r=composeSupervisor(env,NOW);
  assert.equal(r.status,'unknown');assert.equal(r.sources[0].state,'stale');
 }));
@@ -63,8 +63,8 @@ test('no fake recoveries under missing data and priority changes are detected',(
  assert.equal(compareSupervisor(before,[],true).resolved.length,1);
  assert.equal(compareSupervisor(before,after,true).changed.length,1);
 });
-test('diff creates private, bounded receipt only when both sources are recent',()=>fixture(({guardian,sentinel,report,write,env})=>{
- write(guardian,[ci]);write(sentinel,[host]);
+test('diff creates private, bounded receipt only when both sources are recent',()=>fixture(({guardian,sentinel,decision,report,write,env})=>{
+ write(guardian,[ci]);write(sentinel,[host]);write(decision,[]);
  let output='',errors='';const out={write:s=>output+=s},err={write:s=>errors+=s};
  assert.equal(main(['--diff',report],env,out,err,NOW),0,errors);
  assert.equal(JSON.parse(output).reportUpdated,true);
@@ -74,8 +74,8 @@ test('diff creates private, bounded receipt only when both sources are recent',(
  assert.equal(JSON.parse(output).reportUpdated,false);
  assert.equal(JSON.parse(readFileSync(report,'utf8')).incidentCount,2);
 }));
-test('rejects non-private report destination, never follows existing report symlink',()=>fixture(({guardian,sentinel,dir,report,write,env})=>{
- write(guardian,[]);write(sentinel,[]);
+test('rejects non-private report destination, never follows existing report symlink',()=>fixture(({guardian,sentinel,decision,dir,report,write,env})=>{
+ write(guardian,[]);write(sentinel,[]);write(decision,[]);
  const publicDir=join(dir,'public');mkdirSync(publicDir,{mode:0o755});
  let errors='';const out={write:()=>{}},err={write:s=>errors+=s};
  assert.equal(main(['--diff',join(publicDir,'report.json')],env,out,err,NOW),1);
@@ -91,8 +91,8 @@ test('plan is offline, read-only and unknown commands rejected',()=>{
  assert.match(errors,/Usage/);
 });
 
-test('dangling supervisor output symlink is refused, not silently replaced',()=>fixture(({guardian,sentinel,dir,write,env})=>{
- write(guardian,[]);write(sentinel,[]);
+test('dangling supervisor output symlink is refused, not silently replaced',()=>fixture(({guardian,sentinel,decision,dir,write,env})=>{
+ write(guardian,[]);write(sentinel,[]);write(decision,[]);
  const dangling=join(dir,'dangling');symlinkSync(join(dir,'missing.json'),dangling);
  let stderr='';
  const rc=main(['--diff',dangling],env,{write:()=>{}},{write:s=>stderr+=s},NOW);
@@ -111,3 +111,9 @@ test('operator-installed timer templates remain least-privilege and never store 
   assert.ok(timer.includes('Unit=markarian-'+name+'.service'));
  }
 });
+test('Decision Specialist source must be complete and matching fixed schema',()=>fixture(({guardian,sentinel,decision,write,env})=>{
+ write(guardian,[]);write(sentinel,[]);write(decision,[]);
+ let r=composeSupervisor(env,NOW);assert.equal(r.complete,true);assert.equal(r.sources[2].state,'recent');
+ writeFileSync(decision,JSON.stringify({version:1,checkedAt:'2026-10-24T17:59:00.000Z',complete:false,signals:[]}));
+ r=composeSupervisor(env,NOW);assert.equal(r.complete,false);assert.equal(r.sources[2].state,'error');
+}));
