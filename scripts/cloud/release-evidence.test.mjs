@@ -75,6 +75,14 @@ test('staging checks both SHA marker and independent health endpoint, never clai
  assert.equal(calls.length,2);
  assert.ok(result.note.includes('self-reported'));
 });
+test('Next.js /api/health is supported with explicit operator path and no arbitrary probing',async()=>{
+ const {fetcher,calls}=fake({health:{ok:true}});
+ const env={CLOUD_RELEASE_STAGING_ORIGIN:'https://stage.margaryan.cloud',CLOUD_RELEASE_STAGING_HEALTH_PATH:'/api/health'};
+ const ok=await stagingProof(request,env,fetcher);
+ assert.equal(ok.status,'OBSERVED');assert.equal(calls.length,2);
+ const denied=await stagingProof(request,{...env,CLOUD_RELEASE_STAGING_HEALTH_PATH:'/admin'},fetcher);
+ assert.equal(denied.status,'BLOCKED');assert.equal(denied.health,'INVALID_CONFIG');assert.equal(calls.length,3);
+});
 test('staging cannot pass with a wrong SHA, failed health, or absent trusted origin',async()=>{
  const mismatch=fake({markerValue:{...marker,commit:OLD}});
  assert.equal((await stagingProof(request,{CLOUD_RELEASE_STAGING_ORIGIN:'https://stage.margaryan.cloud'},mismatch.fetcher)).status,'BLOCKED');
