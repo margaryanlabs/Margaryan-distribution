@@ -45,6 +45,15 @@ test("Decision Command CI failure is critical but not a runtime assertion",()=>{
  assert.equal(res.ci,"failure");assert.equal(res.signals[0].severity,"critical");
  assert.equal(res.lastPushDays,23);assert.equal(res.runtimeChecked,false);
 });
+test("startup_failure is infrastructure CI failure, not a confirmed source compilation defect",()=>{
+ const item=classify(repo("margaryanlabs/decision-command"),
+  {workflow_runs:[{status:"completed",conclusion:"startup_failure"}]},[]);
+ assert.equal(item.ci,"startup_failure");
+ assert.equal(item.signals.length,1);
+ assert.match(item.signals[0].title,/failed to start/);
+ assert.match(item.signals[0].action,/runner/);
+ assert.equal(item.runtimeChecked,false);
+});
 test("unknown and in-progress CI are never classified successful",()=>{
  const item=repo("margaryanlabs/decision-command");
  assert.equal(classify(item,null,null).ci,"unknown");
