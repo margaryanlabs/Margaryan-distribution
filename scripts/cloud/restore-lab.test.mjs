@@ -16,7 +16,9 @@ writeFileSync(passFile,'test-only-password',{mode:0o600});
 after(()=>rmSync(secrets,{recursive:true,force:true}));
 const env={RESTIC_REPOSITORY:'s3:https://backup.example.invalid/private',RESTIC_PASSWORD_FILE:passFile};
 const metadata={State:{Running:true},Config:{Labels:{'com.docker.compose.project':'markarian-restore-lab','com.docker.compose.service':'db'}},
- HostConfig:{NetworkMode:'markarian-restore-lab_restore_private',Privileged:false,PortBindings:{'5432/tcp':null}}};
+ HostConfig:{NetworkMode:'markarian-restore-lab_restore_private',Privileged:false,PortBindings:{'5432/tcp':null},Tmpfs:{'/var/lib/postgresql/data':'rw,nosuid,nodev,noexec'}},
+ NetworkSettings:{Networks:{'markarian-restore-lab_restore_private':{}},Ports:{'5432/tcp':null}},
+ Mounts:[{Destination:'/run/secrets/lab_password',Type:'bind',RW:false}]};
 const inspect=JSON.stringify(metadata);
 function fakeSpawn({failDump=false,failRestore=false,existingTables=false,zeroAfter=false}={}){
  let tables=0;
@@ -57,7 +59,11 @@ test('container must be running, correctly labeled, isolated and non-privileged'
   {...metadata,Config:{Labels:{'com.docker.compose.project':'production','com.docker.compose.service':'db'}}},
   {...metadata,HostConfig:{...metadata.HostConfig,Privileged:true}},
   {...metadata,HostConfig:{...metadata.HostConfig,NetworkMode:'host'}},
-  {...metadata,HostConfig:{...metadata.HostConfig,PortBindings:{'5432/tcp':[{HostPort:'5432'}]}}}
+  {...metadata,HostConfig:{...metadata.HostConfig,PortBindings:{'5432/tcp':[{HostPort:'5432'}]}}},
+  {...metadata,NetworkSettings:{...metadata.NetworkSettings,Networks:{bridge:{}}}},
+  {...metadata,NetworkSettings:{...metadata.NetworkSettings,Ports:{'5432/tcp':[{HostPort:'5432'}]}}},
+  {...metadata,HostConfig:{...metadata.HostConfig,Tmpfs:{}}},
+  {...metadata,Mounts:[{Destination:'/var/lib/postgresql/data',Type:'volume',RW:true}]}
  ])assert.throws(()=>validateContainerMetadata(id,m));
  assert.throws(()=>validateContainerMetadata('not-an-id',metadata));
 });
