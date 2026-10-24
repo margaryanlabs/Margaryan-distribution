@@ -78,3 +78,14 @@ test("Project Engine presents only reviewable registered blueprints, never an au
  assert.ok(styles.includes(".releaseEngineGates"));
  assert.doesNotMatch(src,/fetch\(["']\/api\/cloud\/release-create/);
 });
+
+test("Project Engine surfaces read-only release evidence, never deployment authorization",()=>{
+ const src=read("app/cloud/mission-control.tsx");
+ const css=read("app/cloud/mission-control.module.css");
+ const cli=read("scripts/cloud/release-evidence.mjs");
+ assert.ok(src.includes("Release Evidence V1"));
+ assert.ok(src.includes("release-evidence.mjs --verify"));
+ assert.ok(css.includes(".releaseEvidenceHint"));
+ assert.ok(cli.includes("mayDeploy:false"));
+ assert.ok(cli.includes("mayRollback:false"));
+});
