@@ -99,7 +99,7 @@ test('dangling supervisor output symlink is refused, not silently replaced',()=>
  assert.equal(rc,1);assert.match(stderr,/NOT READY/);
 }));
 test('operator-installed timer templates remain least-privilege and never store token values',()=>{
- for(const name of ['portfolio-guardian','infrastructure-sentinel','agent-supervisor']){
+ for(const name of ['portfolio-guardian','infrastructure-sentinel','agent-supervisor','decision-specialist']){
   const root=new URL('../../deploy/cloud/agents/',import.meta.url);
   const service=readFileSync(new URL('markarian-'+name+'.service',root),'utf8');
   const timer=readFileSync(new URL('markarian-'+name+'.timer',root),'utf8');
