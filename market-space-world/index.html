@@ -29,6 +29,40 @@
 (()=>{'use strict';const root=document.getElementById('app'),$=id=>document.getElementById(id), canvas=$('world');
 const SCENES={mall:{name:'Торговый центр будущего',desc:'Начни прогулку по атриуму или выбери любой магазин на нижней панели.',number:'00 / THE ATRIUM',accent:'#5eb8ff'},food:{name:'FOOD · супермаркет',desc:'Пройди по торговому залу, возьми товар с полки и собери корзину.',number:'01 / SUPERMARKET',accent:'#5aaef7'},fashion:{name:'FASHION · бутик',desc:'Изучи коллекцию и зайди в интерактивную примерочную, чтобы менять образы.',number:'02 / VIRTUAL FITTING ROOM',accent:'#e8bf8c'},beauty:{name:'BEAUTY · студия',desc:'Исследуй парфюмерию и косметику, подбери оттенок в виртуальной студии.',number:'03 / BEAUTY STUDIO',accent:'#edabb6'},home:{name:'HOME · шоурум',desc:'Прогуляйся по мебели и попробуй разные сочетания в дизайнерской комнате.',number:'04 / LIVING SPACES',accent:'#b9dbb1'}};
 const DATA={food:[{name:'Молоко фермерское',price:790,emoji:'🥛',mat:1},{name:'Апельсиновый сок',price:890,emoji:'🧃',mat:2},{name:'Паста из твердых сортов',price:1120,emoji:'🍝',mat:3},{name:'Свежие яблоки',price:1290,emoji:'🍎',mat:4},{name:'Ароматный кофе',price:2690,emoji:'☕',mat:5},{name:'Хрустящие хлопья',price:990,emoji:'🥣',mat:6}],fashion:[{name:'Пиджак Atelier',price:29900,emoji:'🧥',mat:7},{name:'Костюм-тройка',price:41900,emoji:'👔',mat:8},{name:'Платье минимал',price:25900,emoji:'👗',mat:9},{name:'Джинсы премиум',price:18900,emoji:'👖',mat:10}],beauty:[{name:'Матовая помада',price:5990,emoji:'💄',mat:11},{name:'Парфюм No. 05',price:34900,emoji:'🌸',mat:12},{name:'Сыворотка Glow',price:13500,emoji:'🧴',mat:13},{name:'Пудра Velvet',price:8990,emoji:'💗',mat:14}],home:[{name:'Диван Forma',price:339000,emoji:'🛋️',mat:15},{name:'Кресло Sola',price:119000,emoji:'🪑',mat:16},{name:'Торшер Halo',price:89000,emoji:'💡',mat:17},{name:'Журнальный стол',price:99000,emoji:'🪵',mat:18}]};
+
+// MARKET SPACE Studio: validated demo config passed in the URL. No code or external assets are executed.
+const studioParam=new URLSearchParams(location.search).get('studio');
+if(studioParam && studioParam.length<=10000){
+ try{
+  const raw=studioParam.replace(/-/g,'+').replace(/_/g,'/');
+  const binary=atob(raw);const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
+  const conf=JSON.parse(new TextDecoder().decode(bytes));
+  if(conf && typeof conf==='object' && ['food','fashion','beauty','home'].includes(conf.type) &&
+     typeof conf.name==='string' && conf.name.trim().length>=2 && conf.name.length<=54 &&
+     typeof conf.accent==='string' && /^#[0-9a-fA-F]{6}$/.test(conf.accent) &&
+     Array.isArray(conf.items) && conf.items.length>=4 && conf.items.length<=6){
+    const type=conf.type, count=DATA[type].length;
+    const items=conf.items.slice(0,count).map((p,i)=>({
+      name:String(p?.name||'').replace(/[<>]/g,'').trim().slice(0,44),
+      price:Number(p?.price),emoji:String(p?.emoji||'📦').slice(0,5),mat:DATA[type][i].mat
+    }));
+    if(items.length===count && items.every(p=>p.name.length>=2 && Number.isInteger(p.price) && p.price>0 && p.price<=10000000)){
+      DATA[type]=items;
+      const nm=conf.name.trim().slice(0,54);
+      const brand=document.getElementById('brand');
+      if(brand && brand.firstChild)brand.firstChild.textContent=nm;
+      const sig=document.getElementById('labsSignature');if(sig)sig.textContent=nm.toUpperCase()+' · POWERED BY MARGARYAN LABS · DEMO';
+      const label=document.getElementById('status');if(label)label.textContent='● BRAND DEMO · MARGARYAN LABS';
+      SCENES[type].name=nm+' · '+SCENES[type].name.split(' · ').pop();
+      if(typeof conf.tagline==='string')SCENES[type].desc=conf.tagline.trim().slice(0,100);
+      const style=document.createElement('style');
+      style.textContent='#logomark{background:'+conf.accent+'!important} .worldTab[data-current=true]{box-shadow:0 0 0 2px '+conf.accent+' inset!important} .bigPrimary{background:'+conf.accent+'!important}';
+      document.head.append(style);
+      document.title=nm+' — MARKET SPACE by Margaryan Labs';
+    }
+  }
+ }catch(err){console.warn('Invalid demo studio config',err)}
+}
 let scene='mall',cart={},selected=null,hotspots=[],obstacles=[],mode='manual',tourIndex=0,currentYaw=0,pitch=-.085,pos={x:0,z:18,y:1.76},pointer=null,joy={x:0,y:0},pressed={},introHidden=false,dialog=null,fallback=false,gl=null,mats=[];
 const money=n=>new Intl.NumberFormat('ru-RU').format(n)+' ֏';
 // Session-only, device-local diagnostics. No visitor information is collected or transmitted.
