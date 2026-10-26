@@ -55,6 +55,12 @@ export function createStagingRequest(input){
  const port=Number(input.ports_exposes);
  if(!Number.isInteger(port)||port<1||port>65535)fail("Invalid application port");
  if(!SLUG.test(input.name||"")||input.name.includes("--"))fail("Invalid staging application slug");
+ // App-container caps are staging defaults only, not build-server quotas.
+ // Constrain overrides to reviewed small sizes to avoid unbounded workers.
+ const memoryLimit=input.limits_memory??"1g";
+ const cpuLimit=input.limits_cpus??"1";
+ if(!["512m","1g","2g","4g"].includes(memoryLimit))fail("Unreviewed staging memory limit");
+ if(!["0.5","1","2"].includes(cpuLimit))fail("Unreviewed staging CPU limit");
  if(input.domains&&(!DOMAIN.test(input.domains)||input.domains.includes("..")))
   fail("Provide at most one reviewed staging DNS hostname");
  return {
@@ -64,6 +70,7 @@ export function createStagingRequest(input){
   // Creation must not implicitly deploy or allocate a public fallback URL.
   instant_deploy:false,autogenerate_domain:false,is_auto_deploy_enabled:false,
   base_directory:"/",
+  limits_memory:memoryLimit,limits_cpus:cpuLimit,
   ...(dockerfileLocation?{dockerfile_location:dockerfileLocation}:{}),
   ...(privateSource?{github_app_uuid:input.github_app_uuid}:{}),
   ...(input.domains?{domains:"https://"+input.domains}: {})
