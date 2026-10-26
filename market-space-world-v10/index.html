@@ -275,6 +275,89 @@ function contactShadow(x,z,width=2,depth=2,parent=root){
  parent.add(shadow);return shadow;
 }
 
+// V10.4: source-licensed showroom glTF assets, with stale-load cancellation and scene-safe reuse.
+// Remote detailed models are OPTIONAL and never block the procedural interactive store.
+const PREMIUM_ASSETS=Object.freeze({
+ chair:{
+  src:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SheenChair/glTF-Binary/SheenChair.glb',
+  store:'home',height:1.22,maxWidth:1.40,license:'CC0-1.0',creator:'© 2020 Wayfair / Eric Chadwick'
+ },
+ shoe:{
+  src:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/MaterialsVariantsShoe/glTF-Binary/MaterialsVariantsShoe.glb',
+  store:'fashion',height:.45,maxWidth:.98,license:'CC-BY-4.0',creator:'© 2021 Shopify'
+ }
+});
+const gltfLoader=new GLTFLoader();
+gltfLoader.setCrossOrigin('anonymous');
+const gltfPromises=new Map(),assetGeometry=new WeakSet();
+let showroomGeneration=0, premiumSlots=[];
+function premiumAllowed(){
+ return new URLSearchParams(location.search).get('assets')!=='off'&&(!coarse||qualityMode==='high');
+}
+function fetchPremiumAsset(name){
+ const info=PREMIUM_ASSETS[name];
+ if(!info)return Promise.resolve(null);
+ if(!gltfPromises.has(name)){
+  const request=gltfLoader.loadAsync(info.src).then(gltf=>{
+   const source=gltf?.scene;
+   if(!source)throw Error('Empty glTF scene');
+   // The cached source owns GPU buffers/textures; cloned display instances share them.
+   source.traverse(obj=>{
+    if(obj.geometry)assetGeometry.add(obj.geometry);
+    if(obj.material)for(const m of (Array.isArray(obj.material)?obj.material:[obj.material])){
+     reusableMaterials.add(m);
+    }
+   });
+   return source;
+  }).catch(error=>{
+   gltfPromises.delete(name); // Failed sources may be retried on the next scene change.
+   console.info('Premium model unavailable; procedural scene remains:',name,error?.message||error);
+   return null;
+  });
+  gltfPromises.set(name,request);
+ }
+ return gltfPromises.get(name);
+}
+function installPremiumModel(slot,source,generation){
+ if(!source||generation!==showroomGeneration||active!==slot.store||!premiumAllowed())return false;
+ if(slot.resolved)return false;
+ // Recheck token after any awaited network work to prevent cross-store late insertions.
+ const clone=source.clone(true);
+ clone.traverse(obj=>{
+  if(obj.isMesh){obj.castShadow=!coarse;obj.receiveShadow=!coarse;}
+ });
+ const bbox=new THREE.Box3().setFromObject(clone),size=bbox.getSize(new THREE.Vector3());
+ if(!Number.isFinite(size.y)||size.y<=.0001||size.x<=.0001) return false;
+ const s=Math.min(slot.height/size.y,slot.width/size.x,3.5);
+ clone.scale.setScalar(s);
+ const placedBox=new THREE.Box3().setFromObject(clone);
+ const mid=placedBox.getCenter(new THREE.Vector3());
+ clone.position.set(slot.x-mid.x,slot.base-placedBox.min.y,slot.z-mid.z);
+ clone.userData.itemIndex=slot.index;
+ root.add(clone);pickables.push(clone);
+ if(slot.placeholder){
+  slot.placeholder.visible=false;
+  pickables=pickables.filter(obj=>obj!==slot.placeholder);
+ }
+ slot.resolved=true;
+ return true;
+}
+function upgradePremiumAssets(store){
+ if(!premiumAllowed())return;
+ const generation=showroomGeneration;
+ for(const slot of premiumSlots.filter(s=>s.store===store&&!s.resolved)){
+  fetchPremiumAsset(slot.name).then(source=>{
+   try{installPremiumModel(slot,source,generation);}
+   catch(e){console.warn('Detailed 3D model placement skipped:',e?.message||e);}
+  });
+ }
+}
+function slotPremiumModel(name,store,x,z,base,placeholder,index){
+ const cfg=PREMIUM_ASSETS[name];
+ if(!cfg||cfg.store!==store)return;
+ premiumSlots.push({name,store,x,z,base,placeholder,index,height:cfg.height,width:cfg.maxWidth,resolved:false});
+}
+
 const boxGeo=new THREE.BoxGeometry(1,1,1);
 const sphereGeo=new THREE.SphereGeometry(1,18,12);
 const cyl=(r1,r2,h,segments=14)=>new THREE.CylinderGeometry(r1,r2,h,segments);
@@ -687,7 +770,7 @@ function disposeWorld(){
  root.traverse(n=>{
   if(n.isInstancedMesh)n.dispose();
   if(n.isLight&&n.shadow?.map)n.shadow.map.dispose();
-  if(n.geometry&&n.geometry!==boxGeo&&n.geometry!==sphereGeo)geometries.add(n.geometry);
+  if(n.geometry&&n.geometry!==boxGeo&&n.geometry!==sphereGeo&&!assetGeometry.has(n.geometry))geometries.add(n.geometry);
   if(n.material)for(const m of (Array.isArray(n.material)?n.material:[n.material])){
    if(m&&!reusableMaterials.has(m))materials.add(m);
   }
@@ -699,12 +782,13 @@ function disposeWorld(){
 }
 function setStore(key){
  if(!DATA[key])return;
- active=key;touring=false;tourRoute=[];walkVelocity.x=walkVelocity.z=0;
+ active=key;showroomGeneration++;premiumSlots=[];touring=false;tourRoute=[];walkVelocity.x=walkVelocity.z=0;
  keys.clear();joy.x=joy.y=0;$('tourBtn').textContent='▶ Кинотур';
  disposeWorld();
  hotspots=[];pickables=[];blockers=[];marketPackBatches.clear();tipCurrent=-1;$('objectTip').classList.remove('show');architecture(key);
  try{if(key==='fashion')fashionScene();else if(key==='home')homeScene();else if(key==='beauty')beautyScene();else foodScene();}
  catch(err){console.error('Scene build error:',err);toast('Часть объектов не загрузилась: '+err.message);}
+ upgradePremiumAssets(key);
  camera.position.set(0,1.68,10.7);yaw=0;pitch=-.065;updateCamera();
  const d=DATA[key];$('worldTitle').innerHTML=d.name.replace(' ','<br>');$('eyebrow').textContent=d.tag;$('worldDescription').textContent=d.desc;
  $('titlePanel').style.opacity='1';$('titlePanel').style.pointerEvents='auto';
@@ -824,7 +908,7 @@ pad.addEventListener('pointerup',joyUp);pad.addEventListener('pointercancel',joy
 let dragging=false,dragId=null,dragX=0,dragY=0,dragMoved=false,downX=0,downY=0;
 $('qualityBtn').addEventListener('click',()=>{
  qualityMode=qualityCycle[(qualityCycle.indexOf(qualityMode)+1)%qualityCycle.length];
- qualityReduced=qualityMode!=='auto';applyQuality();
+ qualityReduced=qualityMode!=='auto';applyQuality();if(qualityMode==='high')upgradePremiumAssets(active);
 });
 const canvas=renderer.domElement;
 canvas.addEventListener('pointerdown',e=>{dragging=true;dragId=e.pointerId;dragX=downX=e.clientX;dragY=downY=e.clientY;dragMoved=false;canvas.setPointerCapture(e.pointerId);$('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';});
