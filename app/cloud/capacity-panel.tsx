@@ -7,7 +7,8 @@ const sizes=[
  {label:"Small",cpu:4,ramMiB:8192},
  {label:"Medium",cpu:8,ramMiB:16384},
  {label:"Large",cpu:16,ramMiB:32768},
- {label:"XL",cpu:32,ramMiB:65536}
+ {label:"XL",cpu:32,ramMiB:65536},
+ {label:"Enterprise",cpu:64,ramMiB:131072}
 ] as const;
 const formatMemory=(n:number)=>n>=1024?(n/1024).toLocaleString("en",{maximumFractionDigits:1})+" GiB":n+" MiB";
 export default function CapacityPanel({onDeploy,onSetup}:{onDeploy:()=>void;onSetup:()=>void}){
@@ -32,7 +33,7 @@ export default function CapacityPanel({onDeploy,onSetup}:{onDeploy:()=>void;onSe
   <header className={styles.hero}>
    <span className={styles.kicker}>MARKARIAN CLOUD / OWN INFRASTRUCTURE PLANNING</span>
    <h1>Buy the right <em>capacity.</em></h1>
-   <p>Before paying for VPS, model what our applications may need. These are manual allocation assumptions, not measured demand, vendor quotes or a guarantee of 1,000 users.</p>
+   <p>Architect from one node to a distributed service fleet. Capacity is a workload forecast, not a spending ceiling, autoscaler or live performance measurement.</p>
   </header>
   <section className={styles.scenarios} aria-label="Workload planning scenario">
    <button type="button" aria-pressed={scenario==="first-two"} onClick={()=>chooseScenario("first-two")}>VETOGRAM + Promptence</button>
@@ -44,6 +45,16 @@ export default function CapacityPanel({onDeploy,onSetup}:{onDeploy:()=>void;onSe
     <div className={styles.header}><span className={styles.kicker}>01 / SERVER PROFILE</span><h2>Choose a candidate host</h2></div>
     <div className={styles.presets}>{sizes.map(s=><button type="button" key={s.label} onClick={()=>setPreset(s)}
      aria-pressed={node.cpu===s.cpu&&node.ramMiB===s.ramMiB}><b>{s.label}</b><small>{s.cpu} vCPU · {formatMemory(s.ramMiB)}</small></button>)}</div>
+    <div className={styles.customSizing}>
+      <label>Custom vCPU <input type="number" min="1" step="1" value={node.cpu} onChange={e=>{
+        const cpu=Number(e.target.value);if(!Number.isSafeInteger(cpu)||cpu<1)return;
+        setNode(old=>({...old,cpu,reservedCpu:Math.min(old.reservedCpu,Math.max(0,cpu-1))}));
+      }}/></label>
+      <label>Custom RAM (GiB) <input type="number" min="1" step="1" value={node.ramMiB/1024} onChange={e=>{
+        const gib=Number(e.target.value);if(!Number.isSafeInteger(gib)||gib<1||!Number.isSafeInteger(gib*1024))return;
+        setNode(old=>({...old,ramMiB:gib*1024,reservedRamMiB:Math.min(old.reservedRamMiB,gib*1024-512)}));
+      }}/></label>
+    </div>
     <div className={styles.details}><div><span>VIRTUAL CPU</span><strong>{node.cpu}</strong><small>vCPU total</small></div><div><span>MEMORY</span><strong>{formatMemory(node.ramMiB)}</strong><small>RAM total</small></div>
      <div><span>OS RESERVE</span><strong>{node.reservedCpu} CPU</strong><small>{formatMemory(node.reservedRamMiB)} kept free</small></div></div>
    </section>
@@ -56,12 +67,12 @@ export default function CapacityPanel({onDeploy,onSetup}:{onDeploy:()=>void;onSe
     <p>{result.fit?"The selected allocations fit on paper. Real hosts still need disk, I/O, CPU burst and failure headroom.":"The selected host cannot fit these planned allocations. Increase capacity or split workloads."}</p>
    </section>
   </div>
-  <section className={styles.cost} aria-label="Read-only hosting cost reference">
-   <div><span className={styles.kicker}>COST POLICY / 26 OCT 2026 / NOT A QUOTE</span><h2>Hosting budget: $50 / month</h2>
-    <p>Reference only: Hetzner CX53 $34.99 + IPv4 $0.60 + external Object Storage approx. $7.99 = <strong>$43.58 before VAT</strong>. A $5 reserve leaves $1.42 headroom. Optional server snapshots (~$7), taxes, traffic, domains, AI models and email can exceed $50.</p>
-    <p>Hetzner usage alerts do not enforce a spending cap. This page never provisions a server and cannot approve payment or production cutover.</p>
+  <section className={styles.cost} aria-label="Scalable architecture planning">
+   <div><span className={styles.kicker}>MARKARIAN CLOUD / SCALE WITH DEMAND</span><h2>One platform. Any practical number of nodes.</h2>
+    <p>Start with the capacity the applications actually need; expand into dedicated app, data, worker and observability nodes. The fleet planner allocates separate VETOGRAM and Promptence data pools and spreads HTTP replicas across independent zones.</p>
+    <p>Cost is an operational signal, not an automatic block on architecture. A one-VPS estimate does not equal managed multi-zone availability. Database replication, verified backups and incident recovery remain separate engineering requirements.</p>
    </div>
-   <a href="https://docs.hetzner.com/general/infrastructure-and-availability/price-adjustment/" target="_blank" rel="noopener noreferrer">Review official pricing ↗</a>
+   <a href="https://github.com/margaryanlabs/Margaryan-distribution/tree/feat/cloud-fleet-runtime-architecture-20261026/deploy/cloud/fleet" target="_blank" rel="noopener noreferrer">Review fleet manifest ↗</a>
   </section>
   <section className={styles.workloads}>
    <div className={styles.workHeader}><div><span className={styles.kicker}>03 / OUR APPLICATIONS</span><h2>Plan workloads</h2></div><span>{active.length} enabled / {workloads.length} profiles</span></div>
@@ -78,7 +89,7 @@ export default function CapacityPanel({onDeploy,onSetup}:{onDeploy:()=>void;onSe
    {result.notes.length?result.notes.map((n,i)=><p key={i}>— {n}</p>):
     <p>— Keep primary databases separate from analytics and media rendering when moving beyond a disposable pilot.</p>}
    <p>— The inexpensive shared-vCPU plans do not reserve CPU exclusively. Check disk IOPS, bandwidth, geography and supplier availability before ordering.</p>
-   <p>— This page does not fetch current VPS prices or create a server. Separate offsite backups, data isolation and verified restores are mandatory before production.</p>
+   <p>— This single-host preview complements the multi-node Fleet Planner. No automatic provisioning is enabled. Offsite backups and tested restores are mandatory for data safety.</p>
   </div>
   <div className={styles.actions}>
    <button type="button" onClick={onSetup}>VPS launch checklist ↗</button>
@@ -87,6 +98,6 @@ export default function CapacityPanel({onDeploy,onSetup}:{onDeploy:()=>void;onSe
   </div>
   {guide&&<div className={styles.guide}><strong>When should we buy the first VPS?</strong>
    <p>Only after source builds/tests pass; backup destination and recovery procedures are ready; the host has confirmed CPU/RAM/disk/network capacity; and the disposable Coolify pilot can be deployed. Start with staging. Do not migrate any production DNS or Supabase data before verified restoration.</p></div>}
-  <footer className={styles.foot}>ESTIMATES ONLY · NOT A RESOURCE MONITOR · NOT A PRICE QUOTE</footer>
+  <footer className={styles.foot}>SINGLE-NODE PREVIEW + DISTRIBUTED FLEET PLAN · NO FIXED SPEND CAP · NO SERVER PROVISIONING</footer>
  </section>;
 }
