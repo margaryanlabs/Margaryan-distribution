@@ -144,7 +144,7 @@ check('V10.4 import and source licensing references',()=>{
  for(const token of ['id="assetCredits"','CC0','CC BY 4.0','© 2021 Shopify','Wayfair','KhronosGroup/glTF-Sample-Assets','https://creativecommons.org/licenses/by/4.0/'])assert.ok(world.includes(token),token);
 });
 check('Premium asset manager is optional, asynchronous and safe across scene switches',()=>{
- for(const token of ['const PREMIUM_ASSETS=','fetchPremiumAsset(name)','gltfLoader.loadAsync(info.src)','source.clone(true)','const generation=showroomGeneration','generation!==showroomGeneration','if(!premiumAllowed())return','new URLSearchParams(location.search).get(\\'assets\\')','assetGeometry.add(obj.geometry)','if(n.geometry&&n.geometry!==boxGeo&&n.geometry!==sphereGeo&&!assetGeometry.has(n.geometry))','slot.placeholder.visible=false']) assert.ok(world.includes(token),token);
+ for(const token of ['const PREMIUM_ASSETS=','fetchPremiumAsset(name)','gltfLoader.loadAsync(info.src)','source.clone(true)','const generation=showroomGeneration','generation!==showroomGeneration','if(!premiumAllowed())return',"new URLSearchParams(location.search).get('assets')",'assetGeometry.add(obj.geometry)','if(n.geometry&&n.geometry!==boxGeo&&n.geometry!==sphereGeo&&!assetGeometry.has(n.geometry))','slot.placeholder.visible=false']) assert.ok(world.includes(token),token);
 });
 check('Procedural displays remain when GLB absent and quality gate holds on mobile',()=>{
  for(const token of ["shoeExhibit(-4.6,-7.2)","shoeExhibit(4.6,-19.3)","slotPremiumModel('chair'","slotPremiumModel('shoe'","qualityMode==='high'","qualityMode==='high')upgradePremiumAssets(active)","const firstChair=chair(-2.55,-7),secondChair=chair(2.5,-22)"])assert.ok(world.includes(token),token);
