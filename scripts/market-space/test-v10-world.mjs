@@ -103,4 +103,40 @@ check('Fashion accessories and sewn upholstery remain present',()=>{
 check('WebGL error screen has labelled four-scene concept gallery and Lite action',()=>{
  for(const str of ['id="galleryFallback"','data-fallback="fashion"','data-fallback="food"','data-fallback="beauty"','data-fallback="home"','Визуальная галерея / Концепция','не кадры реального 3D-движка','__marketSpaceShowFallback','mode=lite','webglcontextlost'])assert.ok(world.includes(str),str);
 });
-console.log('V10.2 source contracts: '+count+' passed. Real mobile GPU and external browser QA are not verified.');
+check('Hundreds of grocery package parts use instancing rather than separate meshes',()=>{
+ for(const token of ['new THREE.InstancedMesh(','marketPackBatches','flushMarketPacks()','instanceMatrix.needsUpdate','productIndices','hit.instanceId!==undefined','n.isInstancedMesh)n.dispose()'])assert.ok(world.includes(token),token);
+});
+check('Grocery instancing generates stable batch transforms and selects individual items',()=>{
+ const a=world.indexOf('let marketPackBatches=new Map();'),b=world.indexOf('function groceryShelves(x,z){',a);
+ assert.ok(a>0&&b>a);
+ const emitted=[],pickables=[];
+ class Obj{
+  constructor(){this.position={set(x,y,z){this.x=x;this.y=y;this.z=z}};this.rotation={set(x,y,z){this.x=x;this.y=y;this.z=z}};this.scale={set(x,y,z){this.x=x;this.y=y;this.z=z}};this.matrix={};}
+  updateMatrix(){this.matrix={p:[this.position.x,this.position.y,this.position.z],s:[this.scale.x,this.scale.y,this.scale.z]};}
+ }
+ class Im{
+  constructor(geometry,material,count){this.count=count;this.geometry=geometry;this.material=material;this.userData={};this.instanceMatrix={};this.matrices=[];}
+  setMatrixAt(i,matrix){this.matrices[i]=matrix;}computeBoundingSphere(){}
+ }
+ const mock={InstancedMesh:Im,Object3D:Obj,CylinderGeometry:class{}};
+ const d=new Function('THREE','RoundedBoxGeometry','mat','root','pickables','plane','groceryLabel',
+  world.slice(a,b)+'return {brandBox,flushMarketPacks,batches:()=>marketPackBatches};')(
+   mock,class{},color=>color,{add:m=>emitted.push(m)},pickables,()=>({castShadow:false,receiveShadow:false}),()=>({})
+ );
+ const shelf={position:{x:7.7,y:0,z:2}};let boxes=0;
+ for(const y of [.57,1.24,1.91,2.58,3.24])for(const side of [-1,1])for(let i=0;i<5;i++){
+  d.brandBox(shelf,side*.49,y,(i-2)*1.04,i+Math.round(y*5)+(side>0?3:0));boxes++;
+ }
+ d.flushMarketPacks();
+ assert.equal(boxes,50);
+ assert.ok(emitted.length<=15,'Too many draw calls: '+emitted.length);
+ assert.equal(emitted.reduce((n,b)=>n+b.count,0),100);
+ assert.ok(emitted.every(b=>b.userData.productIndices.length===b.count));
+ assert.ok(emitted.every(b=>b.matrices.every(m=>[...m.p,...m.s].every(Number.isFinite))));
+ assert.equal(d.batches().size,0);
+});
+check('Physically lit materials and soft contact shadows preserve a light mobile fallback',()=>{
+ for(const token of ['RoomEnvironment','new THREE.PMREMGenerator(','scene.environment=','function contactShadow(','createRadialGradient(','function perfumeGlass(','clearcoat:.95'])assert.ok(world.includes(token),token);
+ assert.ok(world.includes('if(!window.__marketSpaceReady)window.__marketSpaceShowFallback'));
+});
+console.log('V10.3 offline source checks: '+count+' passed; true browser render, WebGL performance and visual parity are not certified.');
