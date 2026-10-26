@@ -1,3 +1,4 @@
+import {readFileSync} from "node:fs";
 import test from "node:test";import assert from "node:assert/strict";
 import {planCapacity,defaultWorkloads,twoProductWorkloads} from "../../lib/cloud/capacity.ts";
 test("Default workloads are explicit estimates, never real measurements",()=>{
@@ -50,4 +51,14 @@ test("Expensive media and ClickHouse workloads do not silently fit a 32 GiB firs
  const heavy=twoProductWorkloads.map(x=>({...x,enabled:true}));
  const r=planCapacity({cpu:16,ramMiB:32768,reservedCpu:2,reservedRamMiB:4096},heavy);
  assert.equal(r.fit,false);
+});
+
+test("Capacity UI reads real Coolify snapshot, never labels it physical HA",()=>{
+ const panel=readFileSync(new URL("../../app/cloud/capacity-panel.tsx",import.meta.url),"utf8");
+ const main=readFileSync(new URL("../../app/cloud/page.tsx",import.meta.url),"utf8");
+ assert.match(panel,/inventoryConnected/);
+ assert.match(main,/inventoryConnected=\{data\.mode==="connected"&&data\.sources\?\.servers===true\}/);
+ assert.match(main,/observedServers=\{data\.servers\.map/);
+ assert.match(panel,/not evidence of physical zone separation/);
+ assert.doesNotMatch(panel,/Hosting budget: \$50/);
 });
