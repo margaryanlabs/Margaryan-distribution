@@ -112,7 +112,7 @@ export default function MarkarianCloud(){
    </header>
    <div className={styles.body}>
     {["command","project-center","data-center","agent-watch"].includes(section)&&<MissionControl key={section} startView={section==="project-center"?"projects":section==="data-center"?"data":section==="agent-watch"?"agents":"fleet"} data={data} loading={loading} onRefresh={()=>void refresh()} onOpenSetup={()=>setSection("setup")} onOpenOwned={()=>setSection("owned")} onOpenDeploy={()=>setSection("deploy-engine")} onOpenRecovery={()=>setSection("recovery")} onOpenStudio={()=>setSection("studio")} onOpenTelemetry={()=>setSection("telemetry")} onOpenDomains={()=>setSection("domain-planner")}/>}
-    {section==="capacity"&&<CapacityPanel onDeploy={()=>setSection("deploy-engine")} onSetup={()=>setSection("setup")}/>}
+    {section==="capacity"&&<CapacityPanel onDeploy={()=>setSection("deploy-engine")} onSetup={()=>setSection("setup")} inventoryConnected={data.mode==="connected"&&data.sources?.servers===true} observedServers={data.servers.map(s=>({uuid:s.uuid,name:s.name,status:s.status}))}/>}
     {section==="domain-planner"&&<DomainPlanner onOpenSetup={()=>setSection("setup")}/>}
     {section==="overview"&&<>
      <section className={styles.hero}>
