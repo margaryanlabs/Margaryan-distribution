@@ -93,6 +93,8 @@ jobs:
         run: node --test scripts/cloud/prepare-db-pilot.test.mjs
       - name: Audit VETOGRAM and Promptence Vercel portability contracts offline
         run: node --test scripts/cloud/app-portability.test.mjs
+      - name: Verify multi-node placement and independent data pools (offline)
+        run: node --test scripts/cloud/fleet-plan.test.mjs
       - name: Validate owner-run local release gate (offline)
         run: node --test scripts/cloud/local-ci.test.mjs
       - name: Test infrastructure health and ClickHouse connector

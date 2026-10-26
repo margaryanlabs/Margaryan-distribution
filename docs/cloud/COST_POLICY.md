@@ -1,6 +1,6 @@
-# Markarian Cloud — $50/month budget policy for first two products
+# Markarian Cloud — total cost visibility, without fixed architecture ceilings
 
-Status: **planning/engineering guard only**, no provider billing integration, purchased VPS, managed production database or production cutover. Last reference check: 2026-10-26. These are **USD vendor-listed figures, not invoice guarantees**. Prices vary by location, account currency, VAT and available hardware.
+Status: **optional cost-planning tool only**, not a fixed $50 ceiling, not an architecture approval mechanism. No provider billing integration, purchased VPS, managed production database or production cutover. Last reference check: 2026-10-26. These are **USD vendor-listed figures, not invoice guarantees**. Prices vary by location, account currency, VAT and available hardware.
 
 ## Reference comparison: official Hetzner prices (Germany / Finland, effective 2026-06-15)
 
@@ -18,7 +18,7 @@ Sources (operator MUST recheck):
 - https://docs.hetzner.com/storage/object-storage/overview/
 - https://coolify.io/docs/core/selfhosted-cloud-comparison
 
-## Example before tax, quotas and unknowns
+## Historical small-host example (NOT a platform limit)
 
 | Component | 32 GiB VPS |
 | --- | ---: |
@@ -33,7 +33,7 @@ Sources (operator MUST recheck):
 
 The 16 GiB CX43 is cheaper but **our explicit dual-product estimates do not fit** on 16 GiB alongside separate Neon-compatible Postgres, full Promptence Supabase, Coolify and observability. The 32 GiB model only fits under hypothetical staging allocations; do not call this measured runtime capacity.
 
-## Fail-closed budget check
+## Optional quote evaluation (not a deployment blocker)
 
 From a trusted checkout with Node 22+:
 
@@ -45,7 +45,7 @@ node scripts/cloud/budget-gate.mjs --assess /absolute/private/quote.json
 
 Input file must be owner-only 0600, regular (not a symlink), <=16KB. All cost amounts are **decimal USD strings**, not floats, to avoid rounding errors. Set the real current `quoteCheckedAt`, `tax`, `meteredWorstCase`, `reserve` and `maxPerMonth` after checking exact billing settings. `scope` is **hosting-only**; separately record what AI/email/domain/support charges were excluded.
 
-The `--example` quote is deliberately **BLOCKED** because it has no verified provider hard metered cap and not all hosting costs are known. We refuse to report hosting costs as guaranteed just because fixed server rates fit.
+The `--example` input deliberately models a $50 illustrative scenario and reports `BLOCKED` for **that chosen quote** when tax, traffic or provider limits are unknown. **It is not a restriction imposed on Markarian Cloud**: a user may use a different cap or skip this optional quote analysis entirely. Fleet sizing, HA decisions and customer safety are independent of the example amount.
 
 Budget verdicts:
 - `BLOCKED` exit 1: over cap, stale quote (>14 days), cost omission, or unverified metered controls.
@@ -54,13 +54,13 @@ Budget verdicts:
 
 ### Real operational guardrails (must configure with the provider)
 
-1. Allow only **one VPS**, one IPv4 and **one offsite storage account** during initial migration. No auto-scaling or project-level self-service paid provisioning.
+1. Build the number of independent application and database nodes demanded by measured capacity and availability objectives. Do not create paid infrastructure without operator-approved provider access; use a reviewed autoscaler once provider cost visibility and rollback are configured.
 2. Turn on provider **cost alerts** at $25, $35, $45; these are warnings, not a hard cap. Restrict who can create extra servers or Storage resources.
 3. Limit AI spend at the **AI provider** (dedicated keys + hard usage limits where available) and in each product's DB-backed rate controls; never trust a UI-only toggle.
 4. Configure outgoing bandwidth/egress observability and backups growth checks. Confirm whether an actual provider-imposed hard limit exists; do not attest it if it does not.
 5. Keep backups in a separate failure domain. Storage owned by the same Hetzner account may still be affected by account-wide suspension; maintain an export/recovery plan.
 6. Check bill and usage weekly. On budget pressure reduce nonessential workloads, free scans, previews and observability retention first — **never silently delete customer data or skip recoverable backups**.
-7. Add more nodes only after measured RAM/CPU/IO evidence, paying-user growth or uptime requirements justify higher spend.
+7. Scale horizontally across truly independent fault domains for high availability, or vertically when simpler. Measure RAM/CPU/IO and recurring charges; do not assume a second VPS produces database failover by itself.
 
 ## Application-specific cost traps
 
@@ -71,3 +71,7 @@ Budget verdicts:
 ## Total cost vs managed-cloud comparison
 
 Compare like with like. A managed Vercel/Railway/Supabase bill may already include backups, S3, SSL, monitoring, authentication, and less operator effort; switching to one VPS saves platform charges but transfers responsibility. An untested $40 server is **not** a fair replacement for a managed, multi-zone, backed-up service. Pay for reliability first, and compare total operational cost and incident risk, not only the server invoice.
+
+## No artificial product limits
+
+Markarian Cloud is not architecturally bound to any specific VPS, vendor or monthly spend. The review-only Fleet Planner at `scripts/cloud/fleet-plan.mjs` supports multiple nodes and actual per-service placement across zones. A budget review is an accounting advisory, not an infrastructure hard stop or runtime throttle. Security (secret isolation, private database networking), observed recovery drills and explicit authorization for real purchases remain necessary regardless of cost.
