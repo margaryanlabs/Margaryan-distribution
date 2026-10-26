@@ -555,6 +555,23 @@ function boutiqueHandbag(x,z,color='#786354'){
  tube(0,1.43,.293,.026,.026,.07,darkMetal,g);
  return g;
 }
+// Compact stylized shoe serves as the guaranteed GPU-light alternative to licensed shoe GLB.
+function shoeExhibit(x,z,index=4){
+ platform(x,z,.86);
+ registerBlocker(x,z,1.7,1.7);
+ const g=new THREE.Group();g.position.set(x,.38,z);root.add(g);
+ const sole=mat('#eee7dc',.54),upper=textile('#afa394',THREE.FrontSide);
+ soft(0,.36,0,.93,.14,.42,sole,.06,g);
+ const toe=soft(-.20,.51,.04,.57,.25,.41,upper,.13,g);
+ const heel=soft(.27,.58,-.03,.44,.40,.32,upper,.10,g);heel.rotation.z=-.09;
+ for(let i=0;i<4;i++){
+  const laces=soft(-.03+i*.10,.735-i*.032,.17,.085,.018,.024,ivory,.007,g);
+  laces.rotation.z=.11;
+ }
+ g.userData.itemIndex=index;pickables.push(g);
+ slotPremiumModel('shoe','fashion',x,z,.37,g,index);
+ return g;
+}
 function fashionScene(){
  const colors=['#b5a08a','#e9d8c4','#525951','#ae8a7d'];
  for(const side of [-1,1])for(const z of [3,-9,-22]){
@@ -567,6 +584,8 @@ function fashionScene(){
  mannequin(2.55,-23,'dress','#d8b9a9',3);
  for(const z of [-13,-26])for(const side of [-1,1])
   boutiqueHandbag(side*4.3,z,side>0?'#746359':'#ae8c7b');
+ shoeExhibit(-4.6,-7.2);
+ shoeExhibit(4.6,-19.3);
  for(const x of [-8,8])for(const z of [-3,-15,-27]){
   soft(x,4.45,z,.09,3.3,2.9,brass,.03);
   const mirror=mat('#c0c5bf',.09,.86);plane(x+(x>0?-.085:.085),4.45,z,2.55,3.1,mirror,root,x>0?-Math.PI/2:Math.PI/2);
@@ -592,7 +611,7 @@ function floorLamp(x,z){const g=new THREE.Group();g.position.set(x,0,z);root.add
 function plant(x,z){const g=new THREE.Group();g.position.set(x,0,z);root.add(g);tube(0,.39,0,.36,.27,.73,ceramic,g);tube(0,1.25,0,.046,.07,1.1,mat('#626e4e',.84),g);
  for(let i=0;i<10;i++){const a=i*2.399;const leaf=ball(Math.cos(a)*.52,1.24+(i%4)*.17,Math.sin(a)*.53,.16,.53,.29,mat(i%2?'#6c765b':'#778365',.95),g);leaf.rotation.z=Math.cos(a)*.54;leaf.rotation.x=Math.sin(a)*.48;}
 }
-function chair(x,z){const g=new THREE.Group();g.position.set(x,0,z);root.add(g);registerBlocker(x,z,1.3,1.2);soft(0,.55,0,1.25,.36,1.12,textile('#acaca0',THREE.FrontSide),.23,g);soft(0,1.12,-.38,1.3,1.22,.34,textile('#adaca1',THREE.FrontSide),.25,g);for(const xx of [-.45,.45])for(const zz of [-.3,.36])tube(xx,.2,zz,.07,.09,.4,wood,g);}
+function chair(x,z){const g=new THREE.Group();g.position.set(x,0,z);root.add(g);registerBlocker(x,z,1.3,1.2);contactShadow(x,z,1.85,1.85);soft(0,.55,0,1.25,.36,1.12,textile('#acaca0',THREE.FrontSide),.23,g);soft(0,1.12,-.38,1.3,1.22,.34,textile('#adaca1',THREE.FrontSide),.25,g);for(const xx of [-.45,.45])for(const zz of [-.3,.36])tube(xx,.2,zz,.07,.09,.4,wood,g);return g;}
 function homeScene(){
  for(const z of [0,-16])for(const x of [-6.6,6.6]){
   soft(x,.02,z,6.8,.035,6.0,mat(z===0?'#a39582':'#aaa396',.99),.05);
@@ -601,7 +620,9 @@ function homeScene(){
   floorLamp(x+(x>0?2.8:-2.8),z-1.6);
   plant(x+(x>0?-2.8:2.8),z-2.1);
  }
- chair(-2.55,-7);chair(2.5,-22);
+ const firstChair=chair(-2.55,-7),secondChair=chair(2.5,-22);
+ slotPremiumModel('chair','home',-2.55,-7,0,firstChair,1);
+ slotPremiumModel('chair','home',2.5,-22,0,secondChair,1);
  const book=mat('#5b594d',.78);
  for(let i=0;i<6;i++)soft(-6.3+i*.13,.67,-14, .13,.04,.35,i%2?book:brass,.014);
  [0,1,2,3].forEach((idx)=>selectHotspot(idx%2?6:-6,1.6,idx>1?-16:0,idx));
