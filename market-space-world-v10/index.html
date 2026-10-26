@@ -154,6 +154,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 <script type="module">
 import * as THREE from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 const $=id=>document.getElementById(id), clamp=THREE.MathUtils.clamp;
 const coarse=matchMedia('(pointer:coarse)').matches, reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
 const DATA={
@@ -192,6 +193,16 @@ renderer.domElement.addEventListener('webglcontextlost',e=>{
  window.__marketSpaceShowFallback('Графическое ускорение прервано. Доступна галерея концепций и Lite-прогулка.');
 });
 scene.add(root);
+// Real reflected studio lighting for polished metals, glass and ceramic. Non-fatal if unavailable.
+let environmentTarget=null;
+try{
+ const reflectionRoom=new RoomEnvironment();
+ const generator=new THREE.PMREMGenerator(renderer);
+ environmentTarget=generator.fromScene(reflectionRoom,.025);
+ scene.environment=environmentTarget.texture;
+ scene.environmentIntensity=.88;
+ reflectionRoom.dispose();generator.dispose();
+}catch(e){console.info('Using direct lighting without image-based reflections',e?.message||e)}
 // Cache globally reusable base PBR finishes; scene-specific texture maps remain disposable.
 const materialCache=new Map(),reusableMaterials=new WeakSet();
 function mat(color,rough=.68,metal=0,other={}){
@@ -230,6 +241,27 @@ function textile(color,side=THREE.DoubleSide){
 }
 
 const fabric=fabricColors.map(c=>textile(c));
+// Soft contact shadows: small shared projected decals. They ground objects when mobile shadow maps are off.
+function createContactShadowMaterial(){
+ const c=document.createElement('canvas');c.width=c.height=128;
+ const ctx=c.getContext('2d'),gradient=ctx.createRadialGradient(64,64,6,64,64,62);
+ gradient.addColorStop(0,'rgba(21,19,16,.49)');
+ gradient.addColorStop(.38,'rgba(22,19,16,.27)');
+ gradient.addColorStop(1,'rgba(22,19,16,0)');
+ ctx.fillStyle=gradient;ctx.fillRect(0,0,128,128);
+ const map=new THREE.CanvasTexture(c);
+ const material=new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,opacity:.72,toneMapped:false,polygonOffset:true,polygonOffsetFactor:-1});
+ reusableMaterials.add(material);
+ return material;
+}
+const contactShadowMaterial=createContactShadowMaterial();
+function contactShadow(x,z,width=2,depth=2,parent=root){
+ const shadow=new THREE.Mesh(new THREE.PlaneGeometry(1,1),contactShadowMaterial);
+ shadow.rotation.x=-Math.PI/2;shadow.scale.set(width,depth,1);
+ shadow.position.set(x,.024,z);shadow.castShadow=false;shadow.receiveShadow=false;
+ parent.add(shadow);return shadow;
+}
+
 const boxGeo=new THREE.BoxGeometry(1,1,1);
 const sphereGeo=new THREE.SphereGeometry(1,18,12);
 const cyl=(r1,r2,h,segments=14)=>new THREE.CylinderGeometry(r1,r2,h,segments);
@@ -301,6 +333,7 @@ function architecture(key){
  framedSign(d.name,key==='fashion'?'COLLECTION  /  2026':key==='food'?'FRESH   /   EVERY DAY':key==='beauty'?'THE RITUAL OF BEAUTY':'SPACES TO LIVE',0,3.9,-31.36,6,2.15);
 }
 function platform(x,z,r=1.18){
+ contactShadow(x,z,r*2.5,r*2.5);
  tube(x,.14,z,r,r,.28,mat('#80776b',.49));
  tube(x,.31,z,r*.97,r*.97,.08,brass);
 }
@@ -444,7 +477,7 @@ function fashionScene(){
  }
 }
 function upholsteredSofa(x,z,color='#c6b9a4'){
- const group=new THREE.Group();group.position.set(x,0,z);root.add(group);registerBlocker(x,z,3.7,2.1);
+ const group=new THREE.Group();group.position.set(x,0,z);root.add(group);registerBlocker(x,z,3.7,2.1);contactShadow(x,z,4.6,3.25);
  const cushion=textile(color,THREE.FrontSide);
  soft(0,.48,0,3.5,.45,1.48,cushion,.21,group);
  soft(0,.91,-.57,3.64,1.25,.34,cushion,.13,group);
@@ -477,9 +510,21 @@ function homeScene(){
  for(let i=0;i<6;i++)soft(-6.3+i*.13,.67,-14, .13,.04,.35,i%2?book:brass,.014);
  [0,1,2,3].forEach((idx)=>selectHotspot(idx%2?6:-6,1.6,idx>1?-16:0,idx));
 }
+// Reuse clearcoat glass materials for every bottle, lowering material allocations during scene switches.
+const perfumeGlassCache=new Map();
+function perfumeGlass(color){
+ if(perfumeGlassCache.has(color))return perfumeGlassCache.get(color);
+ const material=new THREE.MeshPhysicalMaterial({
+  color,roughness:.085,metalness:.035,transparent:true,opacity:.84,
+  depthWrite:false,clearcoat:.95,clearcoatRoughness:.07,ior:1.45,
+  envMapIntensity:1.18
+ });
+ perfumeGlassCache.set(color,material);reusableMaterials.add(material);
+ return material;
+}
 function perfumeBottle(g,x,z,color,kind=0,y=0){
  const gp=new THREE.Group();gp.position.set(x,y,z);g.add(gp);
- const tinted=new THREE.MeshPhysicalMaterial({color,transparent:true,opacity:.80,roughness:.14,metalness:.02,depthWrite:true});
+ const tinted=perfumeGlass(color);
  if(kind%2)tube(0,.23,0,.22,.22,.46,tinted,gp);
  else soft(0,.29,0,.46,.53,.26,tinted,.09,gp);
  soft(0,.62,0,.20,.13,.19,brass,.022,gp);
@@ -487,7 +532,7 @@ function perfumeBottle(g,x,z,color,kind=0,y=0){
  return gp;
 }
 function beautyIsland(x,z,index){
- const g=new THREE.Group();g.position.set(x,0,z);g.userData.itemIndex=index;root.add(g);pickables.push(g);registerBlocker(x,z,2.8,2.3);
+ const g=new THREE.Group();g.position.set(x,0,z);g.userData.itemIndex=index;root.add(g);pickables.push(g);registerBlocker(x,z,2.8,2.3);contactShadow(x,z,3.6,3.4);
  tube(0,.47,0,1.25,1.13,.94,mat('#b4a39d',.33),g);
  tube(0,.96,0,1.36,1.28,.11,ceramic,g);
  ring(0,1.03,0,1.19,.023,brass,Math.PI/2,g);
@@ -580,7 +625,7 @@ function brandBox(g,x,y,z,index){
 function groceryShelves(x,z){
  const g=new THREE.Group();g.position.set(x,0,z);root.add(g);
  g.userData.itemIndex=Math.abs(Math.round(x)+Math.round(z))%4;
- pickables.push(g);registerBlocker(x,z,1.65,5.55);
+ pickables.push(g);registerBlocker(x,z,1.65,5.55);contactShadow(x,z,2.25,6.4);
  soft(0,.12,0,1.45,.22,5.4,darkMetal,.06,g);
  for(const y of [.57,1.24,1.91,2.58,3.24]){
   soft(0,y,0,1.48,.10,5.45,mat('#bba88f',.67),.025,g);
@@ -593,7 +638,7 @@ function groceryShelves(x,z){
  for(const s of [-1,1])soft(s*.75,3.6,0,.11,.35,5.4,brass,.02,g);
 }
 function produceIsland(x,z,index){
- const g=new THREE.Group();g.position.set(x,0,z);g.userData.itemIndex=index;root.add(g);pickables.push(g);registerBlocker(x,z,2.75,1.95);
+ const g=new THREE.Group();g.position.set(x,0,z);g.userData.itemIndex=index;root.add(g);pickables.push(g);registerBlocker(x,z,2.75,1.95);contactShadow(x,z,3.6,2.8);
  soft(0,.38,0,2.75,.73,1.85,mat('#806d57',.77),.12,g);soft(0,.76,0,2.83,.12,1.95,wood,.045,g);
  for(let i=0;i<14;i++){
   const a=i*2.4,r=.8*Math.sqrt(i/14),shade=i%3;
@@ -627,6 +672,7 @@ function selectHotspot(x,y,z,index){
 function disposeWorld(){
  const geometries=new Set(),materials=new Set();
  root.traverse(n=>{
+  if(n.isInstancedMesh)n.dispose();
   if(n.isLight&&n.shadow?.map)n.shadow.map.dispose();
   if(n.geometry&&n.geometry!==boxGeo&&n.geometry!==sphereGeo)geometries.add(n.geometry);
   if(n.material)for(const m of (Array.isArray(n.material)?n.material:[n.material])){
