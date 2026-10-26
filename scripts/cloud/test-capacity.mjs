@@ -1,5 +1,5 @@
 import test from "node:test";import assert from "node:assert/strict";
-import {planCapacity,defaultWorkloads} from "../../lib/cloud/capacity.ts";
+import {planCapacity,defaultWorkloads,twoProductWorkloads} from "../../lib/cloud/capacity.ts";
 test("Default workloads are explicit estimates, never real measurements",()=>{
  assert.ok(defaultWorkloads.some(x=>x.id==="veto"&&!x.enabled));
  assert.ok(defaultWorkloads.some(x=>x.id==="data"&&x.ramMiB===8192));
@@ -28,4 +28,26 @@ test("Replicas are accounted for",()=>{
  const x=[{...defaultWorkloads[0],enabled:true,replicas:3}];
  const r=planCapacity({cpu:8,ramMiB:8192,reservedCpu:1,reservedRamMiB:1024},x);
  assert.equal(r.usedCpu,3);assert.equal(r.usedRamMiB,3072);
+});
+
+test("Two isolated production candidates cannot fit a 16 GiB pilot with operational reserve",()=>{
+ const r=planCapacity({cpu:8,ramMiB:16384,reservedCpu:1,reservedRamMiB:2048},twoProductWorkloads);
+ assert.equal(r.valid,true);
+ assert.equal(r.fit,false);
+ assert.ok(r.notes.some(x=>x.includes("exceed")));
+});
+test("32 GiB two-product estimate fits RAM and CPU only with explicitly reserved headroom",()=>{
+ const r=planCapacity({cpu:16,ramMiB:32768,reservedCpu:2,reservedRamMiB:4096},twoProductWorkloads);
+ assert.equal(r.fit,true);
+ assert.equal(r.usedCpu,12);
+ assert.equal(r.usedRamMiB,19968);
+ assert.equal(r.availableRamMiB,28672);
+ assert.ok(twoProductWorkloads.some(x=>x.id==='vetogram-neon-compat'));
+ assert.ok(twoProductWorkloads.some(x=>x.id==='promptence-supabase'));
+ assert.ok(twoProductWorkloads.some(x=>x.id==='clickhouse'&&!x.enabled));
+});
+test("Expensive media and ClickHouse workloads do not silently fit a 32 GiB first VPS",()=>{
+ const heavy=twoProductWorkloads.map(x=>({...x,enabled:true}));
+ const r=planCapacity({cpu:16,ramMiB:32768,reservedCpu:2,reservedRamMiB:4096},heavy);
+ assert.equal(r.fit,false);
 });
