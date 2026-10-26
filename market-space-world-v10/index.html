@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#10110f">
 <meta name="description" content="MARKET SPACE V10 — новая экспериментальная 3D-архитектура retail: полноценная прогулка по бутику, мебели, beauty и супермаркету.">
-<title>MARKET SPACE — Immersive World V10.7</title>
+<title>MARKET SPACE — Immersive World V10.8</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"}}</script>
 <style>
 :root{color-scheme:dark;font:14px/1.5 Inter,"Helvetica Neue",Arial,sans-serif;background:#111311;color:#f5f0e7;--paper:#f4eee3;--mute:#b7b3a8;--line:#d3c6b64b;--warm:#e4c79d}*{box-sizing:border-box}
@@ -37,6 +37,26 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 border:1px solid #d6b98b70;padding:9px 11px;font:11px/1.5 ui-monospace,SFMono-Regular,monospace;
 pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
 #perfHud[hidden]{display:none!important}
+
+
+#experiencePanel{position:fixed;z-index:15;top:94px;left:clamp(12px,3vw,52px);width:min(370px,calc(100vw - 24px));max-height:calc(100dvh - 190px);overflow-y:auto;
+background:linear-gradient(135deg,#263029ed,#0e1612f5);backdrop-filter:blur(20px);border:1px solid #e1caac88;border-radius:12px;padding:19px 18px;color:#ede6d6;box-shadow:0 20px 60px #000a}
+#experiencePanel[hidden]{display:none!important}
+.experienceTop{display:flex;gap:12px;justify-content:space-between;align-items:flex-start}
+.experienceTop h2{font:normal 33px Georgia,serif;letter-spacing:-.05em;margin:5px 0 9px}
+.experienceTop button{background:none;color:#f4e8d4;border:1px solid #d4c3a288;border-radius:5px;width:31px;height:31px}
+.experienceKicker{font-size:9px;letter-spacing:.20em;color:#e9cb9c}
+.experienceIntro{font-size:11px;line-height:1.6;color:#d4cbb7;margin:0 0 16px}
+.experienceSection{border-top:1px solid #e4d5ba46;padding:13px 0}
+.experienceSection strong{display:block;font-size:9px;letter-spacing:.15em;color:#d7c39f;text-transform:uppercase;margin:0 0 10px}
+.experienceOptions{display:flex;flex-wrap:wrap;gap:7px}
+.experienceOptions button{padding:9px 11px;min-height:37px;background:#ffffff0a;color:#efe4d3;border:1px solid #eed7b46e;border-radius:5px;font-size:11px}
+.experienceOptions button[aria-pressed="true"]{background:#e7cfaa;border-color:#e7cfaa;color:#202720;font-weight:800}
+.experienceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:15px}
+.experienceActions button{min-height:42px;border:1px solid #e6cda8a6;background:#ffffff11;color:#f4e6cf;border-radius:5px;font-weight:750;font-size:11px;padding:9px 8px}
+.experienceActions button.main{background:#e8d1b2;color:#17231c}
+.experienceNote{font-size:10px;color:#c7c5b8;line-height:1.5;margin:13px 0 0}
+@media(max-width:620px){#experiencePanel{top:auto;left:7px;right:7px;bottom:92px;width:auto;max-height:min(49dvh,450px);padding:13px 14px}.experienceTop h2{font-size:27px}}
 
 /* V10.7 immersive wardrobe configurator: one secondary mobile sheet, with 3D viewport unobstructed. */
 #lookbookPanel{position:fixed;z-index:15;left:clamp(12px,3vw,52px);top:96px;width:min(365px,calc(100vw - 26px));max-height:calc(100dvh - 208px);overflow-y:auto;overscroll-behavior:contain;
@@ -100,7 +120,15 @@ pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
 .tourBtn{min-height:66px;padding:10px 23px;border:1px solid #d7c8b3;color:#141614;background:#dfcfb6;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.13em;white-space:nowrap;border-radius:7px}
 .tourBtn:hover{background:#f4ebdb}
 .help{position:fixed;z-index:4;left:clamp(18px,3vw,52px);bottom:39px;font-size:10px;color:#f1e9dcab;letter-spacing:.1em}.help b{color:#fff}
-.movePad{display:none;position:fixed;z-index:9;left:20px;bottom:128px;border:1px solid #e6ddc5a8;width:100px;height:100px;border-radius:50%;background:#1015134d;backdrop-filter:blur(7px);touch-action:none}.padThumb{width:43px;height:43px;position:absolute;left:28px;top:28px;border-radius:50%;background:#e5d5b9ba;box-shadow:0 5px 20px #0009}
+.movePad,.lookPad{display:none;position:fixed;z-index:9;bottom:125px;border:1px solid #e6ddc597;width:112px;height:112px;border-radius:50%;background:radial-gradient(circle,#24312a88,#0f1613a8);backdrop-filter:blur(9px);touch-action:none;user-select:none;-webkit-user-select:none}
+.movePad{left:17px}.lookPad{right:17px}
+.padThumb,.lookThumb{width:46px;height:46px;position:absolute;left:32px;top:32px;border-radius:50%;background:#e4d0afc2;box-shadow:0 5px 20px #0009;pointer-events:none;transition:transform .045s linear}
+.lookThumb{background:#cfdfd3a9}
+.movePad:before,.lookPad:before{position:absolute;top:-19px;left:0;right:0;text-align:center;color:#efe4d0bd;font:700 9px Arial,sans-serif;letter-spacing:.12em}
+.movePad:before{content:"ХОДИТЬ"}.lookPad:before{content:"СМОТРЕТЬ"}
+#interactionBtn{display:none;position:fixed;z-index:9;right:27px;bottom:251px;background:#e8d4b3;color:#222720;border:1px solid #fff1d3c9;border-radius:50%;width:48px;height:48px;font-weight:800;box-shadow:0 9px 22px #0008}
+#interactionBtn:disabled{opacity:.45}
+
 .touchHelp{display:none}
 #loading{position:fixed;inset:0;z-index:20;background:radial-gradient(circle at 50% 43%,#303a34,#151b18 58%,#0d110f);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;transition:opacity .6s,visibility .6s;padding:25px}
 #loading.ready{opacity:0;visibility:hidden;pointer-events:none}
@@ -150,7 +178,7 @@ pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
  .header{min-height:66px;padding:11px 9px;gap:5px}.logo{gap:8px}.logomark{height:30px;width:30px}.logomark b{font-size:20px}.brand{font-size:10px;letter-spacing:.12em}.brand small{font-size:7px;letter-spacing:.13em}.topAction{padding:8px 6px;font-size:8px}#styleBtn{border-color:#f0cfa799}
  .titlePanel{top:88px;left:17px;width:calc(100% - 115px);max-width:320px}.titlePanel h1{font-size:39px;margin:12px 0 8px}.titlePanel p{font-size:10px;max-width:235px;line-height:1.5}.titlePanel .kicker{font-size:8px}.titlePanel button{padding:10px 12px;font-size:9px;margin-top:11px}
  #stylePanel{top:75px;right:8px;width:min(320px,calc(100vw - 16px));max-height:calc(100dvh - 190px);overflow-y:auto;padding:13px}#stylePanel h2{font-size:29px;margin:6px 0 10px}#worldNote{top:84px;right:10px;font-size:8px;padding:7px 8px;max-width:100px;line-height:1.4;text-align:center}#qualityBtn{top:124px;right:10px;font-size:8px;padding:8px 10px}#assetCredits{top:163px;right:10px;font-size:9px;max-width:165px}.bottomWrap{bottom:8px;width:calc(100vw - 10px);display:block}.worldDock{width:100%;justify-content:space-around;gap:1px;padding:5px}.worldTab{flex:1;min-width:0;font-size:8px;padding:9px 2px}.worldTab .n{font-size:15px}.tourBtn{position:fixed;bottom:105px;left:50%;transform:translateX(-50%);min-height:38px;padding:8px 14px;font-size:9px}
- #objectTip{right:10px;bottom:181px;min-width:156px;max-width:183px;padding:11px}#objectTip strong{font-size:20px}#objectTip button{padding:8px 10px;font-size:9px}.help{display:none}.movePad{display:block}.touchHelp{display:block;position:fixed;right:16px;bottom:136px;z-index:4;font-size:10px;text-align:right;color:#f3e7cfc9;letter-spacing:.1em}#hotspotHint{top:53%}
+ #objectTip{right:10px;bottom:181px;min-width:156px;max-width:183px;padding:11px}#objectTip strong{font-size:20px}#objectTip button{padding:8px 10px;font-size:9px}#interactionBtn{display:block}.help{display:none}.movePad,.lookPad{display:block}.touchHelp{display:block;position:fixed;right:16px;bottom:136px;z-index:4;font-size:10px;text-align:right;color:#f3e7cfc9;letter-spacing:.1em}#hotspotHint{top:53%}
  #notice{bottom:190px;right:12px}.drawer{padding:22px}
 }
 @media(max-width:430px){
@@ -170,11 +198,17 @@ pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
 <div id="viewport" aria-label="Интерактивное 3D-пространство"></div><div class="scrim"></div>
 <header class="header">
 <a class="logo" href="../market-space-showcase-v10/" aria-label="Вернуться на MARKET SPACE"><span class="logomark"><b>M</b></span><span class="brand">MARKET SPACE<small>BY MARGARYAN LABS</small></span></a>
-<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.7</span>
-<button class="topAction" id="lookbookBtn" aria-controls="lookbookPanel" aria-expanded="false">◈ Lookbook</button><button class="topAction" id="styleBtn" aria-controls="stylePanel" aria-expanded="false">✦ Студия</button><button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
+<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.8</span>
+<button class="topAction" id="experienceBtn" aria-controls="experiencePanel" aria-expanded="false">✦ Experience</button><button class="topAction" id="lookbookBtn" aria-controls="lookbookPanel" aria-expanded="false">◈ Lookbook</button><button class="topAction" id="styleBtn" aria-controls="stylePanel" aria-expanded="false">✦ Студия</button><button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
 </header>
 <div class="titlePanel" id="titlePanel"><div class="kicker" id="eyebrow">01 / THE ATELIER</div><h1 id="worldTitle">The<br>Atelier</h1><p id="worldDescription">Мода — это не карточки в каталоге. Исследуй коллекцию, подойди к манекенам и выбери вещи прямо в пространстве.</p><button id="introButton">Исследовать пространство ↗</button></div>
-<div id="worldNote">V10.7 / INTERACTIVE 3D PREVIEW</div><section id="lookbookPanel" role="dialog" aria-label="Interactive Lookbook — собрать образ" hidden>
+<div id="worldNote">V10.8 / INTERACTIVE 3D PREVIEW</div><section id="experiencePanel" role="dialog" aria-label="Интерактивная студия магазина" hidden>
+<div class="experienceTop"><div><span class="experienceKicker" id="experienceKicker">IMMERSIVE SHOPPING</span><h2 id="experienceTitle">Experience Lab</h2></div><button id="closeExperience" aria-label="Закрыть Experience Lab" type="button">✕</button></div>
+<p class="experienceIntro" id="experienceIntro"></p>
+<div id="experienceOptions"></div>
+<div class="experienceActions"><button id="experienceShare" type="button">↗ Поделиться</button><button id="experienceAdd" class="main" type="button">＋ В демо-корзину</button></div>
+<p class="experienceNote" id="experienceNote">Реальные товары и заказы не подключены. Демонстрация интерактивной торговли.</p>
+</section><section id="lookbookPanel" role="dialog" aria-label="Interactive Lookbook — собрать образ" hidden>
 <div class="lookbookTop"><div><span class="lookbookKicker">Fashion / Personal Styling</span><h2>My Lookbook.</h2></div>
 <button id="closeLookbook" class="lookbookClose" type="button" aria-label="Закрыть Lookbook">✕</button></div>
 <p class="lookbookLead">Собери образ, посмотри его на 3D-манекене и отправь ссылку. Изменения происходят в самом пространстве.</p>
@@ -231,7 +265,9 @@ pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
 <p>Кресло Sheen Chair: © 2020 Wayfair, Eric Chadwick, CC0. <a href="https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/SheenChair" target="_blank" rel="noopener noreferrer">Источник</a>.</p>
 <p>Обувь Materials Variants Shoe: © 2021 Shopify, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. <a href="https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/MaterialsVariantsShoe" target="_blank" rel="noopener noreferrer">Источник</a>.</p></div></details><div id="perfHud" hidden aria-label="Диагностика производительности"></div><div id="hotspotHint" aria-hidden="true"></div>
 <div class="help">WASD — <b>двигаться</b> · мышь — <b>осмотреться</b> · клик — <b>товар</b> · T — <b>тур</b></div><div class="touchHelp">Проведи по экрану,<br>чтобы осмотреться</div>
-<div class="movePad" id="movePad" aria-label="Виртуальный джойстик движения"><div class="padThumb" id="padThumb"></div></div>
+<div class="movePad" id="movePad" role="group" aria-label="Левый джойстик: движение"><div class="padThumb" id="padThumb"></div></div>
+<div class="lookPad" id="lookPad" role="group" aria-label="Правый джойстик: взгляд"><div class="lookThumb" id="lookThumb"></div></div>
+<button type="button" id="interactionBtn" aria-label="Осмотреть ближайший товар">◎</button>
 <div class="bottomWrap"><nav class="worldDock" aria-label="Выбор 3D-магазина">
 <button class="worldTab active" data-store="fashion"><span class="n">01</span>Fashion</button>
 <button class="worldTab" data-store="food"><span class="n">02</span>Market</button>
@@ -343,10 +379,101 @@ function applyStudioLook(){
  });
  document.querySelectorAll('[data-mood]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mood===studioMood)));
  document.querySelectorAll('[data-finish]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.finish===studioFinish)));
+ if(typeof active!=='undefined'&&active==='home')applyExperienceVisuals();
 }
 function markStudioSurface(mesh,role){
  mesh.userData.styleSurface=role;return mesh;
 }
+// Each category has a genuinely different visitor interaction, not an identical generic swatch sheet.
+const EXPERIENCE_OPTIONS={
+ food:{
+  title:'Market Mix',intro:'Собери продуктовую подборку и посмотри, как меняется центральная экспозиция.',
+  groups:[{key:'pick',title:'01 / Главный продукт',choices:[['produce','Фрукты'],['coffee','Кофе'],['olive','Оливки'],['milk','Молоко']]},
+          {key:'bundle',title:'02 / Размер набора',choices:[['one','Один'],['two','Для двоих'],['family','Семейный']]}]
+ },
+ beauty:{
+  title:'Scent Atelier',intro:'Создай аромат: выбери ноту и характер стекла. Флаконы перестраиваются в 3D.',
+  groups:[{key:'scent',title:'01 / Нота аромата',choices:[['rose','Rose'],['citrus','Citrus'],['amber','Amber']]},
+          {key:'glass',title:'02 / Отделка флакона',choices:[['clear','Прозрачный'],['frost','Матовый']]}]
+ },
+ home:{
+  title:'Living Composer',intro:'Подбери ткань диванов и поменяй расположение мебели для интерьера.',
+  groups:[{key:'fabric',title:'01 / Обивка',choices:[['sand','Sand'],['sage','Sage'],['rose','Rose'],['charcoal','Graphite']]},
+          {key:'layout',title:'02 / Сценография',choices:[['gallery','Галерея'],['conversation','Для беседы']]}]
+ }
+};
+const EXPERIENCE_DEFAULTS={food:{pick:'produce',bundle:'one'},beauty:{scent:'rose',glass:'clear'},home:{fabric:'sand',layout:'gallery'}};
+const EXPERIENCE_PRICES={one:1,two:2,family:3};
+function initialExperienceState(){
+ const params=new URLSearchParams(location.search),result={};
+ for(const [store,defaults] of Object.entries(EXPERIENCE_DEFAULTS)){
+  result[store]={};
+  for(const [key,value] of Object.entries(defaults)){
+   const options=EXPERIENCE_OPTIONS[store].groups.find(g=>g.key===key).choices.map(c=>c[0]);
+   const requested=params.get('exp_'+store+'_'+key);
+   result[store][key]=requested&&options.includes(requested)?requested:value;
+  }
+ }
+ return result;
+}
+let experienceState=initialExperienceState(),experienceVisuals={fruit:[],perfume:[],sofas:[]};
+function selectedExperienceItem(store){
+ if(store==='food')return {produce:2,coffee:0,olive:1,milk:3}[experienceState.food.pick];
+ if(store==='beauty')return 0;
+ if(store==='home')return 0;
+ return null;
+}
+function selectedExperienceQty(store){return store==='food'?EXPERIENCE_PRICES[experienceState.food.bundle]:1;}
+function experienceTotal(store){
+ const index=selectedExperienceItem(store);
+ return index==null?0:DATA[store].items[index][2]*selectedExperienceQty(store);
+}
+function applyExperienceVisuals(){
+ if(active==='food'){
+  const colours={produce:['#dc995c','#ad6644','#84965a'],coffee:['#926e47','#c39a61','#846249'],
+   olive:['#7d9160','#a2a974','#718055'],milk:['#e4d7c4','#d0cbbe','#f0dfb5']};
+  const shades=colours[experienceState.food.pick];
+  experienceVisuals.fruit.forEach((obj,i)=>{
+   if(!obj.userData.experienceBaseMaterial){
+    obj.material=obj.material.clone();obj.userData.experienceBaseMaterial=true;
+   }
+   obj.material.color.set(shades[i%3]);
+   if(!obj.userData.experienceBaseScale)obj.userData.experienceBaseScale=obj.scale.clone();
+   obj.scale.copy(obj.userData.experienceBaseScale).multiplyScalar(experienceState.food.bundle==='family'?1.14:1);
+  });
+ }else if(active==='beauty'){
+  const tint={rose:'#d6a3ad',citrus:'#dbbb75',amber:'#b48a5c'}[experienceState.beauty.scent];
+  experienceVisuals.perfume.forEach(obj=>{
+   if(!obj.userData.experienceBaseMaterial){
+    obj.material=obj.material.clone();obj.userData.experienceBaseMaterial=true;
+   }
+   obj.material.color.set(tint);
+   obj.material.roughness=experienceState.beauty.glass==='frost'?.6:.10;
+   obj.material.opacity=experienceState.beauty.glass==='frost'?.97:.84;
+   obj.material.needsUpdate=true;
+  });
+ }else if(active==='home'){
+  const tint={sand:'#c3aa91',sage:'#8d9d8c',rose:'#c19a9e',charcoal:'#545d5d'}[experienceState.home.fabric];
+  experienceVisuals.sofas.forEach((group,i)=>{
+   group.rotation.y=experienceState.home.layout==='conversation'?(i%2===0?.22:-.22):0;
+   group.traverse(obj=>{
+    if(!obj.isMesh||obj.userData.styleSurface!=='upholstery')return;
+    if(!obj.userData.experienceBaseMaterial){
+     obj.material=obj.material.clone();obj.userData.experienceBaseMaterial=true;
+    }
+    obj.material.color.set(tint);
+   });
+  });
+ }
+}
+function experienceURL(){
+ const url=new URL(location.href);url.searchParams.set('world',active);
+ if(EXPERIENCE_OPTIONS[active]){
+  for(const [k,v] of Object.entries(experienceState[active]))url.searchParams.set('exp_'+active+'_'+k,v);
+ }
+ history.replaceState(null,'',url);return url;
+}
+
 let active='fashion',root=new THREE.Group(), hotspots=[],pickables=[],blockers=[],keys=new Set(),yaw=0,pitch=-.03,touring=false,tourT=0,tourRoute=[],joy={x:0,y:0},walkVelocity={x:0,z:0},curProduct=null,cart={},lastActive=null;
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(61,1,.07,120);
@@ -928,7 +1055,7 @@ function chair(x,z){const g=new THREE.Group();g.position.set(x,0,z);root.add(g);
 function homeScene(){
  for(const z of [0,-16])for(const x of [-6.6,6.6]){
   soft(x,.02,z,6.8,.035,6.0,mat(z===0?'#a39582':'#aaa396',.99),.05);
-  const sofa=upholsteredSofa(x,z,x>0?'#b6b7ad':'#c5aa95');sofa.userData.itemIndex=z===0?0:1;pickables.push(sofa);
+  const sofa=upholsteredSofa(x,z,x>0?'#b6b7ad':'#c5aa95');experienceVisuals.sofas.push(sofa);sofa.userData.itemIndex=z===0?0:1;pickables.push(sofa);
   table(x,z+2.0);
   floorLamp(x+(x>0?2.8:-2.8),z-1.6);
   plant(x+(x>0?-2.8:2.8),z-2.1);
@@ -982,8 +1109,12 @@ function beautyScene(){
   }
  }
  for(const z of [-7,-20]){
-   soft(0,.50,z,3.6,.45,1.2,mat('#a68c88',.92),.23);
-   ball(0,1.27,z,.96,.73,.36,mat('#b9a19d',.8));
+  soft(0,.50,z,3.6,.45,1.2,mat('#a68c88',.92),.23);
+  const hero=perfumeBottle(root,0,z,'#d9a1ad',0,.96);
+  hero.scale.setScalar(1.75);
+  if(hero.children[0]?.isMesh)experienceVisuals.perfume.push(hero.children[0]);
+  ring(0,1.04,z,.85,.025,brass);
+  selectHotspot(0,2.12,z+1.15,0);
  }
 }
 // Shared graphic identity is embossed as actual small mesh labels on selected product faces.
@@ -1074,7 +1205,7 @@ function produceIsland(x,z,index){
  for(let i=0;i<14;i++){
   const a=i*2.4,r=.8*Math.sqrt(i/14),shade=i%3;
   const xx=Math.sin(a)*r,zz=Math.cos(a)*r*.8,yy=.90+(i%3)*.055;
-  const fruit=ball(xx,yy,zz,.17,.16,.18,mat(shade===0?'#dd9957':shade===1?'#ac5e44':'#738e59',.66),g);
+  const fruit=ball(xx,yy,zz,.17,.16,.18,mat(shade===0?'#dd9957':shade===1?'#ac5e44':'#738e59',.66),g);experienceVisuals.fruit.push(fruit);
   tube(xx,yy+.162,zz,.017,.022,.08,wood,g);
   if(i%2===0){const leaf=ball(xx+.055,yy+.215,zz,.085,.018,.044,mat('#4f704a',.91),g);leaf.rotation.z=.3;}
  }
@@ -1117,14 +1248,15 @@ function disposeWorld(){
 }
 function setStore(key){
  if(!DATA[key])return;
- closeLookbook();closeStyleStudio();active=key;lookbookStage=null;showroomGeneration++;premiumSlots=[];touring=false;tourRoute=[];walkVelocity.x=walkVelocity.z=0;
- keys.clear();joy.x=joy.y=0;$('tourBtn').textContent='▶ Кинотур';
+ closeExperience();closeLookbook();closeStyleStudio();active=key;lookbookStage=null;showroomGeneration++;premiumSlots=[];touring=false;tourRoute=[];walkVelocity.x=walkVelocity.z=0;
+ keys.clear();resetTouchSticks();$('tourBtn').textContent='▶ Кинотур';
  disposeWorld();
- hotspots=[];pickables=[];blockers=[];marketPackBatches.clear();tipCurrent=-1;$('objectTip').classList.remove('show');premiumState='idle';updatePremiumStatus();architecture(key);
+ hotspots=[];pickables=[];blockers=[];experienceVisuals={fruit:[],perfume:[],sofas:[]};marketPackBatches.clear();tipCurrent=-1;$('objectTip').classList.remove('show');premiumState='idle';updatePremiumStatus();architecture(key);
  try{if(key==='fashion')fashionScene();else if(key==='home')homeScene();else if(key==='beauty')beautyScene();else foodScene();}
  catch(err){console.error('Scene build error:',err);toast('Часть объектов не загрузилась: '+err.message);}
- upgradePremiumAssets(key);reconcilePremiumModels();applyStudioLook();
+ upgradePremiumAssets(key);reconcilePremiumModels();applyStudioLook();applyExperienceVisuals();
  camera.position.set(0,1.68,10.7);yaw=0;pitch=-.065;updateCamera();
+ $('experienceBtn').hidden=key==='fashion';$('lookbookBtn').hidden=key!=='fashion';
  const d=DATA[key];$('worldTitle').innerHTML=d.name.replace(' ','<br>');$('eyebrow').textContent=d.tag;$('worldDescription').textContent=d.desc;
  $('titlePanel').style.opacity='1';$('titlePanel').style.pointerEvents='auto';
  document.querySelectorAll('[data-store]').forEach(b=>{b.classList.toggle('active',b.dataset.store===key);b.setAttribute('aria-pressed',String(b.dataset.store===key));});
@@ -1164,7 +1296,7 @@ function selectAt(cx,cy){
   }
  }
 }
-function showDrawer(){closeLookbook();const d=$('drawerOverlay');d.classList.add('open');d.setAttribute('aria-hidden','false');lastActive=document.activeElement;$('closeDrawer').focus();keys.clear();joy.x=joy.y=0;}
+function showDrawer(){closeExperience();closeLookbook();resetTouchSticks();const d=$('drawerOverlay');d.classList.add('open');d.setAttribute('aria-hidden','false');lastActive=document.activeElement;$('closeDrawer').focus();keys.clear();joy.x=joy.y=0;}
 function hideDrawer(){const d=$('drawerOverlay');d.classList.remove('open');d.setAttribute('aria-hidden','true');if(lastActive&&lastActive.focus)lastActive.focus();}
 function money(v){return Number(v).toLocaleString('ru-RU')+' ֏';}
 function priceTotal(){let sum=0,cnt=0;Object.entries(cart).forEach(([key,qty])=>{const [store,i]=key.split(':');const item=DATA[store]?.items[Number(i)];if(item){sum+=item[2]*qty;cnt+=qty;}});$('cartCount').textContent=cnt;return sum;}
@@ -1201,6 +1333,73 @@ function openCart(){
  buildRows(items);if(!items.length){const p=document.createElement('p');p.textContent='Пока пусто — загляни в коллекцию и выбери предмет.';$('drawerProducts').append(p);}
  $('drawerFoot').replaceChildren();const sum=document.createElement('strong');sum.textContent=money(priceTotal());const cap=document.createElement('span');cap.textContent='Итого (демо)';$('drawerFoot').append(cap,sum);showDrawer();
 }
+// Category-specific experience panel uses standard buttons and actual 3D material/geometry state.
+function closeExperience(){
+ $('experiencePanel').hidden=true;$('experienceBtn').setAttribute('aria-expanded','false');
+}
+function renderExperiencePanel(){
+ const cfg=EXPERIENCE_OPTIONS[active];if(!cfg)return;
+ $('experienceKicker').textContent=active.toUpperCase()+' / LIVE 3D EXPERIENCE';
+ $('experienceTitle').textContent=cfg.title;$('experienceIntro').textContent=cfg.intro;
+ const host=$('experienceOptions');host.replaceChildren();
+ for(const group of cfg.groups){
+  const section=document.createElement('div');section.className='experienceSection';
+  const head=document.createElement('strong');head.textContent=group.title;section.append(head);
+  const buttons=document.createElement('div');buttons.className='experienceOptions';buttons.setAttribute('role','group');buttons.setAttribute('aria-label',group.title);
+  for(const [value,label] of group.choices){
+   const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.optionGroup=group.key;b.dataset.optionValue=value;
+   b.setAttribute('aria-pressed',String(experienceState[active][group.key]===value));
+   b.onclick=()=>{
+    experienceState[active][group.key]=value;
+    applyExperienceVisuals();experienceURL();renderExperiencePanel();
+    const next=host.querySelector('[data-option-group="'+group.key+'"][data-option-value="'+value+'"]');
+    if(next)next.focus();
+   };
+   buttons.append(b);
+  }
+  section.append(buttons);host.append(section);
+ }
+ $('experienceAdd').textContent='＋ Добавить '+(active==='food'?'набор':active==='beauty'?'аромат':'интерьер');
+ $('experienceNote').textContent=active==='beauty'?
+ 'Это визуальный выбор оформления демо-флакона, не изготовление настоящего аромата. Заказы и оплата не подключены.':
+ active==='home'?'Выбираешь виртуальную обстановку, не реальные размеры мебели или доставку. Покупки пока демонстрационные.':
+ 'Выбираешь примерный набор, а не товары из действующего магазина. Списания и доставка отключены.';
+ const price=experienceTotal(active);
+ const total=document.createElement('div');total.className='lookbookTotal';
+ const lab=document.createElement('span');lab.textContent='Стоимость демо-набора';
+ const value=document.createElement('b');value.textContent=money(price);
+ total.append(lab,value);host.append(total);
+}
+function openExperience(){
+ if(active==='fashion'){openLookbook();return;}
+ if(!EXPERIENCE_OPTIONS[active])return;
+ closeLookbook();closeStyleStudio();hideDrawer();stopTour();resetTouchSticks();
+ $('experiencePanel').hidden=false;$('experienceBtn').setAttribute('aria-expanded','true');
+ $('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';
+ renderExperiencePanel();$('closeExperience').focus();
+}
+$('experienceBtn').addEventListener('click',()=>$('experiencePanel').hidden?openExperience():closeExperience());
+$('closeExperience').addEventListener('click',()=>{closeExperience();$('experienceBtn').focus();});
+$('experienceAdd').addEventListener('click',()=>{
+ if(!EXPERIENCE_OPTIONS[active])return;
+ const item=selectedExperienceItem(active),quantity=selectedExperienceQty(active);
+ if(!Number.isInteger(item))return;
+ for(let i=0;i<quantity;i++)addToCart(active,item);
+ toast('Выбранное добавлено в демо-корзину');
+});
+$('experienceShare').addEventListener('click',async()=>{
+ if(!EXPERIENCE_OPTIONS[active])return;
+ const url=experienceURL();url.searchParams.set('experience','1');
+ url.searchParams.delete('diagnostics');url.searchParams.delete('assets');
+ const href=url.toString();
+ if(navigator.share&&coarse){
+  try{await navigator.share({title:'MARKET SPACE · '+EXPERIENCE_OPTIONS[active].title,url:href});return;}
+  catch(e){if(e?.name==='AbortError')return;}
+ }
+ try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(href);toast('Ссылка на пространство скопирована');return;}}catch(e){}
+ window.prompt('Скопируй ссылку на свою 3D-подборку:',href);
+});
+
 // Lookbook acts on the 3D model inside Fashion. Sharing is user-initiated, without backend.
 let lookbookFocus=null;
 function closeLookbook(){
@@ -1211,10 +1410,10 @@ function closeLookbook(){
  lookbookFocus=null;
 }
 function openLookbook(){
- if(active!=='fashion')setStore('fashion');
+ closeExperience();if(active!=='fashion')setStore('fashion');
  if(!lookbookStage){toast('Манекен Lookbook недоступен в этой сцене');return;}
  hideDrawer();closeStyleStudio();stopTour();
- keys.clear();joy.x=joy.y=0;
+ keys.clear();resetTouchSticks();
  $('lookbookPanel').hidden=false;$('lookbookBtn').setAttribute('aria-expanded','true');
  $('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';
  applyLookbookState();
@@ -1289,7 +1488,7 @@ function closeStyleStudio(){
  $('styleBtn').setAttribute('aria-expanded','false');
 }
 function openStyleStudio(){
- closeLookbook();hideDrawer();stopTour();keys.clear();joy.x=joy.y=0;
+ closeExperience();closeLookbook();hideDrawer();stopTour();keys.clear();resetTouchSticks();
  $('stylePanel').hidden=false;
  $('styleBtn').setAttribute('aria-expanded','true');
  $('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';
@@ -1359,8 +1558,8 @@ function stopTour(){
 $('introButton').onclick=startTour;
 $('tourBtn').onclick=()=>touring?stopTour():startTour();
 document.addEventListener('keydown',e=>{
- if(e.code==='Escape'){if(!$('lookbookPanel').hidden){closeLookbook();$('lookbookBtn').focus();}else if(!$('stylePanel').hidden){closeStyleStudio();$('styleBtn').focus();}else hideDrawer();return;}
- if(!$('stylePanel').hidden||!$('lookbookPanel').hidden)return;
+ if(e.code==='Escape'){if(!$('experiencePanel').hidden){closeExperience();$('experienceBtn').focus();}else if(!$('lookbookPanel').hidden){closeLookbook();$('lookbookBtn').focus();}else if(!$('stylePanel').hidden){closeStyleStudio();$('styleBtn').focus();}else hideDrawer();return;}
+ if(!$('stylePanel').hidden||!$('lookbookPanel').hidden||!$('experiencePanel').hidden)return;
  if($('drawerOverlay').classList.contains('open')){
   if(e.code==='Tab'){
    const els=[...$('drawerOverlay').querySelectorAll('button:not([disabled]),a[href]')].filter(x=>x.offsetParent!==null);
@@ -1377,12 +1576,33 @@ document.addEventListener('keydown',e=>{
  if(near&&Number.isInteger(near.index))openItem(near.index);
 }});
 document.addEventListener('keyup',e=>keys.delete(e.code));
-window.addEventListener('blur',()=>{keys.clear();joy.x=joy.y=0;});
-const pad=$('movePad');let joyPointer=null;
-function joyMove(e){const r=pad.getBoundingClientRect(),dx=(e.clientX-r.left-r.width/2)/(r.width*.31),dy=(e.clientY-r.top-r.height/2)/(r.height*.31);joy.x=clamp(dx,-1,1);joy.y=clamp(dy,-1,1);$('padThumb').style.transform='translate('+(joy.x*23)+'px,'+(joy.y*23)+'px)';}
-pad.addEventListener('pointerdown',e=>{joyPointer=e.pointerId;pad.setPointerCapture(e.pointerId);joyMove(e);});pad.addEventListener('pointermove',e=>{if(e.pointerId===joyPointer)joyMove(e);});
+window.addEventListener('blur',()=>{keys.clear();resetTouchSticks();});
+const pad=$('movePad'),lookPad=$('lookPad');let joyPointer=null,lookPointer=null,lookJoy={x:0,y:0};
+function stickVector(e,element){
+ const r=element.getBoundingClientRect(),dx=(e.clientX-r.left-r.width/2)/(r.width*.32),dy=(e.clientY-r.top-r.height/2)/(r.height*.32);
+ const magnitude=Math.hypot(dx,dy),adjusted=magnitude<.16?0:Math.min(1,(magnitude-.16)/.84),normal=Math.max(.0001,magnitude);
+ return {x:dx/normal*adjusted,y:dy/normal*adjusted};
+}
+function joyMove(e){
+ const v=stickVector(e,pad);joy.x=v.x;joy.y=v.y;
+ $('padThumb').style.transform='translate('+(joy.x*29)+'px,'+(joy.y*29)+'px)';
+}
+function lookMove(e){
+ const v=stickVector(e,lookPad);lookJoy.x=v.x;lookJoy.y=v.y;
+ $('lookThumb').style.transform='translate('+(lookJoy.x*29)+'px,'+(lookJoy.y*29)+'px)';
+}
+function resetTouchSticks(){
+ joyPointer=lookPointer=null;joy.x=joy.y=lookJoy.x=lookJoy.y=0;
+ $('padThumb').style.transform='';$('lookThumb').style.transform='';
+}
+pad.addEventListener('pointerdown',e=>{if(joyPointer!==null)return;joyPointer=e.pointerId;pad.setPointerCapture(e.pointerId);joyMove(e);stopTour();});pad.addEventListener('pointermove',e=>{if(e.pointerId===joyPointer)joyMove(e);});
 function joyUp(e){if(e.pointerId!==joyPointer)return;joyPointer=null;joy.x=joy.y=0;$('padThumb').style.transform='';}
 pad.addEventListener('pointerup',joyUp);pad.addEventListener('pointercancel',joyUp);
+lookPad.addEventListener('pointerdown',e=>{if(lookPointer!==null)return;lookPointer=e.pointerId;lookPad.setPointerCapture(e.pointerId);lookMove(e);stopTour();});
+lookPad.addEventListener('pointermove',e=>{if(e.pointerId===lookPointer)lookMove(e)});
+function lookUp(e){if(e.pointerId!==lookPointer)return;lookPointer=null;lookJoy.x=lookJoy.y=0;$('lookThumb').style.transform='';}
+lookPad.addEventListener('pointerup',lookUp);
+lookPad.addEventListener('pointercancel',lookUp);
 let dragging=false,dragId=null,dragX=0,dragY=0,dragMoved=false,downX=0,downY=0;
 $('qualityBtn').addEventListener('click',()=>{
  qualityMode=qualityCycle[(qualityCycle.indexOf(qualityMode)+1)%qualityCycle.length];
@@ -1394,11 +1614,31 @@ canvas.addEventListener('pointermove',e=>{if(!dragging||e.pointerId!==dragId)ret
 canvas.addEventListener('pointerup',e=>{if(e.pointerId!==dragId)return;dragging=false;dragId=null;if(!dragMoved)selectAt(e.clientX,e.clientY);});
 canvas.addEventListener('pointercancel',()=>{dragging=false;dragId=null;});
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(renderPixelRatio);});
+// Big right-hand action button: inspect the nearest product or open the current store's lab.
+function nearestProduct(maxDistance=5.4){
+ let result=null,distance=maxDistance;
+ const p=new THREE.Vector3();
+ for(const h of hotspots){
+  h.g.getWorldPosition(p);
+  const len=p.distanceTo(camera.position);
+  if(len<distance&&Number.isInteger(h.index)){
+   result=h.index;distance=len;
+  }
+ }
+ return result;
+}
+$('interactionBtn').addEventListener('click',()=>{
+ if(!$('experiencePanel').hidden||!$('stylePanel').hidden||!$('lookbookPanel').hidden)return;
+ const nearest=nearestProduct();
+ if(nearest!==null)openItem(nearest);
+ else if(active==='fashion')openLookbook();
+ else openExperience();
+});
 const productTip=$('objectTip'),tipLabel=$('tipProductName');
 let tipCurrent=-1,tipFrame=0;
 $('tipProductAction').addEventListener('click',()=>{if(tipCurrent>=0){stopTour();openItem(tipCurrent);}});
 function updateProductTip(){
- if($('drawerOverlay').classList.contains('open')||!$('lookbookPanel').hidden||touring){productTip.classList.remove('show');return;}
+ if($('drawerOverlay').classList.contains('open')||!$('lookbookPanel').hidden||!$('experiencePanel').hidden||touring){productTip.classList.remove('show');return;}
  const pos3=new THREE.Vector3(),projected=new THREE.Vector3();
  let best=Infinity,bestIndex=-1;
  for(const h of hotspots){
@@ -1423,7 +1663,7 @@ function animate(t){
  requestAnimationFrame(animate);
  const delta=Math.min(.04,(t-(animate.prev||t))/1000);animate.prev=t;
  if(document.hidden)return;
- if(!$('drawerOverlay').classList.contains('open')&&$('lookbookPanel').hidden){
+ if(!$('drawerOverlay').classList.contains('open')&&$('lookbookPanel').hidden&&$('stylePanel').hidden&&$('experiencePanel').hidden){
   if(touring&&tourRoute.length>1){
    tourT+=delta/(reduced?2.4:3.65);
    const n=tourRoute.length-1,seg=Math.min(n-1,Math.floor(tourT));
@@ -1445,6 +1685,9 @@ function animate(t){
    move(walkVelocity.x*delta,walkVelocity.z*delta);
    if(keys.has('ArrowLeft'))yaw+=delta*1.3;
    if(keys.has('ArrowRight'))yaw-=delta*1.3;
+   if(lookPointer!==null){
+    yaw-=lookJoy.x*delta*1.7;pitch=clamp(pitch-lookJoy.y*delta*1.03,-.58,.52);
+   }
   }
  }
  if(lookbookFocus){
@@ -1471,7 +1714,10 @@ function animate(t){
    perfElapsed=0;perfFrames=0;
   }
  }
- if(++tipFrame%8===0)updateProductTip();
+ if(++tipFrame%8===0){
+  updateProductTip();
+  $('interactionBtn').setAttribute('aria-label',nearestProduct()!==null?'Осмотреть ближайший товар':'Открыть интерактивную студию магазина');
+}
  // Single bounded quality downgrade on sustained mobile GPU pressure.
  if(coarse&&qualityMode==='auto'&&!qualityReduced&&delta>.002){
   perfWindow+=delta;perfSamples++;
@@ -1491,6 +1737,7 @@ try{
  applyQuality();setStore(DATA[initial]?initial:'fashion');priceTotal();
  if(new URLSearchParams(location.search).get('studio')==='1')openStyleStudio();
  else if(new URLSearchParams(location.search).get('lookbook')==='1')openLookbook();
+ else if(new URLSearchParams(location.search).get('experience')==='1')openExperience();
  $('loading').classList.add('ready');window.__marketSpaceReady=true;
  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
  requestAnimationFrame(animate);
