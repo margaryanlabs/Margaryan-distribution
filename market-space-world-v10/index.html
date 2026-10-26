@@ -1,0 +1,1948 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10110f">
+<meta name="description" content="MARKET SPACE V10 — новая экспериментальная 3D-архитектура retail: полноценная прогулка по бутику, мебели, beauty и супермаркету.">
+<title>MARKET SPACE — Immersive World V11.0</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"}}</script>
+<style>
+:root{color-scheme:dark;font:14px/1.5 Inter,"Helvetica Neue",Arial,sans-serif;background:#111311;color:#f5f0e7;--paper:#f4eee3;--mute:#b7b3a8;--line:#d3c6b64b;--warm:#e4c79d}*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible{outline:2px solid #e7c9a2;outline-offset:3px}a{color:inherit;text-decoration:none}
+#viewport{position:fixed;inset:0;background:radial-gradient(ellipse at 54% 40%,#6c716b,#333a37 45%,#111713)}#viewport canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}#viewport canvas:active{cursor:grabbing}
+.scrim{position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,#070807a8,transparent 23%,transparent 73%,#050606ba),linear-gradient(90deg,#0b0c0a75,transparent 50%);z-index:2}
+.header{position:fixed;z-index:8;top:0;left:0;right:0;min-height:79px;padding:17px clamp(18px,3vw,52px);display:flex;align-items:center;gap:22px;border-bottom:1px solid #ffffff24;backdrop-filter:blur(6px)}
+.logo{display:flex;align-items:center;gap:12px;white-space:nowrap}.logomark{width:38px;height:38px;display:grid;place-items:center;border:1px solid #ecd9b9;transform:rotate(-45deg)}.logomark b{transform:rotate(45deg);font:italic 26px Georgia,serif;letter-spacing:-.12em}.brand{font-size:13px;letter-spacing:.19em;font-weight:770;line-height:1.15}.brand small{font-size:8px;letter-spacing:.23em;display:block;color:#d2c3ae;margin-top:4px}
+.headercenter{display:flex;align-items:center;gap:10px;margin-left:auto;color:#e7e3d2b9;font-size:10px;letter-spacing:.14em;text-transform:uppercase}.liveDot{width:7px;height:7px;border-radius:100%;background:#ddcba7;box-shadow:0 0 10px #f2dcaa90}
+.topAction{background:#111916a6;border:1px solid #e8dcc888;color:#fff;border-radius:5px;padding:11px 13px;letter-spacing:.11em;text-transform:uppercase;font-size:10px;white-space:nowrap}.topAction:hover{background:#dfc59e;color:#1b1e19}
+#cartCount{background:#e2caac;color:#14120f;border-radius:20px;padding:2px 6px;margin-left:4px;font-size:10px}
+.titlePanel{position:fixed;z-index:3;left:clamp(18px,3vw,52px);top:clamp(125px,18vh,210px);pointer-events:none;width:min(460px,45vw)}
+.kicker{letter-spacing:.25em;font-size:10px;font-weight:740;color:#e6d2b0;text-transform:uppercase}.kicker:before{content:"";display:inline-block;width:25px;height:1px;background:currentColor;vertical-align:middle;margin-right:13px}
+.titlePanel h1{font:normal clamp(50px,6vw,104px)/.96 Georgia,"Times New Roman",serif;letter-spacing:-.06em;margin:20px 0 14px;text-shadow:0 12px 29px #0009}
+.titlePanel p{font-size:13px;max-width:320px;line-height:1.74;color:#eee9deb8;text-shadow:0 2px 10px #000c}.titlePanel{transition:opacity .55s ease}
+.titlePanel button{pointer-events:auto;margin-top:20px;padding:14px 18px;border:1px solid #e8dcc8;background:#f1e7d8;color:#1c201e;font-weight:800;font-size:11px;letter-spacing:.11em}
+#worldNote{position:fixed;z-index:5;top:103px;right:clamp(18px,3vw,52px);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#fff6e8ab;border:1px solid #ffffff4c;background:#1419178c;padding:8px 12px}
+#qualityBtn{position:fixed;z-index:9;top:149px;right:clamp(18px,3vw,52px);border:1px solid #dcccaf99;background:#161d1bd9;color:#f5ead5;padding:9px 12px;font-size:10px;letter-spacing:.09em;cursor:pointer;backdrop-filter:blur(12px)}
+#qualityBtn:hover{background:#dbc8a6;color:#1a211c}
+#assetCredits{position:fixed;z-index:9;top:195px;right:clamp(18px,3vw,52px);max-width:min(300px,80vw);font-size:10px;letter-spacing:.02em;color:#eee3cd}
+#assetCredits summary{cursor:pointer;list-style:none;background:#111a17c9;border:1px solid #c8b99c80;padding:8px 11px;backdrop-filter:blur(8px)}
+#assetCredits summary::-webkit-details-marker{display:none}
+#assetCredits[open]{background:#17201def;border:1px solid #c8b99c80;box-shadow:0 10px 38px #0008}
+#assetCredits[open] summary{border:0;border-bottom:1px solid #c8b99c44}
+#assetCredits .creditContent{padding:10px 13px;line-height:1.55}
+#premiumStatus{padding:7px 9px;border:1px solid #e2c69b6a;color:#f1d6b6;font-size:10px;letter-spacing:.04em}
+#assetCredits a{text-decoration:underline;text-underline-offset:3px;color:#f5dcb0}
+#assetCredits a:focus-visible{outline:2px solid #f5dcb0}
+#perfHud{position:fixed;z-index:9;left:16px;top:94px;background:#0e1914e8;color:#e3d8bf;
+border:1px solid #d6b98b70;padding:9px 11px;font:11px/1.5 ui-monospace,SFMono-Regular,monospace;
+pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
+#perfHud[hidden]{display:none!important}
+
+
+#experiencePanel{position:fixed;z-index:15;top:94px;left:clamp(12px,3vw,52px);width:min(370px,calc(100vw - 24px));max-height:calc(100dvh - 190px);overflow-y:auto;
+background:linear-gradient(135deg,#263029ed,#0e1612f5);backdrop-filter:blur(20px);border:1px solid #e1caac88;border-radius:12px;padding:19px 18px;color:#ede6d6;box-shadow:0 20px 60px #000a}
+#experiencePanel[hidden]{display:none!important}
+.experienceTop{display:flex;gap:12px;justify-content:space-between;align-items:flex-start}
+.experienceTop h2{font:normal 33px Georgia,serif;letter-spacing:-.05em;margin:5px 0 9px}
+.experienceTop button{background:none;color:#f4e8d4;border:1px solid #d4c3a288;border-radius:5px;width:31px;height:31px}
+.experienceKicker{font-size:9px;letter-spacing:.20em;color:#e9cb9c}
+.experienceIntro{font-size:11px;line-height:1.6;color:#d4cbb7;margin:0 0 16px}
+.experienceSection{border-top:1px solid #e4d5ba46;padding:13px 0}
+.experienceSection strong{display:block;font-size:9px;letter-spacing:.15em;color:#d7c39f;text-transform:uppercase;margin:0 0 10px}
+.experienceOptions{display:flex;flex-wrap:wrap;gap:7px}
+.experienceOptions button{padding:9px 11px;min-height:37px;background:#ffffff0a;color:#efe4d3;border:1px solid #eed7b46e;border-radius:5px;font-size:11px}
+.experienceOptions button[aria-pressed="true"]{background:#e7cfaa;border-color:#e7cfaa;color:#202720;font-weight:800}
+.experienceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:15px}
+.experienceActions button{min-height:42px;border:1px solid #e6cda8a6;background:#ffffff11;color:#f4e6cf;border-radius:5px;font-weight:750;font-size:11px;padding:9px 8px}
+.experienceActions button.main{background:#e8d1b2;color:#17231c}
+.experienceNote{font-size:10px;color:#c7c5b8;line-height:1.5;margin:13px 0 0}
+@media(max-width:620px){#experiencePanel{top:auto;left:7px;right:7px;bottom:92px;width:auto;max-height:min(49dvh,450px);padding:13px 14px}.experienceTop h2{font-size:27px}}
+
+/* V10.7 immersive wardrobe configurator: one secondary mobile sheet, with 3D viewport unobstructed. */
+#lookbookPanel{position:fixed;z-index:15;left:clamp(12px,3vw,52px);top:96px;width:min(365px,calc(100vw - 26px));max-height:calc(100dvh - 208px);overflow-y:auto;overscroll-behavior:contain;
+ background:linear-gradient(156deg,#20241ee9,#111917f5 60%);border:1px solid #d7c29c93;box-shadow:0 22px 65px #000b;backdrop-filter:blur(20px);padding:19px 18px;color:#f1e7d6;border-radius:12px}
+#lookbookPanel[hidden]{display:none!important}
+.lookbookTop{display:flex;align-items:flex-start;justify-content:space-between;gap:13px}
+.lookbookTop h2{font:normal 38px/.98 Georgia,serif;letter-spacing:-.05em;margin:7px 0 8px}
+.lookbookKicker{font:700 9px Inter,Arial,sans-serif;letter-spacing:.22em;color:#d9c5a6;text-transform:uppercase}
+.lookbookClose{background:transparent;border:1px solid #e0d1b080;border-radius:5px;color:#eee4d2;padding:7px 11px}
+.lookbookLead{margin:0 0 13px;font-size:11px;line-height:1.6;color:#d1c9b8}
+.lookbookGroup{padding:12px 0;border-top:1px solid #e6d0ad38}
+.lookbookGroup strong{display:block;text-transform:uppercase;letter-spacing:.16em;color:#d9c5a9;font-size:9px;margin-bottom:9px}
+.lookbookChoices{display:flex;flex-wrap:wrap;gap:6px}
+.lookbookChoices button{border:1px solid #ebd8b966;color:#eae1d3;background:#ffffff08;padding:9px 10px;border-radius:6px;font-size:11px;min-height:38px}
+.lookbookChoices button[aria-pressed="true"]{background:#e7d1b1;color:#1d2520;border-color:#e7d1b1;font-weight:800}
+.lookbookChoices button:hover:not([aria-pressed="true"]){background:#ffffff20}
+.lookbookLooks button{font-family:Georgia,serif;font-size:14px;letter-spacing:.01em}
+.lookbookColors button{padding:7px;min-width:52px;font-size:9px}
+.lookbookColors i{display:block;width:25px;height:25px;border:1px solid #eee9de99;border-radius:50%;margin:0 auto 5px;box-shadow:0 3px 9px #0008}
+.lookbookTotal{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #dfc9a75c;padding:13px 0 9px;font-size:11px;color:#c7c4b8}
+.lookbookTotal b{font:normal 21px Georgia,serif;color:#f4e2c5}
+.lookbookActions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.lookbookActions button{min-height:41px;border:1px solid #dfc9a58a;border-radius:5px;color:#e9ddc7;background:#ffffff0d;padding:9px 7px;font-size:10px;font-weight:750;cursor:pointer}
+.lookbookActions .main{background:#ead5b7;color:#18221c;border-color:#ead5b7}
+.lookbookActions button:hover{filter:brightness(1.15)}
+.lookbookDisclaimer{margin:11px 0 0;color:#b0b5ab;font-size:10px;line-height:1.5}
+#lookbookBtn{border-color:#e4c49cba;color:#f5e1bf}
+@media(max-width:620px){
+ #lookbookPanel{left:6px;right:6px;top:auto;bottom:92px;width:auto;max-height:min(46dvh,420px);padding:12px 14px}
+ .lookbookTop h2{font-size:28px;margin:4px 0 7px}
+ .lookbookLead{font-size:10px;margin-bottom:8px}
+ .lookbookGroup{padding:9px 0}.lookbookChoices button{padding:7px 9px;min-height:34px}
+ .lookbookActions button{min-height:36px}
+ #lookbookBtn{font-size:8px}
+}
+
+/* V10.6 — a compact editing console, not a full-screen obstructing shopping modal. */
+#stylePanel{position:fixed;z-index:14;right:clamp(12px,3vw,52px);top:91px;width:min(330px,calc(100vw - 26px));background:#111917f2;color:#f2ecdf;
+ border:1px solid #e0cbaa84;box-shadow:0 18px 60px #000a;backdrop-filter:blur(24px);padding:19px 20px 18px;border-radius:12px}
+#stylePanel[hidden]{display:none!important}
+#stylePanel .styleTop{display:flex;justify-content:space-between;align-items:start;gap:10px}
+#stylePanel .styleKicker{font-size:10px;letter-spacing:.22em;color:#d9bc95;text-transform:uppercase}
+#stylePanel h2{font:normal 36px/1 Georgia,serif;letter-spacing:-.06em;margin:9px 0 12px}
+#stylePanel p{color:#c4c8bf;font-size:11px;line-height:1.6;margin:0 0 16px}
+#stylePanel .styleClose{background:none;color:#e9ddc9;border:1px solid #e3d4bd77;width:30px;height:30px;border-radius:5px}
+#stylePanel .styleLabel{display:block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.15em;color:#e0d6c5;margin:15px 0 9px}
+#stylePanel .styleChoices{display:flex;gap:7px}
+#stylePanel .styleChoices button{flex:1;min-width:0;border:1px solid #e2d1b45d;border-radius:6px;padding:10px 5px;background:#ffffff08;color:#e9e0d0;font-size:10px}
+#stylePanel .styleChoices button[aria-pressed="true"]{background:#e6cfad;color:#121814;font-weight:750;border-color:#e6cfad}
+#stylePanel .styleSwatches button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 3px 7px}
+#stylePanel .styleSwatches i{width:25px;height:25px;display:block;border-radius:50%;border:2px solid #ffffff4d;box-shadow:0 2px 8px #0005}
+#stylePanel #shareStyle{width:100%;background:#ebd7b8;border:0;border-radius:6px;color:#22251e;font-size:11px;font-weight:800;letter-spacing:.08em;padding:13px;margin-top:18px}
+#stylePanel #shareStyle:hover{background:#f8e8d0}
+#stylePanel .styleDisclosure{margin-top:11px;color:#b6b8af;font-size:10px;line-height:1.45}
+
+#hotspotHint{position:fixed;z-index:4;left:50%;top:49%;transform:translate(-50%,-50%);width:17px;height:17px;border:1px solid #e1d7bf8a;border-radius:50%;pointer-events:none;opacity:.65}#hotspotHint:after{content:"";position:absolute;top:7px;left:7px;width:2px;height:2px;background:#f2e5cd;border-radius:50%}
+.bottomWrap{position:fixed;z-index:9;bottom:clamp(16px,2vw,35px);left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;max-width:calc(100vw - 30px)}
+.worldDock{background:#101510e8;border:1px solid #e3d1af73;backdrop-filter:blur(24px);padding:6px;display:flex;gap:5px;box-shadow:0 18px 48px #0008;border-radius:12px}
+.worldTab{min-width:108px;display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center;padding:11px 10px;color:#e8e4deae;background:transparent;border:1px solid transparent;border-radius:7px;font-size:10px;letter-spacing:.09em;text-transform:uppercase;font-weight:750}
+.worldTab .n{color:#d9c7a98a;font:italic 18px Georgia,serif}.worldTab:hover{background:#ffffff11}.worldTab.active{background:#e3cfb0;color:#161914}.worldTab.active .n{color:#775f43}
+.tourBtn{min-height:66px;padding:10px 23px;border:1px solid #d7c8b3;color:#141614;background:#dfcfb6;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.13em;white-space:nowrap;border-radius:7px}
+.tourBtn:hover{background:#f4ebdb}
+.help{position:fixed;z-index:4;left:clamp(18px,3vw,52px);bottom:39px;font-size:10px;color:#f1e9dcab;letter-spacing:.1em}.help b{color:#fff}
+.movePad,.lookPad{display:none;position:fixed;z-index:9;bottom:125px;border:1px solid #e6ddc597;width:112px;height:112px;border-radius:50%;background:radial-gradient(circle,#24312a88,#0f1613a8);backdrop-filter:blur(9px);touch-action:none;user-select:none;-webkit-user-select:none}
+.movePad{left:17px}.lookPad{right:17px}
+.padThumb,.lookThumb{width:46px;height:46px;position:absolute;left:32px;top:32px;border-radius:50%;background:#e4d0afc2;box-shadow:0 5px 20px #0009;pointer-events:none;transition:transform .045s linear}
+.lookThumb{background:#cfdfd3a9}
+.movePad:before,.lookPad:before{position:absolute;top:-19px;left:0;right:0;text-align:center;color:#efe4d0bd;font:700 9px Arial,sans-serif;letter-spacing:.12em}
+.movePad:before{content:"ХОДИТЬ"}.lookPad:before{content:"СМОТРЕТЬ"}
+#interactionBtn{display:none;position:fixed;z-index:9;right:27px;bottom:251px;background:#e8d4b3;color:#222720;border:1px solid #fff1d3c9;border-radius:50%;width:48px;height:48px;font-weight:800;box-shadow:0 9px 22px #0008}
+#interactionBtn:disabled{opacity:.45}
+
+.touchHelp{display:none}
+#loading{position:fixed;inset:0;z-index:20;background:radial-gradient(circle at 50% 43%,#303a34,#151b18 58%,#0d110f);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;transition:opacity .6s,visibility .6s;padding:25px}
+#loading.ready{opacity:0;visibility:hidden;pointer-events:none}
+#loading .symbol{font:italic 77px Georgia,serif;color:#e9d9be;letter-spacing:-.15em;line-height:.9}
+#loading h2{font:normal 27px Georgia,serif;letter-spacing:.02em;margin:23px 0 4px}
+#loading p{color:#c7c8bd;margin:0 0 22px;font-size:12px;max-width:340px}
+.loaderTrack{width:180px;height:2px;background:#ffffff2a;overflow:hidden}.loaderTrack i{display:block;width:42%;height:100%;background:#e3c397;animation:loading 1.5s infinite alternate ease-in-out}
+@keyframes loading{to{transform:translateX(142px)}}
+#loadFallback{margin-top:28px;border:1px solid #d5c09c;color:#f7f1e7;padding:11px 14px;font-size:11px;letter-spacing:.08em;display:none}
+#loading.error{background-color:#252e2b;background-position:center;background-size:cover;background-blend-mode:multiply}
+#loading.error:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,#0c1210e6,#0c121087 70%),linear-gradient(0deg,#0c1210c7,transparent 48%)}
+#loading.error>*{position:relative}
+#loading.error .loaderTrack{display:none}
+#loading.error .symbol{font-size:45px}
+#loading.error h2{font:normal clamp(34px,5vw,58px) Georgia,serif;max-width:570px;letter-spacing:-.045em;margin:18px 0}
+#loading.error p{max-width:540px;font-size:13px;line-height:1.7}
+#loading.error #loadFallback{display:inline-flex;background:#ead5b4;color:#101a15;border:1px solid #ead5b4;font-weight:700}
+#galleryFallback{display:none;gap:9px;align-items:center;flex-wrap:wrap;justify-content:center;margin-top:30px}
+#loading.error #galleryFallback{display:flex}
+#galleryFallback button{background:#14211cc9;border:1px solid #e5d0a877;color:#ece0ca;padding:10px 13px;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+#galleryFallback button[aria-pressed="true"]{background:#e0c6a1;color:#181a16}
+#fallbackLabel{display:none;color:#e6d1ad;font-size:10px;letter-spacing:.21em;text-transform:uppercase;margin-top:26px}
+#loading.error #fallbackLabel{display:block}
+#fallbackDisclosure{display:none;font-size:10px!important;color:#dedbd2b0!important;max-width:540px!important;margin-top:16px!important}
+#loading.error #fallbackDisclosure{display:block}
+
+.drawerOverlay{position:fixed;inset:0;background:#020403a1;backdrop-filter:blur(6px);z-index:30;display:none;justify-content:flex-end}
+.drawerOverlay.open{display:flex}.drawer{height:100dvh;width:min(470px,100%);background:#ede9e1;color:#1d2420;overflow-y:auto;box-shadow:-15px 0 75px #0008;padding:clamp(20px,3vw,39px)}
+.drawerHead{display:flex;gap:12px;justify-content:space-between;align-items:center;border-bottom:1px solid #44444435;padding-bottom:20px}
+.drawerHead small{display:block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#7e8175}.drawerHead h2{font:normal 45px Georgia,serif;letter-spacing:-.06em;margin:4px 0 0}.closeBtn{border:1px solid #474b3e80;background:transparent;color:#242520;font-size:16px;width:36px;height:36px}
+.drawerIntro{font-size:13px;line-height:1.7;color:#59645a;margin:21px 0}.products{display:grid;gap:9px}.productItem{display:grid;grid-template-columns:54px 1fr auto;gap:13px;align-items:center;padding:12px 0;border-bottom:1px solid #80847858}
+.productIcon{width:54px;height:58px;display:grid;place-items:center;background:#d6d1c7;font-size:25px}.productItem strong{font-weight:700;font-size:13px}.productItem small{display:block;color:#6d7469;font-size:11px;margin-top:4px}.productItem button{background:#202924;color:#f5ede0;border:0;padding:10px 13px;font-size:11px}
+.productItem button:hover{background:#4d5645}
+.drawerFoot{border-top:1px solid #787b6c82;margin-top:28px;padding-top:22px;display:flex;gap:12px;justify-content:space-between;color:#596258;font-size:12px}
+.drawerFoot strong{font-size:20px;color:#20251d}.itemDesc{font-size:14px;line-height:1.8;color:#59645a;margin-top:25px}
+#notice{position:fixed;z-index:40;bottom:120px;right:25px;max-width:340px;padding:13px 16px;background:#191e1af2;color:#e8d6bb;border:1px solid #c5ae8a93;font-size:12px;opacity:0;pointer-events:none;transition:opacity .25s}
+#notice.show{opacity:1}
+#objectTip{position:fixed;z-index:7;right:clamp(18px,3vw,52px);bottom:116px;max-width:270px;min-width:198px;padding:15px 16px 14px;background:#141a18dc;border:1px solid #e8d7b673;box-shadow:0 14px 45px #060908a8;backdrop-filter:blur(18px);opacity:0;visibility:hidden;transform:translateY(9px);transition:opacity .2s,transform .2s,visibility .2s;pointer-events:none}
+#objectTip.show{opacity:1;visibility:visible;transform:none;pointer-events:auto}
+#objectTip .tipKicker{font-size:9px;letter-spacing:.2em;color:#d6bd97;text-transform:uppercase}
+#objectTip strong{font:normal 24px/1.05 Georgia,serif;display:block;letter-spacing:-.04em;margin:8px 0 9px}
+#objectTip button{font-size:10px;letter-spacing:.11em;text-transform:uppercase;border:1px solid #e0cfb6;background:#eee1ca;color:#1a221d;padding:9px 12px;font-weight:750;cursor:pointer}
+#objectTip button:hover{background:#fff4e1}
+
+@media(max-width:900px){.headercenter{display:none}.header .topAction:first-of-type{margin-left:auto}.titlePanel{top:126px}.titlePanel h1{font-size:57px}.worldTab{min-width:90px}.help{bottom:118px}}
+@media(max-width:620px){
+ .header{min-height:66px;padding:11px 9px;gap:5px}.logo{gap:8px}.logomark{height:30px;width:30px}.logomark b{font-size:20px}.brand{font-size:10px;letter-spacing:.12em}.brand small{font-size:7px;letter-spacing:.13em}.topAction{padding:8px 6px;font-size:8px}#styleBtn{border-color:#f0cfa799}
+ .titlePanel{top:88px;left:17px;width:calc(100% - 115px);max-width:320px}.titlePanel h1{font-size:39px;margin:12px 0 8px}.titlePanel p{font-size:10px;max-width:235px;line-height:1.5}.titlePanel .kicker{font-size:8px}.titlePanel button{padding:10px 12px;font-size:9px;margin-top:11px}
+ #stylePanel{top:75px;right:8px;width:min(320px,calc(100vw - 16px));max-height:calc(100dvh - 190px);overflow-y:auto;padding:13px}#stylePanel h2{font-size:29px;margin:6px 0 10px}#worldNote{top:84px;right:10px;font-size:8px;padding:7px 8px;max-width:100px;line-height:1.4;text-align:center}#qualityBtn{top:124px;right:10px;font-size:8px;padding:8px 10px}#assetCredits{top:163px;right:10px;font-size:9px;max-width:165px}.bottomWrap{bottom:8px;width:calc(100vw - 10px);display:block}.worldDock{width:100%;justify-content:space-around;gap:1px;padding:5px}.worldTab{flex:1;min-width:0;font-size:8px;padding:9px 2px}.worldTab .n{font-size:15px}.tourBtn{position:fixed;bottom:105px;left:50%;transform:translateX(-50%);min-height:38px;padding:8px 14px;font-size:9px}
+ #objectTip{right:10px;bottom:181px;min-width:156px;max-width:183px;padding:11px}#objectTip strong{font-size:20px}#objectTip button{padding:8px 10px;font-size:9px}#interactionBtn{display:block}.help{display:none}.movePad,.lookPad{display:block}.touchHelp{display:block;position:fixed;right:16px;bottom:136px;z-index:4;font-size:10px;text-align:right;color:#f3e7cfc9;letter-spacing:.1em}#hotspotHint{top:53%}
+ #notice{bottom:190px;right:12px}.drawer{padding:22px}
+}
+@media(max-width:430px){
+ .header{padding-inline:8px;gap:4px}
+ .header .brand{display:none}
+ .logo{gap:0;margin-right:auto}
+ .header .topAction{padding:8px 5px;font-size:8px;letter-spacing:0}
+}
+@media(max-width:340px){
+ .header .topAction{font-size:7px;padding:8px 4px}
+ #lookbookPanel{bottom:88px;max-height:42dvh}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="viewport" aria-label="Интерактивное 3D-пространство"></div><div class="scrim"></div>
+<header class="header">
+<a class="logo" href="../market-space-showcase-v10/" aria-label="Вернуться на MARKET SPACE"><span class="logomark"><b>M</b></span><span class="brand">MARKET SPACE<small>BY MARGARYAN LABS</small></span></a>
+<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 11.0</span>
+<button class="topAction" id="experienceBtn" aria-controls="experiencePanel" aria-expanded="false">✦ Experience</button><button class="topAction" id="lookbookBtn" aria-controls="lookbookPanel" aria-expanded="false">◈ Lookbook</button><button class="topAction" id="styleBtn" aria-controls="stylePanel" aria-expanded="false">✦ Студия</button><button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
+</header>
+<div class="titlePanel" id="titlePanel"><div class="kicker" id="eyebrow">01 / THE ATELIER</div><h1 id="worldTitle">The<br>Atelier</h1><p id="worldDescription">Мода — это не карточки в каталоге. Исследуй коллекцию, подойди к манекенам и выбери вещи прямо в пространстве.</p><button id="introButton">Исследовать пространство ↗</button></div>
+<div id="worldNote">V11.0 / INTERACTIVE 3D PREVIEW</div><section id="experiencePanel" role="dialog" aria-label="Интерактивная студия магазина" hidden>
+<div class="experienceTop"><div><span class="experienceKicker" id="experienceKicker">IMMERSIVE SHOPPING</span><h2 id="experienceTitle">Experience Lab</h2></div><button id="closeExperience" aria-label="Закрыть Experience Lab" type="button">✕</button></div>
+<p class="experienceIntro" id="experienceIntro"></p>
+<div id="experienceOptions"></div>
+<div class="experienceActions"><button id="experienceShare" type="button">↗ Поделиться</button><button id="experienceAdd" class="main" type="button">＋ В демо-корзину</button></div>
+<p class="experienceNote" id="experienceNote">Реальные товары и заказы не подключены. Демонстрация интерактивной торговли.</p>
+</section><section id="lookbookPanel" role="dialog" aria-label="Interactive Lookbook — собрать образ" hidden>
+<div class="lookbookTop"><div><span class="lookbookKicker">Fashion / Personal Styling</span><h2>My Lookbook.</h2></div>
+<button id="closeLookbook" class="lookbookClose" type="button" aria-label="Закрыть Lookbook">✕</button></div>
+<p class="lookbookLead">Собери образ, посмотри его на 3D-манекене и отправь ссылку. Изменения происходят в самом пространстве.</p>
+<div class="lookbookGroup"><strong>01 / Кураторские образы</strong><div class="lookbookChoices lookbookLooks">
+<button type="button" data-look-preset="atelier">Atelier</button>
+<button type="button" data-look-preset="sunset">Golden</button>
+<button type="button" data-look-preset="noir">After Dark</button></div></div>
+<div class="lookbookGroup"><strong>02 / Главный предмет</strong><div class="lookbookChoices">
+<button type="button" data-look-garment="coat">Пальто</button>
+<button type="button" data-look-garment="dress">Платье</button>
+<button type="button" data-look-garment="jacket">Пиджак</button>
+<button type="button" data-look-garment="edition">Edition</button></div></div>
+<div class="lookbookGroup"><strong>03 / Цвет ткани</strong><div class="lookbookChoices lookbookColors">
+<button type="button" data-look-color="sand"><i style="background:#ba9e80"></i>Sand</button>
+<button type="button" data-look-color="rose"><i style="background:#ba8b91"></i>Rose</button>
+<button type="button" data-look-color="sage"><i style="background:#657b71"></i>Sage</button>
+<button type="button" data-look-color="night"><i style="background:#393d43"></i>Night</button></div></div>
+<div class="lookbookGroup"><strong>04 / Детали</strong><div class="lookbookChoices">
+<button type="button" data-look-shoes="sneaker">Кроссовки</button>
+<button type="button" data-look-shoes="dark">Тёмные</button>
+<button type="button" data-look-shoes="none">Без обуви</button>
+<button type="button" data-look-bag="yes">Сумка ✓</button>
+<button type="button" data-look-bag="no">Без сумки</button></div></div>
+<div class="lookbookTotal"><span>Примерная стоимость комплекта</span><b id="lookbookPrice">—</b></div>
+<div class="lookbookActions">
+<button type="button" id="lookbookTurn">↻ Вращать манекен</button>
+<button type="button" id="lookbookShare">↗ Поделиться</button>
+<button type="button" id="lookbookReset">Сбросить</button>
+<button type="button" id="lookbookAdd" class="main">＋ Добавить образ</button>
+</div>
+<p class="lookbookDisclaimer">Виртуальная примерка на стандартном манекене, не сканирование тела. Цены демонстрационные, реальная оплата отключена.</p>
+</section><section id="stylePanel" role="dialog" aria-label="Style Studio — оформление 3D-магазина" hidden>
+ <div class="styleTop"><div><div class="styleKicker">Персонализируй пространство</div><h2>Style Studio</h2></div>
+ <button class="styleClose" id="closeStyle" aria-label="Закрыть студию">✕</button></div>
+ <p>Меняй свет, материалы и настроение магазина прямо во время прогулки.</p>
+ <span class="styleLabel">01 / Атмосфера</span>
+ <div class="styleChoices" role="group" aria-label="Выбор освещения">
+ <button type="button" data-mood="gallery" aria-pressed="true">Галерея</button>
+ <button type="button" data-mood="golden" aria-pressed="false">Закат</button>
+ <button type="button" data-mood="noir" aria-pressed="false">Noir</button></div>
+ <span class="styleLabel">02 / Текстура и цвет</span>
+ <div class="styleChoices styleSwatches" role="group" aria-label="Выбор палитры">
+ <button type="button" data-finish="original" aria-pressed="true"><i style="background:conic-gradient(#bd9981 0 25%,#a5b0a1 25% 50%,#cfb9b0 50% 75%,#595a55 75%)"></i>Original</button>
+ <button type="button" data-finish="linen" aria-pressed="false"><i style="background:#cab4a0"></i>Лён</button>
+ <button type="button" data-finish="rose" aria-pressed="false"><i style="background:#a16b75"></i>Rose</button>
+ <button type="button" data-finish="sage" aria-pressed="false"><i style="background:#778b77"></i>Sage</button>
+ <button type="button" data-finish="graphite" aria-pressed="false"><i style="background:#444a4c"></i>Noir</button></div>
+ <button type="button" id="shareStyle">Поделиться этим пространством ↗</button>
+ <div class="styleDisclosure">Ссылка сохранит магазин, свет и палитру. Это демонстрация дизайна, не персональный заказ и не покупка.</div>
+ </section>
+<button id="qualityBtn" type="button" aria-label="Переключить качество 3D-графики" aria-live="polite">Качество: Авто</button>
+<details id="assetCredits"><summary>3D-модели · источники</summary><div class="creditContent">
+<p>Демонстрационные 3D-ассеты, не реальные товары брендов. Детализированные модели загружаются по возможности; процедурные модели остаются резервными.</p><p id="premiumStatus" role="status" aria-live="polite">3D-ассеты: готовность</p>
+<p>Кресло Sheen Chair: © 2020 Wayfair, Eric Chadwick, CC0. <a href="https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/SheenChair" target="_blank" rel="noopener noreferrer">Источник</a>.</p>
+<p>Обувь Materials Variants Shoe: © 2021 Shopify, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. <a href="https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/MaterialsVariantsShoe" target="_blank" rel="noopener noreferrer">Источник</a>.</p></div></details><div id="perfHud" hidden aria-label="Диагностика производительности"></div><div id="hotspotHint" aria-hidden="true"></div>
+<div class="help">WASD — <b>двигаться</b> · мышь — <b>осмотреться</b> · клик — <b>товар</b> · T — <b>тур</b></div><div class="touchHelp">Проведи по экрану,<br>чтобы осмотреться</div>
+<div class="movePad" id="movePad" role="group" aria-label="Левый джойстик: движение"><div class="padThumb" id="padThumb"></div></div>
+<div class="lookPad" id="lookPad" role="group" aria-label="Правый джойстик: взгляд"><div class="lookThumb" id="lookThumb"></div></div>
+<button type="button" id="interactionBtn" aria-label="Осмотреть ближайший товар">◎</button>
+<div class="bottomWrap"><nav class="worldDock" aria-label="Выбор 3D-магазина">
+<button class="worldTab active" data-store="fashion"><span class="n">01</span>Fashion</button>
+<button class="worldTab" data-store="food"><span class="n">02</span>Market</button>
+<button class="worldTab" data-store="beauty"><span class="n">03</span>Beauty</button>
+<button class="worldTab" data-store="home"><span class="n">04</span>Living</button></nav><button class="tourBtn" id="tourBtn">▶ Кинотур</button></div>
+<div id="loading" role="status" aria-live="polite"><div class="symbol">M.</div><h2>Создаём пространство</h2><p id="loadMessage">Загружается новый 3D-мир. Для наилучшего качества открой ссылку в Chrome.</p><div class="loaderTrack"><i></i></div><span id="fallbackLabel">Визуальная галерея / Концепция</span>
+<div id="galleryFallback">
+<button type="button" data-fallback="fashion" aria-pressed="true">Fashion</button>
+<button type="button" data-fallback="food" aria-pressed="false">Market</button>
+<button type="button" data-fallback="beauty" aria-pressed="false">Beauty</button>
+<button type="button" data-fallback="home" aria-pressed="false">Living</button>
+</div>
+<p id="fallbackDisclosure">Фотографии показывают направление дизайна, а не кадры реального 3D-движка V10.</p>
+<a id="loadFallback" href="../market-space-world-v9/?mode=lite">Открыть интерактивную Lite-версию ↗</a></div>
+<div class="drawerOverlay" id="drawerOverlay" role="dialog" aria-modal="true" aria-label="Каталог или корзина" aria-hidden="true"><section class="drawer"><header class="drawerHead"><div><small id="drawerKicker">MARKET SPACE / COLLECTION</small><h2 id="drawerTitle">Коллекция</h2></div><button class="closeBtn" id="closeDrawer" aria-label="Закрыть">✕</button></header><p class="drawerIntro" id="drawerIntro"></p><div class="products" id="drawerProducts"></div><div class="drawerFoot" id="drawerFoot"></div></section></div>
+<div id="objectTip" aria-live="polite"><div class="tipKicker">Доступен для просмотра</div><strong id="tipProductName"></strong><button id="tipProductAction">Открыть товар ↗</button></div><div id="notice" aria-live="polite"></div>
+<script>
+(function(){
+ const slides={
+  fashion:{title:'THE ATELIER',image:"https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=75&auto=format&fit=crop"},
+  food:{title:'FUTURE MARKET',image:"https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=75&auto=format&fit=crop"},
+  beauty:{title:'BEAUTY MAISON',image:"https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=1200&q=75&auto=format&fit=crop"},
+  home:{title:'LIVING GALLERY',image:"https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=1200&q=75&auto=format&fit=crop"}
+ };
+ const loader=document.getElementById('loading'),message=document.getElementById('loadMessage');
+ const params=new URLSearchParams(location.search);
+ function setSlide(key){
+  if(!slides[key])return;
+  const data=slides[key];
+  loader.style.backgroundImage='linear-gradient(110deg,#141b17bb,#11191580),url("'+data.image+'")';
+  document.querySelector('#loading h2').textContent=data.title;
+  document.querySelectorAll('[data-fallback]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.fallback===key)));
+  document.getElementById('loadFallback').href='../market-space-world-v9/?world='+encodeURIComponent(key)+'&mode=lite';
+ }
+ document.querySelectorAll('[data-fallback]').forEach(b=>b.addEventListener('click',()=>setSlide(b.dataset.fallback)));
+ window.__marketSpaceShowFallback=function(reason){
+  // After a running WebGL scene fails, expose an alternative that does not depend on WebGL.
+  window.__marketSpaceReady=false;
+  loader.classList.remove('ready');loader.classList.add('error');
+  message.textContent=reason||'3D недоступен в этом браузере. Можно посмотреть галерею или открыть интерактивный режим Lite.';
+  setSlide(slides[params.get('world')]?params.get('world'):'fashion');
+ };
+ window.addEventListener('error',function(e){
+  if(window.__marketSpaceReady||loader.classList.contains('error'))return;
+  const txt=e?.message||'3D-модуль не удалось загрузить.';
+  window.__marketSpaceShowFallback('WebGL-модуль не запустился: '+txt+'. Выберите пространство или откройте Lite.');
+ },true);
+ window.setTimeout(function(){
+  if(!window.__marketSpaceReady)window.__marketSpaceShowFallback('3D загружается слишком долго или не поддерживается браузером. Галерея доступна без WebGL.');
+ },13500);
+})();
+</script>
+<script type="module">
+import * as THREE from 'three';
+import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const $=id=>document.getElementById(id), clamp=THREE.MathUtils.clamp;
+const coarse=matchMedia('(pointer:coarse)').matches, reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const showPerformance=new URLSearchParams(location.search).get('diagnostics')==='1';
+const DATA={
+ fashion:{name:'The Atelier',tag:'01 / FASHION GALLERY',desc:'Настоящие объёмные манекены, коллекция на рейлах, мягкий свет и материал, который ощущается как ткань.',floor:'#bcb0a0',wall:'#d1c4b7',accent:'#dfb98c',items:[['Пальто Atelier','🧥',34900,'Объёмный силуэт, мягкая шерстяная фактура.'],['Платье Sculpt','👗',28900,'Драпировка и линии, подчёркивающие форму.'],['Пиджак Line','👔',27500,'Структурированный крой с латунными пуговицами.'],['Костюм Edition','🪡',46900,'Сдержанный премиальный образ.'],['Кроссовки Studio','👟',19500,'Тестовая модель обуви с PBR-текстурами.']]},
+ food:{name:'Future Market',tag:'02 / GROCERY EXPERIENCE',desc:'Новая геометрия стеллажей, настоящие формы упаковок, овощные острова и прогулка между отделами.',floor:'#a8aaa0',wall:'#afb7ab',accent:'#e5bc83',items:[['Кофе Atelier','☕',2690,'Зёрна обжарки, демонстрационная упаковка.'],['Оливковое масло','🫒',3490,'Стеклянная бутылка, базовая модель.'],['Фруктовый набор','🍊',2190,'Свежие фрукты в декоративной корзине.'],['Молоко фермерское','🥛',890,'Экологичный картонный пакет.']]},
+ beauty:{name:'Beauty Maison',tag:'03 / BEAUTY MAISON',desc:'Парфюмерная галерея с округлыми флаконами, стеклом, металлом и спокойной атмосферой.',floor:'#bfafa9',wall:'#d8c7c3',accent:'#e3bda5',items:[['Parfum No.05','🌸',34900,'Флакон с полупрозрачным стеклом.'],['Glow Serum','🧴',13500,'Сыворотка во флаконе с пипеткой.'],['Velvet Rouge','💄',5990,'Помада в металлическом футляре.'],['Skin Elixir','✨',14900,'Коллекционный уход.']]},
+ home:{name:'Living Gallery',tag:'04 / LIVING GALLERY',desc:'Диваны с мягкими подушками, интерьерные объекты, дерево, ковры и галерейная подсветка.',floor:'#afada3',wall:'#c8c9c0',accent:'#d5bd9c',items:[['Диван Forma','🛋️',339000,'Трёхместный модульный диван.'],['Кресло Sola','🪑',119000,'Мягкое дизайнерское кресло.'],['Стол Travertine','🪨',99000,'Каменный журнальный стол.'],['Торшер Halo','💡',89000,'Скульптурный интерьерный светильник.']]}
+};
+// Style Studio — three actually different lighting setups and four real mesh material palettes.
+// Values are URL-based and validated against closed enums; no tracking or remote saves.
+const STUDIO_MOODS={
+ gallery:{exposure:1.10,light:1,ambient:1,point:1,env:1,bg:'#ded3c2',mix:0,tint:'#fff1db'},
+ golden:{exposure:1.18,light:.94,ambient:.84,point:1.36,env:1.14,bg:'#a07662',mix:.28,tint:'#ffcf99'},
+ noir:{exposure:.91,light:.53,ambient:.57,point:1.42,env:.67,bg:'#25333e',mix:.64,tint:'#a9c5db'}
+};
+const STUDIO_FINISHES={original:null,linen:'#c9b5a0',rose:'#a16b75',sage:'#778b77',graphite:'#50565a'};
+const initialStudioQuery=new URLSearchParams(location.search);
+let studioMood=Object.hasOwn(STUDIO_MOODS,initialStudioQuery.get('mood'))?initialStudioQuery.get('mood'):'gallery';
+let studioFinish=Object.hasOwn(STUDIO_FINISHES,initialStudioQuery.get('finish'))?initialStudioQuery.get('finish'):'original';
+let studioWallMaterial=null,studioBackgroundColor=null,studioBaseWall=null;
+function applyStudioLook(){
+ const mode=STUDIO_MOODS[studioMood],color=STUDIO_FINISHES[studioFinish]?new THREE.Color(STUDIO_FINISHES[studioFinish]):null;
+ renderer.toneMappingExposure=mode.exposure;
+ if(scene.environment)scene.environmentIntensity=.88*mode.env;
+ if(studioBackgroundColor&&scene.background){
+  scene.background.copy(studioBackgroundColor).lerp(new THREE.Color(mode.bg),mode.mix);
+  if(scene.fog)scene.fog.color.copy(scene.background);
+ }
+ if(studioWallMaterial&&studioBaseWall)studioWallMaterial.color.copy(studioBaseWall).lerp(new THREE.Color(mode.bg),mode.mix*.47);
+ root.traverse(n=>{
+  if(n.isLight){
+   if(n.userData.studioIntensity==null){
+    n.userData.studioIntensity=n.intensity;
+    n.userData.studioColor=n.color.clone();
+   }
+   const gain=n.isHemisphereLight?mode.ambient:n.isPointLight?mode.point:mode.light;
+   n.intensity=n.userData.studioIntensity*gain;
+   n.color.copy(n.userData.studioColor).lerp(new THREE.Color(mode.tint),studioMood==='gallery'?0:.34);
+  }
+  if(n.isMesh&&n.userData.styleSurface){
+   if(!n.userData.studioMaterial){
+    // Clone per editable item to avoid recoloring shared material of every product.
+    const unique=n.material.clone();
+    n.userData.studioBaseColor=n.material.color.clone();
+    n.material=unique;n.userData.studioMaterial=true;
+   }
+   const muted=n.userData.styleSurface==='upholstery'?.16:.25;
+   if(color)n.material.color.copy(color).lerp(n.userData.studioBaseColor,muted);
+   else n.material.color.copy(n.userData.studioBaseColor);
+  }
+ });
+ document.querySelectorAll('[data-mood]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mood===studioMood)));
+ document.querySelectorAll('[data-finish]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.finish===studioFinish)));
+ if(typeof active!=='undefined'&&active==='home')applyExperienceVisuals();
+}
+function markStudioSurface(mesh,role){
+ mesh.userData.styleSurface=role;return mesh;
+}
+// Each category has a genuinely different visitor interaction, not an identical generic swatch sheet.
+const EXPERIENCE_OPTIONS={
+ food:{
+  title:'Market Mix',intro:'Собери продуктовую подборку и посмотри, как меняется центральная экспозиция.',
+  groups:[{key:'pick',title:'01 / Главный продукт',choices:[['produce','Фрукты'],['coffee','Кофе'],['olive','Оливки'],['milk','Молоко']]},
+          {key:'bundle',title:'02 / Размер набора',choices:[['one','Один'],['two','Для двоих'],['family','Семейный']]}]
+ },
+ beauty:{
+  title:'Scent Atelier',intro:'Создай аромат: выбери ноту и характер стекла. Флаконы перестраиваются в 3D.',
+  groups:[{key:'scent',title:'01 / Нота аромата',choices:[['rose','Rose'],['citrus','Citrus'],['amber','Amber']]},
+          {key:'glass',title:'02 / Отделка флакона',choices:[['clear','Прозрачный'],['frost','Матовый']]}]
+ },
+ home:{
+  title:'Living Composer',intro:'Подбери ткань диванов и поменяй расположение мебели для интерьера.',
+  groups:[{key:'fabric',title:'01 / Обивка',choices:[['sand','Sand'],['sage','Sage'],['rose','Rose'],['charcoal','Graphite']]},
+          {key:'layout',title:'02 / Сценография',choices:[['gallery','Галерея'],['conversation','Для беседы']]}]
+ }
+};
+const EXPERIENCE_DEFAULTS={food:{pick:'produce',bundle:'one'},beauty:{scent:'rose',glass:'clear'},home:{fabric:'sand',layout:'gallery'}};
+const EXPERIENCE_PRICES={one:1,two:2,family:3};
+function initialExperienceState(){
+ const params=new URLSearchParams(location.search),result={};
+ for(const [store,defaults] of Object.entries(EXPERIENCE_DEFAULTS)){
+  result[store]={};
+  for(const [key,value] of Object.entries(defaults)){
+   const options=EXPERIENCE_OPTIONS[store].groups.find(g=>g.key===key).choices.map(c=>c[0]);
+   const requested=params.get('exp_'+store+'_'+key);
+   result[store][key]=requested&&options.includes(requested)?requested:value;
+  }
+ }
+ return result;
+}
+let experienceState=initialExperienceState(),experienceVisuals={fruit:[],perfume:[],sofas:[]};
+function selectedExperienceItem(store){
+ if(store==='food')return {produce:2,coffee:0,olive:1,milk:3}[experienceState.food.pick];
+ if(store==='beauty')return 0;
+ if(store==='home')return 0;
+ return null;
+}
+function selectedExperienceQty(store){return store==='food'?EXPERIENCE_PRICES[experienceState.food.bundle]:1;}
+function experienceTotal(store){
+ const index=selectedExperienceItem(store);
+ return index==null?0:DATA[store].items[index][2]*selectedExperienceQty(store);
+}
+function applyExperienceVisuals(){
+ if(active==='food'){
+  const colours={produce:['#dc995c','#ad6644','#84965a'],coffee:['#926e47','#c39a61','#846249'],
+   olive:['#7d9160','#a2a974','#718055'],milk:['#e4d7c4','#d0cbbe','#f0dfb5']};
+  const shades=colours[experienceState.food.pick];
+  experienceVisuals.fruit.forEach((obj,i)=>{
+   if(!obj.userData.experienceBaseMaterial){
+    obj.material=obj.material.clone();obj.userData.experienceBaseMaterial=true;
+   }
+   obj.material.color.set(shades[i%3]);
+   if(!obj.userData.experienceBaseScale)obj.userData.experienceBaseScale=obj.scale.clone();
+   obj.scale.copy(obj.userData.experienceBaseScale).multiplyScalar(experienceState.food.bundle==='family'?1.14:1);
+  });
+ }else if(active==='beauty'){
+  const tint={rose:'#d6a3ad',citrus:'#dbbb75',amber:'#b48a5c'}[experienceState.beauty.scent];
+  experienceVisuals.perfume.forEach(obj=>{
+   if(!obj.userData.experienceBaseMaterial){
+    obj.material=obj.material.clone();obj.userData.experienceBaseMaterial=true;
+   }
+   obj.material.color.set(tint);
+   obj.material.roughness=experienceState.beauty.glass==='frost'?.6:.10;
+   obj.material.opacity=obj.material.transmission>0?1:(experienceState.beauty.glass==='frost'?.97:.84);
+   obj.material.needsUpdate=true;
+  });
+ }else if(active==='home'){
+  const tint={sand:'#c3aa91',sage:'#8d9d8c',rose:'#c19a9e',charcoal:'#545d5d'}[experienceState.home.fabric];
+  experienceVisuals.sofas.forEach((group,i)=>{
+   group.rotation.y=experienceState.home.layout==='conversation'?(i%2===0?.22:-.22):0;
+   group.traverse(obj=>{
+    if(!obj.isMesh||obj.userData.styleSurface!=='upholstery')return;
+    if(!obj.userData.experienceBaseMaterial){
+     obj.material=obj.material.clone();obj.userData.experienceBaseMaterial=true;
+    }
+    obj.material.color.set(tint);
+   });
+  });
+ }
+}
+function experienceURL(){
+ const url=new URL(location.href);url.searchParams.set('world',active);
+ if(EXPERIENCE_OPTIONS[active]){
+  for(const [k,v] of Object.entries(experienceState[active]))url.searchParams.set('exp_'+active+'_'+k,v);
+ }
+ history.replaceState(null,'',url);return url;
+}
+
+let active='fashion',root=new THREE.Group(), hotspots=[],pickables=[],blockers=[],keys=new Set(),yaw=0,pitch=-.03,touring=false,tourT=0,tourRoute=[],joy={x:0,y:0},walkVelocity={x:0,z:0},curProduct=null,cart={},lastActive=null;
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(61,1,.07,120);
+camera.position.set(0,1.68,10.7);
+let renderer;
+try{renderer=new THREE.WebGLRenderer({alpha:false,antialias:!coarse,powerPreference:'high-performance'});}
+catch(e){window.__marketSpaceShowFallback('WebGL недоступен: '+e.message);throw e;}
+const requestedQuality=new URLSearchParams(location.search).get('quality');
+let renderPixelRatio=Math.min(devicePixelRatio||1,coarse?1.3:1.8),qualityMode=requestedQuality==='high'?'high':requestedQuality==='eco'?'eco':'auto';
+const qualityCycle=['auto','high','eco'],qualityLabels={auto:'Авто',high:'HD',eco:'Eco'};
+function applyQuality(){
+ const dpr=devicePixelRatio||1;
+ renderPixelRatio=qualityMode==='eco'?Math.min(dpr,.85):qualityMode==='high'?Math.min(dpr,coarse?1.6:2):Math.min(dpr,coarse?1.3:1.8);
+ renderer.setPixelRatio(renderPixelRatio);
+ renderer.setSize(innerWidth,innerHeight);
+ $('qualityBtn').textContent='Качество: '+qualityLabels[qualityMode];
+}
+
+renderer.setPixelRatio(renderPixelRatio);
+renderer.setSize(innerWidth,innerHeight);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.10;
+renderer.shadowMap.enabled=!coarse;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+$('viewport').appendChild(renderer.domElement);
+renderer.domElement.addEventListener('webglcontextlost',e=>{
+ e.preventDefault();
+ window.__marketSpaceShowFallback('Графическое ускорение прервано. Доступна галерея концепций и Lite-прогулка.');
+});
+scene.add(root);
+// Real reflected studio lighting for polished metals, glass and ceramic. Non-fatal if unavailable.
+let environmentTarget=null;
+try{
+ const reflectionRoom=new RoomEnvironment();
+ const generator=new THREE.PMREMGenerator(renderer);
+ environmentTarget=generator.fromScene(reflectionRoom,.025);
+ scene.environment=environmentTarget.texture;
+ scene.environmentIntensity=.88;
+ reflectionRoom.dispose();generator.dispose();
+}catch(e){console.info('Using direct lighting without image-based reflections',e?.message||e)}
+// Cache globally reusable base PBR finishes; scene-specific texture maps remain disposable.
+const materialCache=new Map(),reusableMaterials=new WeakSet();
+function mat(color,rough=.68,metal=0,other={}){
+ const simple=Object.keys(other).length===0,key=simple?String(color)+'|'+rough+'|'+metal:null;
+ if(simple&&materialCache.has(key))return materialCache.get(key);
+ const m=new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal,...other});
+ if(simple){materialCache.set(key,m);reusableMaterials.add(m);}
+ return m;
+}
+const ivory=mat('#ebe5d8',.92), brass=mat('#ad8c62',.32,.75),darkMetal=mat('#33352e',.34,.72);
+const ceramic=mat('#e8dbca',.28,.1),black=mat('#252521',.52);
+function timberTexture(){
+ const size=512,c=document.createElement('canvas');c.width=c.height=size;
+ const ctx=c.getContext('2d');
+ ctx.fillStyle='#95755a';ctx.fillRect(0,0,size,size);
+ let state=721;
+ const rand=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;};
+ for(let k=0;k<118;k++){
+  const y=rand()*size,shade=rand()>.48?'#d9aa77':'#3e2419';
+  ctx.strokeStyle=shade;ctx.globalAlpha=.028+rand()*.18;ctx.lineWidth=.4+rand()*2.3;
+  ctx.beginPath();
+  for(let x=0;x<=size;x+=14){
+   const yy=y+Math.sin(x*.018+y*.03)*3.1+Math.sin(x*.067+y*.16)*1.2;
+   if(x===0)ctx.moveTo(x,yy);else ctx.lineTo(x,yy);
+  }
+  ctx.stroke();
+ }
+ for(let knot=0;knot<7;knot++){
+  const x=rand()*size,y=rand()*size;
+  ctx.globalAlpha=.08;ctx.strokeStyle='#533926';
+  for(let r=3;r<20;r+=3){ctx.beginPath();ctx.ellipse(x,y,r*1.5,r*.42,.08,0,Math.PI*2);ctx.stroke();}
+ }
+ ctx.globalAlpha=1;
+ const texture=new THREE.CanvasTexture(c);
+ texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+ texture.repeat.set(1,2);
+ texture.colorSpace=THREE.SRGBColorSpace;
+ texture.anisotropy=4;
+ return texture;
+}
+const wood=new THREE.MeshStandardMaterial({color:'#ffffff',map:timberTexture(),metalness:0,roughness:.62});
+reusableMaterials.add(wood);
+const glass=new THREE.MeshPhysicalMaterial({color:'#e7dacc',roughness:.11,metalness:0,transparent:true,opacity:.57,depthWrite:false});
+const fabricColors=['#a98a72','#eee2d0','#65645e','#bca8a1','#5a6560','#d3b7a2'];
+// Fine woven microrelief creates fabric response under real lights without image downloads.
+function weaveBump(){
+ const c=document.createElement('canvas');c.width=c.height=128;
+ const q=c.getContext('2d');q.fillStyle='#808080';q.fillRect(0,0,128,128);
+ for(let k=0;k<128;k+=4){
+  q.fillStyle=k%8?'#929292':'#b0b0b0';q.fillRect(k,0,1,128);
+  q.fillStyle='#747474';q.fillRect(0,k,128,1);
+ }
+ for(let x=0;x<128;x+=8)for(let y=0;y<128;y+=8){
+  q.fillStyle='#a3a3a3';q.fillRect(x+1,y+1,2,2);
+ }
+ const t=new THREE.CanvasTexture(c);
+ t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(3,6);t.anisotropy=4;
+ return t;
+}
+const sharedWeaveTexture=weaveBump(),garmentMaterialCache=new Map();
+function textile(color,side=THREE.DoubleSide){
+ const key=color+'|'+side;
+ if(garmentMaterialCache.has(key))return garmentMaterialCache.get(key);
+ // Sheen catches grazing showroom lights like woven cotton and wool instead of flat plastic.
+ const material=new THREE.MeshPhysicalMaterial({
+  color,metalness:0,roughness:.88,side,
+  sheen:.66,sheenColor:new THREE.Color(color).lerp(new THREE.Color('#fff4e4'),.28),
+  sheenRoughness:.78,bumpMap:sharedWeaveTexture,bumpScale:.013,
+  envMapIntensity:.68
+ });
+ garmentMaterialCache.set(key,material);reusableMaterials.add(material);
+ return material;
+}
+
+const fabric=fabricColors.map(c=>textile(c));
+// Soft contact shadows: small shared projected decals. They ground objects when mobile shadow maps are off.
+function createContactShadowMaterial(){
+ const c=document.createElement('canvas');c.width=c.height=128;
+ const ctx=c.getContext('2d'),gradient=ctx.createRadialGradient(64,64,6,64,64,62);
+ gradient.addColorStop(0,'rgba(21,19,16,.49)');
+ gradient.addColorStop(.38,'rgba(22,19,16,.27)');
+ gradient.addColorStop(1,'rgba(22,19,16,0)');
+ ctx.fillStyle=gradient;ctx.fillRect(0,0,128,128);
+ const map=new THREE.CanvasTexture(c);
+ const material=new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,opacity:.72,toneMapped:false,polygonOffset:true,polygonOffsetFactor:-1});
+ reusableMaterials.add(material);
+ return material;
+}
+const contactShadowMaterial=createContactShadowMaterial();
+function contactShadow(x,z,width=2,depth=2,parent=root){
+ const shadow=new THREE.Mesh(new THREE.PlaneGeometry(1,1),contactShadowMaterial);
+ shadow.rotation.x=-Math.PI/2;shadow.scale.set(width,depth,1);
+ shadow.position.set(x,.024,z);shadow.castShadow=false;shadow.receiveShadow=false;
+ parent.add(shadow);return shadow;
+}
+
+// V10.4: source-licensed showroom glTF assets, with stale-load cancellation and scene-safe reuse.
+// Remote detailed models are OPTIONAL and never block the procedural interactive store.
+const PREMIUM_ASSETS=Object.freeze({
+ chair:{
+  src:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/SheenChair/glTF-Binary/SheenChair.glb',
+  store:'home',height:1.22,maxWidth:1.40,license:'CC0-1.0',creator:'© 2020 Wayfair / Eric Chadwick'
+ },
+ shoe:{
+  src:'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/MaterialsVariantsShoe/glTF-Binary/MaterialsVariantsShoe.glb',
+  store:'fashion',height:.45,maxWidth:.98,license:'CC-BY-4.0',creator:'© 2021 Shopify'
+ }
+});
+const gltfLoader=new GLTFLoader();
+gltfLoader.setCrossOrigin('anonymous');
+const gltfPromises=new Map(),assetGeometry=new WeakSet();
+let showroomGeneration=0, premiumSlots=[];
+let premiumState='idle';
+function premiumAllowed(){
+ return new URLSearchParams(location.search).get('assets')!=='off'&&qualityMode!=='eco'&&(!coarse||qualityMode==='high');
+}
+function fetchPremiumAsset(name){
+ const info=PREMIUM_ASSETS[name];
+ if(!info)return Promise.resolve(null);
+ if(!gltfPromises.has(name)){
+  const request=gltfLoader.loadAsync(info.src).then(gltf=>{
+   const source=gltf?.scene;
+   if(!source)throw Error('Empty glTF scene');
+   // The cached source owns GPU buffers/textures; cloned display instances share them.
+   source.traverse(obj=>{
+    if(obj.geometry)assetGeometry.add(obj.geometry);
+    if(obj.material)for(const m of (Array.isArray(obj.material)?obj.material:[obj.material])){
+     reusableMaterials.add(m);
+    }
+   });
+   return source;
+  }).catch(error=>{
+   gltfPromises.delete(name); // Failed sources may be retried on the next scene change.
+   console.info('Premium model unavailable; procedural scene remains:',name,error?.message||error);
+   return null;
+  });
+  gltfPromises.set(name,request);
+ }
+ return gltfPromises.get(name);
+}
+function reconcilePremiumModels(){
+ // A loaded GLB stays cached, but Eco hides it and re-enables the lightweight sculpt.
+ const enabled=premiumAllowed();
+ for(const slot of premiumSlots){
+  if(slot.clone){
+   slot.clone.visible=enabled;
+   if(slot.placeholder)slot.placeholder.visible=!enabled;
+   // Three.js raycasting is not a visibility contract. Keep only visible objects pickable.
+   pickables=pickables.filter(obj=>obj!==slot.clone&&obj!==slot.placeholder);
+   const current=enabled?slot.clone:slot.placeholder;
+   if(current)pickables.push(current);
+  }else if(slot.placeholder)slot.placeholder.visible=true;
+ }
+ premiumState=enabled?(premiumSlots.some(x=>x.resolved)?'ready':'loading'):'eco';
+ updatePremiumStatus();
+}
+function updatePremiumStatus(){
+ const el=$('premiumStatus');if(!el)return;
+ const states={
+  idle:'3D-ассеты: готовность',
+  loading:'3D-ассеты: загрузка HD…',
+  ready:'3D-ассеты: HD активен',
+  eco:'3D-ассеты: лёгкие модели',
+  unavailable:'3D-ассеты: запасной режим'
+ };
+ el.textContent=states[premiumState]||states.idle;
+}
+function installPremiumModel(slot,source,generation){
+ if(!source||generation!==showroomGeneration||active!==slot.store||!premiumAllowed())return false;
+ if(slot.resolved)return false;
+ // Recheck token after any awaited network work to prevent cross-store late insertions.
+ const clone=source.clone(true);
+ clone.traverse(obj=>{
+  if(obj.isMesh){obj.castShadow=!coarse;obj.receiveShadow=!coarse;}
+ });
+ const bbox=new THREE.Box3().setFromObject(clone),size=bbox.getSize(new THREE.Vector3());
+ if(!Number.isFinite(size.y)||size.y<=.0001||size.x<=.0001) return false;
+ const s=Math.min(slot.height/size.y,slot.width/size.x,3.5);
+ clone.scale.setScalar(s);
+ const placedBox=new THREE.Box3().setFromObject(clone);
+ const mid=placedBox.getCenter(new THREE.Vector3());
+ clone.position.set(slot.x-mid.x,slot.base-placedBox.min.y,slot.z-mid.z);
+ clone.userData.itemIndex=slot.index;
+ root.add(clone);pickables.push(clone);slot.clone=clone;
+ if(slot.placeholder){
+  slot.placeholder.visible=false;
+  pickables=pickables.filter(obj=>obj!==slot.placeholder);
+ }
+ slot.resolved=true;
+ reconcilePremiumModels();
+ return true;
+}
+function upgradePremiumAssets(store){
+ if(!premiumAllowed()){reconcilePremiumModels();return;}
+ premiumState='loading';updatePremiumStatus();
+ const generation=showroomGeneration;
+ for(const slot of premiumSlots.filter(s=>s.store===store&&!s.resolved)){
+  fetchPremiumAsset(slot.name).then(source=>{
+   if(generation!==showroomGeneration)return;
+   try{
+    if(!source){premiumState='unavailable';updatePremiumStatus();return;}
+    installPremiumModel(slot,source,generation);
+   }catch(e){premiumState='unavailable';updatePremiumStatus();console.warn('Detailed 3D model placement skipped:',e?.message||e);}
+  });
+ }
+}
+function slotPremiumModel(name,store,x,z,base,placeholder,index){
+ const cfg=PREMIUM_ASSETS[name];
+ if(!cfg||cfg.store!==store)return;
+ premiumSlots.push({name,store,x,z,base,placeholder,index,height:cfg.height,width:cfg.maxWidth,resolved:false,clone:null});
+}
+
+const boxGeo=new THREE.BoxGeometry(1,1,1);
+const sphereGeo=new THREE.SphereGeometry(1,18,12);
+const cyl=(r1,r2,h,segments=14)=>new THREE.CylinderGeometry(r1,r2,h,segments);
+function add(mesh,x=0,y=0,z=0,parent=root){mesh.position.set(x,y,z);parent.add(mesh);return mesh;}
+function mesh(geo,mt){let m=new THREE.Mesh(geo,mt);m.castShadow=!coarse;m.receiveShadow=!coarse;return m;}
+function block(x,y,z,w,h,d,m,parent=root){const e=mesh(boxGeo,m);e.scale.set(w,h,d);return add(e,x,y,z,parent);}
+function soft(x,y,z,w,h,d,m,round=.12,parent=root){return add(mesh(new RoundedBoxGeometry(w,h,d,3,Math.min(round,w*.24,h*.24,d*.24)),m),x,y,z,parent);}
+function ball(x,y,z,rx,ry,rz,m,parent=root){const e=mesh(sphereGeo,m);e.scale.set(rx,ry,rz);return add(e,x,y,z,parent);}
+function tube(x,y,z,top,bottom,height,m,parent=root){return add(mesh(cyl(top,bottom,height,16),m),x,y,z,parent);}
+function ring(x,y,z,r,t,m,orient=Math.PI/2,parent=root){const o=mesh(new THREE.TorusGeometry(r,t,8,40),m);o.rotation.x=orient;return add(o,x,y,z,parent);}
+function plane(x,y,z,w,h,material,parent=root,rotation=0){const p=add(mesh(new THREE.PlaneGeometry(w,h),material),x,y,z,parent);p.rotation.y=rotation;return p;}
+function labelTexture(title,sub='',light=false){
+ const c=document.createElement('canvas');c.width=512;c.height=256;const ctx=c.getContext('2d');
+ ctx.fillStyle=light?'#edede4':'#292b27';ctx.fillRect(0,0,512,256);
+ ctx.fillStyle=light?'#454a41':'#d3c2a7';ctx.font='600 21px Arial';ctx.textAlign='center';ctx.fillText('M A R K E T   S P A C E',256,57);
+ ctx.fillStyle=light?'#1a2421':'#f4eee3';ctx.font='52px Georgia';ctx.fillText(title,256,145);
+ ctx.fillStyle=light?'#626b60':'#ddccb1';ctx.font='17px Arial';ctx.fillText(sub.toUpperCase(),256,197);
+ const texture=new THREE.CanvasTexture(c);texture.colorSpace=THREE.SRGBColorSpace;return texture;
+}
+function framedSign(text,sub,x,y,z,w=3.8,h=1.6,rotation=0){
+ const grp=new THREE.Group();grp.position.set(x,y,z);grp.rotation.y=rotation;root.add(grp);
+ soft(0,0,-.035,w+.09,h+.09,.1,darkMetal,.03,grp);
+ const t=new THREE.MeshBasicMaterial({map:labelTexture(text,sub),toneMapped:false});
+ plane(0,0,.03,w,h,t,grp);
+}
+function stoneTexture(colorA='#d5cdc0',colorB='#ada498'){
+ // Deterministic irregular marble and travertine veins instead of blurred repeated boxes.
+ const premium=!coarse||qualityMode==='high';
+ const resolution=premium?1024:512,c=document.createElement('canvas');
+ c.width=c.height=resolution;
+ const ctx=c.getContext('2d');
+ ctx.fillStyle=colorA;ctx.fillRect(0,0,resolution,resolution);
+ let state=37;
+ function random(){state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;}
+ // Fine sediment/grain at multiple scales, with high-res only on capable devices.
+ for(let i=0,n=premium?11500:3900;i<n;i++){
+  const p=random(),x=random()*resolution,y=random()*resolution;
+  ctx.globalAlpha=.016+random()*.10;
+  ctx.fillStyle=p>.48?colorB:'#ffffff';
+  ctx.fillRect(x,y,.6+random()*7,.6+random()*3);
+ }
+ // Drifting stone veins: independent branches, narrow colored core and diffuse edges.
+ const scale=resolution/512;
+ for(let line=0;line<23;line++){
+  const start=random()*resolution,tilt=(random()-.5)*resolution*.32;
+  for(const [strokeAlpha,thickness] of [[.065,5.0],[.19,.9]]){
+   ctx.globalAlpha=strokeAlpha*(line%3===0?1:.7);
+   ctx.strokeStyle=line%2?colorB:'#857a70';
+   ctx.lineWidth=thickness*scale;
+   ctx.beginPath();
+   for(let step=0;step<=52;step++){
+    const y=step/52*resolution;
+    const x=start+tilt*y/resolution+
+      Math.sin(y/resolution*8+line*1.8)*resolution*.018+
+      Math.sin(y/resolution*19+line*.9)*resolution*.005;
+    if(step===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+   }
+   ctx.stroke();
+  }
+ }
+ // Large architectural slab joins stay subordinate to the stone pattern.
+ ctx.globalAlpha=.13;ctx.strokeStyle='#685a4f';ctx.lineWidth=1.1*scale;
+ ctx.strokeRect(1,1,resolution-2,resolution-2);
+ ctx.globalAlpha=1;
+ const texture=new THREE.CanvasTexture(c);
+ texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+ texture.repeat.set(9,18);
+ texture.colorSpace=THREE.SRGBColorSpace;
+ texture.anisotropy=premium?8:4;
+ return texture;
+}
+function areaLight(x,z,color='#ffe0b5',strength=5.6){const l=new THREE.PointLight(color,strength,9,2);l.position.set(x,5.25,z);root.add(l);}
+function spotlight(x,z){
+ const gold=new THREE.MeshBasicMaterial({color:'#ffe6b6'});
+ tube(x,5.25,z,.16,.18,.13,darkMetal);
+ tube(x,5.15,z,.13,.13,.055,gold);
+}
+// Bespoke spatial identity: structural details that belong to each shop, not reused UI skins.
+function architecturalIdentity(key){
+ const warm=mat('#e4ccb0',.59,.12),bronze=mat('#aa906e',.31,.70);
+ const graphite=mat('#414641',.5,.52),chalk=mat('#e4d9c7',.85),oak=wood;
+ const lightBand=new THREE.MeshBasicMaterial({color:key==='beauty'?'#ffddd3':'#ffe3b8',toneMapped:false});
+ if(key==='fashion'){
+  // Curved boutique portals with bronze frames and subdued cove lights.
+  for(const side of [-1,1])for(const z of [0,-15,-27]){
+   const arch=mesh(new THREE.TorusGeometry(1.53,.070,10,36,Math.PI),bronze);
+   arch.rotation.y=Math.PI/2;
+   add(arch,side*10.43,3.75,z);
+   for(const dz of [-1.53,1.53])soft(side*10.43,2.45,z+dz,.105,2.6,.09,bronze,.018);
+   soft(side*10.40,5.12,z, .06,.055,3.05,lightBand,.02);
+   soft(side*10.55,3.95,z, .08,2.4,2.85,mat('#cfbca9',.85),.028);
+  }
+  for(const z of [-7.5,-22]){
+   // Track lighting gives specular edges to metal rails, cut marble and real fabric.
+   for(const x of [-4.3,0,4.3]){
+    soft(x,5.68,z,.36,.12,.24,graphite,.05);
+    tube(x,5.56,z,.11,.12,.13,bronze);
+   }
+  }
+ }else if(key==='beauty'){
+  const roseStone=mat('#bfa8a1',.35,.09),frosted=mat('#e7d5ce',.27,.025,{transparent:true,opacity:.82,depthWrite:false});
+  for(const side of [-1,1])for(const z of [1,-12,-25]){
+   // Ribbed translucent panels / art-deco brass edging.
+   soft(side*10.46,3.08,z, .12,4.5,3.9,roseStone,.045);
+   const maxRibs=coarse&&qualityMode!=='high'?4:6;
+   for(let k=-maxRibs;k<=maxRibs;k++){
+    const zz=z+k*(maxRibs===4?.4:.274);
+    soft(side*10.31,3.1,zz,.11,3.75,.055,k%3===0?bronze:frosted,.018);
+   }
+   soft(side*10.24,5.05,z,.11,.095,3.9,lightBand,.02);
+  }
+  for(const z of [-7,-20])soft(0,.13,z,3.75,.08,2.0,roseStone,.05);
+ }else if(key==='home'){
+  const woven=mat('#a79a86',.94);
+  for(const side of [-1,1])for(const z of [1,-15]){
+   // Timber-lined residential niches replace the generic mall aesthetic.
+   soft(side*10.41,3.04,z,.14,4.45,7.45,woven,.04);
+   const slats=coarse&&qualityMode!=='high'?5:8;
+   for(let j=-slats;j<=slats;j++){
+    soft(side*10.22,3.05,z+j*(slats===5?.65:.42),.055,4.15,.058,oak,.018);
+   }
+   soft(side*10.17,5.17,z,.09,.08,7.12,lightBand,.018);
+  }
+  for(const z of [1,-15])for(const side of [-1,1]){
+   // Low natural fiber borders ground the residential vignettes.
+   const edge=side*6.6;
+   for(const dz of [-2.4,2.4])soft(edge,.036,z+dz,5.8,.038,.035,mat('#897a67',.96),.014);
+  }
+ }else if(key==='food'){
+  const steel=mat('#63716b',.42,.5),tile=mat('#d3d7cc',.55);
+  for(const side of [-1,1])for(const z of [2,-11,-24]){
+   // Market aisle fascia and slim hanging signage.
+   soft(side*7.7,4.85,z,1.95,.32,5.8,steel,.065);
+   soft(side*7.7,4.69,z,1.65,.095,5.5,lightBand,.022);
+   for(const dz of [-2.5,2.5])soft(side*7.7,4.44,z+dz,1.67,.055,.055,bronze,.018);
+   soft(side*10.37,2.4,z,.09,4.2,4.5,tile,.035);
+  }
+  framedSign('THE MARKET','CURATED EVERY DAY',0,4.1,-30.95,5.6,1.25);
+ }
+}
+
+function architecture(key){
+ const d=DATA[key];
+ scene.background=new THREE.Color(key==='fashion'?'#b1a69a':key==='food'?'#a7b5a8':key==='beauty'?'#c9b8b5':'#b9beb6');
+ scene.fog=new THREE.Fog(scene.background,26,56);
+ const wallmat=mat(d.wall,.91).clone(),floorMat=mat('#fffaf4',.40,.015,{map:stoneTexture(key==='beauty'?'#d9c7c1':'#c9c4b8')});studioWallMaterial=wallmat;studioBaseWall=new THREE.Color(d.wall);studioBackgroundColor=scene.background.clone();
+ let floor=add(mesh(new THREE.PlaneGeometry(22,46),floorMat),0,-.01,-9);floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;
+ block(0,6.4,-9,22,1,46,mat('#b5b0a5',.9));block(0,3.1,-31.8,22,6.2,.35,wallmat);
+ for(const side of [-1,1]){
+  block(side*10.9,3,-9,.3,6.2,46,wallmat);
+  block(side*10.6,5.94,-9,.12,.1,44,brass);
+  for(let z=10;z>-31;z-=5.8){
+    soft(side*10.66,3,z,.13,5.2,.11,mat('#8f7d70',.83),.03);
+    if(key==='home'||key==='fashion'){
+      for(let k=-2;k<=2;k++)block(side*10.47,3,z+k*.78,.08,4.1,.04,mat(key==='fashion'?'#bba596':'#8c8676',.78));
+    }
+  }
+ }
+ for(let z=9;z>-31;z-=7.5){
+  block(0,6.06,z,20.2,.17,.28,darkMetal);
+  for(const x of [-8.7,-4.6,0,4.6,8.7])spotlight(x,z);
+ }
+ for(const x of [-9.8,9.8])block(x,.24,-10,.085,.25,37,brass);
+ block(0,.01,-30,21,.03,.13,brass);
+ for(let z of [6,-7,-20]){ring(0,5.3,z,1.05,.048,new THREE.MeshBasicMaterial({color:'#ffdfb7'}));ring(0,5.45,z,1.13,.025,brass);areaLight(0,z);}
+ const hemi=new THREE.HemisphereLight('#fff5e4','#777369',1.5);root.add(hemi);
+ const directional=new THREE.DirectionalLight('#fff4dd',2.15);directional.position.set(-4,9,6);
+ directional.castShadow=!coarse;directional.shadow.mapSize.set(coarse?1024:2048,coarse?1024:2048);directional.shadow.normalBias=.015;directional.shadow.camera.left=-15;directional.shadow.camera.right=15;directional.shadow.camera.top=16;directional.shadow.camera.bottom=-20;directional.shadow.bias=-.001;
+ root.add(directional);
+ const fill=new THREE.DirectionalLight('#dce9ed',.75);fill.position.set(8,6,-13);root.add(fill);
+ framedSign(d.name,key==='fashion'?'COLLECTION  /  2026':key==='food'?'FRESH   /   EVERY DAY':key==='beauty'?'THE RITUAL OF BEAUTY':'SPACES TO LIVE',0,3.9,-31.36,6,2.15);
+ architecturalIdentity(key);
+}
+function platform(x,z,r=1.18){
+ contactShadow(x,z,r*2.5,r*2.5);
+ tube(x,.14,z,r,r,.28,mat('#80776b',.49));
+ tube(x,.31,z,r*.97,r*.97,.08,brass);
+}
+function hanger(g,x=0,y=0,z=0){
+ const material=brass;const p=new THREE.Group();p.position.set(x,y,z);g.add(p);
+ const wire=mesh(new THREE.TorusGeometry(.10,.017,6,12,Math.PI*1.4),material);wire.rotation.z=.32;wire.position.set(0,.22,0);p.add(wire);
+ const left=mesh(cyl(.018,.018,.51,7),material);left.rotation.z=-1.18;left.position.set(-.22,-.05,0);p.add(left);
+ const right=mesh(cyl(.018,.018,.51,7),material);right.rotation.z=1.18;right.position.set(.22,-.05,0);p.add(right);
+ block(0,-.14,0,.52,.035,.04,material,p);
+}
+// V10.1: garment shells built from smoothly shaded 3D fabric rings, not flat extrusions.
+// Silhouettes vary in waist, shoulder, sleeves and lower hem; styling remains procedural.
+function garmentShell(rings,cloth,detail=0){
+ // Smoothed longitudinally sampled cloth loft with physical waist/hem shaping.
+ // Increased silhouette fidelity at HD, while preserving lightweight mobile geometry.
+ const premium=!coarse||qualityMode==='high';
+ const segments=premium?40:16,steps=premium?3:1;
+ const rowCount=(rings.length-1)*steps+1;
+ const positions=[],uvs=[],indices=[];
+ function shapeAt(j){
+  const a=Math.min(rings.length-2,Math.floor(j/steps)),t=j===rowCount-1?1:(j-a*steps)/steps;
+  // Cubic easing avoids sharp sectional creases at waist or lower skirt.
+  const t2=t*t*(3-2*t);
+  return [0,1,2].map(k=>rings[a][k]+(rings[a+1][k]-rings[a][k])*t2);
+ }
+ for(let j=0;j<rowCount;j++){
+  const [y,rx,rz]=shapeAt(j),lower=Math.max(0,Math.min(1,(-y-.25)/1.25));
+  for(let i=0;i<segments;i++){
+   const angle=i/segments*Math.PI*2;
+   const radialFold=1+detail*(.016*Math.cos(angle*9+j*.34)+.018*lower*Math.sin(angle*13+j*.19));
+   const drape=detail*lower*.018*Math.cos(angle*5+y*2.2);
+   positions.push(Math.cos(angle)*rx*radialFold+drape,y,Math.sin(angle)*rz*radialFold);
+   uvs.push(i/segments,j/(rowCount-1));
+   if(j<rowCount-1){
+    const x=j*segments+i,n=j*segments+(i+1)%segments;
+    indices.push(x,n,x+segments,n,n+segments,x+segments);
+   }
+  }
+ }
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+ geometry.setIndex(indices);geometry.computeVertexNormals();
+ return mesh(geometry,cloth);
+}
+function clothBody(color,kind='jacket'){
+ const group=new THREE.Group();
+ const cloth=textile(color);
+ const sleeveColor=textile(color,THREE.FrontSide);
+ const isDress=kind==='dress',isCoat=kind==='coat';
+ const rings=isDress?
+  [[.58,.29,.16],[.43,.40,.23],[.18,.36,.23],[-.19,.28,.20],[-.49,.37,.27],[-.86,.51,.36],[-1.26,.65,.45],[-1.44,.69,.47]]:
+  isCoat?[[.58,.30,.18],[.44,.43,.23],[.18,.40,.27],[-.19,.38,.28],[-.55,.42,.31],[-.90,.48,.35],[-1.17,.51,.39]]:
+  [[.58,.28,.18],[.44,.43,.23],[.20,.38,.27],[-.18,.33,.25],[-.53,.34,.27],[-.73,.35,.27]];
+ const shell=garmentShell(rings,cloth,isDress?1:.45);markStudioSurface(shell,'fabric');group.add(shell);
+ for(const side of [-1,1]){
+  // Each sleeve is a tapered fully dimensional piece with an individual cuff.
+  const sleeve=garmentShell(
+   [[.40,.17,.158],[.17,.158,.148],[-.12,.145,.136],[-.39,.119,.112]],
+   sleeveColor,.16);
+  sleeve.position.set(side*.53,isDress?.10:.02,0);
+  sleeve.rotation.z=side*(isDress?.25:.15);
+  markStudioSurface(sleeve,'fabric');group.add(sleeve);
+  tube(side*(isDress?.64:.62),isDress?-.23:-.40,0,.12,.12,.052,cloth,group);
+ }
+ if(!isDress){
+  // Layered satin lapels and front stitched opening.
+  const satin=mat('#ddd0bc',.91,0,{side:THREE.DoubleSide});
+  const mkLapel=side=>{
+   const sh=new THREE.Shape();
+   sh.moveTo(side*.04,.50);sh.lineTo(side*.28,.39);
+   sh.lineTo(side*.145,-.06);sh.lineTo(side*.02,.16);sh.closePath();
+   const obj=mesh(new THREE.ExtrudeGeometry(sh,{depth:.022,bevelEnabled:!coarse,
+    bevelSize:.009,bevelThickness:.008,bevelSegments:2,steps:1}),satin);
+   obj.position.z=.272;group.add(obj);
+  };
+  mkLapel(-1);mkLapel(1);
+  for(let j=0;j<(isCoat?5:3);j++)ball(.075,.08-j*.17,.31,.028,.028,.02,brass,group);
+  // Tailoring vents and a distinct underlayer peeking out at the neckline.
+  soft(0,.36,.17,.19,.23,.06,ivory,.02,group);
+ }else{
+  // A sculpted belt and gently draping pleat seams.
+  const belt=mat('#a68f7a',.63,.1);
+  soft(0,-.19,.01,.62,.064,.41,belt,.022,group);
+  if(!coarse)for(let k=0;k<12;k++){
+   const a=k*Math.PI*2/12;
+   const rr=.54;
+   const seam=mesh(new THREE.CylinderGeometry(.004,.004,.43,5),mat('#cbbcab',1));
+   seam.position.set(Math.cos(a)*rr,-1.08,Math.sin(a)*rr*.7);
+   seam.rotation.z=Math.cos(a)*.26;seam.rotation.x=Math.sin(a)*.18;
+   group.add(seam);
+  }
+ }
+ return group;
+}
+function mannequin(x,z,kind,color,index){
+ const g=new THREE.Group();g.position.set(x,.38,z);root.add(g);registerBlocker(x,z,1.7,1.7);
+ platform(x,z,1.08);
+ tube(0,.49,0,.048,.048,.86,darkMetal,g);
+ ball(0,1.07,0,.22,.34,.18,mat('#c6b4a1',.68),g);
+ tube(0,1.62,0,.085,.085,.29,mat('#c9b4a2',.71),g);
+ ball(0,1.91,0,.14,.22,.145,mat('#c6b4a1',.67),g);
+ for(const side of [-1,1]){
+  const arm=ball(side*.37,1.08,0,.115,.44,.13,mat('#c6b4a1',.7),g);arm.rotation.z=side*.13;
+  const leg=ball(side*.16,.39,0,.14,.55,.16,mat('#bdab98',.75),g);leg.rotation.z=-side*.06;
+ }
+ const garment=clothBody(color,kind);
+ garment.scale.set(1.01,.83,.96);garment.position.set(0,1.13,.11);g.add(garment);
+ // Group is selectable via raycasting against actual 3D geometry.
+ g.userData.itemIndex=index;pickables.push(g);
+ selectHotspot(x,2.12,z+1.04,index);
+ return g;
+}
+function garmentsRail(x,z,colors){
+ const rail=new THREE.Group();rail.position.set(x,0,z);root.add(rail);registerBlocker(x,z,4.5,1.1);
+ for(const dx of [-2,2]){tube(dx,1.6,0,.045,.045,3.0,brass,rail);tube(dx,.1,0,.11,.11,.16,darkMetal,rail);}
+ const cross=tube(0,3.05,0,.042,.042,4.1,brass,rail);cross.rotation.z=Math.PI/2;
+ soft(0,.35,0,4.1,.25,.8,wood,.06,rail);
+ for(let i=0;i<7;i++){
+  const cloth=clothBody(colors[i%colors.length],i%3===0?'dress':i%2?'jacket':'coat');
+  cloth.scale.set(.67,.69,.72);cloth.position.set(-1.64+i*.54,2.35,0);rail.add(cloth);
+  hanger(rail,-1.64+i*.54,2.82,0);
+ }
+}
+// Leather accessories use real modeled rounded volumes, folded flap and handle geometry.
+function boutiqueHandbag(x,z,color='#786354'){
+ const g=new THREE.Group();g.position.set(x,0,z);root.add(g);
+ registerBlocker(x,z,1.4,1.25);
+ soft(0,.49,0,1.28,.89,1.12,mat('#9f9487',.31,.1),.11,g);
+ soft(0,.97,0,1.33,.07,1.16,brass,.025,g);
+ const leather=textile(color,THREE.FrontSide);
+ soft(0,1.37,.05,.89,.67,.32,leather,.13,g);
+ soft(0,1.53,.23,.78,.23,.10,leather,.03,g);
+ const handle=mesh(new THREE.TorusGeometry(.23,.037,9,26,Math.PI),leather);
+ handle.position.set(0,1.75,.05);g.add(handle);
+ for(const dx of [-.20,.20]){
+  tube(dx,1.67,.21,.035,.035,.10,brass,g);
+ }
+ soft(0,1.44,.262,.16,.115,.045,brass,.026,g);
+ tube(0,1.43,.293,.026,.026,.07,darkMetal,g);
+ return g;
+}
+// Compact stylized shoe serves as the guaranteed GPU-light alternative to licensed shoe GLB.
+function shoeExhibit(x,z,index=4){
+ platform(x,z,.86);
+ registerBlocker(x,z,1.7,1.7);
+ const g=new THREE.Group();g.position.set(x,.38,z);root.add(g);
+ const sole=mat('#eee7dc',.54),upper=textile('#afa394',THREE.FrontSide);
+ soft(0,.36,0,.93,.14,.42,sole,.06,g);
+ const toe=soft(-.20,.51,.04,.57,.25,.41,upper,.13,g);
+ const heel=soft(.27,.58,-.03,.44,.40,.32,upper,.10,g);heel.rotation.z=-.09;
+ for(let i=0;i<4;i++){
+  const laces=soft(-.03+i*.10,.735-i*.032,.17,.085,.018,.024,ivory,.007,g);
+  laces.rotation.z=.11;
+ }
+ g.userData.itemIndex=index;pickables.push(g);
+ selectHotspot(x,1.28,z+1.05,index);
+ slotPremiumModel('shoe','fashion',x,z,.37,g,index);
+ return g;
+}
+// V10.7 LOOKBOOK: assembled live inside the fashion world, never a static overlay picture.
+// It demonstrates combinations on a generic mannequin, not a personalized body scan.
+const LOOKBOOK_GARMENTS={
+ coat:{index:0,label:'Пальто Atelier',kind:'coat',base:'#b8a18b'},
+ dress:{index:1,label:'Платье Sculpt',kind:'dress',base:'#cbb3a9'},
+ jacket:{index:2,label:'Пиджак Line',kind:'jacket',base:'#606d63'},
+ edition:{index:3,label:'Edition',kind:'jacket',base:'#aa9380'}
+};
+const LOOKBOOK_COLORS={sand:'#b99d80',rose:'#b88992',sage:'#637c70',night:'#393e47'};
+const LOOKBOOK_PRESETS={
+ atelier:{garment:'coat',color:'sand',shoes:'sneaker',bag:'yes',mood:'gallery'},
+ sunset:{garment:'dress',color:'rose',shoes:'sneaker',bag:'yes',mood:'golden'},
+ noir:{garment:'edition',color:'night',shoes:'dark',bag:'no',mood:'noir'}
+};
+function safeLookParam(key,options,fallback){
+ const raw=new URLSearchParams(location.search).get(key);
+ return raw&&Object.hasOwn(options,raw)?raw:fallback;
+}
+let lookbookState={
+ garment:safeLookParam('look',LOOKBOOK_GARMENTS,'coat'),
+ color:safeLookParam('lookTone',LOOKBOOK_COLORS,'sand'),
+ shoes:safeLookParam('lookShoes',{sneaker:1,dark:1,none:1},'sneaker'),
+ bag:safeLookParam('lookBag',{yes:1,no:1},'yes')
+};
+let lookbookStage=null;
+function createLookbookStage(){
+ const x=4.55,z=-3.6;
+ platform(x,z,1.38);registerBlocker(x,z,2.7,2.7);
+ const pivot=new THREE.Group();
+ pivot.position.set(x,.37,z);pivot.userData.lookbookOpen=true;root.add(pivot);pickables.push(pivot);
+ // Same 3D sculpt vocabulary as the rest of Fashion. No expensive new external GLBs.
+ tube(0,.48,0,.045,.045,.94,darkMetal,pivot);
+ const mannequinMat=mat('#bca992',.86);
+ ball(0,1.04,0,.215,.32,.16,mannequinMat,pivot);
+ tube(0,1.58,0,.07,.07,.27,mannequinMat,pivot);
+ ball(0,1.85,0,.145,.22,.135,mannequinMat,pivot);
+ for(const side of [-1,1]){
+  const leg=ball(side*.16,.43,0,.13,.55,.16,mannequinMat,pivot);leg.rotation.z=side*.04;
+  const arm=ball(side*.38,1.02,0,.115,.44,.14,mannequinMat,pivot);arm.rotation.z=side*.15;
+ }
+ const garments={};
+ for(const [key,def] of Object.entries(LOOKBOOK_GARMENTS)){
+  const g=clothBody(def.base,def.kind);
+  g.scale.set(1.06,.84,1);g.position.set(0,1.1,.12);
+  g.traverse(obj=>{
+   if(obj.isMesh&&obj.userData.styleSurface){
+    delete obj.userData.styleSurface;
+    obj.material=obj.material.clone();obj.userData.lookbookFabric=true;
+   }
+  });
+  pivot.add(g);garments[key]=g;
+ }
+ const shoes={};
+ for(const shade of ['sneaker','dark']){
+  const g=new THREE.Group();pivot.add(g);
+  const main=mat(shade==='dark'?'#353b40':'#e8dfd5',.63),sole=ivory;
+  for(const sign of [-1,1]){
+   soft(sign*.16,-.07,.13,.29,.14,.58,sole,.055,g);
+   soft(sign*.16,.035,.09,.285,.20,.46,main,.09,g);
+   for(let k=0;k<3;k++)soft(sign*.16,.148,.02+k*.09,.20,.015,.035,brass,.006,g);
+  }
+  shoes[shade]=g;
+ }
+ const bag=new THREE.Group();bag.position.set(.73,.62,.02);pivot.add(bag);
+ soft(0,0,0,.37,.44,.18,textile('#776052'),.09,bag);
+ const handle=mesh(new THREE.TorusGeometry(.14,.022,6,20,Math.PI),brass);
+ handle.position.set(0,.29,0);bag.add(handle);
+ soft(0,.18,.105,.11,.055,.025,brass,.012,bag);
+ const plaque=soft(0,.75,.51,1.25,.21,.08,mat('#262b26',.63),.025,pivot);
+ plaque.userData.lookbookNoPick=true;
+ lookbookStage={pivot,garments,shoes,bag,rotationEnabled:false};
+ applyLookbookState();
+}
+function applyLookbookState(){
+ if(!lookbookStage)return;
+ for(const [key,g] of Object.entries(lookbookStage.garments)){
+  g.visible=key===lookbookState.garment;
+  if(!g.visible)continue;
+  g.traverse(obj=>{
+   if(obj.isMesh&&obj.userData.lookbookFabric&&obj.material.color)
+    obj.material.color.set(LOOKBOOK_COLORS[lookbookState.color]);
+  });
+ }
+ for(const [key,g] of Object.entries(lookbookStage.shoes))g.visible=key===lookbookState.shoes;
+ lookbookStage.bag.visible=lookbookState.bag==='yes';
+ document.querySelectorAll('[data-look-garment]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lookGarment===lookbookState.garment)));
+ document.querySelectorAll('[data-look-color]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lookColor===lookbookState.color)));
+ document.querySelectorAll('[data-look-shoes]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lookShoes===lookbookState.shoes)));
+ document.querySelectorAll('[data-look-bag]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lookBag===lookbookState.bag)));
+ const price=DATA.fashion.items[LOOKBOOK_GARMENTS[lookbookState.garment].index][2]+
+  (lookbookState.shoes==='none'?0:DATA.fashion.items[4][2]);
+ $('lookbookPrice').textContent=money(price);
+}
+function updateLookbookURL(){
+ const url=new URL(location.href);
+ url.searchParams.set('world','fashion');
+ url.searchParams.set('look',lookbookState.garment);
+ url.searchParams.set('lookTone',lookbookState.color);
+ url.searchParams.set('lookShoes',lookbookState.shoes);
+ url.searchParams.set('lookBag',lookbookState.bag);
+ url.searchParams.set('mood',studioMood);
+ url.searchParams.set('finish',studioFinish);
+ history.replaceState(null,'',url);
+ return url;
+}
+
+function fashionScene(){
+ const colors=['#b5a08a','#e9d8c4','#525951','#ae8a7d'];
+ for(const side of [-1,1])for(const z of [3,-9,-22]){
+  platform(side*7.6,z,2.45);
+  garmentsRail(side*7.6,z,colors);
+ }
+ mannequin(-2.55,-4,'jacket','#b8a18b',0);
+ mannequin(2.65,-8,'dress','#cab5a5',1);
+ mannequin(-2.4,-17,'jacket','#646a64',2);
+ mannequin(2.55,-23,'dress','#d8b9a9',3);
+ for(const z of [-13,-26])for(const side of [-1,1])
+  boutiqueHandbag(side*4.3,z,side>0?'#746359':'#ae8c7b');
+ shoeExhibit(-4.6,-7.2);
+ shoeExhibit(4.6,-19.3);
+ createLookbookStage();
+ for(const x of [-8,8])for(const z of [-3,-15,-27]){
+  soft(x,4.45,z,.09,3.3,2.9,brass,.03);
+  const mirror=mat('#c0c5bf',.09,.86);plane(x+(x>0?-.085:.085),4.45,z,2.55,3.1,mirror,root,x>0?-Math.PI/2:Math.PI/2);
+ }
+}
+function upholsteredSofa(x,z,color='#c6b9a4'){
+ const group=new THREE.Group();group.position.set(x,0,z);root.add(group);registerBlocker(x,z,3.7,2.1);contactShadow(x,z,4.6,3.25);
+ const cushion=textile(color,THREE.FrontSide);
+ markStudioSurface(soft(0,.48,0,3.5,.45,1.48,cushion,.21,group),'upholstery');
+ markStudioSurface(soft(0,.91,-.57,3.64,1.25,.34,cushion,.13,group),'upholstery');
+ for(const side of [-1,1])markStudioSurface(soft(side*1.63,.74,.02,.40,.91,1.65,cushion,.16,group),'upholstery');
+ for(const i of [-1,0,1]){
+  markStudioSurface(soft(i*1.03,.72,.25,.98,.25,1.07,textile(i===0?'#c7b8a0':color,THREE.FrontSide),.12,group),'upholstery');
+  const pillow=soft(i*1.09,1.1,-.35,.65,.56,.19,textile(i===0?'#eee1d0':'#acaa9d',THREE.FrontSide),.09,group);pillow.rotation.z=i*.12;if(i===0)markStudioSurface(pillow,'upholstery');
+  // Fine hand-sewn front cushion piping catches warm showroom light.
+  soft(i*1.03,.72,.786,.96,.025,.036,mat('#9d9383',.83),.01,group);
+ }
+ for(const xx of [-1.45,1.45])for(const zz of [-.61,.61])tube(xx,.19,zz,.075,.075,.28,darkMetal,group);
+ return group;
+}
+function table(x,z){const g=new THREE.Group();g.position.set(x,0,z);root.add(g);soft(0,.55,0,1.65,.13,1.04,mat('#d3cbbd',.28,.08),.21,g);for(const dx of [-.59,.59])tube(dx,.25,0,.11,.13,.52,darkMetal,g);}
+function floorLamp(x,z){const g=new THREE.Group();g.position.set(x,0,z);root.add(g);tube(0,.08,0,.42,.42,.16,darkMetal,g);tube(0,1.25,0,.035,.035,2.5,brass,g);tube(0,2.55,0,.55,.28,.45,mat('#e8ddc6',.91),g);ring(0,2.62,0,.47,.024,new THREE.MeshBasicMaterial({color:'#ffe3ad'}),Math.PI/2,g);}
+function plant(x,z){const g=new THREE.Group();g.position.set(x,0,z);root.add(g);tube(0,.39,0,.36,.27,.73,ceramic,g);tube(0,1.25,0,.046,.07,1.1,mat('#626e4e',.84),g);
+ for(let i=0;i<10;i++){const a=i*2.399;const leaf=ball(Math.cos(a)*.52,1.24+(i%4)*.17,Math.sin(a)*.53,.16,.53,.29,mat(i%2?'#6c765b':'#778365',.95),g);leaf.rotation.z=Math.cos(a)*.54;leaf.rotation.x=Math.sin(a)*.48;}
+}
+function chair(x,z){const g=new THREE.Group();g.position.set(x,0,z);root.add(g);registerBlocker(x,z,1.3,1.2);contactShadow(x,z,1.85,1.85);soft(0,.55,0,1.25,.36,1.12,textile('#acaca0',THREE.FrontSide),.23,g);soft(0,1.12,-.38,1.3,1.22,.34,textile('#adaca1',THREE.FrontSide),.25,g);for(const xx of [-.45,.45])for(const zz of [-.3,.36])tube(xx,.2,zz,.07,.09,.4,wood,g);return g;}
+function homeScene(){
+ for(const z of [0,-16])for(const x of [-6.6,6.6]){
+  soft(x,.02,z,6.8,.035,6.0,mat(z===0?'#a39582':'#aaa396',.99),.05);
+  const sofa=upholsteredSofa(x,z,x>0?'#b6b7ad':'#c5aa95');experienceVisuals.sofas.push(sofa);sofa.userData.itemIndex=z===0?0:1;pickables.push(sofa);
+  table(x,z+2.0);
+  floorLamp(x+(x>0?2.8:-2.8),z-1.6);
+  plant(x+(x>0?-2.8:2.8),z-2.1);
+ }
+ const firstChair=chair(-2.55,-7),secondChair=chair(2.5,-22);
+ selectHotspot(-2.55,1.55,-5.6,1);selectHotspot(2.5,1.55,-20.6,1);
+ slotPremiumModel('chair','home',-2.55,-7,0,firstChair,1);
+ slotPremiumModel('chair','home',2.5,-22,0,secondChair,1);
+ const book=mat('#5b594d',.78);
+ for(let i=0;i<6;i++)soft(-6.3+i*.13,.67,-14, .13,.04,.35,i%2?book:brass,.014);
+ [0,1,2,3].forEach((idx)=>selectHotspot(idx%2?6:-6,1.6,idx>1?-16:0,idx));
+}
+// Reuse clearcoat glass materials for every bottle, lowering material allocations during scene switches.
+const perfumeGlassCache=new Map();
+function perfumeGlass(color){
+ if(perfumeGlassCache.has(color))return perfumeGlassCache.get(color);
+ const high=!coarse||qualityMode==='high';
+ const material=new THREE.MeshPhysicalMaterial({
+  color,roughness:.09,metalness:.025,
+  transparent:!high,opacity:high?1:.84,depthWrite:high,
+  transmission:high?.67:0,thickness:high?.28:0,ior:1.46,
+  attenuationColor:new THREE.Color(color),attenuationDistance:1.8,
+  clearcoat:.90,clearcoatRoughness:.075,envMapIntensity:1.12
+ });
+ perfumeGlassCache.set(color,material);reusableMaterials.add(material);
+ return material;
+}
+// Print small original brand art directly onto real bottle fronts, never reusing stock photos.
+const scentLabelCache=new Map();
+function scentLabel(kind){
+ const id=((kind%4)+4)%4;
+ if(scentLabelCache.has(id))return scentLabelCache.get(id);
+ const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
+ const ctx=canvas.getContext('2d');
+ ctx.fillStyle='#f0e4d4';ctx.fillRect(0,0,256,256);
+ ctx.fillStyle='#54483e';ctx.textAlign='center';
+ ctx.font='700 17px Georgia';ctx.fillText('M A I S O N',128,45);
+ ctx.fillRect(48,63,160,1);
+ ctx.font='normal 48px Georgia';ctx.fillText(['05','09','12','21'][id],128,141);
+ ctx.font='13px Arial';ctx.fillText(['ROSE','SOLAR','AMBER','ELIXIR'][id],128,180);
+ ctx.font='10px Arial';ctx.fillText('EAU DE PARFUM  /  50 ML',128,224);
+ const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+ const material=new THREE.MeshBasicMaterial({map:texture,transparent:false,toneMapped:false,side:THREE.DoubleSide});
+ scentLabelCache.set(id,material);reusableMaterials.add(material);return material;
+}
+function syncPhysicalGlass(){
+ const high=!coarse||qualityMode==='high';
+ const change=m=>{
+  if(!m||!m.isMeshPhysicalMaterial)return;
+  const enabled=high;
+  if((m.transmission>0)===enabled)return;
+  m.transparent=!enabled;m.depthWrite=enabled;m.opacity=enabled?1:.84;
+  m.transmission=enabled?.67:0;m.thickness=enabled?.28:0;m.needsUpdate=true;
+ };
+ for(const m of perfumeGlassCache.values())change(m);
+ for(const obj of experienceVisuals.perfume)change(obj.material);
+}
+function perfumeBottle(g,x,z,color,kind=0,y=0){
+ const gp=new THREE.Group();gp.position.set(x,y,z);g.add(gp);
+ const tinted=perfumeGlass(color);
+ if(kind%2)tube(0,.23,0,.22,.22,.46,tinted,gp);
+ else soft(0,.29,0,.46,.53,.26,tinted,.09,gp);
+ soft(0,.62,0,.20,.13,.19,brass,.022,gp);
+ tube(0,.73,0,.055,.055,.16,brass,gp);
+ // Label reserved for large hero/gallery bottles to respect mobile draw-call budgets.
+ if(kind%4===0){
+  const m=scentLabel(kind);
+  const sign=mesh(new THREE.PlaneGeometry(.26,.26),m);
+  sign.position.set(0,.30,.143);sign.castShadow=false;gp.add(sign);
+ }
+ return gp;
+}
+function beautyIsland(x,z,index){
+ const g=new THREE.Group();g.position.set(x,0,z);g.userData.itemIndex=index;root.add(g);pickables.push(g);registerBlocker(x,z,2.8,2.3);contactShadow(x,z,3.6,3.4);
+ tube(0,.47,0,1.25,1.13,.94,mat('#b4a39d',.33),g);
+ tube(0,.96,0,1.36,1.28,.11,ceramic,g);
+ ring(0,1.03,0,1.19,.023,brass,Math.PI/2,g);
+ for(let i=0;i<10;i++){const a=i*2.399,rr=.68*Math.sqrt(i/10);perfumeBottle(g,Math.cos(a)*rr,Math.sin(a)*rr,['#d8a8a4','#e9cab3','#c4b3c1','#a4b9b8'][i%4],i,.84);}
+ tube(0,1.20,0,.06,.06,.27,brass,g);
+ selectHotspot(x,1.9,z+1.5,index);
+}
+function beautyScene(){
+ for(const z of [1,-12,-25])for(const side of [-1,1]){
+  const x=side*6.8;
+  beautyIsland(x,z,(Math.abs(z)+ (side>0?1:0))%4);
+  soft(x,3.63,z,3.25,3.35,.19,mat('#b79b9c',.4),.19);
+  for(const y of [2.7,3.5,4.3]){
+   soft(x+(side>0?-.11:.11),y,z,3.05,.055,.53,brass,.023);
+   for(let i=0;i<6;i++)perfumeBottle(root,x-.98+i*.38,z,['#e4b2aa','#bdb0b9','#c7d0c5'][i%3],i,y+.13);
+  }
+ }
+ for(const z of [-7,-20]){
+  soft(0,.50,z,3.6,.45,1.2,mat('#a68c88',.92),.23);
+  const hero=perfumeBottle(root,0,z,'#d9a1ad',0,.96);
+  hero.scale.setScalar(1.75);
+  if(hero.children[0]?.isMesh)experienceVisuals.perfume.push(hero.children[0]);
+  ring(0,1.04,z,.85,.025,brass);
+  selectHotspot(0,2.12,z+1.15,0);
+ }
+}
+// Shared graphic identity is embossed as actual small mesh labels on selected product faces.
+const goodsLabelMaterials=new Map();
+const goodsLabelNames=['ATELIER / COFFEE','TERRA / OLIVE','FARM / FRESH','ORIGIN / MILK','MAISON / PASTA'];
+function groceryLabel(index){
+ const id=((index%5)+5)%5;
+ if(goodsLabelMaterials.has(id))return goodsLabelMaterials.get(id);
+ const cv=document.createElement('canvas');cv.width=256;cv.height=128;const q=cv.getContext('2d');
+ q.fillStyle=['#e9d6b6','#e0e4d5','#ead1b5','#e0e6df','#dfcaba'][id];q.fillRect(0,0,256,128);
+ q.fillStyle='#242d27';q.fillRect(12,12,232,2);
+ q.font='bold 16px Arial';q.textAlign='center';q.fillText('M  A  R  K  E  T',128,38);
+ q.font='bold 19px Arial';q.fillText(goodsLabelNames[id].split(' / ')[0],128,71);
+ q.font='12px Arial';q.fillText(goodsLabelNames[id].split(' / ')[1],128,98);
+ const map=new THREE.CanvasTexture(cv);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=4;
+ const m=new THREE.MeshBasicMaterial({map,side:THREE.DoubleSide,toneMapped:false});
+ goodsLabelMaterials.set(id,m);reusableMaterials.add(m);
+ return m;
+}
+// One GPU instanced draw call per silhouette/material instead of hundreds of distinct shelf meshes.
+let marketPackBatches=new Map();
+function queueMarketPack(group,shape,material,x,y,z,w,h,d,itemIndex){
+ const key=shape+'|'+material;
+ let batch=marketPackBatches.get(key);
+ if(!batch){batch={shape,material,items:[]};marketPackBatches.set(key,batch);}
+ batch.items.push([group.position.x+x,group.position.y+y,group.position.z+z,w,h,d,itemIndex]);
+}
+function flushMarketPacks(){
+ if(!marketPackBatches.size)return;
+ const shapeGeometries={
+  box:new RoundedBoxGeometry(1,1,1,2,.075),
+  cylinder:new THREE.CylinderGeometry(.5,.5,1,12)
+ };
+ const dummy=new THREE.Object3D();
+ for(const batch of marketPackBatches.values()){
+  const instanced=new THREE.InstancedMesh(shapeGeometries[batch.shape],mat(batch.material,.82,.012),batch.items.length);
+  instanced.castShadow=false;instanced.receiveShadow=false;
+  instanced.userData.productIndices=[];
+  batch.items.forEach((p,i)=>{
+   const [x,y,z,w,h,d,index]=p;
+   dummy.position.set(x,y,z);dummy.rotation.set(0,0,0);dummy.scale.set(w,h,d);
+   dummy.updateMatrix();instanced.setMatrixAt(i,dummy.matrix);
+   instanced.userData.productIndices.push(index%4);
+  });
+  instanced.instanceMatrix.needsUpdate=true;instanced.computeBoundingSphere();
+  root.add(instanced);pickables.push(instanced);
+ }
+ marketPackBatches.clear();
+}
+function brandBox(g,x,y,z,index){
+ const shades=['#c3a476','#9fae9c','#bd8d75','#c7c0ab','#a9b7ad'];
+ const col=shades[((index%5)+5)%5],itemId=((index%4)+4)%4;
+ if(index%3===0){
+  queueMarketPack(g,'box',col,x,y+.31,z,.41,.57,.37,itemId);
+  queueMarketPack(g,'box','#ebe5d8',x,y+.61,z,.21,.06,.20,itemId);
+ }else if(index%3===1){
+  queueMarketPack(g,'cylinder',col,x,y+.29,z,.38,.56,.38,itemId);
+  queueMarketPack(g,'cylinder','#ad8c62',x,y+.62,z,.30,.10,.30,itemId);
+ }else{
+  queueMarketPack(g,'box',col,x,y+.31,z,.40,.56,.31,itemId);
+  queueMarketPack(g,'box','#ebe5d8',x,y+.36,z+.17,.32,.12,.02,itemId);
+ }
+ // A readable artwork label on selected packages, while the bulk is GPU-instanced.
+ if(index%8===0){
+  const side=x>=0?1:-1;
+  const sticker=plane(x+side*.22,y+.34,z,.34,.25,groceryLabel(index),g,side*Math.PI/2);
+  sticker.castShadow=false;sticker.receiveShadow=false;
+ }
+}
+function groceryShelves(x,z){
+ const g=new THREE.Group();g.position.set(x,0,z);root.add(g);
+ g.userData.itemIndex=Math.abs(Math.round(x)+Math.round(z))%4;
+ pickables.push(g);registerBlocker(x,z,1.65,5.55);contactShadow(x,z,2.25,6.4);
+ soft(0,.12,0,1.45,.22,5.4,darkMetal,.06,g);
+ for(const y of [.57,1.24,1.91,2.58,3.24]){
+  soft(0,y,0,1.48,.10,5.45,mat('#bba88f',.67),.025,g);
+  for(const side of [-1,1])for(let i=0;i<(coarse?5:8);i++){
+   brandBox(g,side*.49,y,(i-((coarse?5:8)-1)/2)*(coarse?1.04:.59),i+Math.round(y*5)+(side>0?3:0));
+   // Each item is a fully modeled box or cylinder, placed on its shelf.
+  }
+ }
+ for(const side of [-1,1])for(const zz of [-2.58,2.58])tube(side*.68,1.75,zz,.055,.055,3.5,darkMetal,g);
+ for(const s of [-1,1])soft(s*.75,3.6,0,.11,.35,5.4,brass,.02,g);
+}
+function produceIsland(x,z,index){
+ const g=new THREE.Group();g.position.set(x,0,z);g.userData.itemIndex=index;root.add(g);pickables.push(g);registerBlocker(x,z,2.75,1.95);contactShadow(x,z,3.6,2.8);
+ soft(0,.38,0,2.75,.73,1.85,mat('#806d57',.77),.12,g);soft(0,.76,0,2.83,.12,1.95,wood,.045,g);
+ for(let i=0;i<14;i++){
+  const a=i*2.4,r=.8*Math.sqrt(i/14),shade=i%3;
+  const xx=Math.sin(a)*r,zz=Math.cos(a)*r*.8,yy=.90+(i%3)*.055;
+  const fruit=ball(xx,yy,zz,.17,.16,.18,mat(shade===0?'#dd9957':shade===1?'#ac5e44':'#738e59',.66),g);experienceVisuals.fruit.push(fruit);
+  tube(xx,yy+.162,zz,.017,.022,.08,wood,g);
+  if(i%2===0){const leaf=ball(xx+.055,yy+.215,zz,.085,.018,.044,mat('#4f704a',.91),g);leaf.rotation.z=.3;}
+ }
+ selectHotspot(x,1.3,z+1.45,index);
+}
+function foodScene(){
+ marketPackBatches.clear();
+ for(const x of [-7.7,7.7])for(const z of [2,-11,-24])groceryShelves(x,z);
+ for(const z of [1,-15])produceIsland(0,z,z===1?2:3);
+ for(const x of [-9.6,9.6])for(let z=7;z>-30;z-=9){
+   soft(x,2,z,.45,3.8,6,mat('#9bb2aa',.37,.16),.08);
+   for(let j=0;j<4;j++)soft(x+(x>0?-.22:.22),.75+j*.71,z,.055,.08,5.9,ivory,.02);
+ }
+ for(const x of [-3,3])for(const z of [-5,-23])selectHotspot(x,1.35,z,x>0?1:0);
+ flushMarketPacks();
+}
+function registerBlocker(x,z,w,d){blockers.push({x,z,w,d});}
+function selectHotspot(x,y,z,index){
+ const g=new THREE.Group();g.position.set(x,y,z);root.add(g);
+ const shell=mesh(new THREE.SphereGeometry(.14,18,12),new THREE.MeshBasicMaterial({color:'#efe1cb'}));
+ g.add(shell);
+ const halo=mesh(new THREE.TorusGeometry(.24,.016,6,28),new THREE.MeshBasicMaterial({color:'#fff4d9',transparent:true,opacity:.75}));halo.position.z=.08;g.add(halo);
+ const pick=mesh(new THREE.SphereGeometry(.43,10,8),new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:0,depthWrite:false}));pick.userData.itemIndex=index;g.add(pick);pickables.push(pick);hotspots.push({g,halo,index});
+ return g;
+}
+function disposeWorld(){
+ const geometries=new Set(),materials=new Set();
+ root.traverse(n=>{
+  if(n.isInstancedMesh)n.dispose();
+  if(n.isLight&&n.shadow?.map)n.shadow.map.dispose();
+  if(n.geometry&&n.geometry!==boxGeo&&n.geometry!==sphereGeo&&!assetGeometry.has(n.geometry))geometries.add(n.geometry);
+  if(n.material)for(const m of (Array.isArray(n.material)?n.material:[n.material])){
+   if(m&&!reusableMaterials.has(m))materials.add(m);
+  }
+ });
+ for(const geo of geometries)geo.dispose();
+ for(const m of materials){if(m.map)m.map.dispose();if(m.bumpMap&&m.bumpMap!==sharedWeaveTexture)m.bumpMap.dispose();m.dispose();}
+ root.clear();
+ renderer.renderLists.dispose();
+}
+function setStore(key){
+ if(!DATA[key])return;
+ closeExperience();closeLookbook();closeStyleStudio();active=key;lookbookStage=null;showroomGeneration++;premiumSlots=[];touring=false;tourRoute=[];walkVelocity.x=walkVelocity.z=0;
+ keys.clear();resetTouchSticks();$('tourBtn').textContent='▶ Кинотур';
+ disposeWorld();
+ hotspots=[];pickables=[];blockers=[];experienceVisuals={fruit:[],perfume:[],sofas:[]};marketPackBatches.clear();tipCurrent=-1;$('objectTip').classList.remove('show');premiumState='idle';updatePremiumStatus();architecture(key);
+ try{if(key==='fashion')fashionScene();else if(key==='home')homeScene();else if(key==='beauty')beautyScene();else foodScene();}
+ catch(err){console.error('Scene build error:',err);toast('Часть объектов не загрузилась: '+err.message);}
+ upgradePremiumAssets(key);reconcilePremiumModels();applyStudioLook();applyExperienceVisuals();
+ camera.position.set(0,1.68,10.7);yaw=0;pitch=-.065;updateCamera();
+ $('experienceBtn').hidden=key==='fashion';$('lookbookBtn').hidden=key!=='fashion';
+ const d=DATA[key];$('worldTitle').innerHTML=d.name.replace(' ','<br>');$('eyebrow').textContent=d.tag;$('worldDescription').textContent=d.desc;
+ $('titlePanel').style.opacity='1';$('titlePanel').style.pointerEvents='auto';
+ document.querySelectorAll('[data-store]').forEach(b=>{b.classList.toggle('active',b.dataset.store===key);b.setAttribute('aria-pressed',String(b.dataset.store===key));});
+ const url=new URL(location.href);url.searchParams.set('world',key);url.searchParams.set('mood',studioMood);url.searchParams.set('finish',studioFinish);history.replaceState(null,'',url);
+}
+function updateCamera(){camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;}
+function blocked(x,z){
+ if(x<-9.5||x>9.5||z<-30.6||z>12.25)return true;
+ const radius=.32;
+ return blockers.some(b=>{
+  const cx=clamp(x,b.x-b.w/2,b.x+b.w/2),cz=clamp(z,b.z-b.d/2,b.z+b.d/2);
+  return (x-cx)*(x-cx)+(z-cz)*(z-cz)<radius*radius;
+ });
+}
+function move(dx,dz){
+ if(Math.abs(dx)+Math.abs(dz)>.002){$('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';}
+ const nx=camera.position.x+dx,nz=camera.position.z+dz;
+ // Resolve individual axes for natural sliding instead of walking through merch.
+ if(!blocked(nx,camera.position.z))camera.position.x=nx;
+ if(!blocked(camera.position.x,nz))camera.position.z=nz;
+}
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
+function selectAt(cx,cy){
+ mouse.set(cx/innerWidth*2-1,-(cy/innerHeight)*2+1);ray.setFromCamera(mouse,camera);
+ const hits=ray.intersectObjects(pickables,true);
+ for(const hit of hits){
+  if(hit.distance>22)break;
+  if(hit.instanceId!==undefined&&Array.isArray(hit.object.userData.productIndices)){
+   const id=hit.object.userData.productIndices[hit.instanceId];
+   if(Number.isInteger(id)){openItem(id);return;}
+  }
+  let node=hit.object;
+  while(node&&node!==root){
+   if(node.userData.lookbookOpen){openLookbook();return;}
+   if(Number.isInteger(node.userData.itemIndex)){openItem(node.userData.itemIndex);return;}
+   node=node.parent;
+  }
+ }
+}
+function showDrawer(){closeExperience();closeLookbook();resetTouchSticks();const d=$('drawerOverlay');d.classList.add('open');d.setAttribute('aria-hidden','false');lastActive=document.activeElement;$('closeDrawer').focus();keys.clear();joy.x=joy.y=0;}
+function hideDrawer(){const d=$('drawerOverlay');d.classList.remove('open');d.setAttribute('aria-hidden','true');if(lastActive&&lastActive.focus)lastActive.focus();}
+function money(v){return Number(v).toLocaleString('ru-RU')+' ֏';}
+function priceTotal(){let sum=0,cnt=0;Object.entries(cart).forEach(([key,qty])=>{const [store,i]=key.split(':');const item=DATA[store]?.items[Number(i)];if(item){sum+=item[2]*qty;cnt+=qty;}});$('cartCount').textContent=cnt;return sum;}
+function addToCart(store,index){if(!DATA[store]?.items[index])return;const key=store+':'+index;cart[key]=Math.min(99,(cart[key]||0)+1);priceTotal();toast('Добавлено в демо-корзину');}
+function toast(msg){const n=$('notice');n.textContent=msg;n.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>n.classList.remove('show'),2400);}
+function buildRows(rows){
+ const wrap=$('drawerProducts');wrap.replaceChildren();
+ rows.forEach(({title,emoji,detail,price,button,action})=>{
+  const row=document.createElement('div');row.className='productItem';
+  const ico=document.createElement('div');ico.className='productIcon';ico.textContent=emoji;
+  const txt=document.createElement('div');const name=document.createElement('strong');name.textContent=title;const info=document.createElement('small');info.textContent=detail+' · '+money(price);txt.append(name,info);
+  const b=document.createElement('button');b.textContent=button;b.addEventListener('click',action);row.append(ico,txt,b);wrap.append(row);
+ });
+}
+function openCatalog(){
+ const d=DATA[active];$('drawerKicker').textContent='MARKET SPACE / '+d.tag;$('drawerTitle').textContent='Коллекция';
+ $('drawerIntro').textContent='Предметы в демонстрационном пространстве. Это примеры, цены условные, оплата отключена.';
+ buildRows(d.items.map((it,i)=>({title:it[0],emoji:it[1],price:it[2],detail:it[3],button:'＋',action:()=>addToCart(active,i)})));
+ $('drawerFoot').innerHTML='<span>Демо-каталог, без покупки</span>';showDrawer();
+}
+function openItem(index){
+ const d=DATA[active],item=d.items[index];if(!item)return;
+ $('drawerKicker').textContent=d.tag;$('drawerTitle').textContent=item[0];$('drawerIntro').textContent=item[3];
+ buildRows([{title:item[0],emoji:item[1],detail:'Демонстрационный товар',price:item[2],button:'＋ В корзину',action:()=>addToCart(active,index)}]);
+ $('drawerFoot').textContent='Товар и его цена представлены для демонстрации. Реальные платежи не подключены.';showDrawer();
+}
+function openCart(){
+ $('drawerKicker').textContent='MARKET SPACE / SHOPPING';$('drawerTitle').textContent='Корзина';
+ $('drawerIntro').textContent='Пример работы виртуального магазина. Заказы, оплата и доставка не подключены.';
+ const items=Object.entries(cart).filter(([,q])=>q>0).map(([key,q])=>{
+  const [store,i]=key.split(':'),p=DATA[store].items[Number(i)];
+  return {title:p[0]+' × '+q,emoji:p[1],price:p[2]*q,detail:DATA[store].name,button:'−',action:()=>{cart[key]=Math.max(0,q-1);priceTotal();openCart();}};
+ });
+ buildRows(items);if(!items.length){const p=document.createElement('p');p.textContent='Пока пусто — загляни в коллекцию и выбери предмет.';$('drawerProducts').append(p);}
+ $('drawerFoot').replaceChildren();const sum=document.createElement('strong');sum.textContent=money(priceTotal());const cap=document.createElement('span');cap.textContent='Итого (демо)';$('drawerFoot').append(cap,sum);showDrawer();
+}
+// Category-specific experience panel uses standard buttons and actual 3D material/geometry state.
+function closeExperience(){
+ $('experiencePanel').hidden=true;$('experienceBtn').setAttribute('aria-expanded','false');
+}
+function renderExperiencePanel(){
+ const cfg=EXPERIENCE_OPTIONS[active];if(!cfg)return;
+ $('experienceKicker').textContent=active.toUpperCase()+' / LIVE 3D EXPERIENCE';
+ $('experienceTitle').textContent=cfg.title;$('experienceIntro').textContent=cfg.intro;
+ const host=$('experienceOptions');host.replaceChildren();
+ for(const group of cfg.groups){
+  const section=document.createElement('div');section.className='experienceSection';
+  const head=document.createElement('strong');head.textContent=group.title;section.append(head);
+  const buttons=document.createElement('div');buttons.className='experienceOptions';buttons.setAttribute('role','group');buttons.setAttribute('aria-label',group.title);
+  for(const [value,label] of group.choices){
+   const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.optionGroup=group.key;b.dataset.optionValue=value;
+   b.setAttribute('aria-pressed',String(experienceState[active][group.key]===value));
+   b.onclick=()=>{
+    experienceState[active][group.key]=value;
+    applyExperienceVisuals();experienceURL();renderExperiencePanel();
+    const next=host.querySelector('[data-option-group="'+group.key+'"][data-option-value="'+value+'"]');
+    if(next)next.focus();
+   };
+   buttons.append(b);
+  }
+  section.append(buttons);host.append(section);
+ }
+ $('experienceAdd').textContent='＋ Добавить '+(active==='food'?'набор':active==='beauty'?'аромат':'интерьер');
+ $('experienceNote').textContent=active==='beauty'?
+ 'Это визуальный выбор оформления демо-флакона, не изготовление настоящего аромата. Заказы и оплата не подключены.':
+ active==='home'?'Выбираешь виртуальную обстановку, не реальные размеры мебели или доставку. Покупки пока демонстрационные.':
+ 'Выбираешь примерный набор, а не товары из действующего магазина. Списания и доставка отключены.';
+ const price=experienceTotal(active);
+ const total=document.createElement('div');total.className='lookbookTotal';
+ const lab=document.createElement('span');lab.textContent='Стоимость демо-набора';
+ const value=document.createElement('b');value.textContent=money(price);
+ total.append(lab,value);host.append(total);
+}
+function openExperience(){
+ if(active==='fashion'){openLookbook();return;}
+ if(!EXPERIENCE_OPTIONS[active])return;
+ closeLookbook();closeStyleStudio();hideDrawer();stopTour();resetTouchSticks();
+ $('experiencePanel').hidden=false;$('experienceBtn').setAttribute('aria-expanded','true');
+ $('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';
+ renderExperiencePanel();$('closeExperience').focus();
+}
+$('experienceBtn').addEventListener('click',()=>$('experiencePanel').hidden?openExperience():closeExperience());
+$('closeExperience').addEventListener('click',()=>{closeExperience();$('experienceBtn').focus();});
+$('experienceAdd').addEventListener('click',()=>{
+ if(!EXPERIENCE_OPTIONS[active])return;
+ const item=selectedExperienceItem(active),quantity=selectedExperienceQty(active);
+ if(!Number.isInteger(item))return;
+ for(let i=0;i<quantity;i++)addToCart(active,item);
+ toast('Выбранное добавлено в демо-корзину');
+});
+$('experienceShare').addEventListener('click',async()=>{
+ if(!EXPERIENCE_OPTIONS[active])return;
+ const url=experienceURL();url.searchParams.set('experience','1');
+ url.searchParams.delete('diagnostics');url.searchParams.delete('assets');
+ const href=url.toString();
+ if(navigator.share&&coarse){
+  try{await navigator.share({title:'MARKET SPACE · '+EXPERIENCE_OPTIONS[active].title,url:href});return;}
+  catch(e){if(e?.name==='AbortError')return;}
+ }
+ try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(href);toast('Ссылка на пространство скопирована');return;}}catch(e){}
+ window.prompt('Скопируй ссылку на свою 3D-подборку:',href);
+});
+
+// Lookbook acts on the 3D model inside Fashion. Sharing is user-initiated, without backend.
+let lookbookFocus=null;
+function closeLookbook(){
+ $('lookbookPanel').hidden=true;
+ $('lookbookBtn').setAttribute('aria-expanded','false');
+ if(lookbookStage)lookbookStage.rotationEnabled=false;
+ $('lookbookTurn').setAttribute('aria-pressed','false');
+ lookbookFocus=null;
+}
+function openLookbook(){
+ closeExperience();if(active!=='fashion')setStore('fashion');
+ if(!lookbookStage){toast('Манекен Lookbook недоступен в этой сцене');return;}
+ hideDrawer();closeStyleStudio();stopTour();
+ keys.clear();resetTouchSticks();
+ $('lookbookPanel').hidden=false;$('lookbookBtn').setAttribute('aria-expanded','true');
+ $('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';
+ applyLookbookState();
+ // An ease-in tour focuses on the sculpted mannequin without interfering with the scene.
+ const end=new THREE.Vector3(1.20,1.68,1.08);
+ const desiredYaw=-Math.atan2(4.55-end.x,end.z+3.6);
+ lookbookFocus={start:camera.position.clone(),end,t:0,initialYaw:yaw,endYaw:desiredYaw,initialPitch:pitch};
+ $('closeLookbook').focus();
+}
+function updateLookbookControls(){
+ document.querySelectorAll('[data-look-preset]').forEach(b=>{
+  const p=LOOKBOOK_PRESETS[b.dataset.lookPreset];
+  const selected=p&&p.garment===lookbookState.garment&&p.color===lookbookState.color&&
+   p.shoes===lookbookState.shoes&&p.bag===lookbookState.bag&&p.mood===studioMood;
+  b.setAttribute('aria-pressed',String(!!selected));
+ });
+ applyLookbookState();updateLookbookURL();
+}
+$('lookbookBtn').addEventListener('click',()=>$('lookbookPanel').hidden?openLookbook():closeLookbook());
+$('closeLookbook').addEventListener('click',()=>{closeLookbook();$('lookbookBtn').focus();});
+document.querySelectorAll('[data-look-preset]').forEach(b=>b.addEventListener('click',()=>{
+ const p=LOOKBOOK_PRESETS[b.dataset.lookPreset];if(!p)return;
+ lookbookState={garment:p.garment,color:p.color,shoes:p.shoes,bag:p.bag};
+ studioMood=p.mood;applyStudioLook();updateLookbookControls();
+}));
+for(const [selector,key,options] of [
+ ['[data-look-garment]','garment',LOOKBOOK_GARMENTS],
+ ['[data-look-color]','color',LOOKBOOK_COLORS],
+ ['[data-look-shoes]','shoes',{sneaker:1,dark:1,none:1}],
+ ['[data-look-bag]','bag',{yes:1,no:1}]
+ ]){
+ document.querySelectorAll(selector).forEach(b=>b.addEventListener('click',()=>{
+  const value=b.dataset['look'+key[0].toUpperCase()+key.slice(1)];
+  if(!Object.hasOwn(options,value))return;
+  lookbookState[key]=value;updateLookbookControls();
+ }));
+}
+$('lookbookTurn').addEventListener('click',()=>{
+ if(!lookbookStage)return;
+ lookbookStage.rotationEnabled=!lookbookStage.rotationEnabled;
+ $('lookbookTurn').setAttribute('aria-pressed',String(lookbookStage.rotationEnabled));
+ $('lookbookTurn').textContent=lookbookStage.rotationEnabled?'Ⅱ Стоп вращение':'↻ Вращать манекен';
+});
+$('lookbookReset').addEventListener('click',()=>{
+ const base=LOOKBOOK_PRESETS.atelier;
+ lookbookState={garment:base.garment,color:base.color,shoes:base.shoes,bag:base.bag};
+ if(lookbookStage)lookbookStage.pivot.rotation.y=0;
+ updateLookbookControls();
+});
+$('lookbookAdd').addEventListener('click',()=>{
+ if(active!=='fashion')return;
+ addToCart('fashion',LOOKBOOK_GARMENTS[lookbookState.garment].index);
+ if(lookbookState.shoes!=='none')addToCart('fashion',4);
+ toast('Предметы образа добавлены в демо-корзину');
+});
+$('lookbookShare').addEventListener('click',async()=>{
+ const url=updateLookbookURL();
+ url.searchParams.set('lookbook','1');
+ url.searchParams.delete('diagnostics');url.searchParams.delete('assets');
+ const href=url.toString();
+ if(navigator.share&&coarse){
+  try{await navigator.share({title:'MARKET SPACE · My Lookbook',url:href});return;}
+  catch(e){if(e?.name==='AbortError')return;}
+ }
+ try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(href);toast('Ссылка на образ скопирована');return;}}catch(e){}
+ window.prompt('Скопируй ссылку на свой 3D-образ:',href);
+});
+
+// Style Studio is intentionally local-only: URL state, no accounts, no tracking or hidden uploads.
+function closeStyleStudio(){
+ $('stylePanel').hidden=true;
+ $('styleBtn').setAttribute('aria-expanded','false');
+}
+function openStyleStudio(){
+ closeExperience();closeLookbook();hideDrawer();stopTour();keys.clear();resetTouchSticks();
+ $('stylePanel').hidden=false;
+ $('styleBtn').setAttribute('aria-expanded','true');
+ $('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';
+ applyStudioLook();
+ $('closeStyle').focus();
+}
+function updateStyleURL(){
+ const url=new URL(location.href);
+ url.searchParams.set('world',active);
+ url.searchParams.set('mood',studioMood);
+ url.searchParams.set('finish',studioFinish);
+ history.replaceState(null,'',url);
+ return url;
+}
+$('styleBtn').addEventListener('click',()=>$('stylePanel').hidden?openStyleStudio():closeStyleStudio());
+$('closeStyle').addEventListener('click',()=>{closeStyleStudio();$('styleBtn').focus();});
+document.querySelectorAll('[data-mood]').forEach(b=>b.addEventListener('click',()=>{
+ if(!Object.hasOwn(STUDIO_MOODS,b.dataset.mood))return;
+ studioMood=b.dataset.mood;applyStudioLook();updateStyleURL();
+}));
+document.querySelectorAll('[data-finish]').forEach(b=>b.addEventListener('click',()=>{
+ if(!Object.hasOwn(STUDIO_FINISHES,b.dataset.finish))return;
+ studioFinish=b.dataset.finish;applyStudioLook();updateStyleURL();
+}));
+$('shareStyle').addEventListener('click',async()=>{
+ const url=updateStyleURL();
+ url.searchParams.delete('diagnostics');url.searchParams.delete('assets');
+ if(qualityMode==='high')url.searchParams.set('quality','high');
+ else if(qualityMode==='eco')url.searchParams.set('quality','eco');
+ else url.searchParams.delete('quality');
+ const href=url.toString(),title='MARKET SPACE · '+DATA[active].name+' / Style Studio';
+ if(navigator.share&&coarse){
+  try{await navigator.share({title,url:href});return;}
+  catch(e){if(e?.name==='AbortError')return;}
+ }
+ try{
+  if(navigator.clipboard?.writeText){
+   await navigator.clipboard.writeText(href);toast('Ссылка на этот дизайн скопирована');return;
+  }
+  const input=document.createElement('textarea');input.value=href;input.style.position='fixed';
+  input.style.opacity='0';document.body.append(input);input.select();
+  const copied=document.execCommand('copy');input.remove();
+  if(copied){toast('Ссылка на этот дизайн скопирована');return;}
+ }catch(e){console.info('Copy is unavailable',e);}
+ window.prompt('Скопируй ссылку на свой дизайн:',href);
+});
+
+$('catalogBtn').onclick=openCatalog;$('cartBtn').onclick=openCart;$('closeDrawer').onclick=hideDrawer;
+$('drawerOverlay').addEventListener('pointerdown',e=>{if(e.target===$('drawerOverlay'))hideDrawer();});
+document.querySelectorAll('[data-store]').forEach(b=>b.onclick=()=>{hideDrawer();setStore(b.dataset.store);});
+// Directed camera choreography stays in walkable central routes, starting at current location.
+const directorRoutes={
+ fashion:[{x:0,z:5,yaw:.28,pitch:-.09},{x:.3,z:-4,yaw:-.38,pitch:-.08},{x:-.2,z:-12.7,yaw:.40,pitch:-.075},{x:.4,z:-21.5,yaw:-.31,pitch:-.08},{x:0,z:-28,yaw:0,pitch:-.03}],
+ food:[{x:3.1,z:5,yaw:.30,pitch:-.09},{x:3.1,z:-4.5,yaw:-.35,pitch:-.08},{x:3.1,z:-11,yaw:.32,pitch:-.07},{x:3.1,z:-21,yaw:-.30,pitch:-.06},{x:3.1,z:-28,yaw:0,pitch:-.02}],
+ beauty:[{x:3,z:4,yaw:.38,pitch:-.08},{x:3,z:-5,yaw:-.36,pitch:-.1},{x:3,z:-13,yaw:.35,pitch:-.08},{x:3,z:-24,yaw:-.25,pitch:-.05},{x:3,z:-28,yaw:0,pitch:-.04}],
+ home:[{x:0,z:5,yaw:.33,pitch:-.10},{x:-.3,z:-3,yaw:-.40,pitch:-.07},{x:.3,z:-12,yaw:.31,pitch:-.08},{x:0,z:-21,yaw:-.36,pitch:-.06},{x:0,z:-28,yaw:0,pitch:-.05}]
+};
+function startTour(){
+ tourRoute=[{x:camera.position.x,z:camera.position.z,yaw,pitch},...directorRoutes[active]];
+ tourT=0;touring=true;walkVelocity.x=walkVelocity.z=0;
+ $('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';
+ $('tourBtn').textContent='Ⅱ Остановить';
+}
+function stopTour(){
+ touring=false;tourRoute=[];$('tourBtn').textContent='▶ Кинотур';
+}
+$('introButton').onclick=startTour;
+$('tourBtn').onclick=()=>touring?stopTour():startTour();
+document.addEventListener('keydown',e=>{
+ if(e.code==='Escape'){if(!$('experiencePanel').hidden){closeExperience();$('experienceBtn').focus();}else if(!$('lookbookPanel').hidden){closeLookbook();$('lookbookBtn').focus();}else if(!$('stylePanel').hidden){closeStyleStudio();$('styleBtn').focus();}else hideDrawer();return;}
+ if(!$('stylePanel').hidden||!$('lookbookPanel').hidden||!$('experiencePanel').hidden)return;
+ if($('drawerOverlay').classList.contains('open')){
+  if(e.code==='Tab'){
+   const els=[...$('drawerOverlay').querySelectorAll('button:not([disabled]),a[href]')].filter(x=>x.offsetParent!==null);
+   const first=els[0],last=els[els.length-1];
+   if(first&&last&&((e.shiftKey&&document.activeElement===first)||(!e.shiftKey&&document.activeElement===last))){
+    e.preventDefault();(e.shiftKey?last:first).focus();
+   }
+  }
+  return;
+ }if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.code==='KeyT')$('tourBtn').click();if(e.code==='KeyE'){
+ const at=new THREE.Vector3(),near=hotspots.map(h=>{
+  h.g.getWorldPosition(at);return {index:h.index,distance:at.distanceTo(camera.position)};
+ }).filter(a=>a.distance<3.5).sort((a,b)=>a.distance-b.distance)[0];
+ if(near&&Number.isInteger(near.index))openItem(near.index);
+}});
+document.addEventListener('keyup',e=>keys.delete(e.code));
+window.addEventListener('blur',()=>{keys.clear();resetTouchSticks();});
+const pad=$('movePad'),lookPad=$('lookPad');let joyPointer=null,lookPointer=null,lookJoy={x:0,y:0};
+function stickVector(e,element){
+ const r=element.getBoundingClientRect(),dx=(e.clientX-r.left-r.width/2)/(r.width*.32),dy=(e.clientY-r.top-r.height/2)/(r.height*.32);
+ const magnitude=Math.hypot(dx,dy),adjusted=magnitude<.16?0:Math.min(1,(magnitude-.16)/.84),normal=Math.max(.0001,magnitude);
+ return {x:dx/normal*adjusted,y:dy/normal*adjusted};
+}
+function joyMove(e){
+ const v=stickVector(e,pad);joy.x=v.x;joy.y=v.y;
+ $('padThumb').style.transform='translate('+(joy.x*29)+'px,'+(joy.y*29)+'px)';
+}
+function lookMove(e){
+ const v=stickVector(e,lookPad);lookJoy.x=v.x;lookJoy.y=v.y;
+ $('lookThumb').style.transform='translate('+(lookJoy.x*29)+'px,'+(lookJoy.y*29)+'px)';
+}
+function resetTouchSticks(){
+ joyPointer=lookPointer=null;joy.x=joy.y=lookJoy.x=lookJoy.y=0;
+ $('padThumb').style.transform='';$('lookThumb').style.transform='';
+}
+pad.addEventListener('pointerdown',e=>{if(joyPointer!==null)return;joyPointer=e.pointerId;pad.setPointerCapture(e.pointerId);joyMove(e);stopTour();});pad.addEventListener('pointermove',e=>{if(e.pointerId===joyPointer)joyMove(e);});
+function joyUp(e){if(e.pointerId!==joyPointer)return;joyPointer=null;joy.x=joy.y=0;$('padThumb').style.transform='';}
+pad.addEventListener('pointerup',joyUp);pad.addEventListener('pointercancel',joyUp);
+lookPad.addEventListener('pointerdown',e=>{if(lookPointer!==null)return;lookPointer=e.pointerId;lookPad.setPointerCapture(e.pointerId);lookMove(e);stopTour();});
+lookPad.addEventListener('pointermove',e=>{if(e.pointerId===lookPointer)lookMove(e)});
+function lookUp(e){if(e.pointerId!==lookPointer)return;lookPointer=null;lookJoy.x=lookJoy.y=0;$('lookThumb').style.transform='';}
+lookPad.addEventListener('pointerup',lookUp);
+lookPad.addEventListener('pointercancel',lookUp);
+let dragging=false,dragId=null,dragX=0,dragY=0,dragMoved=false,downX=0,downY=0;
+$('qualityBtn').addEventListener('click',()=>{
+ qualityMode=qualityCycle[(qualityCycle.indexOf(qualityMode)+1)%qualityCycle.length];
+ qualityReduced=qualityMode!=='auto';
+ applyQuality();syncPhysicalGlass();
+ // New HD geometry and 1K stone textures require rebuilding the current world.
+ const originalView=camera.position.clone(),oldYaw=yaw,oldPitch=pitch,oldStore=active;
+ setStore(oldStore);
+ camera.position.copy(originalView);yaw=oldYaw;pitch=oldPitch;updateCamera();
+ toast('Качество: '+qualityLabels[qualityMode]);
+});
+const canvas=renderer.domElement;
+canvas.addEventListener('pointerdown',e=>{dragging=true;dragId=e.pointerId;dragX=downX=e.clientX;dragY=downY=e.clientY;dragMoved=false;canvas.setPointerCapture(e.pointerId);$('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';});
+canvas.addEventListener('pointermove',e=>{if(!dragging||e.pointerId!==dragId)return;let dx=e.clientX-dragX,dy=e.clientY-dragY;if(Math.abs(e.clientX-downX)+Math.abs(e.clientY-downY)>8)dragMoved=true;yaw-=dx*(coarse?.005:.0036);pitch=clamp(pitch-dy*.0028,-.58,.52);dragX=e.clientX;dragY=e.clientY;if(Math.abs(dx)+Math.abs(dy)>0){stopTour();}});
+canvas.addEventListener('pointerup',e=>{if(e.pointerId!==dragId)return;dragging=false;dragId=null;if(!dragMoved)selectAt(e.clientX,e.clientY);});
+canvas.addEventListener('pointercancel',()=>{dragging=false;dragId=null;});
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(renderPixelRatio);});
+// Big right-hand action button: inspect the nearest product or open the current store's lab.
+function nearestProduct(maxDistance=5.4){
+ let result=null,distance=maxDistance;
+ const p=new THREE.Vector3();
+ for(const h of hotspots){
+  h.g.getWorldPosition(p);
+  const len=p.distanceTo(camera.position);
+  if(len<distance&&Number.isInteger(h.index)){
+   result=h.index;distance=len;
+  }
+ }
+ return result;
+}
+$('interactionBtn').addEventListener('click',()=>{
+ if(!$('experiencePanel').hidden||!$('stylePanel').hidden||!$('lookbookPanel').hidden)return;
+ const nearest=nearestProduct();
+ if(nearest!==null)openItem(nearest);
+ else if(active==='fashion')openLookbook();
+ else openExperience();
+});
+const productTip=$('objectTip'),tipLabel=$('tipProductName');
+let tipCurrent=-1,tipFrame=0;
+$('tipProductAction').addEventListener('click',()=>{if(tipCurrent>=0){stopTour();openItem(tipCurrent);}});
+function updateProductTip(){
+ if($('drawerOverlay').classList.contains('open')||!$('lookbookPanel').hidden||!$('experiencePanel').hidden||touring){productTip.classList.remove('show');return;}
+ const pos3=new THREE.Vector3(),projected=new THREE.Vector3();
+ let best=Infinity,bestIndex=-1;
+ for(const h of hotspots){
+  h.g.getWorldPosition(pos3);
+  const distance=pos3.distanceTo(camera.position);
+  if(distance>6.2)continue;
+  projected.copy(pos3).project(camera);
+  if(projected.z<-.95||projected.z>1||Math.abs(projected.x)>.80||Math.abs(projected.y)>.82)continue;
+  const rank=distance*.1+Math.hypot(projected.x,projected.y)*2.1;
+  if(rank<best){best=rank;bestIndex=h.index;}
+ }
+ if(bestIndex<0){productTip.classList.remove('show');tipCurrent=-1;return;}
+ if(tipCurrent!==bestIndex){
+  tipCurrent=bestIndex;tipLabel.textContent=DATA[active].items[bestIndex]?.[0]||'Товар';
+ }
+ productTip.classList.add('show');
+}
+let perfWindow=0,perfSamples=0,qualityReduced=false;
+let perfElapsed=0,perfFrames=0;
+if(showPerformance)$('perfHud').hidden=false;
+function animate(t){
+ requestAnimationFrame(animate);
+ const delta=Math.min(.04,(t-(animate.prev||t))/1000);animate.prev=t;
+ if(document.hidden)return;
+ if(!$('drawerOverlay').classList.contains('open')&&$('lookbookPanel').hidden&&$('stylePanel').hidden&&$('experiencePanel').hidden){
+  if(touring&&tourRoute.length>1){
+   tourT+=delta/(reduced?2.4:3.65);
+   const n=tourRoute.length-1,seg=Math.min(n-1,Math.floor(tourT));
+   const u=clamp(tourT-seg,0,1),ease=u*u*(3-2*u),a=tourRoute[seg],b=tourRoute[seg+1];
+   camera.position.x=THREE.MathUtils.lerp(a.x,b.x,ease);
+   camera.position.z=THREE.MathUtils.lerp(a.z,b.z,ease);
+   const angular=Math.atan2(Math.sin(b.yaw-a.yaw),Math.cos(b.yaw-a.yaw));
+   yaw=a.yaw+angular*ease;pitch=THREE.MathUtils.lerp(a.pitch,b.pitch,ease);
+   if(tourT>=n)stopTour();
+  }else{
+   const forward=(keys.has('KeyW')||keys.has('ArrowUp')?1:0)-(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-joy.y;
+   const side=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+joy.x;
+   const norm=Math.max(1,Math.hypot(forward,side)),speed=3.45;
+   const targetX=(Math.sin(yaw)*forward+Math.cos(yaw)*side)/norm*speed;
+   const targetZ=(-Math.cos(yaw)*forward+Math.sin(yaw)*side)/norm*speed;
+   const smooth=1-Math.exp(-12*delta);
+   walkVelocity.x=THREE.MathUtils.lerp(walkVelocity.x,targetX,smooth);
+   walkVelocity.z=THREE.MathUtils.lerp(walkVelocity.z,targetZ,smooth);
+   move(walkVelocity.x*delta,walkVelocity.z*delta);
+   if(keys.has('ArrowLeft'))yaw+=delta*1.3;
+   if(keys.has('ArrowRight'))yaw-=delta*1.3;
+   if(lookPointer!==null){
+    yaw-=lookJoy.x*delta*1.7;pitch=clamp(pitch-lookJoy.y*delta*1.03,-.58,.52);
+   }
+  }
+ }
+ if(lookbookFocus){
+  lookbookFocus.t=Math.min(1,lookbookFocus.t+delta/(reduced?.25:1.1));
+  const v=lookbookFocus.t*lookbookFocus.t*(3-2*lookbookFocus.t);
+  camera.position.lerpVectors(lookbookFocus.start,lookbookFocus.end,v);
+  yaw=THREE.MathUtils.lerp(lookbookFocus.initialYaw,lookbookFocus.endYaw,v);
+  pitch=THREE.MathUtils.lerp(lookbookFocus.initialPitch,-.035,v);
+  if(lookbookFocus.t>=1)lookbookFocus=null;
+ }else camera.position.y=1.68+(reduced?0:.012*Math.sin(t*.0014));
+ if(lookbookStage&&lookbookStage.rotationEnabled&&!reduced&&active==='fashion')
+   lookbookStage.pivot.rotation.y+=delta*.42;
+ updateCamera();
+ hotspots.forEach((h,i)=>{h.g.rotation.y+=delta*.26;h.halo.scale.setScalar(1+(reduced?0:.11*Math.sin(t*.0028+i)));});
+ renderer.render(scene,camera);
+ if(showPerformance){
+  perfElapsed+=delta;perfFrames++;
+  if(perfElapsed>=1){
+   const hud=$('perfHud'),info=renderer.info;
+   hud.textContent='FPS '+Math.round(perfFrames/perfElapsed)+' | '+qualityMode.toUpperCase()+
+    '\nDraw calls '+info.render.calls+' | triangles '+info.render.triangles+
+    '\nGeometry '+info.memory.geometries+' | textures '+info.memory.textures+
+    '\nScreen DPR '+renderPixelRatio.toFixed(2)+' | store '+active;
+   perfElapsed=0;perfFrames=0;
+  }
+ }
+ if(++tipFrame%8===0){
+  updateProductTip();
+  $('interactionBtn').setAttribute('aria-label',nearestProduct()!==null?'Осмотреть ближайший товар':'Открыть интерактивную студию магазина');
+}
+ // Single bounded quality downgrade on sustained mobile GPU pressure.
+ if(coarse&&qualityMode==='auto'&&!qualityReduced&&delta>.002){
+  perfWindow+=delta;perfSamples++;
+  if(perfWindow>6){
+   const fps=perfSamples/perfWindow;
+   if(fps<27 && renderPixelRatio>1){
+    qualityReduced=true;renderPixelRatio=Math.min(1,devicePixelRatio||1);
+    renderer.setPixelRatio(renderPixelRatio);renderer.setSize(innerWidth,innerHeight);$('qualityBtn').textContent='Качество: Авто · экономия';
+   }
+   perfWindow=0;perfSamples=0;
+  }
+ }
+}
+
+try{
+ const initial=new URLSearchParams(location.search).get('world');
+ applyQuality();setStore(DATA[initial]?initial:'fashion');priceTotal();
+ if(new URLSearchParams(location.search).get('studio')==='1')openStyleStudio();
+ else if(new URLSearchParams(location.search).get('lookbook')==='1')openLookbook();
+ else if(new URLSearchParams(location.search).get('experience')==='1')openExperience();
+ $('loading').classList.add('ready');window.__marketSpaceReady=true;
+ camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+ requestAnimationFrame(animate);
+}catch(err){console.error('MARKET SPACE scene initialization failed',err);window.__marketSpaceShowFallback('Ошибка 3D-сцены: '+err.message);}
+</script>
+</body></html>

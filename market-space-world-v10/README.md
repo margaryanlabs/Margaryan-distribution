@@ -1,0 +1,210 @@
+# MARKET SPACE WORLD V10 — rebuild prototype
+
+Built as a new isolated static browser experience in the existing Margaryan Distribution repository; V9, older previews, and INGU Shop are untouched.
+
+## What genuinely changed
+- Three.js r0.186 WebGL 3D engine with physically lit rough/metal materials, tone mapping, soft shadows on non-mobile devices, colored backlighting, actual depth-geometry and custom procedural stone textures.
+- Five-meter-tall architectural interiors, branded gallery signage, cornices, spotlights, luminous rings and varied finishes.
+- Fashion: actually modelled 3D garments (extruded tailored body panels, sleeves, lapels, buttons and fabric skirts), mannequin bodies, suspended clothing on rails, display podiums and mirrors. Meshes are stylized bespoke procedural models, NOT production-grade scanned cloth simulations or skinned apparel meshes.
+- Living: upholstered rounded sofas and cushions, modular living sections, lamps, wood/stone tables, potted plants and armchairs.
+- Beauty: 3D glass/metal flacons, serum bottles, cosmetics display islands.
+- Market: per-item real 3D cartons, cylinders and shelves, produce islands, refrigerator wall elements.
+- Walking: touch drag to look, virtual mobile joystick, WASD/arrow keys, collision around main center objects, cinematic camera fly-through, catalog and hit-testable product markers with a local demo cart.
+- Production safety: no paid services, no database, no payments, no real merchant inventory, no unconsented user information, no production changes.
+
+## Preview
+- V10 interactive world: /market-space-world-v10/?world=fashion
+- V10 storefront: /market-space-showcase-v10/
+- CDN loading uses the pinned three.js 0.186.0 ESM package via jsDelivr; online connectivity is required on first visit. Failed WebGL/module loading visibly exposes a link to the known V9 prototype.
+- Legacy low-resource mode is linked to the existing V9 Canvas2D Lite renderer. V10 itself does not falsely claim a CPU-rendered version of these same detailed meshes.
+
+## Limits — must remain explicit
+- Geometry is significantly more detailed than V9 but still procedural. Photoreal clothing needs original licensed GLB or glTF assets, physically based fabric textures, real-world lighting calibration, and extensive art direction.
+- No claims of Android performance, real texture quality, universal WebGL availability, realistic cloth simulation, actual purchase handling, or 100% interaction test coverage.
+- Run the static source contract at scripts/market-space/test-v10-world.mjs, browser/physical device QA and visual accessibility test before advancing from draft.
+
+
+## V10.1 — model and interaction quality pass (2026-10-26)
+- Replaced mostly flat garment extrusion silhouettes with smoothly shaded ring-mesh 3D garments: separate jacket/coat/dress profiles, tapered sleeves, scarf-like lapel panels, seams, brass buttons, a structured waist and restrained skirt pleating.
+- Rescaled and anatomically realigned mannequin bodies and dress hems. Original scene selection continues to work.
+- Reusable fine procedural woven bump map for textile fabrics, no externally fetched garment textures required.
+- Click or tap **the actual geometry** of mannequins, furniture, beauty islands, produce islands and grocery shelves; hovering marker spheres alone is no longer mandatory.
+- Collision map now tracks approximate actual display footprints, resolving horizontal axes separately so visitors cannot simply clip through display tables and sofas.
+- Shop switches reclaim transient geometries, materials, texture maps and light shadow maps, while caching reusable finishes.
+- The cinematic tour now interpolates via per-category directed route keyframes, starting from the visitor's current position, without hard resets. Manual joystick/WASD movement is smoothed.
+- Mobile WebGL resolution automatically drops once after sustained low FPS; on a non-WebGL browser, the existing V9 2.5D link remains available.
+- Rebalanced exposure and light intensity to reduce blown-out whites while keeping premium warm interior highlights.
+
+### QA and honesty
+- 10 offline source contracts executed against the actual GitHub source (JavaScript parse, categories, geometry, interactive routes, collisions, static accessibility, fallback).
+- Isolated garment ring geometry created 160 finite vertices and 280 triangles; collision and route samples passed.
+- These tests do **not** verify real visual quality on physical phones or browsers. Automated external browser QA remains unavailable. Keep V10.1 draft until actual device reviews and load tests.
+
+
+## V10.2 — detailed commerce + mobile fallback (2026-10-26)
+- Supermarket shelves show original, in-engine branded package labels and individual fruit leaves/stems (real meshes, selectively instanced across shelves).
+- Fashion gallery now has physical leather handbags on sculptural plinths, with 3D handles and brass hardware.
+- Living showroom now has reusable woven upholstery materials and fine piping at the front edge of sofa cushions.
+- Customers can discover a nearby product from a contextual in-world card and open it without tiny hotspot precision; catalogue drawer wraps keyboard Tab focus.
+- Director tours in Market and Beauty were moved off obstructed central axes.
+- Quality toggle provides Auto/HD/Eco render pixel ratio. Sustained slow mobile FPS can reduce Auto resolution to retain interactivity.
+- Critical no-WebGL UX: after a failed GPU module load or a timeout, a clearly-labelled reference photography gallery for all four store types appears and links to V9 Lite's interactive 2.5D fallback. This does not claim the moodboard shots are generated by the V10 3D engine.
+- World logo returns to the matching V10 commercial landing page.
+- 15 source and isolated geometry/route checks pass against the fetched GitHub branch. A simulated script-only gallery state test also passed for Beauty-to-Market switching and correctly constructed Lite URLs.
+
+### Remaining blockers
+- Real-browser screenshots and physical GPU/touch checks were not available. Source tests cannot certify shader render correctness or image fidelity.
+- High-end production quality still requires licensed/commissioned GLB assets, physically based textures, proper environment lighting, profiling and a quality-assurance pass on several Android/iOS device classes.
+- No real payment integration or checkout; product pricing is illustrative.
+
+
+## V10.3 — visual grounding and GPU batching (2026-10-26)
+- Grocery shelf merchandise now uses Three.js InstancedMesh keyed by base shape/material. Each carton/bottle keeps a per-instance product index so clicking the individual object still opens the correct demo product. This reduces WebGL draw calls compared with per-item mesh construction while preserving visible objects. One shelf's 50 products (100 mesh parts) were validated as 12 instanced groups with finite transforms; **real FPS gains were not measured**.
+- Disposal now includes InstancedMesh GPU instance resources on store transitions.
+- RoomEnvironment + PMREM is used for reflective studio illumination, surrounded by safe direct-light fallback if environment generation fails. This is physically inspired scene lighting, not a claim of photoreal lighting calibration.
+- Shared radial contact-shadow textures ground mannequins, couches, groceries, produce displays and cosmetic islands even on phones without expensive shadow maps.
+- Glass cosmetic bottles use reused clearcoat materials, reduced roughness and environment reflections.
+- 18 offline static and isolated behavior checks pass. Browser screenshots, real WebGL availability, GPU profiling, actual materials and Android interaction remain unverified.
+
+### Asset quality threshold for the premium commercial version
+The existing four experimental V7 GLBs in /assets/v7/ were inspected. They are tiny models with a single mesh each (approximately 8–47 KB) and no image texture references. They may be suitable for a light procedural prototype, but they cannot credibly be marketed as professional photorealistic fashion/furniture assets. Real high-fidelity assets must be commissioned or acquired with explicit licenses, verified glTF/GLB PBR material channels, quality-controlled geometry and separate mobile LODs before replacing V10.3 showroom content.
+
+Do not confuse GPU batching, clearcoat settings or enhanced lighting with verified final photography-level realism.
+
+## V10.4 — Licensed GLB showroom examples (2026-10-26)
+- Added optional Khronos GLTFLoader with two detailed PBR assets (third-party examples, not merchant inventory):
+  - Sheen Chair: © 2020 Wayfair / Eric Chadwick, CC0-1.0, approx. 3.9 MB. https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/SheenChair
+  - Materials Variants Shoe: © 2021 Shopify, CC BY 4.0, approx. 7.8 MB. https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/MaterialsVariantsShoe
+- Licenses and original creator credit are displayed in the interactive page via 3D-модели / источники. Retain attribution when using the Shopify model.
+- Models are optional and load asynchronously after procedural stores render. Cached GLB instances are sized to exhibit plinths, linked to demo item cards, and retained safely across store switches. Old late results are rejected via a generation token.
+- Desktop Auto and mobile HD load detailed examples. A link with query quality=high enables HD immediately on mobile. quality=eco and assets=off keep the light procedural version.
+- Failed external GLB requests do not break the WebGL storefront or replace the ordinary models.
+- This is a validated static integration path, not a proof of mobile GPU performance, real texture rendering, or commercial photorealism.
+- Before production, use licensed commissioned brand merchandise assets, self-host optimized GLBs, implement LOD variants and data budgets, verify all PBR channels and test Android/iOS. Remote model files currently live on GitHub raw hosting.
+- Example HD: /market-space-world-v10/?world=fashion&quality=high&preview=104
+- Example Lite: /market-space-world-v10/?world=fashion&quality=eco&assets=off&preview=104
+
+## V10.5 — mobile correctness and real device instrumentation (2026-10-26)
+
+- Fixed detailed-model visibility when moving from HD to Eco and back: Eco actually hides source GLB clones and restores procedural displays, including on desktop.
+- Raycast candidates are re-synchronized with the currently visible models, so an invisible expensive mesh cannot steal product taps; returning to HD restores the cached model without downloading it again.
+- `quality=eco` prevents premium fetch on all devices. `assets=off` continues to be the hard disable override; mobile Auto defaults to procedural, HD explicitly allows detailed models.
+- The 3D source credits expander includes the detailed-model state so the user can see loading, HD ready, or Eco fallback.
+- Optional on-device diagnostics: append `&diagnostics=1` to any V10 URL. A small live HUD reports observed FPS, current render mode, WebGL draw calls / triangle count, allocated geometries and textures, device pixel ratio, and currently selected store. These are measurements made by the visitor's running browser, not independently benchmarked numbers.
+- Fashion shoe exhibits and home chair displays now have accessible item hotspots. Keyboard `E` selects the nearest valid catalog hotspot instead of an arbitrary render group with missing item metadata.
+- **25/25 offline source and isolated behavior contracts passed.** Quality state tests simulated desktop/touch HD ↔ Eco transitions and verified visible mesh and raycast target synchronization.
+- Still pending: real Chrome/Samsung Fold/iPhone graphics QA, remote asset network timing, device FPS evidence and visually verified lighting. Do not market the preview as production ready.
+
+### Direct QA URLs
+- HD (detailed assets where available): /market-space-world-v10/?world=fashion&quality=high&preview=105
+- Eco (always procedural): /market-space-world-v10/?world=fashion&quality=eco&assets=off&preview=105
+- Mobile hardware diagnostics: /market-space-world-v10/?world=fashion&quality=high&diagnostics=1&preview=105
+
+## V10.6 — interactive Style Studio and organic discovery (2026-10-26)
+
+Instead of adding further glossy CSS-only decorations, this iteration adds **customer-facing interaction inside the actual 3D renderer**:
+
+- A compact, mobile-adapted Style Studio panel within the existing World UI, accessible from the new "✦ Студия" navigation action.
+- Three physically different lighting/exposure/environment presets: Gallery, Golden Hour, Noir. These adjust actual Three.js lights, fog, background and renderer tone mapping, not merely overlay colors.
+- Five visual material options: Original, Linen, Rose, Sage and Graphite. Interactive swatches recolor real 3D garment shells, sleeves and sofa upholstery via per-mesh cloned PBR fabric materials. The Original mode preserves and can restore the showroom's varied initial garments.
+- Reusable base shared fabric materials are never mutated by a client customization, avoiding cross-store and cache contamination. Per-object color clones are disposed by the already existing world cleanup.
+- A share action creates an ordinary URL with exact store (world), lighting mood (mood), and selected palette (finish). Native mobile Web Share is used when available; else clipboard and manual copy. No account, analytics, tracking or backend persistence is added.
+- A direct entry option `studio=1` opens the configurator on arrival, and the commercial landing page now promotes a real, editable showroom instead of relying only on portfolio moodboard photography.
+- The main sales copy avoids claiming that live checkout is already available (cart and product pricing remain strictly illustrative).
+- 29/29 offline static and isolated behavior contracts passed, including generated 3D mesh material color cloning, reversible swatches and non-compounding lighting intensity.
+- **Still not verified:** actual Android/Safari GPU rendering, visual fidelity, FPS, mobile browser native sharing success, and all 3D content transitions. Keep draft and solicit real device QA before commercial promotion.
+
+### Direct previews
+- Fashion original: `/market-space-world-v10/?world=fashion&preview=106`
+- Interactive golden-hour outfit designer: `/market-space-world-v10/?world=fashion&mood=golden&finish=rose&studio=1&preview=106`
+- Living sage showroom: `/market-space-world-v10/?world=home&mood=gallery&finish=sage&studio=1&preview=106`
+- Sales site: `/market-space-showcase-v10/`
+
+## V10.7 — 3D Lookbook: shareable outfits inside the actual Fashion showroom (2026-10-26)
+
+- An interactive Lookbook panel, reached from the 3D header or automatically with `?lookbook=1`, is integrated in the real existing Fashion world, not a separate mocked site or static promotional image.
+- A sculptural mannequin on its own circular podium assembles one of **four distinct 3D garment meshes** (Atelier coat, Sculpt dress, Line jacket, Edition), **four selectable fabric hues**, two sneaker finishes or no footwear, and an optional 3D handbag. The object uses existing mesh generation, woven material and lighting resources.
+- Curated combinations: Atelier, Golden and After Dark. Buttons change garment geometry visibility, fabric color, shoe and bag visibility, and optionally the existing Style Studio lighting mood.
+- Opening the Lookbook smoothly focuses the 3D camera on the real mannequin; optional rotation exposes the garment's silhouette from every side. Controls use a compact, scrollable bottom sheet on phones, do not erase the 3D scene, and remain reversible.
+- A total is computed only from **existing illustrative Fashion catalog line items**. Shoes are the existing demonstration sneaker SKU; the decorative handbag is explicitly not treated as a commercial sellable SKU. The add-look action puts only the chosen garment and optional demo sneaker in the existing local cart. No checkout is connected.
+- Outfit parameters `look`, `lookTone`, `lookShoes`, `lookBag` and `lookbook=1` are encoded in shareable URLs with the room and Style Studio lighting state. Visitors can open the configured look directly via native mobile share or clipboard.
+- The V10 commercial landing now has a "Собрать 3D-образ" call-to-action; this links straight to a preselected 3D outfit.
+- Explicit in-app disclaimer: this is a **generic virtual mannequin** demo, **not** a body scan, AR try-on, fit prediction, actual clothing draping simulation, real sale, or completed payment gateway.
+- Added narrow-screen navigation handling to retain the four navigation actions on compact Android/Fold viewports.
+- QA: **29 earlier core checks passed**, plus **3 new behavior checks** for Lookbook UI, actual 3D garment variant selection, color switches, and demo pricing. JS sources parse. Real screenshot, mobile GPU performance, asset rendering and user-device input testing remain pending.
+
+### Previews
+- Live Lookbook: `/market-space-world-v10/?world=fashion&lookbook=1&look=dress&lookTone=rose&lookShoes=sneaker&lookBag=yes&preview=107`
+- Dark curated look: `/market-space-world-v10/?world=fashion&lookbook=1&look=edition&lookTone=night&lookShoes=dark&lookBag=no&mood=noir&preview=107`
+- Commercial landing with direct Lookbook entry: `/market-space-showcase-v10/`
+
+### Next asset milestone
+Commission/licence high-resolution real garment glTF + PBR textures and optimized mobile LODs, implement source-bound catalog, and verify device visuals. The current clothes remain handmade procedural stylizations rather than photoreal fabric simulation.
+
+## V10.8 — interactive labs in every store + two mobile joysticks (2026-10-26)
+
+The flagship showroom no longer confines active product experimentation to Fashion:
+
+- **Market Mix:** visitors choose produce/coffee/olive oil/milk from actual demo grocery catalog items, select individual / couple / family bundle size, see price scale by SKU quantity, and change the colors of **real 3D produce meshes**. Family mode scales the existing 3D fruit from its original proportions rather than destroying the shape. One-tap demo cart and shareable configuration URLs.
+- **Beauty / Scent Atelier:** choose Rose, Citrus or Amber; Clear or Frosted glass. The central displayed **3D perfume bottles** have their actual clearcoat/glass shader materials updated: color, roughness and opacity. This is visual customization, **not actual chemical scent formulation** or manufacturing.
+- **Living Composer:** choose fabric Sand/Sage/Rose/Graphite and Gallery/Conversation layout. Changes the real sofa upholstery materials and pivots real 3D furniture groups, not static images. The existing Style Studio lights remain independently usable.
+- Each of these three stores has a dedicated compact mobile `Experience` drawer with accessible pressed-state buttons, a real demo catalog price estimate, functional add-to-basket, and share links restoring the exact chosen options. Deep link `?world=food|beauty|home&experience=1&exp_<store>_<key>=...` opens the configured experience.
+- Fashion retains the interactive 3D Lookbook; the new Experience button is replaced by Lookbook only in Fashion, so the mobile header is not overloaded.
+- The commercial landing has three direct calls-to-action leading to all other experiences, not just Fashion.
+
+### Mobile navigation improvements
+
+- The existing small left movement pad was reworked into a larger thumb joystick with a 16% dead zone and vector magnitude normalization, so diagonal walks cannot exceed the set speed.
+- Added **independent right joystick for camera yaw/pitch**; users can move and look at the same time, and can still drag the free canvas to turn the view. Both pads use distinct pointer IDs and pointer capture with pointerup/cancel handling.
+- Large right-side **◎ inspect** action selects the nearest registered catalog item, or opens the current category's interaction panel when not near a product.
+- Joystick states are reset on app blur, shop switches and overlay transitions. Scrolling overlays pause walking. Touch pads appear on mobile; desktop retains pointer dragging and WASD.
+- Responsive changes preserve top navigation on narrow Fold screens.
+
+### Engineering verification & limits
+- All **29** pre-existing core source/isolation checks pass, plus **3** standalone Lookbook checks, plus **8** new behavioral checks for Market, Beauty, Living, deep links and dual joystick event infrastructure; module/classic JS parse. Total: **40 checks**.
+- The 8 new tests simulate three stores' actual 3D material changes and furniture transforms. These are **not** browser render or touch device tests.
+- Commercial data remains illustrative: no production checkout, manufacturing, user account or CRM is enabled. Physical Samsung Fold/Android/Safari GPU visuals and user touch reachability still require end-to-end tests.
+
+### Preview links
+- Food family mix: `/market-space-world-v10/?world=food&experience=1&exp_food_pick=produce&exp_food_bundle=family&preview=108`
+- Beauty amber/frosted: `/market-space-world-v10/?world=beauty&experience=1&exp_beauty_scent=amber&exp_beauty_glass=frost&preview=108`
+- Living conversation/sage: `/market-space-world-v10/?world=home&experience=1&exp_home_fabric=sage&exp_home_layout=conversation&preview=108`
+- Fashion Lookbook: `/market-space-world-v10/?world=fashion&lookbook=1&preview=108`
+
+## V11.0 — material, geometry, architecture quality rebuild (2026-10-26)
+
+This milestone deliberately upgrades the actual Three.js scene content rather than adding more UI decoration.
+
+**More credible fashion materials and 3D silhouettes**
+- Garment shells now use smoothly interpolated 3D contour rings and nonrepeating drape/hem wrinkles, rather than sparse cross-sections.
+- HD: **880 surface vertices / 1,680 triangle faces** on the test garment; Eco: **128 vertices / 224 triangles**. HD detail is available on Android through `quality=high` even when the pointer is a touchscreen.
+- Sleeves are volumetric cloth lofts rather than simple rigid cylinders. Jacket/coat lapels have beveled extruded depth.
+- Fabrics use `MeshPhysicalMaterial` with a real `sheen` layer, cloth bump texture and more plausible roughness. A room PMREM environment is still used for subtle fabric, metal and clearcoat response.
+
+**Distinct stone, timber, reflective cosmetics**
+- Deterministic irregular marble/travertine veining replaces noisy tiny boxes and flat repetitive tile imagery. Actual canvas maps use 1,024² in HD versus 512² in Eco with corresponding anisotropic texture filtering.
+- Procedural wood grain and knotted timber texture introduced as a shared physically lit finish for Living details and retail furniture.
+- Selected cosmetics glass uses `MeshPhysicalMaterial.transmission`, `thickness`, `ior`, reflection clearcoat and absorption tint **only when the device is using HD or a desktop render**. Eco retains less expensive alpha transparency. The official Three.js material docs state opacity should equal one for nonzero transmission.
+- Original in-scene `MAISON` perfume labels are drawn as cached texture art directly on actual 3D bottle fronts.
+
+**Each retail sector has bespoke architectural geometry**
+- Fashion: bronze boutique arch portals, long light coves, sculptural wall panels and track hardware.
+- Beauty: ribbed translucent glass, rose stone, illuminated art-deco wall niches and central scent podiums.
+- Living: timber slat walls, textured niches, rug trims and residential cove lighting.
+- Market: dark green commercial fascia, warm-lit shelf headers, structured aisle panels and signage.
+- Dense detail is reduced on Eco/mobile by limiting rib and timber slat counts.
+
+**Quality switching is now a real mesh / material rebuild**
+- Auto / HD / Eco switch rebuilds the current room to apply mesh density and canvas texture LOD while restoring the visitor's position and camera angle.
+- Branded interactive tools (Lookbook, Style Studio, Market Mix, Beauty Scent Atelier, Living Composer, twin joysticks, local demo cart and selectable objects) continue to exist.
+- A new `scripts/market-space/test-v11-quality.mjs` verifies geometric counts, HD/Eco stone resolution, dynamic glass optical parameters, distinct interiors, and the actual quality rebuild path.
+- The previously installed Three.js WebGL module remains pinned; no new commercial infrastructure, no Vercel production deployment or paid asset service was required.
+
+**QA honest limits**
+- All offline regression suites pass, including 5 new V11 isolated quality checks.
+- **Physical Android Chrome / Fold / iPhone screenshot render, GPU timings, materials appearance and browser compatibility were not independently verified.**
+- This is a stronger bespoke procedural product-design prototype; genuinely photorealistic clothing, calibrated fabric scans, furniture catalog and client inventory still require original licensed/commissioned high-poly GLB assets plus PBR texture maps and mobile LOD validation.
+- Actual payment capture, merchant orders, product CRM and production checkout remain intentionally disabled.
+
+Preview HD: `/market-space-world-v10/?world=fashion&quality=high&preview=110`
+Preview Eco: `/market-space-world-v10/?world=fashion&quality=eco&assets=off&preview=110`
