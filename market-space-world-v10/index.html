@@ -809,7 +809,6 @@ function architecturalIdentity(key){
  const warm=mat('#e4ccb0',.59,.12),bronze=mat('#aa906e',.31,.70);
  const graphite=mat('#414641',.5,.52),chalk=mat('#e4d9c7',.85),oak=wood;
  const lightBand=new THREE.MeshBasicMaterial({color:key==='beauty'?'#ffddd3':'#ffe3b8',toneMapped:false});
- reusableMaterials.add(lightBand);
  if(key==='fashion'){
   // Curved boutique portals with bronze frames and subdued cove lights.
   for(const side of [-1,1])for(const z of [0,-15,-27]){
@@ -895,7 +894,7 @@ function architecture(key){
  for(let z of [6,-7,-20]){ring(0,5.3,z,1.05,.048,new THREE.MeshBasicMaterial({color:'#ffdfb7'}));ring(0,5.45,z,1.13,.025,brass);areaLight(0,z);}
  const hemi=new THREE.HemisphereLight('#fff5e4','#777369',1.5);root.add(hemi);
  const directional=new THREE.DirectionalLight('#fff4dd',2.15);directional.position.set(-4,9,6);
- directional.castShadow=!coarse;directional.shadow.mapSize.set(1024,1024);directional.shadow.camera.left=-15;directional.shadow.camera.right=15;directional.shadow.camera.top=16;directional.shadow.camera.bottom=-20;directional.shadow.bias=-.001;
+ directional.castShadow=!coarse;directional.shadow.mapSize.set(coarse?1024:2048,coarse?1024:2048);directional.shadow.normalBias=.015;directional.shadow.camera.left=-15;directional.shadow.camera.right=15;directional.shadow.camera.top=16;directional.shadow.camera.bottom=-20;directional.shadow.bias=-.001;
  root.add(directional);
  const fill=new THREE.DirectionalLight('#dce9ed',.75);fill.position.set(8,6,-13);root.add(fill);
  framedSign(d.name,key==='fashion'?'COLLECTION  /  2026':key==='food'?'FRESH   /   EVERY DAY':key==='beauty'?'THE RITUAL OF BEAUTY':'SPACES TO LIVE',0,3.9,-31.36,6,2.15);
@@ -1803,7 +1802,13 @@ lookPad.addEventListener('pointercancel',lookUp);
 let dragging=false,dragId=null,dragX=0,dragY=0,dragMoved=false,downX=0,downY=0;
 $('qualityBtn').addEventListener('click',()=>{
  qualityMode=qualityCycle[(qualityCycle.indexOf(qualityMode)+1)%qualityCycle.length];
- qualityReduced=qualityMode!=='auto';applyQuality();syncPhysicalGlass();reconcilePremiumModels();if(qualityMode==='high'||qualityMode==='auto')upgradePremiumAssets(active);
+ qualityReduced=qualityMode!=='auto';
+ applyQuality();syncPhysicalGlass();
+ // New HD geometry and 1K stone textures require rebuilding the current world.
+ const originalView=camera.position.clone(),oldYaw=yaw,oldPitch=pitch,oldStore=active;
+ setStore(oldStore);
+ camera.position.copy(originalView);yaw=oldYaw;pitch=oldPitch;updateCamera();
+ toast('Качество: '+qualityLabels[qualityMode]);
 });
 const canvas=renderer.domElement;
 canvas.addEventListener('pointerdown',e=>{dragging=true;dragId=e.pointerId;dragX=downX=e.clientX;dragY=downY=e.clientY;dragMoved=false;canvas.setPointerCapture(e.pointerId);$('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';});
