@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#090b0d">
 <meta name="description" content="MARKET SPACE by Margaryan Labs — виртуальные магазины нового поколения. Fashion, beauty, grocery и интерьерные шоурумы с интерактивными 3D-прогулками.">
-<title>MARKET SPACE V10.6 — Design your 3D world</title>
+<title>MARKET SPACE V10.7 — Interactive 3D Lookbook and Style Studio</title>
 <style>
 :root{color-scheme:dark;--ink:#0a0b0d;--panel:#151719;--surface:#1a1d1d;--paper:#f1eee7;--soft:#c8c4ba;--mute:#8e938f;--line:rgba(244,241,230,.19);--warm:#decab0;--edge:clamp(22px,5vw,92px);font:16px/1.5 Inter,"Helvetica Neue",Arial,sans-serif}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--paper);background:var(--ink);overflow-x:hidden}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.5;cursor:wait}a{color:inherit;text-decoration:none}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #e8cc9b;outline-offset:4px}
@@ -15,7 +15,7 @@ background:linear-gradient(112deg,#d7af8031,#d7af8007 60%);max-width:450px}
 .studioTeaser>span{font-size:9px;letter-spacing:.23em;color:#e4c59a;font-weight:750}
 .studioTeaser p{margin:7px 0;font-size:12px;line-height:1.6;color:#cfc9bc}
 .studioTeaser a{font-size:12px;color:#e7cfaa;text-underline-offset:4px;text-decoration:underline;font-weight:750}
-.studioTeaser a:hover{color:#fff2d9}
+.studioTeaser a:hover{color:#fff2d9}.studioLinks{display:flex;flex-wrap:wrap;gap:16px;margin-top:13px}
 .grain{position:fixed;inset:0;pointer-events:none;z-index:30;opacity:.13;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.68' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.14' filter='url(%23n)'/%3E%3C/svg%3E")}
 .skip{position:absolute;left:12px;top:-80px;background:white;color:black;padding:10px 14px;z-index:200}.skip:focus{top:12px}
 .header{height:84px;position:absolute;inset:0 0 auto;z-index:20;display:flex;align-items:center;gap:32px;padding:0 var(--edge);border-bottom:1px solid var(--line);background:linear-gradient(#05050594,#05050500)}
@@ -81,8 +81,11 @@ background:linear-gradient(112deg,#d7af8031,#d7af8007 60%);max-width:450px}
 <div class="heroText"><span class="eyebrow">Будущее цифрового ритейла / 2026</span><h1 id="heroTitle">Не сайт.<span>Пространство.</span></h1>
 <p class="heroDesc">Мы превращаем обычные интернет-магазины в миры, которые хочется исследовать. Архитектура, атмосфера, интерактивность и выбор товаров — в одном пространстве.</p>
 <div class="actions"><button class="button js-demo" data-world="fashion">Войти в демо <span class="arr">↗</span></button><a class="button ghost" href="#solutions">Исследовать концепции <span class="arr">↓</span></a></div>
-<div class="studioTeaser"><span>✦ NEW / LIVE STUDIO</span><p>Попробуй изменить освещение и ткани будущего магазина прямо в 3D — и поделись своей версией.</p>
-<a href="../market-space-world-v10/?world=fashion&mood=golden&finish=rose&studio=1&preview=106" aria-label="Открыть Style Studio с настроенным 3D-бутиком">Создать свой стиль ↗</a></div></div>
+<div class="studioTeaser"><span>✦ NEW / LIVE STUDIO</span><p>Собери собственный образ на 3D-манекене, измени свет и ткани будущего магазина — и поделись результатом.</p>
+<div class="studioLinks">
+<a href="../market-space-world-v10/?world=fashion&lookbook=1&look=dress&lookTone=rose&lookShoes=sneaker&lookBag=yes&preview=107" aria-label="Открыть интерактивный 3D-Lookbook и собрать свой образ">Собрать 3D-образ ↗</a>
+<a href="../market-space-world-v10/?world=fashion&mood=golden&finish=rose&studio=1&preview=107" aria-label="Открыть Style Studio с настроенным 3D-бутиком">Дизайн магазина ↗</a>
+</div></div></div>
 <div class="heroVisual"><div class="artFrame">
 <div class="imageStage" id="imageStage" aria-label="Фотографический референс атмосферы выбранного магазина">
 <div class="sceneImage fashion active" data-image="fashion"></div><div class="sceneImage food" data-image="food"></div><div class="sceneImage beauty" data-image="beauty"></div><div class="sceneImage home" data-image="home"></div>
