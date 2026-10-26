@@ -438,7 +438,8 @@ function applyExperienceVisuals(){
     obj.material=obj.material.clone();obj.userData.experienceBaseMaterial=true;
    }
    obj.material.color.set(shades[i%3]);
-   obj.scale.setScalar(experienceState.food.bundle==='family'?1.14:1);
+   if(!obj.userData.experienceBaseScale)obj.userData.experienceBaseScale=obj.scale.clone();
+   obj.scale.copy(obj.userData.experienceBaseScale).multiplyScalar(experienceState.food.bundle==='family'?1.14:1);
   });
  }else if(active==='beauty'){
   const tint={rose:'#d6a3ad',citrus:'#dbbb75',amber:'#b48a5c'}[experienceState.beauty.scent];
@@ -1346,11 +1347,13 @@ function renderExperiencePanel(){
   const head=document.createElement('strong');head.textContent=group.title;section.append(head);
   const buttons=document.createElement('div');buttons.className='experienceOptions';buttons.setAttribute('role','group');buttons.setAttribute('aria-label',group.title);
   for(const [value,label] of group.choices){
-   const b=document.createElement('button');b.type='button';b.textContent=label;
+   const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.optionGroup=group.key;b.dataset.optionValue=value;
    b.setAttribute('aria-pressed',String(experienceState[active][group.key]===value));
    b.onclick=()=>{
     experienceState[active][group.key]=value;
     applyExperienceVisuals();experienceURL();renderExperiencePanel();
+    const next=host.querySelector('[data-option-group="'+group.key+'"][data-option-value="'+value+'"]');
+    if(next)next.focus();
    };
    buttons.append(b);
   }
