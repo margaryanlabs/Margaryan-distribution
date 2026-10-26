@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "edge-app-a",
+      "zone": "zone-a",
+      "pools": [
+        "apps",
+        "ops"
+      ],
+      "cpu": 16,
+      "memoryMiB": 32768,
+      "diskGiB": 250,
+      "reservedCpu": 2,
+      "reservedMemoryMiB": 4096,
+      "reservedDiskGiB": 40,
+      "online": true
+    },
+    {
+      "id": "edge-app-b",
+      "zone": "zone-b",
+      "pools": [
+        "apps",
+        "ops"
+      ],
+      "cpu": 16,
+      "memoryMiB": 32768,
+      "diskGiB": 250,
+      "reservedCpu": 2,
+      "reservedMemoryMiB": 4096,
+      "reservedDiskGiB": 40,
+      "online": true
+    },
+    {
+      "id": "vetogram-data-a",
+      "zone": "zone-a",
+      "pools": [
+        "vetogram-data"
+      ],
+      "cpu": 8,
+      "memoryMiB": 16384,
+      "diskGiB": 500,
+      "reservedCpu": 1,
+      "reservedMemoryMiB": 2048,
+      "reservedDiskGiB": 100,
+      "online": true
+    },
+    {
+      "id": "promptence-data-b",
+      "zone": "zone-b",
+      "pools": [
+        "promptence-data"
+      ],
+      "cpu": 16,
+      "memoryMiB": 32768,
+      "diskGiB": 500,
+      "reservedCpu": 2,
+      "reservedMemoryMiB": 4096,
+      "reservedDiskGiB": 100,
+      "online": true
+    }
+  ],
+  "services": [
+    {
+      "id": "vetogram-api",
+      "pool": "apps",
+      "kind": "stateless",
+      "replicas": 2,
+      "cpu": 2,
+      "memoryMiB": 2048,
+      "diskGiB": 2,
+      "requireZoneSpread": true,
+      "publicIngress": true
+    },
+    {
+      "id": "promptence-api",
+      "pool": "apps",
+      "kind": "stateless",
+      "replicas": 2,
+      "cpu": 2,
+      "memoryMiB": 2048,
+      "diskGiB": 2,
+      "requireZoneSpread": true,
+      "publicIngress": true
+    },
+    {
+      "id": "markarian-console",
+      "pool": "ops",
+      "kind": "stateless",
+      "replicas": 1,
+      "cpu": 1,
+      "memoryMiB": 2048,
+      "diskGiB": 4,
+      "requireZoneSpread": false,
+      "publicIngress": false
+    },
+    {
+      "id": "vetogram-postgres",
+      "pool": "vetogram-data",
+      "kind": "stateful",
+      "replicas": 1,
+      "cpu": 4,
+      "memoryMiB": 8192,
+      "diskGiB": 200,
+      "requireZoneSpread": false,
+      "publicIngress": false
+    },
+    {
+      "id": "promptence-supabase",
+      "pool": "promptence-data",
+      "kind": "stateful",
+      "replicas": 1,
+      "cpu": 6,
+      "memoryMiB": 12288,
+      "diskGiB": 200,
+      "requireZoneSpread": false,
+      "publicIngress": false
+    },
+    {
+      "id": "promptence-scheduler",
+      "pool": "ops",
+      "kind": "stateless",
+      "replicas": 1,
+      "cpu": 1,
+      "memoryMiB": 1024,
+      "diskGiB": 1,
+      "requireZoneSpread": false,
+      "publicIngress": false
+    },
+    {
+      "id": "metrics",
+      "pool": "ops",
+      "kind": "stateless",
+      "replicas": 1,
+      "cpu": 1,
+      "memoryMiB": 2048,
+      "diskGiB": 15,
+      "requireZoneSpread": false,
+      "publicIngress": false
+    }
+  ]
+}
