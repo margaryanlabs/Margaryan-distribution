@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#10110f">
 <meta name="description" content="MARKET SPACE V10 — новая экспериментальная 3D-архитектура retail: полноценная прогулка по бутику, мебели, beauty и супермаркету.">
-<title>MARKET SPACE — Immersive World V10.3</title>
+<title>MARKET SPACE — Immersive World V10.4</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"}}</script>
 <style>
 :root{color-scheme:dark;font:14px/1.5 Inter,"Helvetica Neue",Arial,sans-serif;background:#111311;color:#f5f0e7;--paper:#f4eee3;--mute:#b7b3a8;--line:#d3c6b64b;--warm:#e4c79d}*{box-sizing:border-box}
@@ -24,6 +24,14 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 #worldNote{position:fixed;z-index:5;top:103px;right:clamp(18px,3vw,52px);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#fff6e8ab;border:1px solid #ffffff4c;background:#1419178c;padding:8px 12px}
 #qualityBtn{position:fixed;z-index:9;top:149px;right:clamp(18px,3vw,52px);border:1px solid #dcccaf99;background:#161d1bd9;color:#f5ead5;padding:9px 12px;font-size:10px;letter-spacing:.09em;cursor:pointer;backdrop-filter:blur(12px)}
 #qualityBtn:hover{background:#dbc8a6;color:#1a211c}
+#assetCredits{position:fixed;z-index:9;top:195px;right:clamp(18px,3vw,52px);max-width:min(300px,80vw);font-size:10px;letter-spacing:.02em;color:#eee3cd}
+#assetCredits summary{cursor:pointer;list-style:none;background:#111a17c9;border:1px solid #c8b99c80;padding:8px 11px;backdrop-filter:blur(8px)}
+#assetCredits summary::-webkit-details-marker{display:none}
+#assetCredits[open]{background:#17201def;border:1px solid #c8b99c80;box-shadow:0 10px 38px #0008}
+#assetCredits[open] summary{border:0;border-bottom:1px solid #c8b99c44}
+#assetCredits .creditContent{padding:10px 13px;line-height:1.55}
+#assetCredits a{text-decoration:underline;text-underline-offset:3px;color:#f5dcb0}
+#assetCredits a:focus-visible{outline:2px solid #f5dcb0}
 #hotspotHint{position:fixed;z-index:4;left:50%;top:49%;transform:translate(-50%,-50%);width:17px;height:17px;border:1px solid #e1d7bf8a;border-radius:50%;pointer-events:none;opacity:.65}#hotspotHint:after{content:"";position:absolute;top:7px;left:7px;width:2px;height:2px;background:#f2e5cd;border-radius:50%}
 .bottomWrap{position:fixed;z-index:9;bottom:clamp(16px,2vw,35px);left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;max-width:calc(100vw - 30px)}
 .worldDock{background:#101510e8;border:1px solid #e3d1af73;backdrop-filter:blur(24px);padding:6px;display:flex;gap:5px;box-shadow:0 18px 48px #0008;border-radius:12px}
@@ -81,7 +89,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 @media(max-width:620px){
  .header{min-height:66px;padding:11px 12px;gap:7px}.logo{gap:8px}.logomark{height:30px;width:30px}.logomark b{font-size:20px}.brand{font-size:10px;letter-spacing:.12em}.brand small{font-size:7px;letter-spacing:.13em}.topAction{padding:9px 8px;font-size:9px}
  .titlePanel{top:88px;left:17px;width:calc(100% - 115px);max-width:320px}.titlePanel h1{font-size:39px;margin:12px 0 8px}.titlePanel p{font-size:10px;max-width:235px;line-height:1.5}.titlePanel .kicker{font-size:8px}.titlePanel button{padding:10px 12px;font-size:9px;margin-top:11px}
- #worldNote{top:84px;right:10px;font-size:8px;padding:7px 8px;max-width:100px;line-height:1.4;text-align:center}#qualityBtn{top:124px;right:10px;font-size:8px;padding:8px 10px}.bottomWrap{bottom:8px;width:calc(100vw - 10px);display:block}.worldDock{width:100%;justify-content:space-around;gap:1px;padding:5px}.worldTab{flex:1;min-width:0;font-size:8px;padding:9px 2px}.worldTab .n{font-size:15px}.tourBtn{position:fixed;bottom:105px;left:50%;transform:translateX(-50%);min-height:38px;padding:8px 14px;font-size:9px}
+ #worldNote{top:84px;right:10px;font-size:8px;padding:7px 8px;max-width:100px;line-height:1.4;text-align:center}#qualityBtn{top:124px;right:10px;font-size:8px;padding:8px 10px}#assetCredits{top:163px;right:10px;font-size:9px;max-width:165px}.bottomWrap{bottom:8px;width:calc(100vw - 10px);display:block}.worldDock{width:100%;justify-content:space-around;gap:1px;padding:5px}.worldTab{flex:1;min-width:0;font-size:8px;padding:9px 2px}.worldTab .n{font-size:15px}.tourBtn{position:fixed;bottom:105px;left:50%;transform:translateX(-50%);min-height:38px;padding:8px 14px;font-size:9px}
  #objectTip{right:10px;bottom:181px;min-width:156px;max-width:183px;padding:11px}#objectTip strong{font-size:20px}#objectTip button{padding:8px 10px;font-size:9px}.help{display:none}.movePad{display:block}.touchHelp{display:block;position:fixed;right:16px;bottom:136px;z-index:4;font-size:10px;text-align:right;color:#f3e7cfc9;letter-spacing:.1em}#hotspotHint{top:53%}
  #notice{bottom:190px;right:12px}.drawer{padding:22px}
 }
@@ -92,11 +100,15 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 <div id="viewport" aria-label="Интерактивное 3D-пространство"></div><div class="scrim"></div>
 <header class="header">
 <a class="logo" href="../market-space-showcase-v10/" aria-label="Вернуться на MARKET SPACE"><span class="logomark"><b>M</b></span><span class="brand">MARKET SPACE<small>BY MARGARYAN LABS</small></span></a>
-<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.3</span>
+<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.4</span>
 <button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
 </header>
 <div class="titlePanel" id="titlePanel"><div class="kicker" id="eyebrow">01 / THE ATELIER</div><h1 id="worldTitle">The<br>Atelier</h1><p id="worldDescription">Мода — это не карточки в каталоге. Исследуй коллекцию, подойди к манекенам и выбери вещи прямо в пространстве.</p><button id="introButton">Исследовать пространство ↗</button></div>
-<div id="worldNote">V10.3 / INTERACTIVE 3D PREVIEW</div><button id="qualityBtn" type="button" aria-label="Переключить качество 3D-графики" aria-live="polite">Качество: Авто</button><div id="hotspotHint" aria-hidden="true"></div>
+<div id="worldNote">V10.4 / INTERACTIVE 3D PREVIEW</div><button id="qualityBtn" type="button" aria-label="Переключить качество 3D-графики" aria-live="polite">Качество: Авто</button>
+<details id="assetCredits"><summary>3D-модели · источники</summary><div class="creditContent">
+<p>Демонстрационные 3D-ассеты, не реальные товары брендов. Детализированные модели загружаются по возможности; процедурные модели остаются резервными.</p>
+<p>Кресло Sheen Chair: © 2020 Wayfair, Eric Chadwick, CC0. <a href="https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/SheenChair" target="_blank" rel="noopener noreferrer">Источник</a>.</p>
+<p>Обувь Materials Variants Shoe: © 2021 Shopify, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. <a href="https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/MaterialsVariantsShoe" target="_blank" rel="noopener noreferrer">Источник</a>.</p></div></details><div id="hotspotHint" aria-hidden="true"></div>
 <div class="help">WASD — <b>двигаться</b> · мышь — <b>осмотреться</b> · клик — <b>товар</b> · T — <b>тур</b></div><div class="touchHelp">Проведи по экрану,<br>чтобы осмотреться</div>
 <div class="movePad" id="movePad" aria-label="Виртуальный джойстик движения"><div class="padThumb" id="padThumb"></div></div>
 <div class="bottomWrap"><nav class="worldDock" aria-label="Выбор 3D-магазина">
@@ -155,10 +167,11 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 import * as THREE from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 const $=id=>document.getElementById(id), clamp=THREE.MathUtils.clamp;
 const coarse=matchMedia('(pointer:coarse)').matches, reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
 const DATA={
- fashion:{name:'The Atelier',tag:'01 / FASHION GALLERY',desc:'Настоящие объёмные манекены, коллекция на рейлах, мягкий свет и материал, который ощущается как ткань.',floor:'#bcb0a0',wall:'#d1c4b7',accent:'#dfb98c',items:[['Пальто Atelier','🧥',34900,'Объёмный силуэт, мягкая шерстяная фактура.'],['Платье Sculpt','👗',28900,'Драпировка и линии, подчёркивающие форму.'],['Пиджак Line','👔',27500,'Структурированный крой с латунными пуговицами.'],['Костюм Edition','🪡',46900,'Сдержанный премиальный образ.']]},
+ fashion:{name:'The Atelier',tag:'01 / FASHION GALLERY',desc:'Настоящие объёмные манекены, коллекция на рейлах, мягкий свет и материал, который ощущается как ткань.',floor:'#bcb0a0',wall:'#d1c4b7',accent:'#dfb98c',items:[['Пальто Atelier','🧥',34900,'Объёмный силуэт, мягкая шерстяная фактура.'],['Платье Sculpt','👗',28900,'Драпировка и линии, подчёркивающие форму.'],['Пиджак Line','👔',27500,'Структурированный крой с латунными пуговицами.'],['Костюм Edition','🪡',46900,'Сдержанный премиальный образ.'],['Кроссовки Studio','👟',19500,'Тестовая модель обуви с PBR-текстурами.']]},
  food:{name:'Future Market',tag:'02 / GROCERY EXPERIENCE',desc:'Новая геометрия стеллажей, настоящие формы упаковок, овощные острова и прогулка между отделами.',floor:'#a8aaa0',wall:'#afb7ab',accent:'#e5bc83',items:[['Кофе Atelier','☕',2690,'Зёрна обжарки, демонстрационная упаковка.'],['Оливковое масло','🫒',3490,'Стеклянная бутылка, базовая модель.'],['Фруктовый набор','🍊',2190,'Свежие фрукты в декоративной корзине.'],['Молоко фермерское','🥛',890,'Экологичный картонный пакет.']]},
  beauty:{name:'Beauty Maison',tag:'03 / BEAUTY MAISON',desc:'Парфюмерная галерея с округлыми флаконами, стеклом, металлом и спокойной атмосферой.',floor:'#bfafa9',wall:'#d8c7c3',accent:'#e3bda5',items:[['Parfum No.05','🌸',34900,'Флакон с полупрозрачным стеклом.'],['Glow Serum','🧴',13500,'Сыворотка во флаконе с пипеткой.'],['Velvet Rouge','💄',5990,'Помада в металлическом футляре.'],['Skin Elixir','✨',14900,'Коллекционный уход.']]},
  home:{name:'Living Gallery',tag:'04 / LIVING GALLERY',desc:'Диваны с мягкими подушками, интерьерные объекты, дерево, ковры и галерейная подсветка.',floor:'#afada3',wall:'#c8c9c0',accent:'#d5bd9c',items:[['Диван Forma','🛋️',339000,'Трёхместный модульный диван.'],['Кресло Sola','🪑',119000,'Мягкое дизайнерское кресло.'],['Стол Travertine','🪨',99000,'Каменный журнальный стол.'],['Торшер Halo','💡',89000,'Скульптурный интерьерный светильник.']]}
