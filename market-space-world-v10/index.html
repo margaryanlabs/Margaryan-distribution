@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#10110f">
 <meta name="description" content="MARKET SPACE V10 — новая экспериментальная 3D-архитектура retail: полноценная прогулка по бутику, мебели, beauty и супермаркету.">
-<title>MARKET SPACE — Immersive World V10.2</title>
+<title>MARKET SPACE — Immersive World V10.3</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"}}</script>
 <style>
 :root{color-scheme:dark;font:14px/1.5 Inter,"Helvetica Neue",Arial,sans-serif;background:#111311;color:#f5f0e7;--paper:#f4eee3;--mute:#b7b3a8;--line:#d3c6b64b;--warm:#e4c79d}*{box-sizing:border-box}
@@ -92,11 +92,11 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 <div id="viewport" aria-label="Интерактивное 3D-пространство"></div><div class="scrim"></div>
 <header class="header">
 <a class="logo" href="../market-space-showcase-v10/" aria-label="Вернуться на MARKET SPACE"><span class="logomark"><b>M</b></span><span class="brand">MARKET SPACE<small>BY MARGARYAN LABS</small></span></a>
-<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.2</span>
+<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.3</span>
 <button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
 </header>
 <div class="titlePanel" id="titlePanel"><div class="kicker" id="eyebrow">01 / THE ATELIER</div><h1 id="worldTitle">The<br>Atelier</h1><p id="worldDescription">Мода — это не карточки в каталоге. Исследуй коллекцию, подойди к манекенам и выбери вещи прямо в пространстве.</p><button id="introButton">Исследовать пространство ↗</button></div>
-<div id="worldNote">V10.2 / INTERACTIVE 3D PREVIEW</div><button id="qualityBtn" type="button" aria-label="Переключить качество 3D-графики" aria-live="polite">Качество: Авто</button><div id="hotspotHint" aria-hidden="true"></div>
+<div id="worldNote">V10.3 / INTERACTIVE 3D PREVIEW</div><button id="qualityBtn" type="button" aria-label="Переключить качество 3D-графики" aria-live="polite">Качество: Авто</button><div id="hotspotHint" aria-hidden="true"></div>
 <div class="help">WASD — <b>двигаться</b> · мышь — <b>осмотреться</b> · клик — <b>товар</b> · T — <b>тур</b></div><div class="touchHelp">Проведи по экрану,<br>чтобы осмотреться</div>
 <div class="movePad" id="movePad" aria-label="Виртуальный джойстик движения"><div class="padThumb" id="padThumb"></div></div>
 <div class="bottomWrap"><nav class="worldDock" aria-label="Выбор 3D-магазина">
@@ -154,6 +154,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 <script type="module">
 import * as THREE from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 const $=id=>document.getElementById(id), clamp=THREE.MathUtils.clamp;
 const coarse=matchMedia('(pointer:coarse)').matches, reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
 const DATA={
@@ -192,6 +193,16 @@ renderer.domElement.addEventListener('webglcontextlost',e=>{
  window.__marketSpaceShowFallback('Графическое ускорение прервано. Доступна галерея концепций и Lite-прогулка.');
 });
 scene.add(root);
+// Real reflected studio lighting for polished metals, glass and ceramic. Non-fatal if unavailable.
+let environmentTarget=null;
+try{
+ const reflectionRoom=new RoomEnvironment();
+ const generator=new THREE.PMREMGenerator(renderer);
+ environmentTarget=generator.fromScene(reflectionRoom,.025);
+ scene.environment=environmentTarget.texture;
+ scene.environmentIntensity=.88;
+ reflectionRoom.dispose();generator.dispose();
+}catch(e){console.info('Using direct lighting without image-based reflections',e?.message||e)}
 // Cache globally reusable base PBR finishes; scene-specific texture maps remain disposable.
 const materialCache=new Map(),reusableMaterials=new WeakSet();
 function mat(color,rough=.68,metal=0,other={}){
@@ -230,6 +241,27 @@ function textile(color,side=THREE.DoubleSide){
 }
 
 const fabric=fabricColors.map(c=>textile(c));
+// Soft contact shadows: small shared projected decals. They ground objects when mobile shadow maps are off.
+function createContactShadowMaterial(){
+ const c=document.createElement('canvas');c.width=c.height=128;
+ const ctx=c.getContext('2d'),gradient=ctx.createRadialGradient(64,64,6,64,64,62);
+ gradient.addColorStop(0,'rgba(21,19,16,.49)');
+ gradient.addColorStop(.38,'rgba(22,19,16,.27)');
+ gradient.addColorStop(1,'rgba(22,19,16,0)');
+ ctx.fillStyle=gradient;ctx.fillRect(0,0,128,128);
+ const map=new THREE.CanvasTexture(c);
+ const material=new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,opacity:.72,toneMapped:false,polygonOffset:true,polygonOffsetFactor:-1});
+ reusableMaterials.add(material);
+ return material;
+}
+const contactShadowMaterial=createContactShadowMaterial();
+function contactShadow(x,z,width=2,depth=2,parent=root){
+ const shadow=new THREE.Mesh(new THREE.PlaneGeometry(1,1),contactShadowMaterial);
+ shadow.rotation.x=-Math.PI/2;shadow.scale.set(width,depth,1);
+ shadow.position.set(x,.024,z);shadow.castShadow=false;shadow.receiveShadow=false;
+ parent.add(shadow);return shadow;
+}
+
 const boxGeo=new THREE.BoxGeometry(1,1,1);
 const sphereGeo=new THREE.SphereGeometry(1,18,12);
 const cyl=(r1,r2,h,segments=14)=>new THREE.CylinderGeometry(r1,r2,h,segments);
@@ -301,6 +333,7 @@ function architecture(key){
  framedSign(d.name,key==='fashion'?'COLLECTION  /  2026':key==='food'?'FRESH   /   EVERY DAY':key==='beauty'?'THE RITUAL OF BEAUTY':'SPACES TO LIVE',0,3.9,-31.36,6,2.15);
 }
 function platform(x,z,r=1.18){
+ contactShadow(x,z,r*2.5,r*2.5);
  tube(x,.14,z,r,r,.28,mat('#80776b',.49));
  tube(x,.31,z,r*.97,r*.97,.08,brass);
 }
@@ -444,7 +477,7 @@ function fashionScene(){
  }
 }
 function upholsteredSofa(x,z,color='#c6b9a4'){
- const group=new THREE.Group();group.position.set(x,0,z);root.add(group);registerBlocker(x,z,3.7,2.1);
+ const group=new THREE.Group();group.position.set(x,0,z);root.add(group);registerBlocker(x,z,3.7,2.1);contactShadow(x,z,4.6,3.25);
  const cushion=textile(color,THREE.FrontSide);
  soft(0,.48,0,3.5,.45,1.48,cushion,.21,group);
  soft(0,.91,-.57,3.64,1.25,.34,cushion,.13,group);
@@ -477,9 +510,21 @@ function homeScene(){
  for(let i=0;i<6;i++)soft(-6.3+i*.13,.67,-14, .13,.04,.35,i%2?book:brass,.014);
  [0,1,2,3].forEach((idx)=>selectHotspot(idx%2?6:-6,1.6,idx>1?-16:0,idx));
 }
+// Reuse clearcoat glass materials for every bottle, lowering material allocations during scene switches.
+const perfumeGlassCache=new Map();
+function perfumeGlass(color){
+ if(perfumeGlassCache.has(color))return perfumeGlassCache.get(color);
+ const material=new THREE.MeshPhysicalMaterial({
+  color,roughness:.085,metalness:.035,transparent:true,opacity:.84,
+  depthWrite:false,clearcoat:.95,clearcoatRoughness:.07,ior:1.45,
+  envMapIntensity:1.18
+ });
+ perfumeGlassCache.set(color,material);reusableMaterials.add(material);
+ return material;
+}
 function perfumeBottle(g,x,z,color,kind=0,y=0){
  const gp=new THREE.Group();gp.position.set(x,y,z);g.add(gp);
- const tinted=new THREE.MeshPhysicalMaterial({color,transparent:true,opacity:.80,roughness:.14,metalness:.02,depthWrite:true});
+ const tinted=perfumeGlass(color);
  if(kind%2)tube(0,.23,0,.22,.22,.46,tinted,gp);
  else soft(0,.29,0,.46,.53,.26,tinted,.09,gp);
  soft(0,.62,0,.20,.13,.19,brass,.022,gp);
@@ -487,7 +532,7 @@ function perfumeBottle(g,x,z,color,kind=0,y=0){
  return gp;
 }
 function beautyIsland(x,z,index){
- const g=new THREE.Group();g.position.set(x,0,z);g.userData.itemIndex=index;root.add(g);pickables.push(g);registerBlocker(x,z,2.8,2.3);
+ const g=new THREE.Group();g.position.set(x,0,z);g.userData.itemIndex=index;root.add(g);pickables.push(g);registerBlocker(x,z,2.8,2.3);contactShadow(x,z,3.6,3.4);
  tube(0,.47,0,1.25,1.13,.94,mat('#b4a39d',.33),g);
  tube(0,.96,0,1.36,1.28,.11,ceramic,g);
  ring(0,1.03,0,1.19,.023,brass,Math.PI/2,g);
@@ -527,28 +572,60 @@ function groceryLabel(index){
  goodsLabelMaterials.set(id,m);reusableMaterials.add(m);
  return m;
 }
+// One GPU instanced draw call per silhouette/material instead of hundreds of distinct shelf meshes.
+let marketPackBatches=new Map();
+function queueMarketPack(group,shape,material,x,y,z,w,h,d,itemIndex){
+ const key=shape+'|'+material;
+ let batch=marketPackBatches.get(key);
+ if(!batch){batch={shape,material,items:[]};marketPackBatches.set(key,batch);}
+ batch.items.push([group.position.x+x,group.position.y+y,group.position.z+z,w,h,d,itemIndex]);
+}
+function flushMarketPacks(){
+ if(!marketPackBatches.size)return;
+ const shapeGeometries={
+  box:new RoundedBoxGeometry(1,1,1,2,.075),
+  cylinder:new THREE.CylinderGeometry(.5,.5,1,12)
+ };
+ const dummy=new THREE.Object3D();
+ for(const batch of marketPackBatches.values()){
+  const instanced=new THREE.InstancedMesh(shapeGeometries[batch.shape],mat(batch.material,.82,.012),batch.items.length);
+  instanced.castShadow=false;instanced.receiveShadow=false;
+  instanced.userData.productIndices=[];
+  batch.items.forEach((p,i)=>{
+   const [x,y,z,w,h,d,index]=p;
+   dummy.position.set(x,y,z);dummy.rotation.set(0,0,0);dummy.scale.set(w,h,d);
+   dummy.updateMatrix();instanced.setMatrixAt(i,dummy.matrix);
+   instanced.userData.productIndices.push(index%4);
+  });
+  instanced.instanceMatrix.needsUpdate=true;instanced.computeBoundingSphere();
+  root.add(instanced);pickables.push(instanced);
+ }
+ marketPackBatches.clear();
+}
 function brandBox(g,x,y,z,index){
  const shades=['#c3a476','#9fae9c','#bd8d75','#c7c0ab','#a9b7ad'];
- const mt=mat(shades[index%5],.85);
+ const col=shades[((index%5)+5)%5],itemId=((index%4)+4)%4;
  if(index%3===0){
-   soft(x,y+.31,z,.41,.57,.37,mt,.04,g);soft(x,y+.61,z,.21,.06,.2,ivory,.02,g);
+  queueMarketPack(g,'box',col,x,y+.31,z,.41,.57,.37,itemId);
+  queueMarketPack(g,'box','#ebe5d8',x,y+.61,z,.21,.06,.20,itemId);
  }else if(index%3===1){
-   tube(x,y+.29,z,.19,.20,.56,mt,g);tube(x,y+.62,z,.15,.15,.10,brass,g);
+  queueMarketPack(g,'cylinder',col,x,y+.29,z,.38,.56,.38,itemId);
+  queueMarketPack(g,'cylinder','#ad8c62',x,y+.62,z,.30,.10,.30,itemId);
  }else{
-   soft(x,y+.31,z,.40,.56,.31,mt,.04,g);
-   block(x,y+.36,z+.17,.32,.12,.02,ivory,g);
+  queueMarketPack(g,'box',col,x,y+.31,z,.40,.56,.31,itemId);
+  queueMarketPack(g,'box','#ebe5d8',x,y+.36,z+.17,.32,.12,.02,itemId);
  }
- // Only selected facing cartons receive a real textured label to preserve mobile draw calls.
- if(index%3===0){
+ // A readable artwork label on selected packages, while the bulk is GPU-instanced.
+ if(index%8===0){
   const side=x>=0?1:-1;
-  const sticker=plane(x+side*.217,y+.34,z,.34,.25,groceryLabel(index),g,side*Math.PI/2);
+  const sticker=plane(x+side*.22,y+.34,z,.34,.25,groceryLabel(index),g,side*Math.PI/2);
   sticker.castShadow=false;sticker.receiveShadow=false;
  }
 }
 function groceryShelves(x,z){
  const g=new THREE.Group();g.position.set(x,0,z);root.add(g);
  g.userData.itemIndex=Math.abs(Math.round(x)+Math.round(z))%4;
- pickables.push(g);registerBlocker(x,z,1.65,5.55);
+ pickables.push(g);registerBlocker(x,z,1.65,5.55);contactShadow(x,z,2.25,6.4);
  soft(0,.12,0,1.45,.22,5.4,darkMetal,.06,g);
  for(const y of [.57,1.24,1.91,2.58,3.24]){
   soft(0,y,0,1.48,.10,5.45,mat('#bba88f',.67),.025,g);
@@ -561,7 +638,7 @@ function groceryShelves(x,z){
  for(const s of [-1,1])soft(s*.75,3.6,0,.11,.35,5.4,brass,.02,g);
 }
 function produceIsland(x,z,index){
- const g=new THREE.Group();g.position.set(x,0,z);g.userData.itemIndex=index;root.add(g);pickables.push(g);registerBlocker(x,z,2.75,1.95);
+ const g=new THREE.Group();g.position.set(x,0,z);g.userData.itemIndex=index;root.add(g);pickables.push(g);registerBlocker(x,z,2.75,1.95);contactShadow(x,z,3.6,2.8);
  soft(0,.38,0,2.75,.73,1.85,mat('#806d57',.77),.12,g);soft(0,.76,0,2.83,.12,1.95,wood,.045,g);
  for(let i=0;i<14;i++){
   const a=i*2.4,r=.8*Math.sqrt(i/14),shade=i%3;
@@ -573,6 +650,7 @@ function produceIsland(x,z,index){
  selectHotspot(x,1.3,z+1.45,index);
 }
 function foodScene(){
+ marketPackBatches.clear();
  for(const x of [-7.7,7.7])for(const z of [2,-11,-24])groceryShelves(x,z);
  for(const z of [1,-15])produceIsland(0,z,z===1?2:3);
  for(const x of [-9.6,9.6])for(let z=7;z>-30;z-=9){
@@ -580,6 +658,7 @@ function foodScene(){
    for(let j=0;j<4;j++)soft(x+(x>0?-.22:.22),.75+j*.71,z,.055,.08,5.9,ivory,.02);
  }
  for(const x of [-3,3])for(const z of [-5,-23])selectHotspot(x,1.35,z,x>0?1:0);
+ flushMarketPacks();
 }
 function registerBlocker(x,z,w,d){blockers.push({x,z,w,d});}
 function selectHotspot(x,y,z,index){
@@ -593,6 +672,7 @@ function selectHotspot(x,y,z,index){
 function disposeWorld(){
  const geometries=new Set(),materials=new Set();
  root.traverse(n=>{
+  if(n.isInstancedMesh)n.dispose();
   if(n.isLight&&n.shadow?.map)n.shadow.map.dispose();
   if(n.geometry&&n.geometry!==boxGeo&&n.geometry!==sphereGeo)geometries.add(n.geometry);
   if(n.material)for(const m of (Array.isArray(n.material)?n.material:[n.material])){
@@ -609,7 +689,7 @@ function setStore(key){
  active=key;touring=false;tourRoute=[];walkVelocity.x=walkVelocity.z=0;
  keys.clear();joy.x=joy.y=0;$('tourBtn').textContent='▶ Кинотур';
  disposeWorld();
- hotspots=[];pickables=[];blockers=[];tipCurrent=-1;$('objectTip').classList.remove('show');architecture(key);
+ hotspots=[];pickables=[];blockers=[];marketPackBatches.clear();tipCurrent=-1;$('objectTip').classList.remove('show');architecture(key);
  try{if(key==='fashion')fashionScene();else if(key==='home')homeScene();else if(key==='beauty')beautyScene();else foodScene();}
  catch(err){console.error('Scene build error:',err);toast('Часть объектов не загрузилась: '+err.message);}
  camera.position.set(0,1.68,10.7);yaw=0;pitch=-.065;updateCamera();
@@ -640,6 +720,10 @@ function selectAt(cx,cy){
  const hits=ray.intersectObjects(pickables,true);
  for(const hit of hits){
   if(hit.distance>22)break;
+  if(hit.instanceId!==undefined&&Array.isArray(hit.object.userData.productIndices)){
+   const id=hit.object.userData.productIndices[hit.instanceId];
+   if(Number.isInteger(id)){openItem(id);return;}
+  }
   let node=hit.object;
   while(node&&node!==root){
    if(Number.isInteger(node.userData.itemIndex)){openItem(node.userData.itemIndex);return;}
