@@ -150,7 +150,7 @@ check('Procedural displays remain when GLB absent and quality gate holds on mobi
  for(const token of ["shoeExhibit(-4.6,-7.2)","shoeExhibit(4.6,-19.3)","slotPremiumModel('chair'","slotPremiumModel('shoe'","qualityMode==='high'","qualityMode==='high'||qualityMode==='auto')upgradePremiumAssets(active)","const firstChair=chair(-2.55,-7),secondChair=chair(2.5,-22)"])assert.ok(world.includes(token),token);
 });
 check('HD query enables detailed mobile models',()=>{
- for(const token of ["const requestedQuality=new URLSearchParams(location.search).get('quality')","requestedQuality==='high'?'high'","applyQuality();setStore(","qualityMode==='high')upgradePremiumAssets(active)"])assert.ok(world.includes(token),token);
+ for(const token of ["const requestedQuality=new URLSearchParams(location.search).get('quality')","requestedQuality==='high'?'high'","applyQuality();setStore(","qualityMode==='high'||qualityMode==='auto')upgradePremiumAssets(active)"])assert.ok(world.includes(token),token);
 });
 
 check('Eco disables premium draw meshes and optional diagnostics can show GPU counters',()=>{
