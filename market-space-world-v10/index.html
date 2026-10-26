@@ -214,7 +214,7 @@ function clothBody(color,kind='jacket'){
    for(let k=0;k<10;k++){const a=k/10*Math.PI*2;const line=mesh(new THREE.CylinderGeometry(.007,.007,.83,5),seam);line.position.set(Math.sin(a)*.39,-1.35,Math.cos(a)*.39+.06);line.rotation.z=Math.sin(a)*.19;line.rotation.x=-Math.cos(a)*.19;group.add(line);}
  }else if(kind==='jacket'){
    // Separate structural lapels, fabric seams and buttons rather than printed jacket textures.
-   const lap=mat('#e0d2bf',.89,{});
+   const lap=mat('#e0d2bf',.89,0);
    const a=new THREE.Shape();a.moveTo(-.15,.52);a.lineTo(-.39,.34);a.lineTo(-.13,-.12);a.lineTo(-.015,.12);a.closePath();
    const l=mesh(new THREE.ShapeGeometry(a),lap);l.position.z=.18;group.add(l);
    const b=mesh(new THREE.ShapeGeometry(a),lap);b.scale.x=-1;b.position.z=.18;group.add(b);
@@ -294,8 +294,8 @@ function homeScene(){
  for(let i=0;i<6;i++)soft(-6.3+i*.13,.67,-14, .13,.04,.35,i%2?book:brass,.014);
  [0,1,2,3].forEach((idx)=>selectHotspot(idx%2?6:-6,1.6,idx>1?-16:0,idx));
 }
-function perfumeBottle(g,x,z,color,kind=0){
- const gp=new THREE.Group();gp.position.set(x,0,z);g.add(gp);
+function perfumeBottle(g,x,z,color,kind=0,y=0){
+ const gp=new THREE.Group();gp.position.set(x,y,z);g.add(gp);
  const tinted=new THREE.MeshPhysicalMaterial({color,transparent:true,opacity:.80,roughness:.14,metalness:.02,depthWrite:true});
  if(kind%2)tube(0,.23,0,.22,.22,.46,tinted,gp);
  else soft(0,.29,0,.46,.53,.26,tinted,.09,gp);
@@ -319,7 +319,7 @@ function beautyScene(){
   soft(x,3.63,z,3.25,3.35,.19,mat('#b79b9c',.4),.19);
   for(const y of [2.7,3.5,4.3]){
    soft(x+(side>0?-.11:.11),y,z,3.05,.055,.53,brass,.023);
-   for(let i=0;i<6;i++)perfumeBottle(root,x-.98+i*.38,z,['#e4b2aa','#bdb0b9','#c7d0c5'][i%3],i);
+   for(let i=0;i<6;i++)perfumeBottle(root,x-.98+i*.38,z,['#e4b2aa','#bdb0b9','#c7d0c5'][i%3],i,y+.13);
   }
  }
  for(const z of [-7,-20]){
@@ -327,16 +327,16 @@ function beautyScene(){
    ball(0,1.27,z,.96,.73,.36,mat('#b9a19d',.8));
  }
 }
-function brandBox(g,x,z,index){
+function brandBox(g,x,y,z,index){
  const shades=['#c3a476','#9fae9c','#bd8d75','#c7c0ab','#a9b7ad'];
  const mt=mat(shades[index%5],.85);
  if(index%3===0){
-   soft(x,.31,z,.41,.57,.37,mt,.04,g);soft(x,.61,z,.21,.06,.2,ivory,.02,g);
+   soft(x,y+.31,z,.41,.57,.37,mt,.04,g);soft(x,y+.61,z,.21,.06,.2,ivory,.02,g);
  }else if(index%3===1){
-   tube(x,.29,z,.19,.20,.56,mt,g);tube(x,.62,z,.15,.15,.10,brass,g);
+   tube(x,y+.29,z,.19,.20,.56,mt,g);tube(x,y+.62,z,.15,.15,.10,brass,g);
  }else{
-   soft(x,.31,z,.40,.56,.31,mt,.04,g);
-   block(x,.36,z+.17,.32,.12,.02,ivory,g);
+   soft(x,y+.31,z,.40,.56,.31,mt,.04,g);
+   block(x,y+.36,z+.17,.32,.12,.02,ivory,g);
  }
 }
 function groceryShelves(x,z){
@@ -344,10 +344,9 @@ function groceryShelves(x,z){
  soft(0,.12,0,1.45,.22,5.4,darkMetal,.06,g);
  for(const y of [.57,1.24,1.91,2.58,3.24]){
   soft(0,y,0,1.48,.10,5.45,mat('#bba88f',.67),.025,g);
-  for(const side of [-1,1])for(let i=0;i<8;i++){
-   brandBox(g,side*.49,z*0+(i-3.5)*.59,i+Math.round(y*5)+(side>0?3:0));
-   // Each item is a real box/cylinder shape, not a textured flat quad.
-   const p=g.children[g.children.length-1];if(p&&p.isMesh)p.position.y+=y;
+  for(const side of [-1,1])for(let i=0;i<(coarse?5:8);i++){
+   brandBox(g,side*.49,y,(i-((coarse?5:8)-1)/2)*(coarse?1.04:.59),i+Math.round(y*5)+(side>0?3:0));
+   // Each item is a fully modeled box or cylinder, placed on its shelf.
   }
  }
  for(const side of [-1,1])for(const zz of [-2.58,2.58])tube(side*.68,1.75,zz,.055,.055,3.5,darkMetal,g);
@@ -376,7 +375,7 @@ function selectHotspot(x,y,z,index){
  const shell=mesh(new THREE.SphereGeometry(.14,18,12),new THREE.MeshBasicMaterial({color:'#efe1cb'}));
  g.add(shell);
  const halo=mesh(new THREE.TorusGeometry(.24,.016,6,28),new THREE.MeshBasicMaterial({color:'#fff4d9',transparent:true,opacity:.75}));halo.position.z=.08;g.add(halo);
- const pick=mesh(new THREE.SphereGeometry(.43,10,8),new THREE.MeshBasicMaterial({visible:false}));pick.userData.itemIndex=index;g.add(pick);pickables.push(pick);hotspots.push({g,halo});
+ const pick=mesh(new THREE.SphereGeometry(.43,10,8),new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:0,depthWrite:false}));pick.userData.itemIndex=index;g.add(pick);pickables.push(pick);hotspots.push({g,halo});
  return g;
 }
 function setStore(key){
@@ -393,7 +392,13 @@ function setStore(key){
  const url=new URL(location.href);url.searchParams.set('world',key);history.replaceState(null,'',url);
 }
 function updateCamera(){camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;}
-function move(dx,dz){camera.position.x=clamp(camera.position.x+dx,-5.5,5.5);camera.position.z=clamp(camera.position.z+dz,-29.3,11.3);}
+function blocked(x,z){
+ if(active==='food'&&(Math.hypot(x,z-1)<1.8||Math.hypot(x,z+15)<1.8))return true;
+ if(active==='fashion'&&[[-2.55,-4],[2.65,-8],[-2.4,-17],[2.55,-23]].some(p=>Math.hypot(x-p[0],z-p[1])<1.1))return true;
+ if(active==='home'&&[[-2.55,-7],[2.5,-22]].some(p=>Math.hypot(x-p[0],z-p[1])<.85))return true;
+ return false;
+}
+function move(dx,dz){const nx=clamp(camera.position.x+dx,-5.5,5.5),nz=clamp(camera.position.z+dz,-29.3,11.3);if(!blocked(nx,camera.position.z))camera.position.x=nx;if(!blocked(camera.position.x,nz))camera.position.z=nz;}
 const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
 function selectAt(cx,cy){
  mouse.set(cx/innerWidth*2-1,-(cy/innerHeight)*2+1);ray.setFromCamera(mouse,camera);
