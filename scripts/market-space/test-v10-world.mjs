@@ -97,4 +97,7 @@ check('Cinema tours steer around central Market/Beauty objects',()=>{
   }
  }
 });
+check('Fashion accessories and sewn upholstery remain present',()=>{
+ for(const k of ['function boutiqueHandbag(', 'const handle=mesh(new THREE.TorusGeometry', "const cushion=textile(", 'Fine hand-sewn front cushion piping'])assert.ok(world.includes(k),k);
+});
 console.log('V10.2 source contracts: '+count+' passed. Real mobile GPU and external browser QA are not verified.');
