@@ -40,6 +40,10 @@ node scripts/cloud/vps-preflight.mjs --check --json
 
 `READY_FOR_DISPOSABLE_PILOT` confirms only host prerequisites. **It never authorizes production or database migration.** Missing Docker socket access, CPU, RAM, disk, or OS evidence results in `NOT_READY` with a nonzero exit. JSON contains named pass/wait checks, not IP addresses, tokens or server details.
 
+## Safely queue a real STAGING deployment (only after Coolify is configured)
+
+An operator-gated Coolify API release command exists at `scripts/cloud/rollout.mjs` with read-only `--verify`, digest-reviewed `--start-staging` and GET-only `--status`. It checks exact approved Git SHA and an isolated staging app. See `docs/cloud/STAGING_ROLLOUT.md`. It never deploys production, migrates databases or changes DNS.
+
 ## Coolify + disposable real deploy
 
 1. Review the published install instructions at https://coolify.io/docs/start-with-self-hosted. Run the official installer on the fresh secured VPS after inspecting it, not unreviewed shell code.
