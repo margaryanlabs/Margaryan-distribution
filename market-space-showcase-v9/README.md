@@ -1,18 +1,18 @@
 # MARKET SPACE V9 — Commercial Experience
 
-Isolated premium sales/showcase site for Margaryan Labs virtual retail. This is not a replacement for MARKET SPACE Studio or the world renderer.
+Isolated premium sales/showcase site for Margaryan Labs virtual retail. This is not a replacement for MARKET SPACE Studio. A V9 copy of the world renderer is included to allow safe visual iteration while keeping V8.1 untouched.
 
 ## What ships
 - Cinematic responsive landing with original UI, four industry concepts (Fashion, Supermarket, Beauty, Home), transitions, editorial cards, offer tiers and mobile menu.
-- CTA launches the existing interactive V8.1 world inside a modal. World query preserves the category; optional Lite toggle uses mode=lite.
+- CTA launches an isolated V9 version of the V8.1 interactive world inside a modal. World query preserves the category; optional Lite toggle uses mode=lite.
 - Short client brief form can copy locally or export a text file. There is no server-side lead capture or payment processing; this is disclosed to visitors.
 - Reduced-motion support, keyboard navigation and focus management for modal dialogs.
 - Remote photographs are moodboard references, disclosed as non-rendered concept art. They are not screenshots of the actual world.
 
 ## Scope and safety
-- Only new market-space-showcase-v9 files; no modification to INGU, V8/V8.1 or existing Studio configurations.
+- Only new market-space-showcase-v9 and market-space-world-v9 files; no modification to INGU, V8/V8.1 or existing Studio configurations.
 - Branch: feat/market-space-v9-commercial-experience-20261026, stacked on V8.1 UX branch. The site has NOT been deployed.
-- Static path: /market-space-showcase-v9/index.html, linked demo sibling: /market-space-world-v8-1/.
+- Static path: /market-space-showcase-v9/index.html, linked demo sibling: /market-space-world-v9/.
 - Image URLs rely on Unsplash hosting. Verify usage rights, availability and image performance, and replace with approved owned visual assets before commercial public launch.
 
 ## QA record
@@ -20,7 +20,7 @@ Isolated premium sales/showcase site for Margaryan Labs virtual retail. This is 
 - Inline JavaScript compiled without syntax errors.
 - JavaScript-referenced element IDs exist and none are duplicated.
 - Not yet tested: browser visual QA, mobile screenshots of V9, real Android GPU, world 3D performance, external image availability or GitHub Pages publication.
-- V8.1 remains a proof-of-concept (procedural WebGL and optional 2.5D fallback), not a photorealistic 3D world.
+- V9 World preserves V8.1 behavior, with an editorial dark-and-warm HUD and softer distance lighting. It remains a proof-of-concept (procedural WebGL and optional 2.5D fallback), not a photorealistic 3D world.
 
 ## Release blockers before selling a premium 3D store
 1. Replace stock references with original photography or approved rendered showroom assets.
