@@ -19,7 +19,7 @@ const app=()=>({
  git_repository:'margaryanlabs/Telegram-story-bot',
  git_branch:'feat/vetogram-selfhost-origin-20261026',
  git_commit_sha:sha,build_pack:'dockerfile',
- dockerfile_location:'/Dockerfile.selfhost',health_check_enabled:true,
+ dockerfile_location:'/Dockerfile.selfhost',docker_registry_image_name:'margaryan/vetogram',health_check_enabled:true,
  health_check_path:'/api/health',settings:{is_auto_deploy_enabled:false},
  token:'DO_NOT_LEAK',private_key:'DO_NOT_LEAK'
 });
@@ -55,6 +55,7 @@ test('wrong commit, automatic deploy, unhealthy readiness config block',()=>{
   {name:'vetogram-production'}, {build_pack:'dockercompose'},
   {health_check_enabled:false}, {settings:{is_auto_deploy_enabled:true}},
   {dockerfile_location:'/Dockerfile'},
+  {docker_registry_image_name:''},
   {git_repository:'somebody/Telegram-story-bot'}
  ]){
   const r=checkLiveStagingApp(example(),{...app(),...patch});
@@ -157,5 +158,8 @@ test('private tokens, failed API and unsafe input cannot trigger mutation',async
   env.CLOUD_DEPLOY_ENABLE='staging-only';
   env.CLOUD_COOLIFY_WRITE_TOKEN_FILE=read;
   await assert.rejects(queueStaging(example(),env,async()=>{throw Error('network called')}),/Separate read and write/);
+  env.CLOUD_COOLIFY_WRITE_TOKEN_FILE=write;
+  writeFileSync(write,'COOLIFY_READ_ONLY_TOKEN');
+  await assert.rejects(queueStaging(example(),env,async()=>reply(app())),/separate scopes/);
  }finally{rmSync(dir,{recursive:true,force:true});}
 });
