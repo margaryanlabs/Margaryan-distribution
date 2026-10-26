@@ -68,6 +68,7 @@ export function checkLiveStagingApp(manifest,raw){
   ['git-branch',raw.git_branch===m.branch],
   ['commit-is-pinned',raw.git_commit_sha===m.commit],
   ['portable-dockerfile',raw.build_pack==='dockerfile'&&dockerfile===m.dockerfile],
+  ['shared-image-registry',typeof raw.docker_registry_image_name==='string'&&raw.docker_registry_image_name.trim().length>0],
   ['readiness-configured',raw.health_check_enabled===true&&raw.health_check_path===m.healthPath],
   ['autodeploy-off',settings?.is_auto_deploy_enabled===false],
  ];
@@ -111,6 +112,8 @@ export async function queueStaging(manifest,env,fetcher=fetch){
  const inspected=await observeApplication(m,env,fetcher);
  if(inspected.verdict!=='STAGING_APP_MATCH_REVIEW')fail('Live staging app differs from reviewed source');
  const writeToken=readPrivateReadToken(env.CLOUD_COOLIFY_WRITE_TOKEN_FILE);
+ const readToken=readPrivateReadToken(env.CLOUD_COOLIFY_READ_TOKEN_FILE);
+ if(writeToken===readToken)fail('Read and write tokens must have separate scopes');
  const base=trustedHttpsOrigin(env.CLOUD_COOLIFY_URL);
  const url=new URL('/api/v1/deploy',base);
  url.searchParams.set('uuid',m.applicationUuid);
