@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#10110f">
 <meta name="description" content="MARKET SPACE V10 — новая экспериментальная 3D-архитектура retail: полноценная прогулка по бутику, мебели, beauty и супермаркету.">
-<title>MARKET SPACE — Immersive World V10.6</title>
+<title>MARKET SPACE — Immersive World V10.7</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"}}</script>
 <style>
 :root{color-scheme:dark;font:14px/1.5 Inter,"Helvetica Neue",Arial,sans-serif;background:#111311;color:#f5f0e7;--paper:#f4eee3;--mute:#b7b3a8;--line:#d3c6b64b;--warm:#e4c79d}*{box-sizing:border-box}
@@ -37,6 +37,41 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 border:1px solid #d6b98b70;padding:9px 11px;font:11px/1.5 ui-monospace,SFMono-Regular,monospace;
 pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
 #perfHud[hidden]{display:none!important}
+
+/* V10.7 immersive wardrobe configurator: one secondary mobile sheet, with 3D viewport unobstructed. */
+#lookbookPanel{position:fixed;z-index:15;left:clamp(12px,3vw,52px);top:96px;width:min(365px,calc(100vw - 26px));max-height:calc(100dvh - 208px);overflow-y:auto;overscroll-behavior:contain;
+ background:linear-gradient(156deg,#20241ee9,#111917f5 60%);border:1px solid #d7c29c93;box-shadow:0 22px 65px #000b;backdrop-filter:blur(20px);padding:19px 18px;color:#f1e7d6;border-radius:12px}
+#lookbookPanel[hidden]{display:none!important}
+.lookbookTop{display:flex;align-items:flex-start;justify-content:space-between;gap:13px}
+.lookbookTop h2{font:normal 38px/.98 Georgia,serif;letter-spacing:-.05em;margin:7px 0 8px}
+.lookbookKicker{font:700 9px Inter,Arial,sans-serif;letter-spacing:.22em;color:#d9c5a6;text-transform:uppercase}
+.lookbookClose{background:transparent;border:1px solid #e0d1b080;border-radius:5px;color:#eee4d2;padding:7px 11px}
+.lookbookLead{margin:0 0 13px;font-size:11px;line-height:1.6;color:#d1c9b8}
+.lookbookGroup{padding:12px 0;border-top:1px solid #e6d0ad38}
+.lookbookGroup strong{display:block;text-transform:uppercase;letter-spacing:.16em;color:#d9c5a9;font-size:9px;margin-bottom:9px}
+.lookbookChoices{display:flex;flex-wrap:wrap;gap:6px}
+.lookbookChoices button{border:1px solid #ebd8b966;color:#eae1d3;background:#ffffff08;padding:9px 10px;border-radius:6px;font-size:11px;min-height:38px}
+.lookbookChoices button[aria-pressed="true"]{background:#e7d1b1;color:#1d2520;border-color:#e7d1b1;font-weight:800}
+.lookbookChoices button:hover:not([aria-pressed="true"]){background:#ffffff20}
+.lookbookLooks button{font-family:Georgia,serif;font-size:14px;letter-spacing:.01em}
+.lookbookColors button{padding:7px;min-width:52px;font-size:9px}
+.lookbookColors i{display:block;width:25px;height:25px;border:1px solid #eee9de99;border-radius:50%;margin:0 auto 5px;box-shadow:0 3px 9px #0008}
+.lookbookTotal{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #dfc9a75c;padding:13px 0 9px;font-size:11px;color:#c7c4b8}
+.lookbookTotal b{font:normal 21px Georgia,serif;color:#f4e2c5}
+.lookbookActions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.lookbookActions button{min-height:41px;border:1px solid #dfc9a58a;border-radius:5px;color:#e9ddc7;background:#ffffff0d;padding:9px 7px;font-size:10px;font-weight:750;cursor:pointer}
+.lookbookActions .main{background:#ead5b7;color:#18221c;border-color:#ead5b7}
+.lookbookActions button:hover{filter:brightness(1.15)}
+.lookbookDisclaimer{margin:11px 0 0;color:#b0b5ab;font-size:10px;line-height:1.5}
+#lookbookBtn{border-color:#e4c49cba;color:#f5e1bf}
+@media(max-width:620px){
+ #lookbookPanel{left:6px;right:6px;top:auto;bottom:92px;width:auto;max-height:min(46dvh,420px);padding:12px 14px}
+ .lookbookTop h2{font-size:28px;margin:4px 0 7px}
+ .lookbookLead{font-size:10px;margin-bottom:8px}
+ .lookbookGroup{padding:9px 0}.lookbookChoices button{padding:7px 9px;min-height:34px}
+ .lookbookActions button{min-height:36px}
+ #lookbookBtn{font-size:8px}
+}
 
 /* V10.6 — a compact editing console, not a full-screen obstructing shopping modal. */
 #stylePanel{position:fixed;z-index:14;right:clamp(12px,3vw,52px);top:91px;width:min(330px,calc(100vw - 26px));background:#111917f2;color:#f2ecdf;
@@ -125,11 +160,43 @@ pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
 <div id="viewport" aria-label="Интерактивное 3D-пространство"></div><div class="scrim"></div>
 <header class="header">
 <a class="logo" href="../market-space-showcase-v10/" aria-label="Вернуться на MARKET SPACE"><span class="logomark"><b>M</b></span><span class="brand">MARKET SPACE<small>BY MARGARYAN LABS</small></span></a>
-<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.6</span>
-<button class="topAction" id="styleBtn" aria-controls="stylePanel" aria-expanded="false">✦ Студия</button><button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
+<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.7</span>
+<button class="topAction" id="lookbookBtn" aria-controls="lookbookPanel" aria-expanded="false">◈ Lookbook</button><button class="topAction" id="styleBtn" aria-controls="stylePanel" aria-expanded="false">✦ Студия</button><button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
 </header>
 <div class="titlePanel" id="titlePanel"><div class="kicker" id="eyebrow">01 / THE ATELIER</div><h1 id="worldTitle">The<br>Atelier</h1><p id="worldDescription">Мода — это не карточки в каталоге. Исследуй коллекцию, подойди к манекенам и выбери вещи прямо в пространстве.</p><button id="introButton">Исследовать пространство ↗</button></div>
-<div id="worldNote">V10.6 / INTERACTIVE 3D PREVIEW</div><section id="stylePanel" role="dialog" aria-label="Style Studio — оформление 3D-магазина" hidden>
+<div id="worldNote">V10.7 / INTERACTIVE 3D PREVIEW</div><section id="lookbookPanel" role="dialog" aria-label="Interactive Lookbook — собрать образ" hidden>
+<div class="lookbookTop"><div><span class="lookbookKicker">Fashion / Personal Styling</span><h2>My Lookbook.</h2></div>
+<button id="closeLookbook" class="lookbookClose" type="button" aria-label="Закрыть Lookbook">✕</button></div>
+<p class="lookbookLead">Собери образ, посмотри его на 3D-манекене и отправь ссылку. Изменения происходят в самом пространстве.</p>
+<div class="lookbookGroup"><strong>01 / Кураторские образы</strong><div class="lookbookChoices lookbookLooks">
+<button type="button" data-look-preset="atelier">Atelier</button>
+<button type="button" data-look-preset="sunset">Golden</button>
+<button type="button" data-look-preset="noir">After Dark</button></div></div>
+<div class="lookbookGroup"><strong>02 / Главный предмет</strong><div class="lookbookChoices">
+<button type="button" data-look-garment="coat">Пальто</button>
+<button type="button" data-look-garment="dress">Платье</button>
+<button type="button" data-look-garment="jacket">Пиджак</button>
+<button type="button" data-look-garment="edition">Edition</button></div></div>
+<div class="lookbookGroup"><strong>03 / Цвет ткани</strong><div class="lookbookChoices lookbookColors">
+<button type="button" data-look-color="sand"><i style="background:#ba9e80"></i>Sand</button>
+<button type="button" data-look-color="rose"><i style="background:#ba8b91"></i>Rose</button>
+<button type="button" data-look-color="sage"><i style="background:#657b71"></i>Sage</button>
+<button type="button" data-look-color="night"><i style="background:#393d43"></i>Night</button></div></div>
+<div class="lookbookGroup"><strong>04 / Детали</strong><div class="lookbookChoices">
+<button type="button" data-look-shoes="sneaker">Кроссовки</button>
+<button type="button" data-look-shoes="boot">Ботинки</button>
+<button type="button" data-look-shoes="none">Без обуви</button>
+<button type="button" data-look-bag="yes">Сумка ✓</button>
+<button type="button" data-look-bag="no">Без сумки</button></div></div>
+<div class="lookbookTotal"><span>Примерная стоимость комплекта</span><b id="lookbookPrice">—</b></div>
+<div class="lookbookActions">
+<button type="button" id="lookbookTurn">↻ Вращать манекен</button>
+<button type="button" id="lookbookShare">↗ Поделиться</button>
+<button type="button" id="lookbookReset">Сбросить</button>
+<button type="button" id="lookbookAdd" class="main">＋ Добавить образ</button>
+</div>
+<p class="lookbookDisclaimer">Виртуальная примерка на стандартном манекене, не сканирование тела. Цены демонстрационные, реальная оплата отключена.</p>
+</section><section id="stylePanel" role="dialog" aria-label="Style Studio — оформление 3D-магазина" hidden>
  <div class="styleTop"><div><div class="styleKicker">Персонализируй пространство</div><h2>Style Studio</h2></div>
  <button class="styleClose" id="closeStyle" aria-label="Закрыть студию">✕</button></div>
  <p>Меняй свет, материалы и настроение магазина прямо во время прогулки.</p>
