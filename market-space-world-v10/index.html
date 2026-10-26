@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#10110f">
 <meta name="description" content="MARKET SPACE V10 — новая экспериментальная 3D-архитектура retail: полноценная прогулка по бутику, мебели, beauty и супермаркету.">
-<title>MARKET SPACE — Immersive World V10.8</title>
+<title>MARKET SPACE — Immersive World V11.0</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"}}</script>
 <style>
 :root{color-scheme:dark;font:14px/1.5 Inter,"Helvetica Neue",Arial,sans-serif;background:#111311;color:#f5f0e7;--paper:#f4eee3;--mute:#b7b3a8;--line:#d3c6b64b;--warm:#e4c79d}*{box-sizing:border-box}
@@ -198,11 +198,11 @@ background:linear-gradient(135deg,#263029ed,#0e1612f5);backdrop-filter:blur(20px
 <div id="viewport" aria-label="Интерактивное 3D-пространство"></div><div class="scrim"></div>
 <header class="header">
 <a class="logo" href="../market-space-showcase-v10/" aria-label="Вернуться на MARKET SPACE"><span class="logomark"><b>M</b></span><span class="brand">MARKET SPACE<small>BY MARGARYAN LABS</small></span></a>
-<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.8</span>
+<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 11.0</span>
 <button class="topAction" id="experienceBtn" aria-controls="experiencePanel" aria-expanded="false">✦ Experience</button><button class="topAction" id="lookbookBtn" aria-controls="lookbookPanel" aria-expanded="false">◈ Lookbook</button><button class="topAction" id="styleBtn" aria-controls="stylePanel" aria-expanded="false">✦ Студия</button><button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
 </header>
 <div class="titlePanel" id="titlePanel"><div class="kicker" id="eyebrow">01 / THE ATELIER</div><h1 id="worldTitle">The<br>Atelier</h1><p id="worldDescription">Мода — это не карточки в каталоге. Исследуй коллекцию, подойди к манекенам и выбери вещи прямо в пространстве.</p><button id="introButton">Исследовать пространство ↗</button></div>
-<div id="worldNote">V10.8 / INTERACTIVE 3D PREVIEW</div><section id="experiencePanel" role="dialog" aria-label="Интерактивная студия магазина" hidden>
+<div id="worldNote">V11.0 / INTERACTIVE 3D PREVIEW</div><section id="experiencePanel" role="dialog" aria-label="Интерактивная студия магазина" hidden>
 <div class="experienceTop"><div><span class="experienceKicker" id="experienceKicker">IMMERSIVE SHOPPING</span><h2 id="experienceTitle">Experience Lab</h2></div><button id="closeExperience" aria-label="Закрыть Experience Lab" type="button">✕</button></div>
 <p class="experienceIntro" id="experienceIntro"></p>
 <div id="experienceOptions"></div>
@@ -449,7 +449,7 @@ function applyExperienceVisuals(){
    }
    obj.material.color.set(tint);
    obj.material.roughness=experienceState.beauty.glass==='frost'?.6:.10;
-   obj.material.opacity=experienceState.beauty.glass==='frost'?.97:.84;
+   obj.material.opacity=obj.material.transmission>0?1:(experienceState.beauty.glass==='frost'?.97:.84);
    obj.material.needsUpdate=true;
   });
  }else if(active==='home'){
@@ -525,7 +525,38 @@ function mat(color,rough=.68,metal=0,other={}){
  return m;
 }
 const ivory=mat('#ebe5d8',.92), brass=mat('#ad8c62',.32,.75),darkMetal=mat('#33352e',.34,.72);
-const ceramic=mat('#e8dbca',.28,.1),wood=mat('#93735a',.75),black=mat('#252521',.52);
+const ceramic=mat('#e8dbca',.28,.1),black=mat('#252521',.52);
+function timberTexture(){
+ const size=512,c=document.createElement('canvas');c.width=c.height=size;
+ const ctx=c.getContext('2d');
+ ctx.fillStyle='#95755a';ctx.fillRect(0,0,size,size);
+ let state=721;
+ const rand=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;};
+ for(let k=0;k<118;k++){
+  const y=rand()*size,shade=rand()>.48?'#d9aa77':'#3e2419';
+  ctx.strokeStyle=shade;ctx.globalAlpha=.028+rand()*.18;ctx.lineWidth=.4+rand()*2.3;
+  ctx.beginPath();
+  for(let x=0;x<=size;x+=14){
+   const yy=y+Math.sin(x*.018+y*.03)*3.1+Math.sin(x*.067+y*.16)*1.2;
+   if(x===0)ctx.moveTo(x,yy);else ctx.lineTo(x,yy);
+  }
+  ctx.stroke();
+ }
+ for(let knot=0;knot<7;knot++){
+  const x=rand()*size,y=rand()*size;
+  ctx.globalAlpha=.08;ctx.strokeStyle='#533926';
+  for(let r=3;r<20;r+=3){ctx.beginPath();ctx.ellipse(x,y,r*1.5,r*.42,.08,0,Math.PI*2);ctx.stroke();}
+ }
+ ctx.globalAlpha=1;
+ const texture=new THREE.CanvasTexture(c);
+ texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+ texture.repeat.set(1,2);
+ texture.colorSpace=THREE.SRGBColorSpace;
+ texture.anisotropy=4;
+ return texture;
+}
+const wood=new THREE.MeshStandardMaterial({color:'#ffffff',map:timberTexture(),metalness:0,roughness:.62});
+reusableMaterials.add(wood);
 const glass=new THREE.MeshPhysicalMaterial({color:'#e7dacc',roughness:.11,metalness:0,transparent:true,opacity:.57,depthWrite:false});
 const fabricColors=['#a98a72','#eee2d0','#65645e','#bca8a1','#5a6560','#d3b7a2'];
 // Fine woven microrelief creates fabric response under real lights without image downloads.
@@ -547,7 +578,13 @@ const sharedWeaveTexture=weaveBump(),garmentMaterialCache=new Map();
 function textile(color,side=THREE.DoubleSide){
  const key=color+'|'+side;
  if(garmentMaterialCache.has(key))return garmentMaterialCache.get(key);
- const material=mat(color,.96,.005,{side,bumpMap:sharedWeaveTexture,bumpScale:.014});
+ // Sheen catches grazing showroom lights like woven cotton and wool instead of flat plastic.
+ const material=new THREE.MeshPhysicalMaterial({
+  color,metalness:0,roughness:.88,side,
+  sheen:.66,sheenColor:new THREE.Color(color).lerp(new THREE.Color('#fff4e4'),.28),
+  sheenRoughness:.78,bumpMap:sharedWeaveTexture,bumpScale:.013,
+  envMapIntensity:.68
+ });
  garmentMaterialCache.set(key,material);reusableMaterials.add(material);
  return material;
 }
@@ -716,12 +753,50 @@ function framedSign(text,sub,x,y,z,w=3.8,h=1.6,rotation=0){
  plane(0,0,.03,w,h,t,grp);
 }
 function stoneTexture(colorA='#d5cdc0',colorB='#ada498'){
- const c=document.createElement('canvas');c.width=512;c.height=512;const q=c.getContext('2d');q.fillStyle=colorA;q.fillRect(0,0,512,512);
- let seed=37;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;}
- for(let i=0;i<1700;i++){const v=random();q.globalAlpha=.03+random()*.14;q.fillStyle=v>.45?colorB:'#ffffff';q.fillRect(random()*512,random()*512,1+random()*18,1+random()*3);}
- q.globalAlpha=.2;q.strokeStyle=colorB;q.lineWidth=2;
- for(let v=0;v<=512;v+=128){q.beginPath();q.moveTo(v,0);q.lineTo(v,512);q.stroke();q.beginPath();q.moveTo(0,v);q.lineTo(512,v);q.stroke();}
- q.globalAlpha=1;const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(4,8);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t;
+ // Deterministic irregular marble and travertine veins instead of blurred repeated boxes.
+ const premium=!coarse||qualityMode==='high';
+ const resolution=premium?1024:512,c=document.createElement('canvas');
+ c.width=c.height=resolution;
+ const ctx=c.getContext('2d');
+ ctx.fillStyle=colorA;ctx.fillRect(0,0,resolution,resolution);
+ let state=37;
+ function random(){state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;}
+ // Fine sediment/grain at multiple scales, with high-res only on capable devices.
+ for(let i=0,n=premium?11500:3900;i<n;i++){
+  const p=random(),x=random()*resolution,y=random()*resolution;
+  ctx.globalAlpha=.016+random()*.10;
+  ctx.fillStyle=p>.48?colorB:'#ffffff';
+  ctx.fillRect(x,y,.6+random()*7,.6+random()*3);
+ }
+ // Drifting stone veins: independent branches, narrow colored core and diffuse edges.
+ const scale=resolution/512;
+ for(let line=0;line<23;line++){
+  const start=random()*resolution,tilt=(random()-.5)*resolution*.32;
+  for(const [strokeAlpha,thickness] of [[.065,5.0],[.19,.9]]){
+   ctx.globalAlpha=strokeAlpha*(line%3===0?1:.7);
+   ctx.strokeStyle=line%2?colorB:'#857a70';
+   ctx.lineWidth=thickness*scale;
+   ctx.beginPath();
+   for(let step=0;step<=52;step++){
+    const y=step/52*resolution;
+    const x=start+tilt*y/resolution+
+      Math.sin(y/resolution*8+line*1.8)*resolution*.018+
+      Math.sin(y/resolution*19+line*.9)*resolution*.005;
+    if(step===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+   }
+   ctx.stroke();
+  }
+ }
+ // Large architectural slab joins stay subordinate to the stone pattern.
+ ctx.globalAlpha=.13;ctx.strokeStyle='#685a4f';ctx.lineWidth=1.1*scale;
+ ctx.strokeRect(1,1,resolution-2,resolution-2);
+ ctx.globalAlpha=1;
+ const texture=new THREE.CanvasTexture(c);
+ texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+ texture.repeat.set(9,18);
+ texture.colorSpace=THREE.SRGBColorSpace;
+ texture.anisotropy=premium?8:4;
+ return texture;
 }
 function areaLight(x,z,color='#ffe0b5',strength=5.6){const l=new THREE.PointLight(color,strength,9,2);l.position.set(x,5.25,z);root.add(l);}
 function spotlight(x,z){
@@ -729,11 +804,75 @@ function spotlight(x,z){
  tube(x,5.25,z,.16,.18,.13,darkMetal);
  tube(x,5.15,z,.13,.13,.055,gold);
 }
+// Bespoke spatial identity: structural details that belong to each shop, not reused UI skins.
+function architecturalIdentity(key){
+ const warm=mat('#e4ccb0',.59,.12),bronze=mat('#aa906e',.31,.70);
+ const graphite=mat('#414641',.5,.52),chalk=mat('#e4d9c7',.85),oak=wood;
+ const lightBand=new THREE.MeshBasicMaterial({color:key==='beauty'?'#ffddd3':'#ffe3b8',toneMapped:false});
+ if(key==='fashion'){
+  // Curved boutique portals with bronze frames and subdued cove lights.
+  for(const side of [-1,1])for(const z of [0,-15,-27]){
+   const arch=mesh(new THREE.TorusGeometry(1.53,.070,10,36,Math.PI),bronze);
+   arch.rotation.y=Math.PI/2;
+   add(arch,side*10.43,3.75,z);
+   for(const dz of [-1.53,1.53])soft(side*10.43,2.45,z+dz,.105,2.6,.09,bronze,.018);
+   soft(side*10.40,5.12,z, .06,.055,3.05,lightBand,.02);
+   soft(side*10.55,3.95,z, .08,2.4,2.85,mat('#cfbca9',.85),.028);
+  }
+  for(const z of [-7.5,-22]){
+   // Track lighting gives specular edges to metal rails, cut marble and real fabric.
+   for(const x of [-4.3,0,4.3]){
+    soft(x,5.68,z,.36,.12,.24,graphite,.05);
+    tube(x,5.56,z,.11,.12,.13,bronze);
+   }
+  }
+ }else if(key==='beauty'){
+  const roseStone=mat('#bfa8a1',.35,.09),frosted=mat('#e7d5ce',.27,.025,{transparent:true,opacity:.82,depthWrite:false});
+  for(const side of [-1,1])for(const z of [1,-12,-25]){
+   // Ribbed translucent panels / art-deco brass edging.
+   soft(side*10.46,3.08,z, .12,4.5,3.9,roseStone,.045);
+   const maxRibs=coarse&&qualityMode!=='high'?4:6;
+   for(let k=-maxRibs;k<=maxRibs;k++){
+    const zz=z+k*(maxRibs===4?.4:.274);
+    soft(side*10.31,3.1,zz,.11,3.75,.055,k%3===0?bronze:frosted,.018);
+   }
+   soft(side*10.24,5.05,z,.11,.095,3.9,lightBand,.02);
+  }
+  for(const z of [-7,-20])soft(0,.13,z,3.75,.08,2.0,roseStone,.05);
+ }else if(key==='home'){
+  const woven=mat('#a79a86',.94);
+  for(const side of [-1,1])for(const z of [1,-15]){
+   // Timber-lined residential niches replace the generic mall aesthetic.
+   soft(side*10.41,3.04,z,.14,4.45,7.45,woven,.04);
+   const slats=coarse&&qualityMode!=='high'?5:8;
+   for(let j=-slats;j<=slats;j++){
+    soft(side*10.22,3.05,z+j*(slats===5?.65:.42),.055,4.15,.058,oak,.018);
+   }
+   soft(side*10.17,5.17,z,.09,.08,7.12,lightBand,.018);
+  }
+  for(const z of [1,-15])for(const side of [-1,1]){
+   // Low natural fiber borders ground the residential vignettes.
+   const edge=side*6.6;
+   for(const dz of [-2.4,2.4])soft(edge,.036,z+dz,5.8,.038,.035,mat('#897a67',.96),.014);
+  }
+ }else if(key==='food'){
+  const steel=mat('#63716b',.42,.5),tile=mat('#d3d7cc',.55);
+  for(const side of [-1,1])for(const z of [2,-11,-24]){
+   // Market aisle fascia and slim hanging signage.
+   soft(side*7.7,4.85,z,1.95,.32,5.8,steel,.065);
+   soft(side*7.7,4.69,z,1.65,.095,5.5,lightBand,.022);
+   for(const dz of [-2.5,2.5])soft(side*7.7,4.44,z+dz,1.67,.055,.055,bronze,.018);
+   soft(side*10.37,2.4,z,.09,4.2,4.5,tile,.035);
+  }
+  framedSign('THE MARKET','CURATED EVERY DAY',0,4.1,-30.95,5.6,1.25);
+ }
+}
+
 function architecture(key){
  const d=DATA[key];
  scene.background=new THREE.Color(key==='fashion'?'#b1a69a':key==='food'?'#a7b5a8':key==='beauty'?'#c9b8b5':'#b9beb6');
  scene.fog=new THREE.Fog(scene.background,26,56);
- const wallmat=mat(d.wall,.91).clone(),floorMat=mat(d.floor,.54,.08,{map:stoneTexture(key==='beauty'?'#d9c7c1':'#c9c4b8')});studioWallMaterial=wallmat;studioBaseWall=new THREE.Color(d.wall);studioBackgroundColor=scene.background.clone();
+ const wallmat=mat(d.wall,.91).clone(),floorMat=mat('#fffaf4',.40,.015,{map:stoneTexture(key==='beauty'?'#d9c7c1':'#c9c4b8')});studioWallMaterial=wallmat;studioBaseWall=new THREE.Color(d.wall);studioBackgroundColor=scene.background.clone();
  let floor=add(mesh(new THREE.PlaneGeometry(22,46),floorMat),0,-.01,-9);floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;
  block(0,6.4,-9,22,1,46,mat('#b5b0a5',.9));block(0,3.1,-31.8,22,6.2,.35,wallmat);
  for(const side of [-1,1]){
@@ -755,10 +894,11 @@ function architecture(key){
  for(let z of [6,-7,-20]){ring(0,5.3,z,1.05,.048,new THREE.MeshBasicMaterial({color:'#ffdfb7'}));ring(0,5.45,z,1.13,.025,brass);areaLight(0,z);}
  const hemi=new THREE.HemisphereLight('#fff5e4','#777369',1.5);root.add(hemi);
  const directional=new THREE.DirectionalLight('#fff4dd',2.15);directional.position.set(-4,9,6);
- directional.castShadow=!coarse;directional.shadow.mapSize.set(1024,1024);directional.shadow.camera.left=-15;directional.shadow.camera.right=15;directional.shadow.camera.top=16;directional.shadow.camera.bottom=-20;directional.shadow.bias=-.001;
+ directional.castShadow=!coarse;directional.shadow.mapSize.set(coarse?1024:2048,coarse?1024:2048);directional.shadow.normalBias=.015;directional.shadow.camera.left=-15;directional.shadow.camera.right=15;directional.shadow.camera.top=16;directional.shadow.camera.bottom=-20;directional.shadow.bias=-.001;
  root.add(directional);
  const fill=new THREE.DirectionalLight('#dce9ed',.75);fill.position.set(8,6,-13);root.add(fill);
  framedSign(d.name,key==='fashion'?'COLLECTION  /  2026':key==='food'?'FRESH   /   EVERY DAY':key==='beauty'?'THE RITUAL OF BEAUTY':'SPACES TO LIVE',0,3.9,-31.36,6,2.15);
+ architecturalIdentity(key);
 }
 function platform(x,z,r=1.18){
  contactShadow(x,z,r*2.5,r*2.5);
@@ -775,18 +915,30 @@ function hanger(g,x=0,y=0,z=0){
 // V10.1: garment shells built from smoothly shaded 3D fabric rings, not flat extrusions.
 // Silhouettes vary in waist, shoulder, sleeves and lower hem; styling remains procedural.
 function garmentShell(rings,cloth,detail=0){
- const count=coarse?12:20,positions=[],uvs=[],indices=[];
- for(let j=0;j<rings.length;j++){
-  const [y,rx,rz]=rings[j];
-  for(let i=0;i<count;i++){
-   const a=i/count*Math.PI*2;
-   const wrinkle=1+(detail*.038*Math.cos(a*10+j*.83));
-   const px=Math.cos(a)*rx*wrinkle;
-   const pz=Math.sin(a)*rz*(1+detail*.04*Math.sin(a*8+j*.62));
-   positions.push(px,y,pz);
-   uvs.push(i/count,j/(rings.length-1));
-   if(j<rings.length-1){const b=j*count+i,n=j*count+(i+1)%count;
-     indices.push(b,n,b+count,n,n+count,b+count);}
+ // Smoothed longitudinally sampled cloth loft with physical waist/hem shaping.
+ // Increased silhouette fidelity at HD, while preserving lightweight mobile geometry.
+ const premium=!coarse||qualityMode==='high';
+ const segments=premium?40:16,steps=premium?3:1;
+ const rowCount=(rings.length-1)*steps+1;
+ const positions=[],uvs=[],indices=[];
+ function shapeAt(j){
+  const a=Math.min(rings.length-2,Math.floor(j/steps)),t=j===rowCount-1?1:(j-a*steps)/steps;
+  // Cubic easing avoids sharp sectional creases at waist or lower skirt.
+  const t2=t*t*(3-2*t);
+  return [0,1,2].map(k=>rings[a][k]+(rings[a+1][k]-rings[a][k])*t2);
+ }
+ for(let j=0;j<rowCount;j++){
+  const [y,rx,rz]=shapeAt(j),lower=Math.max(0,Math.min(1,(-y-.25)/1.25));
+  for(let i=0;i<segments;i++){
+   const angle=i/segments*Math.PI*2;
+   const radialFold=1+detail*(.016*Math.cos(angle*9+j*.34)+.018*lower*Math.sin(angle*13+j*.19));
+   const drape=detail*lower*.018*Math.cos(angle*5+y*2.2);
+   positions.push(Math.cos(angle)*rx*radialFold+drape,y,Math.sin(angle)*rz*radialFold);
+   uvs.push(i/segments,j/(rowCount-1));
+   if(j<rowCount-1){
+    const x=j*segments+i,n=j*segments+(i+1)%segments;
+    indices.push(x,n,x+segments,n,n+segments,x+segments);
+   }
   }
  }
  const geometry=new THREE.BufferGeometry();
@@ -807,10 +959,13 @@ function clothBody(color,kind='jacket'){
  const shell=garmentShell(rings,cloth,isDress?1:.45);markStudioSurface(shell,'fabric');group.add(shell);
  for(const side of [-1,1]){
   // Each sleeve is a tapered fully dimensional piece with an individual cuff.
-  const sleeve=mesh(new THREE.CylinderGeometry(.165,.115,isDress?.69:.91,coarse?10:14,2),sleeveColor);
-  sleeve.position.set(side*.53,isDress?.09:.02,0);
-  sleeve.rotation.z=side*(isDress?.25:.15);markStudioSurface(sleeve,'fabric');group.add(sleeve);
-  tube(side*(isDress?.65:.63),isDress?-.24:-.42,0,.115,.115,.075,cloth,group);
+  const sleeve=garmentShell(
+   [[.40,.17,.158],[.17,.158,.148],[-.12,.145,.136],[-.39,.119,.112]],
+   sleeveColor,.16);
+  sleeve.position.set(side*.53,isDress?.10:.02,0);
+  sleeve.rotation.z=side*(isDress?.25:.15);
+  markStudioSurface(sleeve,'fabric');group.add(sleeve);
+  tube(side*(isDress?.64:.62),isDress?-.23:-.40,0,.12,.12,.052,cloth,group);
  }
  if(!isDress){
   // Layered satin lapels and front stitched opening.
@@ -819,7 +974,9 @@ function clothBody(color,kind='jacket'){
    const sh=new THREE.Shape();
    sh.moveTo(side*.04,.50);sh.lineTo(side*.28,.39);
    sh.lineTo(side*.145,-.06);sh.lineTo(side*.02,.16);sh.closePath();
-   const obj=mesh(new THREE.ShapeGeometry(sh),satin);obj.position.z=.27;group.add(obj);
+   const obj=mesh(new THREE.ExtrudeGeometry(sh,{depth:.022,bevelEnabled:!coarse,
+    bevelSize:.009,bevelThickness:.008,bevelSegments:2,steps:1}),satin);
+   obj.position.z=.272;group.add(obj);
   };
   mkLapel(-1);mkLapel(1);
   for(let j=0;j<(isCoat?5:3);j++)ball(.075,.08-j*.17,.31,.028,.028,.02,brass,group);
@@ -1072,13 +1229,46 @@ function homeScene(){
 const perfumeGlassCache=new Map();
 function perfumeGlass(color){
  if(perfumeGlassCache.has(color))return perfumeGlassCache.get(color);
+ const high=!coarse||qualityMode==='high';
  const material=new THREE.MeshPhysicalMaterial({
-  color,roughness:.085,metalness:.035,transparent:true,opacity:.84,
-  depthWrite:false,clearcoat:.95,clearcoatRoughness:.07,ior:1.45,
-  envMapIntensity:1.18
+  color,roughness:.09,metalness:.025,
+  transparent:!high,opacity:high?1:.84,depthWrite:high,
+  transmission:high?.67:0,thickness:high?.28:0,ior:1.46,
+  attenuationColor:new THREE.Color(color),attenuationDistance:1.8,
+  clearcoat:.90,clearcoatRoughness:.075,envMapIntensity:1.12
  });
  perfumeGlassCache.set(color,material);reusableMaterials.add(material);
  return material;
+}
+// Print small original brand art directly onto real bottle fronts, never reusing stock photos.
+const scentLabelCache=new Map();
+function scentLabel(kind){
+ const id=((kind%4)+4)%4;
+ if(scentLabelCache.has(id))return scentLabelCache.get(id);
+ const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
+ const ctx=canvas.getContext('2d');
+ ctx.fillStyle='#f0e4d4';ctx.fillRect(0,0,256,256);
+ ctx.fillStyle='#54483e';ctx.textAlign='center';
+ ctx.font='700 17px Georgia';ctx.fillText('M A I S O N',128,45);
+ ctx.fillRect(48,63,160,1);
+ ctx.font='normal 48px Georgia';ctx.fillText(['05','09','12','21'][id],128,141);
+ ctx.font='13px Arial';ctx.fillText(['ROSE','SOLAR','AMBER','ELIXIR'][id],128,180);
+ ctx.font='10px Arial';ctx.fillText('EAU DE PARFUM  /  50 ML',128,224);
+ const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+ const material=new THREE.MeshBasicMaterial({map:texture,transparent:false,toneMapped:false,side:THREE.DoubleSide});
+ scentLabelCache.set(id,material);reusableMaterials.add(material);return material;
+}
+function syncPhysicalGlass(){
+ const high=!coarse||qualityMode==='high';
+ const change=m=>{
+  if(!m||!m.isMeshPhysicalMaterial)return;
+  const enabled=high;
+  if((m.transmission>0)===enabled)return;
+  m.transparent=!enabled;m.depthWrite=enabled;m.opacity=enabled?1:.84;
+  m.transmission=enabled?.67:0;m.thickness=enabled?.28:0;m.needsUpdate=true;
+ };
+ for(const m of perfumeGlassCache.values())change(m);
+ for(const obj of experienceVisuals.perfume)change(obj.material);
 }
 function perfumeBottle(g,x,z,color,kind=0,y=0){
  const gp=new THREE.Group();gp.position.set(x,y,z);g.add(gp);
@@ -1087,6 +1277,12 @@ function perfumeBottle(g,x,z,color,kind=0,y=0){
  else soft(0,.29,0,.46,.53,.26,tinted,.09,gp);
  soft(0,.62,0,.20,.13,.19,brass,.022,gp);
  tube(0,.73,0,.055,.055,.16,brass,gp);
+ // Label reserved for large hero/gallery bottles to respect mobile draw-call budgets.
+ if(kind%4===0){
+  const m=scentLabel(kind);
+  const sign=mesh(new THREE.PlaneGeometry(.26,.26),m);
+  sign.position.set(0,.30,.143);sign.castShadow=false;gp.add(sign);
+ }
  return gp;
 }
 function beautyIsland(x,z,index){
@@ -1606,7 +1802,13 @@ lookPad.addEventListener('pointercancel',lookUp);
 let dragging=false,dragId=null,dragX=0,dragY=0,dragMoved=false,downX=0,downY=0;
 $('qualityBtn').addEventListener('click',()=>{
  qualityMode=qualityCycle[(qualityCycle.indexOf(qualityMode)+1)%qualityCycle.length];
- qualityReduced=qualityMode!=='auto';applyQuality();reconcilePremiumModels();if(qualityMode==='high'||qualityMode==='auto')upgradePremiumAssets(active);
+ qualityReduced=qualityMode!=='auto';
+ applyQuality();syncPhysicalGlass();
+ // New HD geometry and 1K stone textures require rebuilding the current world.
+ const originalView=camera.position.clone(),oldYaw=yaw,oldPitch=pitch,oldStore=active;
+ setStore(oldStore);
+ camera.position.copy(originalView);yaw=oldYaw;pitch=oldPitch;updateCamera();
+ toast('Качество: '+qualityLabels[qualityMode]);
 });
 const canvas=renderer.domElement;
 canvas.addEventListener('pointerdown',e=>{dragging=true;dragId=e.pointerId;dragX=downX=e.clientX;dragY=downY=e.clientY;dragMoved=false;canvas.setPointerCapture(e.pointerId);$('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';});
