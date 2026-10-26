@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10110f">
+<meta name="description" content="MARKET SPACE V10 — новая экспериментальная 3D-архитектура retail: полноценная прогулка по бутику, мебели, beauty и супермаркету.">
+<title>MARKET SPACE — Immersive World V10</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"}}</script>
+<style>
+:root{color-scheme:dark;font:14px/1.5 Inter,"Helvetica Neue",Arial,sans-serif;background:#111311;color:#f5f0e7;--paper:#f4eee3;--mute:#b7b3a8;--line:#d3c6b64b;--warm:#e4c79d}*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible{outline:2px solid #e7c9a2;outline-offset:3px}a{color:inherit;text-decoration:none}
+#viewport{position:fixed;inset:0;background:radial-gradient(ellipse at 54% 40%,#6c716b,#333a37 45%,#111713)}#viewport canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}#viewport canvas:active{cursor:grabbing}
+.scrim{position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,#070807a8,transparent 23%,transparent 73%,#050606ba),linear-gradient(90deg,#0b0c0a75,transparent 50%);z-index:2}
+.header{position:fixed;z-index:8;top:0;left:0;right:0;min-height:79px;padding:17px clamp(18px,3vw,52px);display:flex;align-items:center;gap:22px;border-bottom:1px solid #ffffff24;backdrop-filter:blur(6px)}
+.logo{display:flex;align-items:center;gap:12px;white-space:nowrap}.logomark{width:38px;height:38px;display:grid;place-items:center;border:1px solid #ecd9b9;transform:rotate(-45deg)}.logomark b{transform:rotate(45deg);font:italic 26px Georgia,serif;letter-spacing:-.12em}.brand{font-size:13px;letter-spacing:.19em;font-weight:770;line-height:1.15}.brand small{font-size:8px;letter-spacing:.23em;display:block;color:#d2c3ae;margin-top:4px}
+.headercenter{display:flex;align-items:center;gap:10px;margin-left:auto;color:#e7e3d2b9;font-size:10px;letter-spacing:.14em;text-transform:uppercase}.liveDot{width:7px;height:7px;border-radius:100%;background:#ddcba7;box-shadow:0 0 10px #f2dcaa90}
+.topAction{background:#111916a6;border:1px solid #e8dcc888;color:#fff;border-radius:5px;padding:11px 13px;letter-spacing:.11em;text-transform:uppercase;font-size:10px;white-space:nowrap}.topAction:hover{background:#dfc59e;color:#1b1e19}
+#cartCount{background:#e2caac;color:#14120f;border-radius:20px;padding:2px 6px;margin-left:4px;font-size:10px}
+.titlePanel{position:fixed;z-index:3;left:clamp(18px,3vw,52px);top:clamp(125px,18vh,210px);pointer-events:none;width:min(460px,45vw)}
+.kicker{letter-spacing:.25em;font-size:10px;font-weight:740;color:#e6d2b0;text-transform:uppercase}.kicker:before{content:"";display:inline-block;width:25px;height:1px;background:currentColor;vertical-align:middle;margin-right:13px}
+.titlePanel h1{font:normal clamp(50px,6vw,104px)/.96 Georgia,"Times New Roman",serif;letter-spacing:-.06em;margin:20px 0 14px;text-shadow:0 12px 29px #0009}
+.titlePanel p{font-size:13px;max-width:320px;line-height:1.74;color:#eee9deb8;text-shadow:0 2px 10px #000c}
+.titlePanel button{pointer-events:auto;margin-top:20px;padding:14px 18px;border:1px solid #e8dcc8;background:#f1e7d8;color:#1c201e;font-weight:800;font-size:11px;letter-spacing:.11em}
+#worldNote{position:fixed;z-index:5;top:103px;right:clamp(18px,3vw,52px);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#fff6e8ab;border:1px solid #ffffff4c;background:#1419178c;padding:8px 12px}
+#hotspotHint{position:fixed;z-index:4;left:50%;top:49%;transform:translate(-50%,-50%);width:17px;height:17px;border:1px solid #e1d7bf8a;border-radius:50%;pointer-events:none;opacity:.65}#hotspotHint:after{content:"";position:absolute;top:7px;left:7px;width:2px;height:2px;background:#f2e5cd;border-radius:50%}
+.bottomWrap{position:fixed;z-index:9;bottom:clamp(16px,2vw,35px);left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;max-width:calc(100vw - 30px)}
+.worldDock{background:#101510e8;border:1px solid #e3d1af73;backdrop-filter:blur(24px);padding:6px;display:flex;gap:5px;box-shadow:0 18px 48px #0008;border-radius:12px}
+.worldTab{min-width:108px;display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center;padding:11px 10px;color:#e8e4deae;background:transparent;border:1px solid transparent;border-radius:7px;font-size:10px;letter-spacing:.09em;text-transform:uppercase;font-weight:750}
+.worldTab .n{color:#d9c7a98a;font:italic 18px Georgia,serif}.worldTab:hover{background:#ffffff11}.worldTab.active{background:#e3cfb0;color:#161914}.worldTab.active .n{color:#775f43}
+.tourBtn{min-height:66px;padding:10px 23px;border:1px solid #d7c8b3;color:#141614;background:#dfcfb6;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.13em;white-space:nowrap;border-radius:7px}
+.tourBtn:hover{background:#f4ebdb}
+.help{position:fixed;z-index:4;left:clamp(18px,3vw,52px);bottom:39px;font-size:10px;color:#f1e9dcab;letter-spacing:.1em}.help b{color:#fff}
+.movePad{display:none;position:fixed;z-index:9;left:20px;bottom:128px;border:1px solid #e6ddc5a8;width:100px;height:100px;border-radius:50%;background:#1015134d;backdrop-filter:blur(7px);touch-action:none}.padThumb{width:43px;height:43px;position:absolute;left:28px;top:28px;border-radius:50%;background:#e5d5b9ba;box-shadow:0 5px 20px #0009}
+.touchHelp{display:none}
+#loading{position:fixed;inset:0;z-index:20;background:radial-gradient(circle at 50% 43%,#303a34,#151b18 58%,#0d110f);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;transition:opacity .6s,visibility .6s;padding:25px}
+#loading.ready{opacity:0;visibility:hidden;pointer-events:none}
+#loading .symbol{font:italic 77px Georgia,serif;color:#e9d9be;letter-spacing:-.15em;line-height:.9}
+#loading h2{font:normal 27px Georgia,serif;letter-spacing:.02em;margin:23px 0 4px}
+#loading p{color:#c7c8bd;margin:0 0 22px;font-size:12px;max-width:340px}
+.loaderTrack{width:180px;height:2px;background:#ffffff2a;overflow:hidden}.loaderTrack i{display:block;width:42%;height:100%;background:#e3c397;animation:loading 1.5s infinite alternate ease-in-out}
+@keyframes loading{to{transform:translateX(142px)}}
+#loadFallback{margin-top:28px;border:1px solid #d5c09c;color:#f7f1e7;padding:11px 14px;font-size:11px;letter-spacing:.08em;display:none}
+.drawerOverlay{position:fixed;inset:0;background:#020403a1;backdrop-filter:blur(6px);z-index:30;display:none;justify-content:flex-end}
+.drawerOverlay.open{display:flex}.drawer{height:100dvh;width:min(470px,100%);background:#ede9e1;color:#1d2420;overflow-y:auto;box-shadow:-15px 0 75px #0008;padding:clamp(20px,3vw,39px)}
+.drawerHead{display:flex;gap:12px;justify-content:space-between;align-items:center;border-bottom:1px solid #44444435;padding-bottom:20px}
+.drawerHead small{display:block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#7e8175}.drawerHead h2{font:normal 45px Georgia,serif;letter-spacing:-.06em;margin:4px 0 0}.closeBtn{border:1px solid #474b3e80;background:transparent;color:#242520;font-size:16px;width:36px;height:36px}
+.drawerIntro{font-size:13px;line-height:1.7;color:#59645a;margin:21px 0}.products{display:grid;gap:9px}.productItem{display:grid;grid-template-columns:54px 1fr auto;gap:13px;align-items:center;padding:12px 0;border-bottom:1px solid #80847858}
+.productIcon{width:54px;height:58px;display:grid;place-items:center;background:#d6d1c7;font-size:25px}.productItem strong{font-weight:700;font-size:13px}.productItem small{display:block;color:#6d7469;font-size:11px;margin-top:4px}.productItem button{background:#202924;color:#f5ede0;border:0;padding:10px 13px;font-size:11px}
+.productItem button:hover{background:#4d5645}
+.drawerFoot{border-top:1px solid #787b6c82;margin-top:28px;padding-top:22px;display:flex;gap:12px;justify-content:space-between;color:#596258;font-size:12px}
+.drawerFoot strong{font-size:20px;color:#20251d}.itemDesc{font-size:14px;line-height:1.8;color:#59645a;margin-top:25px}
+#notice{position:fixed;z-index:40;bottom:120px;right:25px;max-width:340px;padding:13px 16px;background:#191e1af2;color:#e8d6bb;border:1px solid #c5ae8a93;font-size:12px;opacity:0;pointer-events:none;transition:opacity .25s}
+#notice.show{opacity:1}
+@media(max-width:900px){.headercenter{display:none}.header .topAction:first-of-type{margin-left:auto}.titlePanel{top:126px}.titlePanel h1{font-size:57px}.worldTab{min-width:90px}.help{bottom:118px}}
+@media(max-width:620px){
+ .header{min-height:66px;padding:11px 12px;gap:7px}.logo{gap:8px}.logomark{height:30px;width:30px}.logomark b{font-size:20px}.brand{font-size:10px;letter-spacing:.12em}.brand small{font-size:7px;letter-spacing:.13em}.topAction{padding:9px 8px;font-size:9px}
+ .titlePanel{top:88px;left:17px;width:calc(100% - 115px);max-width:320px}.titlePanel h1{font-size:39px;margin:12px 0 8px}.titlePanel p{font-size:10px;max-width:235px;line-height:1.5}.titlePanel .kicker{font-size:8px}.titlePanel button{padding:10px 12px;font-size:9px;margin-top:11px}
+ #worldNote{top:84px;right:10px;font-size:8px;padding:7px 8px;max-width:100px;line-height:1.4;text-align:center}.bottomWrap{bottom:8px;width:calc(100vw - 10px);display:block}.worldDock{width:100%;justify-content:space-around;gap:1px;padding:5px}.worldTab{flex:1;min-width:0;font-size:8px;padding:9px 2px}.worldTab .n{font-size:15px}.tourBtn{position:fixed;bottom:105px;left:50%;transform:translateX(-50%);min-height:38px;padding:8px 14px;font-size:9px}
+ .help{display:none}.movePad{display:block}.touchHelp{display:block;position:fixed;right:16px;bottom:136px;z-index:4;font-size:10px;text-align:right;color:#f3e7cfc9;letter-spacing:.1em}#hotspotHint{top:53%}
+ #notice{bottom:190px;right:12px}.drawer{padding:22px}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="viewport" aria-label="Интерактивное 3D-пространство"></div><div class="scrim"></div>
+<header class="header">
+<a class="logo" href="../market-space-showcase-v9/" aria-label="Вернуться на MARKET SPACE"><span class="logomark"><b>M</b></span><span class="brand">MARKET SPACE<small>BY MARGARYAN LABS</small></span></a>
+<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10</span>
+<button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
+</header>
+<div class="titlePanel" id="titlePanel"><div class="kicker" id="eyebrow">01 / THE ATELIER</div><h1 id="worldTitle">The<br>Atelier</h1><p id="worldDescription">Мода — это не карточки в каталоге. Исследуй коллекцию, подойди к манекенам и выбери вещи прямо в пространстве.</p><button id="introButton">Исследовать пространство ↗</button></div>
+<div id="worldNote">Interactive 3D / Concept</div><div id="hotspotHint" aria-hidden="true"></div>
+<div class="help">WASD — <b>двигаться</b> · мышь — <b>осмотреться</b> · клик — <b>товар</b> · T — <b>тур</b></div><div class="touchHelp">Проведи по экрану,<br>чтобы осмотреться</div>
+<div class="movePad" id="movePad" aria-label="Виртуальный джойстик движения"><div class="padThumb" id="padThumb"></div></div>
+<div class="bottomWrap"><nav class="worldDock" aria-label="Выбор 3D-магазина">
+<button class="worldTab active" data-store="fashion"><span class="n">01</span>Fashion</button>
+<button class="worldTab" data-store="food"><span class="n">02</span>Market</button>
+<button class="worldTab" data-store="beauty"><span class="n">03</span>Beauty</button>
+<button class="worldTab" data-store="home"><span class="n">04</span>Living</button></nav><button class="tourBtn" id="tourBtn">▶ Кинотур</button></div>
+<div id="loading" role="status" aria-live="polite"><div class="symbol">M.</div><h2>Создаём пространство</h2><p id="loadMessage">Загружается новый 3D-мир. Для наилучшего качества открой ссылку в Chrome.</p><div class="loaderTrack"><i></i></div><a id="loadFallback" href="../market-space-world-v9/">Открыть предыдущую 3D-версию ↗</a></div>
+<div class="drawerOverlay" id="drawerOverlay" role="dialog" aria-modal="true" aria-label="Каталог или корзина" aria-hidden="true"><section class="drawer"><header class="drawerHead"><div><small id="drawerKicker">MARKET SPACE / COLLECTION</small><h2 id="drawerTitle">Коллекция</h2></div><button class="closeBtn" id="closeDrawer" aria-label="Закрыть">✕</button></header><p class="drawerIntro" id="drawerIntro"></p><div class="products" id="drawerProducts"></div><div class="drawerFoot" id="drawerFoot"></div></section></div>
+<div id="notice" aria-live="polite"></div>
+<script>
+window.addEventListener("error",function(){if(!window.__marketSpaceReady){document.getElementById("loadMessage").textContent="3D-модуль не загрузился. Возможно, браузер заблокировал WebGL или сеть CDN.";document.getElementById("loadFallback").style.display="inline-block";}},true);
+window.setTimeout(function(){if(!window.__marketSpaceReady){document.getElementById("loadMessage").textContent="Загрузка занимает слишком много времени. Попробуй Chrome или открой предыдущую версию.";document.getElementById("loadFallback").style.display="inline-block";}},13500);
+</script>
+<script type="module">
+import * as THREE from 'three';
+import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
+const $=id=>document.getElementById(id), clamp=THREE.MathUtils.clamp;
+const coarse=matchMedia('(pointer:coarse)').matches, reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const DATA={
+ fashion:{name:'The Atelier',tag:'01 / FASHION GALLERY',desc:'Настоящие объёмные манекены, коллекция на рейлах, мягкий свет и материал, который ощущается как ткань.',floor:'#bcb0a0',wall:'#d1c4b7',accent:'#dfb98c',items:[['Пальто Atelier','🧥',34900,'Объёмный силуэт, мягкая шерстяная фактура.'],['Платье Sculpt','👗',28900,'Драпировка и линии, подчёркивающие форму.'],['Пиджак Line','👔',27500,'Структурированный крой с латунными пуговицами.'],['Костюм Edition','🪡',46900,'Сдержанный премиальный образ.']]},
+ food:{name:'Future Market',tag:'02 / GROCERY EXPERIENCE',desc:'Новая геометрия стеллажей, настоящие формы упаковок, овощные острова и прогулка между отделами.',floor:'#a8aaa0',wall:'#afb7ab',accent:'#e5bc83',items:[['Кофе Atelier','☕',2690,'Зёрна обжарки, демонстрационная упаковка.'],['Оливковое масло','🫒',3490,'Стеклянная бутылка, базовая модель.'],['Фруктовый набор','🍊',2190,'Свежие фрукты в декоративной корзине.'],['Молоко фермерское','🥛',890,'Экологичный картонный пакет.']]},
+ beauty:{name:'Beauty Maison',tag:'03 / BEAUTY MAISON',desc:'Парфюмерная галерея с округлыми флаконами, стеклом, металлом и спокойной атмосферой.',floor:'#bfafa9',wall:'#d8c7c3',accent:'#e3bda5',items:[['Parfum No.05','🌸',34900,'Флакон с полупрозрачным стеклом.'],['Glow Serum','🧴',13500,'Сыворотка во флаконе с пипеткой.'],['Velvet Rouge','💄',5990,'Помада в металлическом футляре.'],['Skin Elixir','✨',14900,'Коллекционный уход.']]},
+ home:{name:'Living Gallery',tag:'04 / LIVING GALLERY',desc:'Диваны с мягкими подушками, интерьерные объекты, дерево, ковры и галерейная подсветка.',floor:'#afada3',wall:'#c8c9c0',accent:'#d5bd9c',items:[['Диван Forma','🛋️',339000,'Трёхместный модульный диван.'],['Кресло Sola','🪑',119000,'Мягкое дизайнерское кресло.'],['Стол Travertine','🪨',99000,'Каменный журнальный стол.'],['Торшер Halo','💡',89000,'Скульптурный интерьерный светильник.']]}
+};
+let active='fashion',root=new THREE.Group(), hotspots=[],pickables=[],keys=new Set(),yaw=0,pitch=-.03,touring=false,tourT=0,joy={x:0,y:0},curProduct=null,cart={},lastActive=null;
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(61,1,.07,120);
+camera.position.set(0,1.68,10.7);
+let renderer;
+try{renderer=new THREE.WebGLRenderer({alpha:false,antialias:!coarse,powerPreference:'high-performance'});}
+catch(e){$('loadMessage').textContent='WebGL недоступен: '+e.message;$('loadFallback').style.display='inline-block';throw e;}
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,coarse?1.3:1.8));
+renderer.setSize(innerWidth,innerHeight);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.36;
+renderer.shadowMap.enabled=!coarse;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+$('viewport').appendChild(renderer.domElement);
+scene.add(root);
+const mat=(color,rough=.68,metal=0,other={})=>new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal,...other});
+const ivory=mat('#ebe5d8',.92), brass=mat('#ad8c62',.32,.75),darkMetal=mat('#33352e',.34,.72);
+const ceramic=mat('#e8dbca',.28,.1),wood=mat('#93735a',.75),black=mat('#252521',.52);
+const glass=new THREE.MeshPhysicalMaterial({color:'#e7dacc',roughness:.11,metalness:0,transparent:true,opacity:.57,depthWrite:false});
+const fabricColors=['#a98a72','#eee2d0','#65645e','#bca8a1','#5a6560','#d3b7a2'];
+const fabric=fabricColors.map(c=>mat(c,.95,.0,{side:THREE.DoubleSide}));
+const boxGeo=new THREE.BoxGeometry(1,1,1);
+const sphereGeo=new THREE.SphereGeometry(1,18,12);
+const cyl=(r1,r2,h,segments=14)=>new THREE.CylinderGeometry(r1,r2,h,segments);
+function add(mesh,x=0,y=0,z=0,parent=root){mesh.position.set(x,y,z);parent.add(mesh);return mesh;}
+function mesh(geo,mt){let m=new THREE.Mesh(geo,mt);m.castShadow=!coarse;m.receiveShadow=!coarse;return m;}
+function block(x,y,z,w,h,d,m,parent=root){const e=mesh(boxGeo,m);e.scale.set(w,h,d);return add(e,x,y,z,parent);}
+function soft(x,y,z,w,h,d,m,round=.12,parent=root){return add(mesh(new RoundedBoxGeometry(w,h,d,3,Math.min(round,w*.24,h*.24,d*.24)),m),x,y,z,parent);}
+function ball(x,y,z,rx,ry,rz,m,parent=root){const e=mesh(sphereGeo,m);e.scale.set(rx,ry,rz);return add(e,x,y,z,parent);}
+function tube(x,y,z,top,bottom,height,m,parent=root){return add(mesh(cyl(top,bottom,height,16),m),x,y,z,parent);}
+function ring(x,y,z,r,t,m,orient=Math.PI/2,parent=root){const o=mesh(new THREE.TorusGeometry(r,t,8,40),m);o.rotation.x=orient;return add(o,x,y,z,parent);}
+function plane(x,y,z,w,h,material,parent=root,rotation=0){const p=add(mesh(new THREE.PlaneGeometry(w,h),material),x,y,z,parent);p.rotation.y=rotation;return p;}
+function labelTexture(title,sub='',light=false){
+ const c=document.createElement('canvas');c.width=512;c.height=256;const ctx=c.getContext('2d');
+ ctx.fillStyle=light?'#edede4':'#292b27';ctx.fillRect(0,0,512,256);
+ ctx.fillStyle=light?'#454a41':'#d3c2a7';ctx.font='600 21px Arial';ctx.textAlign='center';ctx.fillText('M A R K E T   S P A C E',256,57);
+ ctx.fillStyle=light?'#1a2421':'#f4eee3';ctx.font='52px Georgia';ctx.fillText(title,256,145);
+ ctx.fillStyle=light?'#626b60':'#ddccb1';ctx.font='17px Arial';ctx.fillText(sub.toUpperCase(),256,197);
+ const texture=new THREE.CanvasTexture(c);texture.colorSpace=THREE.SRGBColorSpace;return texture;
+}
+function framedSign(text,sub,x,y,z,w=3.8,h=1.6,rotation=0){
+ const grp=new THREE.Group();grp.position.set(x,y,z);grp.rotation.y=rotation;root.add(grp);
+ soft(0,0,-.035,w+.09,h+.09,.1,darkMetal,.03,grp);
+ const t=new THREE.MeshBasicMaterial({map:labelTexture(text,sub),toneMapped:false});
+ plane(0,0,.03,w,h,t,grp);
+}
+function stoneTexture(colorA='#d5cdc0',colorB='#ada498'){
+ const c=document.createElement('canvas');c.width=512;c.height=512;const q=c.getContext('2d');q.fillStyle=colorA;q.fillRect(0,0,512,512);
+ let seed=37;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;}
+ for(let i=0;i<1700;i++){const v=random();q.globalAlpha=.03+random()*.14;q.fillStyle=v>.45?colorB:'#ffffff';q.fillRect(random()*512,random()*512,1+random()*18,1+random()*3);}
+ q.globalAlpha=.2;q.strokeStyle=colorB;q.lineWidth=2;
+ for(let v=0;v<=512;v+=128){q.beginPath();q.moveTo(v,0);q.lineTo(v,512);q.stroke();q.beginPath();q.moveTo(0,v);q.lineTo(512,v);q.stroke();}
+ q.globalAlpha=1;const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(4,8);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t;
+}
+function areaLight(x,z,color='#ffe0b5',strength=8){const l=new THREE.PointLight(color,strength,9,2);l.position.set(x,5.25,z);root.add(l);}
+function spotlight(x,z){
+ const gold=new THREE.MeshBasicMaterial({color:'#ffe6b6'});
+ tube(x,5.25,z,.16,.18,.13,darkMetal);
+ tube(x,5.15,z,.13,.13,.055,gold);
+}
+function architecture(key){
+ const d=DATA[key];
+ scene.background=new THREE.Color(key==='fashion'?'#b1a69a':key==='food'?'#a7b5a8':key==='beauty'?'#c9b8b5':'#b9beb6');
+ scene.fog=new THREE.Fog(scene.background,26,56);
+ const wallmat=mat(d.wall,.91),floorMat=mat(d.floor,.54,.08,{map:stoneTexture(key==='beauty'?'#d9c7c1':'#c9c4b8')});
+ let floor=add(mesh(new THREE.PlaneGeometry(22,46),floorMat),0,-.01,-9);floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;
+ block(0,6.4,-9,22,1,46,mat('#b5b0a5',.9));block(0,3.1,-31.8,22,6.2,.35,wallmat);
+ for(const side of [-1,1]){
+  block(side*10.9,3,-9,.3,6.2,46,wallmat);
+  block(side*10.6,5.94,-9,.12,.1,44,brass);
+  for(let z=10;z>-31;z-=5.8){
+    soft(side*10.66,3,z,.13,5.2,.11,mat('#8f7d70',.83),.03);
+    if(key==='home'||key==='fashion'){
+      for(let k=-2;k<=2;k++)block(side*10.47,3,z+k*.78,.08,4.1,.04,mat(key==='fashion'?'#bba596':'#8c8676',.78));
+    }
+  }
+ }
+ for(let z=9;z>-31;z-=7.5){
+  block(0,6.06,z,20.2,.17,.28,darkMetal);
+  for(const x of [-8.7,-4.6,0,4.6,8.7])spotlight(x,z);
+ }
+ for(const x of [-9.8,9.8])block(x,.24,-10,.085,.25,37,brass);
+ block(0,.01,-30,21,.03,.13,brass);
+ for(let z of [6,-7,-20]){ring(0,5.3,z,1.05,.048,new THREE.MeshBasicMaterial({color:'#ffdfb7'}));ring(0,5.45,z,1.13,.025,brass);areaLight(0,z);}
+ const hemi=new THREE.HemisphereLight('#fff5e4','#777369',2.3);root.add(hemi);
+ const directional=new THREE.DirectionalLight('#fff4dd',2.9);directional.position.set(-4,9,6);
+ directional.castShadow=!coarse;directional.shadow.mapSize.set(1024,1024);directional.shadow.camera.left=-15;directional.shadow.camera.right=15;directional.shadow.camera.top=16;directional.shadow.camera.bottom=-20;directional.shadow.bias=-.001;
+ root.add(directional);
+ const fill=new THREE.DirectionalLight('#dce9ed',1.15);fill.position.set(8,6,-13);root.add(fill);
+ framedSign(d.name,key==='fashion'?'COLLECTION  /  2026':key==='food'?'FRESH   /   EVERY DAY':key==='beauty'?'THE RITUAL OF BEAUTY':'SPACES TO LIVE',0,3.9,-31.36,6,2.15);
+}
+function platform(x,z,r=1.18){
+ tube(x,.14,z,r,r,.28,mat('#80776b',.49));
+ tube(x,.31,z,r*.97,r*.97,.08,brass);
+}
+function hanger(g,x=0,y=0,z=0){
+ const material=brass;const p=new THREE.Group();p.position.set(x,y,z);g.add(p);
+ const wire=mesh(new THREE.TorusGeometry(.10,.017,6,12,Math.PI*1.4),material);wire.rotation.z=.32;wire.position.set(0,.22,0);p.add(wire);
+ const left=mesh(cyl(.018,.018,.51,7),material);left.rotation.z=-1.18;left.position.set(-.22,-.05,0);p.add(left);
+ const right=mesh(cyl(.018,.018,.51,7),material);right.rotation.z=1.18;right.position.set(.22,-.05,0);p.add(right);
+ block(0,-.14,0,.52,.035,.04,material,p);
+}
+function clothBody(color,kind='jacket'){
+ const group=new THREE.Group(),cloth=mat(color,.93,.03,{side:THREE.DoubleSide});
+ const shape=new THREE.Shape();
+ shape.moveTo(-.28,.62);shape.lineTo(-.46,.49);shape.lineTo(-.53,-.24);shape.lineTo(-.37,-.36);
+ shape.lineTo(-.31,-.26);shape.lineTo(-.28,-.76);shape.lineTo(.28,-.76);
+ shape.lineTo(.31,-.26);shape.lineTo(.37,-.36);shape.lineTo(.53,-.24);
+ shape.lineTo(.46,.49);shape.lineTo(.28,.62);shape.lineTo(.12,.52);shape.lineTo(-.12,.52);shape.closePath();
+ const body=mesh(new THREE.ExtrudeGeometry(shape,{depth:.12,bevelEnabled:true,bevelSegments:2,steps:1,bevelSize:.038,bevelThickness:.034}),cloth);
+ group.add(body);
+ const seam=mat('#a39580',.83);
+ if(kind==='dress'){
+   const skirt=mesh(new THREE.CylinderGeometry(.26,.56,1.04,18,3,true),cloth);skirt.position.set(0,-1.23,.08);group.add(skirt);
+   for(let k=0;k<10;k++){const a=k/10*Math.PI*2;const line=mesh(new THREE.CylinderGeometry(.007,.007,.83,5),seam);line.position.set(Math.sin(a)*.39,-1.35,Math.cos(a)*.39+.06);line.rotation.z=Math.sin(a)*.19;line.rotation.x=-Math.cos(a)*.19;group.add(line);}
+ }else if(kind==='jacket'){
+   // Separate structural lapels, fabric seams and buttons rather than printed jacket textures.
+   const lap=mat('#e0d2bf',.89,{});
+   const a=new THREE.Shape();a.moveTo(-.15,.52);a.lineTo(-.39,.34);a.lineTo(-.13,-.12);a.lineTo(-.015,.12);a.closePath();
+   const l=mesh(new THREE.ShapeGeometry(a),lap);l.position.z=.18;group.add(l);
+   const b=mesh(new THREE.ShapeGeometry(a),lap);b.scale.x=-1;b.position.z=.18;group.add(b);
+   for(let j=0;j<4;j++)ball(.06,.10-j*.17,.22,.027,.027,.02,brass,group);
+ }
+ soft(0,-.75,.05,.57,.085,.2,cloth,.035,group);
+ return group;
+}
+function mannequin(x,z,kind,color,index){
+ const g=new THREE.Group();g.position.set(x,.38,z);root.add(g);platform(x,z,1.08);
+ tube(0,.47,0,.045,.045,.88,darkMetal,g);
+ ball(0,1.07,0,.22,.34,.18,mat('#c6b4a1',.68),g);
+ ball(0,1.49,0,.11,.17,.12,mat('#c6b4a1',.68),g);
+ for(const side of [-1,1]){
+  const arm=ball(side*.38,.66,0,.12,.49,.14,mat('#c6b4a1',.68),g);arm.rotation.z=side*.13;
+  const leg=ball(side*.16,-.25,0,.15,.62,.18,mat('#bdab98',.73),g);leg.rotation.z=-side*.05;
+ }
+ const garment=clothBody(color,kind);garment.scale.set(1.22,1.2,1.55);garment.position.set(0,.74,.16);g.add(garment);
+ selectHotspot(x,2.4,z+1.25,index);
+ return g;
+}
+function garmentsRail(x,z,colors){
+ const rail=new THREE.Group();rail.position.set(x,0,z);root.add(rail);
+ for(const dx of [-2,2]){tube(dx,1.6,0,.045,.045,3.0,brass,rail);tube(dx,.1,0,.11,.11,.16,darkMetal,rail);}
+ const cross=tube(0,3.05,0,.042,.042,4.1,brass,rail);cross.rotation.z=Math.PI/2;
+ soft(0,.35,0,4.1,.25,.8,wood,.06,rail);
+ for(let i=0;i<7;i++){
+  const cloth=clothBody(colors[i%colors.length],i%3===0?'dress':i%2?'jacket':'coat');
+  cloth.scale.set(.67,.69,.72);cloth.position.set(-1.64+i*.54,2.35,0);rail.add(cloth);
+  hanger(rail,-1.64+i*.54,2.82,0);
+ }
+}
+function fashionScene(){
+ const colors=['#b5a08a','#e9d8c4','#525951','#ae8a7d'];
+ for(const side of [-1,1])for(const z of [3,-9,-22]){
+  platform(side*7.6,z,2.45);
+  garmentsRail(side*7.6,z,colors);
+ }
+ mannequin(-2.55,-4,'jacket','#b8a18b',0);
+ mannequin(2.65,-8,'dress','#cab5a5',1);
+ mannequin(-2.4,-17,'jacket','#646a64',2);
+ mannequin(2.55,-23,'dress','#d8b9a9',3);
+ for(const x of [-8,8])for(const z of [-3,-15,-27]){
+  soft(x,4.45,z,.09,3.3,2.9,brass,.03);
+  const mirror=mat('#c0c5bf',.09,.86);plane(x+(x>0?-.085:.085),4.45,z,2.55,3.1,mirror,root,x>0?-Math.PI/2:Math.PI/2);
+ }
+}
+function upholsteredSofa(x,z,color='#c6b9a4'){
+ const group=new THREE.Group();group.position.set(x,0,z);root.add(group);
+ const cushion=mat(color,.98);
+ soft(0,.48,0,3.5,.45,1.48,cushion,.21,group);
+ soft(0,.91,-.57,3.64,1.25,.34,cushion,.13,group);
+ for(const side of [-1,1])soft(side*1.63,.74,.02,.40,.91,1.65,cushion,.16,group);
+ for(const i of [-1,0,1]){
+  soft(i*1.03,.72,.25,.98,.25,1.07,mat(i===0?'#c7b8a0':color,.99),.12,group);
+  const pillow=soft(i*1.09,1.1,-.35,.65,.56,.19,mat(i===0?'#eee1d0':'#acaa9d',.99),.09,group);pillow.rotation.z=i*.12;
+ }
+ for(const xx of [-1.45,1.45])for(const zz of [-.61,.61])tube(xx,.19,zz,.075,.075,.28,darkMetal,group);
+ return group;
+}
+function table(x,z){const g=new THREE.Group();g.position.set(x,0,z);root.add(g);soft(0,.55,0,1.65,.13,1.04,mat('#d3cbbd',.28,.08),.21,g);for(const dx of [-.59,.59])tube(dx,.25,0,.11,.13,.52,darkMetal,g);}
+function floorLamp(x,z){const g=new THREE.Group();g.position.set(x,0,z);root.add(g);tube(0,.08,0,.42,.42,.16,darkMetal,g);tube(0,1.25,0,.035,.035,2.5,brass,g);tube(0,2.55,0,.55,.28,.45,mat('#e8ddc6',.91),g);ring(0,2.62,0,.47,.024,new THREE.MeshBasicMaterial({color:'#ffe3ad'}),Math.PI/2,g);}
+function plant(x,z){const g=new THREE.Group();g.position.set(x,0,z);root.add(g);tube(0,.39,0,.36,.27,.73,ceramic,g);tube(0,1.25,0,.046,.07,1.1,mat('#626e4e',.84),g);
+ for(let i=0;i<10;i++){const a=i*2.399;const leaf=ball(Math.cos(a)*.52,1.24+(i%4)*.17,Math.sin(a)*.53,.16,.53,.29,mat(i%2?'#6c765b':'#778365',.95),g);leaf.rotation.z=Math.cos(a)*.54;leaf.rotation.x=Math.sin(a)*.48;}
+}
+function chair(x,z){const g=new THREE.Group();g.position.set(x,0,z);root.add(g);soft(0,.55,0,1.25,.36,1.12,mat('#acaca0',.92),.23,g);soft(0,1.12,-.38,1.3,1.22,.34,mat('#adaca1',.95),.25,g);for(const xx of [-.45,.45])for(const zz of [-.3,.36])tube(xx,.2,zz,.07,.09,.4,wood,g);}
+function homeScene(){
+ for(const z of [0,-16])for(const x of [-6.6,6.6]){
+  soft(x,.02,z,6.8,.035,6.0,mat(z===0?'#a39582':'#aaa396',.99),.05);
+  upholsteredSofa(x,z,x>0?'#b6b7ad':'#c5aa95');
+  table(x,z+2.0);
+  floorLamp(x+(x>0?2.8:-2.8),z-1.6);
+  plant(x+(x>0?-2.8:2.8),z-2.1);
+ }
+ chair(-2.55,-7);chair(2.5,-22);
+ const book=mat('#5b594d',.78);
+ for(let i=0;i<6;i++)soft(-6.3+i*.13,.67,-14, .13,.04,.35,i%2?book:brass,.014);
+ [0,1,2,3].forEach((idx)=>selectHotspot(idx%2?6:-6,1.6,idx>1?-16:0,idx));
+}
+function perfumeBottle(g,x,z,color,kind=0){
+ const gp=new THREE.Group();gp.position.set(x,0,z);g.add(gp);
+ const tinted=new THREE.MeshPhysicalMaterial({color,transparent:true,opacity:.80,roughness:.14,metalness:.02,depthWrite:true});
+ if(kind%2)tube(0,.23,0,.22,.22,.46,tinted,gp);
+ else soft(0,.29,0,.46,.53,.26,tinted,.09,gp);
+ soft(0,.62,0,.20,.13,.19,brass,.022,gp);
+ tube(0,.73,0,.055,.055,.16,brass,gp);
+ return gp;
+}
+function beautyIsland(x,z,index){
+ const g=new THREE.Group();g.position.set(x,0,z);root.add(g);
+ tube(0,.47,0,1.25,1.13,.94,mat('#b4a39d',.33),g);
+ tube(0,.96,0,1.36,1.28,.11,ceramic,g);
+ ring(0,1.03,0,1.19,.023,brass,Math.PI/2,g);
+ for(let i=0;i<10;i++){const a=i*2.399,rr=.68*Math.sqrt(i/10);perfumeBottle(g,Math.cos(a)*rr,Math.sin(a)*rr,['#d8a8a4','#e9cab3','#c4b3c1','#a4b9b8'][i%4],i);}
+ tube(0,1.20,0,.06,.06,.27,brass,g);
+ selectHotspot(x,1.9,z+1.5,index);
+}
+function beautyScene(){
+ for(const z of [1,-12,-25])for(const side of [-1,1]){
+  const x=side*6.8;
+  beautyIsland(x,z,(Math.abs(z)+ (side>0?1:0))%4);
+  soft(x,3.63,z,3.25,3.35,.19,mat('#b79b9c',.4),.19);
+  for(const y of [2.7,3.5,4.3]){
+   soft(x+(side>0?-.11:.11),y,z,3.05,.055,.53,brass,.023);
+   for(let i=0;i<6;i++)perfumeBottle(root,x-.98+i*.38,z,['#e4b2aa','#bdb0b9','#c7d0c5'][i%3],i);
+  }
+ }
+ for(const z of [-7,-20]){
+   soft(0,.50,z,3.6,.45,1.2,mat('#a68c88',.92),.23);
+   ball(0,1.27,z,.96,.73,.36,mat('#b9a19d',.8));
+ }
+}
+function brandBox(g,x,z,index){
+ const shades=['#c3a476','#9fae9c','#bd8d75','#c7c0ab','#a9b7ad'];
+ const mt=mat(shades[index%5],.85);
+ if(index%3===0){
+   soft(x,.31,z,.41,.57,.37,mt,.04,g);soft(x,.61,z,.21,.06,.2,ivory,.02,g);
+ }else if(index%3===1){
+   tube(x,.29,z,.19,.20,.56,mt,g);tube(x,.62,z,.15,.15,.10,brass,g);
+ }else{
+   soft(x,.31,z,.40,.56,.31,mt,.04,g);
+   block(x,.36,z+.17,.32,.12,.02,ivory,g);
+ }
+}
+function groceryShelves(x,z){
+ const g=new THREE.Group();g.position.set(x,0,z);root.add(g);
+ soft(0,.12,0,1.45,.22,5.4,darkMetal,.06,g);
+ for(const y of [.57,1.24,1.91,2.58,3.24]){
+  soft(0,y,0,1.48,.10,5.45,mat('#bba88f',.67),.025,g);
+  for(const side of [-1,1])for(let i=0;i<8;i++){
+   brandBox(g,side*.49,z*0+(i-3.5)*.59,i+Math.round(y*5)+(side>0?3:0));
+   // Each item is a real box/cylinder shape, not a textured flat quad.
+   const p=g.children[g.children.length-1];if(p&&p.isMesh)p.position.y+=y;
+  }
+ }
+ for(const side of [-1,1])for(const zz of [-2.58,2.58])tube(side*.68,1.75,zz,.055,.055,3.5,darkMetal,g);
+ for(const s of [-1,1])soft(s*.75,3.6,0,.11,.35,5.4,brass,.02,g);
+}
+function produceIsland(x,z,index){
+ const g=new THREE.Group();g.position.set(x,0,z);root.add(g);
+ soft(0,.38,0,2.75,.73,1.85,mat('#806d57',.77),.12,g);soft(0,.76,0,2.83,.12,1.95,wood,.045,g);
+ for(let i=0;i<14;i++){
+  const a=i*2.4,r=.8*Math.sqrt(i/14),shade=i%3;
+  ball(Math.sin(a)*r,.90+(i%3)*.055,Math.cos(a)*r*.8,.17,.16,.18,mat(shade===0?'#dd9957':shade===1?'#ac5e44':'#738e59',.66),g);
+ }
+ selectHotspot(x,1.3,z+1.45,index);
+}
+function foodScene(){
+ for(const x of [-7.7,7.7])for(const z of [2,-11,-24])groceryShelves(x,z);
+ for(const z of [1,-15])produceIsland(0,z,z===1?2:3);
+ for(const x of [-9.6,9.6])for(let z=7;z>-30;z-=9){
+   soft(x,2,z,.45,3.8,6,mat('#9bb2aa',.37,.16),.08);
+   for(let j=0;j<4;j++)soft(x+(x>0?-.22:.22),.75+j*.71,z,.055,.08,5.9,ivory,.02);
+ }
+ for(const x of [-3,3])for(const z of [-5,-23])selectHotspot(x,1.35,z,x>0?1:0);
+}
+function selectHotspot(x,y,z,index){
+ const g=new THREE.Group();g.position.set(x,y,z);root.add(g);
+ const shell=mesh(new THREE.SphereGeometry(.14,18,12),new THREE.MeshBasicMaterial({color:'#efe1cb'}));
+ g.add(shell);
+ const halo=mesh(new THREE.TorusGeometry(.24,.016,6,28),new THREE.MeshBasicMaterial({color:'#fff4d9',transparent:true,opacity:.75}));halo.position.z=.08;g.add(halo);
+ const pick=mesh(new THREE.SphereGeometry(.43,10,8),new THREE.MeshBasicMaterial({visible:false}));pick.userData.itemIndex=index;g.add(pick);pickables.push(pick);hotspots.push({g,halo});
+ return g;
+}
+function setStore(key){
+ if(!DATA[key])return;
+ active=key;touring=false;$('tourBtn').textContent='▶ Кинотур';
+ while(root.children.length){const ch=root.children[0];root.remove(ch);ch.traverse(n=>{if(n.geometry&&n.geometry!==boxGeo&&n.geometry!==sphereGeo)n.geometry.dispose();if(n.material&&n.material.map&&n.material.map.isCanvasTexture)n.material.map.dispose();});}
+ hotspots=[];pickables=[];architecture(key);
+ try{if(key==='fashion')fashionScene();else if(key==='home')homeScene();else if(key==='beauty')beautyScene();else foodScene();}
+ catch(err){console.error('Scene build error:',err);toast('Часть объектов не загрузилась: '+err.message);}
+ camera.position.set(0,1.68,10.7);yaw=0;pitch=-.065;updateCamera();
+ const d=DATA[key];$('worldTitle').innerHTML=d.name.replace(' ','<br>');$('eyebrow').textContent=d.tag;$('worldDescription').textContent=d.desc;
+ $('titlePanel').style.opacity='1';$('titlePanel').style.pointerEvents='auto';
+ document.querySelectorAll('[data-store]').forEach(b=>{b.classList.toggle('active',b.dataset.store===key);b.setAttribute('aria-pressed',String(b.dataset.store===key));});
+ const url=new URL(location.href);url.searchParams.set('world',key);history.replaceState(null,'',url);
+}
+function updateCamera(){camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;}
+function move(dx,dz){camera.position.x=clamp(camera.position.x+dx,-5.5,5.5);camera.position.z=clamp(camera.position.z+dz,-29.3,11.3);}
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
+function selectAt(cx,cy){
+ mouse.set(cx/innerWidth*2-1,-(cy/innerHeight)*2+1);ray.setFromCamera(mouse,camera);
+ const hits=ray.intersectObjects(pickables,false);
+ if(hits.length){openItem(hits[0].object.userData.itemIndex);return;}
+}
+function showDrawer(){const d=$('drawerOverlay');d.classList.add('open');d.setAttribute('aria-hidden','false');lastActive=document.activeElement;$('closeDrawer').focus();keys.clear();joy.x=joy.y=0;}
+function hideDrawer(){const d=$('drawerOverlay');d.classList.remove('open');d.setAttribute('aria-hidden','true');if(lastActive&&lastActive.focus)lastActive.focus();}
+function money(v){return Number(v).toLocaleString('ru-RU')+' ֏';}
+function priceTotal(){let sum=0,cnt=0;Object.entries(cart).forEach(([key,qty])=>{const [store,i]=key.split(':');const item=DATA[store]?.items[Number(i)];if(item){sum+=item[2]*qty;cnt+=qty;}});$('cartCount').textContent=cnt;return sum;}
+function addToCart(store,index){if(!DATA[store]?.items[index])return;const key=store+':'+index;cart[key]=Math.min(99,(cart[key]||0)+1);priceTotal();toast('Добавлено в демо-корзину');}
+function toast(msg){const n=$('notice');n.textContent=msg;n.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>n.classList.remove('show'),2400);}
+function buildRows(rows){
+ const wrap=$('drawerProducts');wrap.replaceChildren();
+ rows.forEach(({title,emoji,detail,price,button,action})=>{
+  const row=document.createElement('div');row.className='productItem';
+  const ico=document.createElement('div');ico.className='productIcon';ico.textContent=emoji;
+  const txt=document.createElement('div');const name=document.createElement('strong');name.textContent=title;const info=document.createElement('small');info.textContent=detail+' · '+money(price);txt.append(name,info);
+  const b=document.createElement('button');b.textContent=button;b.addEventListener('click',action);row.append(ico,txt,b);wrap.append(row);
+ });
+}
+function openCatalog(){
+ const d=DATA[active];$('drawerKicker').textContent='MARKET SPACE / '+d.tag;$('drawerTitle').textContent='Коллекция';
+ $('drawerIntro').textContent='Предметы в демонстрационном пространстве. Это примеры, цены условные, оплата отключена.';
+ buildRows(d.items.map((it,i)=>({title:it[0],emoji:it[1],price:it[2],detail:it[3],button:'＋',action:()=>addToCart(active,i)})));
+ $('drawerFoot').innerHTML='<span>Демо-каталог, без покупки</span>';showDrawer();
+}
+function openItem(index){
+ const d=DATA[active],item=d.items[index];if(!item)return;
+ $('drawerKicker').textContent=d.tag;$('drawerTitle').textContent=item[0];$('drawerIntro').textContent=item[3];
+ buildRows([{title:item[0],emoji:item[1],detail:'Демонстрационный товар',price:item[2],button:'＋ В корзину',action:()=>addToCart(active,index)}]);
+ $('drawerFoot').textContent='Товар и его цена представлены для демонстрации. Реальные платежи не подключены.';showDrawer();
+}
+function openCart(){
+ $('drawerKicker').textContent='MARKET SPACE / SHOPPING';$('drawerTitle').textContent='Корзина';
+ $('drawerIntro').textContent='Пример работы виртуального магазина. Заказы, оплата и доставка не подключены.';
+ const items=Object.entries(cart).filter(([,q])=>q>0).map(([key,q])=>{
+  const [store,i]=key.split(':'),p=DATA[store].items[Number(i)];
+  return {title:p[0]+' × '+q,emoji:p[1],price:p[2]*q,detail:DATA[store].name,button:'−',action:()=>{cart[key]=Math.max(0,q-1);priceTotal();openCart();}};
+ });
+ buildRows(items);if(!items.length){const p=document.createElement('p');p.textContent='Пока пусто — загляни в коллекцию и выбери предмет.';$('drawerProducts').append(p);}
+ $('drawerFoot').replaceChildren();const sum=document.createElement('strong');sum.textContent=money(priceTotal());const cap=document.createElement('span');cap.textContent='Итого (демо)';$('drawerFoot').append(cap,sum);showDrawer();
+}
+$('catalogBtn').onclick=openCatalog;$('cartBtn').onclick=openCart;$('closeDrawer').onclick=hideDrawer;
+$('drawerOverlay').addEventListener('pointerdown',e=>{if(e.target===$('drawerOverlay'))hideDrawer();});
+document.querySelectorAll('[data-store]').forEach(b=>b.onclick=()=>{hideDrawer();setStore(b.dataset.store);});
+$('introButton').onclick=()=>{touring=true;tourT=0;$('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';$('tourBtn').textContent='Ⅱ Остановить';};
+$('tourBtn').onclick=()=>{touring=!touring;if(touring){tourT=0;$('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';} $('tourBtn').textContent=touring?'Ⅱ Остановить':'▶ Кинотур';};
+document.addEventListener('keydown',e=>{if(e.code==='Escape')hideDrawer();if($('drawerOverlay').classList.contains('open'))return;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.code==='KeyT')$('tourBtn').click();if(e.code==='KeyE'){const near=pickables.find(p=>p.getWorldPosition(new THREE.Vector3()).distanceTo(camera.position)<3.5);if(near)openItem(near.userData.itemIndex);}});
+document.addEventListener('keyup',e=>keys.delete(e.code));
+window.addEventListener('blur',()=>{keys.clear();joy.x=joy.y=0;});
+const pad=$('movePad');let joyPointer=null;
+function joyMove(e){const r=pad.getBoundingClientRect(),dx=(e.clientX-r.left-r.width/2)/(r.width*.31),dy=(e.clientY-r.top-r.height/2)/(r.height*.31);joy.x=clamp(dx,-1,1);joy.y=clamp(dy,-1,1);$('padThumb').style.transform='translate('+(joy.x*23)+'px,'+(joy.y*23)+'px)';}
+pad.addEventListener('pointerdown',e=>{joyPointer=e.pointerId;pad.setPointerCapture(e.pointerId);joyMove(e);});pad.addEventListener('pointermove',e=>{if(e.pointerId===joyPointer)joyMove(e);});
+function joyUp(e){if(e.pointerId!==joyPointer)return;joyPointer=null;joy.x=joy.y=0;$('padThumb').style.transform='';}
+pad.addEventListener('pointerup',joyUp);pad.addEventListener('pointercancel',joyUp);
+let dragging=false,dragId=null,dragX=0,dragY=0,dragMoved=false,downX=0,downY=0;
+const canvas=renderer.domElement;
+canvas.addEventListener('pointerdown',e=>{dragging=true;dragId=e.pointerId;dragX=downX=e.clientX;dragY=downY=e.clientY;dragMoved=false;canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener('pointermove',e=>{if(!dragging||e.pointerId!==dragId)return;let dx=e.clientX-dragX,dy=e.clientY-dragY;if(Math.abs(e.clientX-downX)+Math.abs(e.clientY-downY)>8)dragMoved=true;yaw-=dx*(coarse?.005:.0036);pitch=clamp(pitch-dy*.0028,-.58,.52);dragX=e.clientX;dragY=e.clientY;if(Math.abs(dx)+Math.abs(dy)>0){touring=false;$('tourBtn').textContent='▶ Кинотур';}});
+canvas.addEventListener('pointerup',e=>{if(e.pointerId!==dragId)return;dragging=false;dragId=null;if(!dragMoved)selectAt(e.clientX,e.clientY);});
+canvas.addEventListener('pointercancel',()=>{dragging=false;dragId=null;});
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio||1,coarse?1.3:1.8));});
+function animate(t){
+ requestAnimationFrame(animate);const delta=Math.min(.04,(t-(animate.prev||t))/1000);animate.prev=t;
+ if(!$('drawerOverlay').classList.contains('open')){
+  if(touring){
+   tourT+=delta*.19;const phase=Math.min(1,tourT);
+   camera.position.z=THREE.MathUtils.lerp(10.8,-25.5,phase);
+   camera.position.x=Math.sin(phase*5.2)*1.1;
+   yaw=-.16*Math.sin(phase*Math.PI*5.2);pitch=-.08+.026*Math.cos(phase*6.28);
+   if(phase>=1){touring=false;$('tourBtn').textContent='↻ Кинотур';}
+  }else{
+   const forward=(keys.has('KeyW')||keys.has('ArrowUp')?1:0)-(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-joy.y;
+   const side=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+joy.x;
+   const rate=delta*3.9/Math.max(1,Math.hypot(forward,side));
+   move((Math.sin(yaw)*forward+Math.cos(yaw)*side)*rate,(-Math.cos(yaw)*forward+Math.sin(yaw)*side)*rate);
+   if(keys.has('ArrowLeft'))yaw+=delta*1.3;if(keys.has('ArrowRight'))yaw-=delta*1.3;
+  }
+ }
+ camera.position.y=1.68+(reduced?0:.012*Math.sin(t*.0014));updateCamera();
+ hotspots.forEach((h,i)=>{h.g.rotation.y+=delta*.26;h.halo.scale.setScalar(1+(reduced?0:.11*Math.sin(t*.0028+i)));});
+ renderer.render(scene,camera);
+}
+try{
+ const initial=new URLSearchParams(location.search).get('world');
+ setStore(DATA[initial]?initial:'fashion');priceTotal();
+ $('loading').classList.add('ready');window.__marketSpaceReady=true;
+ camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+ requestAnimationFrame(animate);
+}catch(err){console.error('MARKET SPACE scene initialization failed',err);$('loadMessage').textContent='Ошибка 3D-сцены: '+err.message;$('loadFallback').style.display='inline-block';}
+</script>
+</body></html>
