@@ -858,7 +858,7 @@ function garmentShell(rings,cloth,detail=0){
   const a=Math.min(rings.length-2,Math.floor(j/steps)),t=j===rowCount-1?1:(j-a*steps)/steps;
   // Cubic easing avoids sharp sectional creases at waist or lower skirt.
   const t2=t*t*(3-2*t);
-  return [0,1,2].map(k=>THREE.MathUtils.lerp(rings[a][k],rings[a+1][k],t2));
+  return [0,1,2].map(k=>rings[a][k]+(rings[a+1][k]-rings[a][k])*t2);
  }
  for(let j=0;j<rowCount;j++){
   const [y,rx,rz]=shapeAt(j),lower=Math.max(0,Math.min(1,(-y-.25)/1.25));
