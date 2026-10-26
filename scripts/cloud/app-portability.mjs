@@ -19,14 +19,17 @@ export function evaluatePortability(project,files){
  const pkg=JSON.parse(files['package.json']),vercel=JSON.parse(files['vercel.json']),found=[];
  if(project==='vetogram'){
   const start=String(pkg.scripts?.start||'');
-  found.push(finding('portable_http_entrypoint',!start||/\bvercel\s+dev\b/i.test(start)?'BLOCK':'REVIEW',
+  const selfhost=String(pkg.scripts?.['start:selfhost']||'')==='node server/self-hosted.js';
+  found.push(finding('portable_http_entrypoint',selfhost?'REVIEW':!start||/\bvercel\s+dev\b/i.test(start)?'BLOCK':'REVIEW',
    'Test a native Node HTTP entrypoint, request body parsing, API routing and public assets.'));
-  found.push(finding('vercel_function_build',vercel.builds?.some?.(x=>x.use==='@vercel/node')?'BLOCK':'REVIEW',
+  found.push(finding('vercel_function_build',vercel.builds?.some?.(x=>x.use==='@vercel/node')&&!selfhost?'BLOCK':'REVIEW',
    'Replace Vercel function routing with a verified portable server.'));
   found.push(finding('fixed_vercel_user_link',String(files['api/privacy-backup-worker.js']||'').includes('telegram-story-bot-murex.vercel.app')?'BLOCK':'REVIEW',
    'Remove a fixed Vercel domain from archive notifications.'));
   found.push(finding('telegram_webhook','BLOCK','Prove one active signed webhook and no reuse of live Telegram staging sessions.'));
   found.push(finding('signed_background_jobs','BLOCK','Verify signed viewer and backup triggers with the new data plane.'));
+  found.push(finding('neon_schema_v6_portability','BLOCK',
+   'Latest VETOGRAM REBORN uses Neon schema v6 with OTP leases: verify live provider, replay and grants independently on isolated staging.'));
   found.push(finding('encrypted_session_restore','BLOCK','Verify session key custody, RLS, objects and isolated restore.'));
  }else{
   found.push(finding('bun_ssr_runtime',String(pkg.packageManager||'').startsWith('bun@')?'REVIEW':'BLOCK',
@@ -37,6 +40,8 @@ export function evaluatePortability(project,files){
   found.push(finding('managed_database_pin',String(vercel.env?.SUPABASE_URL||'').includes('.supabase.co')?'BLOCK':'REVIEW',
    'Review managed Supabase URL pins, Auth origin and OAuth redirect allowlist.'));
   found.push(finding('payment_oauth_and_tenant','BLOCK','Prove verified payment/refund webhooks, OAuth, email and tenant isolation.'));
+  found.push(finding('locked_registry_mirror','BLOCK',
+   'bun.lock may refer to Lovable package proxy; re-resolve against verified public registry before a VPS build.'));
   found.push(finding('data_restore','BLOCK','Prove PostgreSQL, Auth, Storage, RLS and encryption-key recovery.'));
  }
  return {schema:'markarian-app-portability/v1',project,repository:profile.repository,checks:found,
