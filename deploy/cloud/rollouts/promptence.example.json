@@ -1,0 +1,12 @@
+{
+  "schema": "markarian-staging-rollout/v1",
+  "product": "promptence",
+  "repository": "margaryan-labs/ai-revenue-navigator",
+  "branch": "feat/promptence-selfhost-cloud-staging-20261026",
+  "commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "applicationUuid": "replace_with_coolify_uuid",
+  "stagingOrigin": "https://staging.promptence.example.org",
+  "healthPath": "/api/health",
+  "dockerfile": "Dockerfile.selfhost",
+  "environment": "staging"
+}

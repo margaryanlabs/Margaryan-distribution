@@ -1,0 +1,12 @@
+{
+  "schema": "markarian-staging-rollout/v1",
+  "product": "vetogram",
+  "repository": "margaryanlabs/Telegram-story-bot",
+  "branch": "feat/vetogram-selfhost-origin-20261026",
+  "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "applicationUuid": "replace_with_coolify_uuid",
+  "stagingOrigin": "https://staging.vetogram.example.org",
+  "healthPath": "/api/health",
+  "dockerfile": "Dockerfile.selfhost",
+  "environment": "staging"
+}
