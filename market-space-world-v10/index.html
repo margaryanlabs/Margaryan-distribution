@@ -30,6 +30,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 #assetCredits[open]{background:#17201def;border:1px solid #c8b99c80;box-shadow:0 10px 38px #0008}
 #assetCredits[open] summary{border:0;border-bottom:1px solid #c8b99c44}
 #assetCredits .creditContent{padding:10px 13px;line-height:1.55}
+#premiumStatus{padding:7px 9px;border:1px solid #e2c69b6a;color:#f1d6b6;font-size:10px;letter-spacing:.04em}
 #assetCredits a{text-decoration:underline;text-underline-offset:3px;color:#f5dcb0}
 #assetCredits a:focus-visible{outline:2px solid #f5dcb0}
 #hotspotHint{position:fixed;z-index:4;left:50%;top:49%;transform:translate(-50%,-50%);width:17px;height:17px;border:1px solid #e1d7bf8a;border-radius:50%;pointer-events:none;opacity:.65}#hotspotHint:after{content:"";position:absolute;top:7px;left:7px;width:2px;height:2px;background:#f2e5cd;border-radius:50%}
@@ -106,7 +107,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 <div class="titlePanel" id="titlePanel"><div class="kicker" id="eyebrow">01 / THE ATELIER</div><h1 id="worldTitle">The<br>Atelier</h1><p id="worldDescription">Мода — это не карточки в каталоге. Исследуй коллекцию, подойди к манекенам и выбери вещи прямо в пространстве.</p><button id="introButton">Исследовать пространство ↗</button></div>
 <div id="worldNote">V10.5 / INTERACTIVE 3D PREVIEW</div><button id="qualityBtn" type="button" aria-label="Переключить качество 3D-графики" aria-live="polite">Качество: Авто</button>
 <details id="assetCredits"><summary>3D-модели · источники</summary><div class="creditContent">
-<p>Демонстрационные 3D-ассеты, не реальные товары брендов. Детализированные модели загружаются по возможности; процедурные модели остаются резервными.</p>
+<p>Демонстрационные 3D-ассеты, не реальные товары брендов. Детализированные модели загружаются по возможности; процедурные модели остаются резервными.</p><p id="premiumStatus" role="status" aria-live="polite">3D-ассеты: готовность</p>
 <p>Кресло Sheen Chair: © 2020 Wayfair, Eric Chadwick, CC0. <a href="https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/SheenChair" target="_blank" rel="noopener noreferrer">Источник</a>.</p>
 <p>Обувь Materials Variants Shoe: © 2021 Shopify, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. <a href="https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/MaterialsVariantsShoe" target="_blank" rel="noopener noreferrer">Источник</a>.</p></div></details><div id="hotspotHint" aria-hidden="true"></div>
 <div class="help">WASD — <b>двигаться</b> · мышь — <b>осмотреться</b> · клик — <b>товар</b> · T — <b>тур</b></div><div class="touchHelp">Проведи по экрану,<br>чтобы осмотреться</div>
@@ -294,7 +295,7 @@ const gltfPromises=new Map(),assetGeometry=new WeakSet();
 let showroomGeneration=0, premiumSlots=[];
 let premiumState='idle';
 function premiumAllowed(){
- return new URLSearchParams(location.search).get('assets')!=='off'&&(!coarse||qualityMode==='high');
+ return new URLSearchParams(location.search).get('assets')!=='off'&&qualityMode!=='eco'&&(!coarse||qualityMode==='high');
 }
 function fetchPremiumAsset(name){
  const info=PREMIUM_ASSETS[name];
@@ -327,6 +328,10 @@ function reconcilePremiumModels(){
   if(slot.clone){
    slot.clone.visible=enabled;
    if(slot.placeholder)slot.placeholder.visible=!enabled;
+   // Three.js raycasting is not a visibility contract. Keep only visible objects pickable.
+   pickables=pickables.filter(obj=>obj!==slot.clone&&obj!==slot.placeholder);
+   const current=enabled?slot.clone:slot.placeholder;
+   if(current)pickables.push(current);
   }else if(slot.placeholder)slot.placeholder.visible=true;
  }
  premiumState=enabled?(premiumSlots.some(x=>x.resolved)?'ready':'loading'):'eco';
