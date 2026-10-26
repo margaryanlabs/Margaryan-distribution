@@ -22,3 +22,20 @@ Built as a new isolated static browser experience in the existing Margaryan Dist
 - Geometry is significantly more detailed than V9 but still procedural. Photoreal clothing needs original licensed GLB or glTF assets, physically based fabric textures, real-world lighting calibration, and extensive art direction.
 - No claims of Android performance, real texture quality, universal WebGL availability, realistic cloth simulation, actual purchase handling, or 100% interaction test coverage.
 - Run the static source contract at scripts/market-space/test-v10-world.mjs, browser/physical device QA and visual accessibility test before advancing from draft.
+
+
+## V10.1 — model and interaction quality pass (2026-10-26)
+- Replaced mostly flat garment extrusion silhouettes with smoothly shaded ring-mesh 3D garments: separate jacket/coat/dress profiles, tapered sleeves, scarf-like lapel panels, seams, brass buttons, a structured waist and restrained skirt pleating.
+- Rescaled and anatomically realigned mannequin bodies and dress hems. Original scene selection continues to work.
+- Reusable fine procedural woven bump map for textile fabrics, no externally fetched garment textures required.
+- Click or tap **the actual geometry** of mannequins, furniture, beauty islands, produce islands and grocery shelves; hovering marker spheres alone is no longer mandatory.
+- Collision map now tracks approximate actual display footprints, resolving horizontal axes separately so visitors cannot simply clip through display tables and sofas.
+- Shop switches reclaim transient geometries, materials, texture maps and light shadow maps, while caching reusable finishes.
+- The cinematic tour now interpolates via per-category directed route keyframes, starting from the visitor's current position, without hard resets. Manual joystick/WASD movement is smoothed.
+- Mobile WebGL resolution automatically drops once after sustained low FPS; on a non-WebGL browser, the existing V9 2.5D link remains available.
+- Rebalanced exposure and light intensity to reduce blown-out whites while keeping premium warm interior highlights.
+
+### QA and honesty
+- 10 offline source contracts executed against the actual GitHub source (JavaScript parse, categories, geometry, interactive routes, collisions, static accessibility, fallback).
+- Isolated garment ring geometry created 160 finite vertices and 280 triangles; collision and route samples passed.
+- These tests do **not** verify real visual quality on physical phones or browsers. Automated external browser QA remains unavailable. Keep V10.1 draft until actual device reviews and load tests.
