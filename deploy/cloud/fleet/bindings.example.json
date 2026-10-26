@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "nodeId": "edge-app-a",
+      "serverUuid": "REPLACE_UUID_APP_A"
+    },
+    {
+      "nodeId": "edge-app-b",
+      "serverUuid": "REPLACE_UUID_APP_B"
+    },
+    {
+      "nodeId": "vetogram-data-a",
+      "serverUuid": "REPLACE_UUID_VETO_DB"
+    },
+    {
+      "nodeId": "promptence-data-b",
+      "serverUuid": "REPLACE_UUID_PROMPT_DB"
+    }
+  ]
+}
