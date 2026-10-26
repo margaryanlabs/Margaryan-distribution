@@ -29,3 +29,53 @@ Source-only until an owned Coolify server exists. Implements the documented Cool
 - Never use a personal admin API token in the website's NEXT_PUBLIC settings or expose this importer via a browser endpoint.
 
 Official endpoint: https://coolify.io/docs/api/endpoints/applications/create-public-application
+## 2026-10-26 — recover PROMPTENCE and VETO with nested Dockerfiles
+
+The old importer had a real mismatch: a Coolify `build_pack:"dockerfile"` request for these repositories did not specify `dockerfile_location` even though neither Dockerfile is in the repository root. The operator importer now accepts a *validated, repository-relative* `dockerfile_location` **only** with the Dockerfile build pack, rejects traversal/URLs/unsafe suffixes, and explicitly submits `instant_deploy:false` plus `autogenerate_domain:false`. There is **no live staging app yet**.
+
+Both source repositories are **private**; an operator must first set up a narrowly scoped, existing Coolify GitHub App inside the private Coolify administration UI. No GitHub App private key is sent through this config.
+
+**PROMPTENCE config shape** (values are **placeholders**, not real UUIDs or production credentials):
+
+```json
+{
+  "project_uuid": "YOUR_PROJECT_UUID",
+  "server_uuid": "YOUR_SERVER_UUID",
+  "environment_name": "staging",
+  "source": "private-github-app",
+  "github_app_uuid": "YOUR_COOLIFY_GH_APP_UUID",
+  "git_repository": "margaryan-labs/ai-revenue-navigator",
+  "git_branch": "ops/recovery-readiness-20261026",
+  "build_pack": "dockerfile",
+  "dockerfile_location": "deploy/selfhost/Dockerfile",
+  "ports_exposes": "3000",
+  "name": "promptence-recovery-staging"
+}
+```
+
+**VETO config** is the same except:
+
+```json
+{
+  "git_repository": "margaryanlabs/decision-command",
+  "git_branch": "ops/recovery-readiness-20261026",
+  "dockerfile_location": "deploy/selfhost/Dockerfile.web",
+  "name": "veto-recovery-staging"
+}
+```
+
+Merge these four VETO values into the **complete** PROMPTENCE config, retaining the operator-supplied UUIDs. Never use production database, AI, payment or trading secrets for a build smoke. In Coolify, base directory must remain the repository root to keep the Docker `COPY . .` and lockfiles valid. PROMPTENCE also needs its **browser-public** Supabase URL and publishable key as manually reviewed build arguments; service-role/worker secrets must not be Docker build args. The canonical production Supabase ref is still hard-pinned, so a successful build is **not** proof of working Auth or recovered customer data.
+
+Run on a trusted operator system (Node 22+):
+
+```bash
+node --test scripts/cloud/test-deploy-stage-dockerfile.mjs
+node scripts/cloud/deploy-stage.mjs --plan /ABSOLUTE/private/stage-promptence.json
+node scripts/cloud/deploy-stage.mjs --plan /ABSOLUTE/private/stage-veto.json
+```
+
+This only validates the request and provides an approval digest; it creates no application. Creation is a **separate owner-reviewed operation** using the exact digest and staging-only credentials per instructions above. The Coolify API creates only an application record and is not an authorization to deploy, allocate paid resources or change DNS.
+
+After a manually approved disposable image build, run each repository's `node scripts/ops/selfhost-gate.mjs preflight` and local `smoke http://127.0.0.1:3000/`. These are source and single-endpoint checks; independent recovery of Postgres, Supabase Auth, Storage, ClickHouse, backups, RLS and worker safety is still required.
+
+Official Coolify Git app and Dockerfile location documentation: https://coolify.io/docs/api/endpoints/applications/create-private-github-app-application and https://coolify.io/docs/applications/builds/dockerfile .
