@@ -379,7 +379,7 @@ function applyStudioLook(){
  });
  document.querySelectorAll('[data-mood]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mood===studioMood)));
  document.querySelectorAll('[data-finish]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.finish===studioFinish)));
- if(active==='home')applyExperienceVisuals();
+ if(typeof active!=='undefined'&&active==='home')applyExperienceVisuals();
 }
 function markStudioSurface(mesh,role){
  mesh.userData.styleSurface=role;return mesh;
