@@ -99,3 +99,23 @@ Do not confuse GPU batching, clearcoat settings or enhanced lighting with verifi
 - HD (detailed assets where available): /market-space-world-v10/?world=fashion&quality=high&preview=105
 - Eco (always procedural): /market-space-world-v10/?world=fashion&quality=eco&assets=off&preview=105
 - Mobile hardware diagnostics: /market-space-world-v10/?world=fashion&quality=high&diagnostics=1&preview=105
+
+## V10.6 — interactive Style Studio and organic discovery (2026-10-26)
+
+Instead of adding further glossy CSS-only decorations, this iteration adds **customer-facing interaction inside the actual 3D renderer**:
+
+- A compact, mobile-adapted Style Studio panel within the existing World UI, accessible from the new "✦ Студия" navigation action.
+- Three physically different lighting/exposure/environment presets: Gallery, Golden Hour, Noir. These adjust actual Three.js lights, fog, background and renderer tone mapping, not merely overlay colors.
+- Five visual material options: Original, Linen, Rose, Sage and Graphite. Interactive swatches recolor real 3D garment shells, sleeves and sofa upholstery via per-mesh cloned PBR fabric materials. The Original mode preserves and can restore the showroom's varied initial garments.
+- Reusable base shared fabric materials are never mutated by a client customization, avoiding cross-store and cache contamination. Per-object color clones are disposed by the already existing world cleanup.
+- A share action creates an ordinary URL with exact store (world), lighting mood (mood), and selected palette (finish). Native mobile Web Share is used when available; else clipboard and manual copy. No account, analytics, tracking or backend persistence is added.
+- A direct entry option `studio=1` opens the configurator on arrival, and the commercial landing page now promotes a real, editable showroom instead of relying only on portfolio moodboard photography.
+- The main sales copy avoids claiming that live checkout is already available (cart and product pricing remain strictly illustrative).
+- 29/29 offline static and isolated behavior contracts passed, including generated 3D mesh material color cloning, reversible swatches and non-compounding lighting intensity.
+- **Still not verified:** actual Android/Safari GPU rendering, visual fidelity, FPS, mobile browser native sharing success, and all 3D content transitions. Keep draft and solicit real device QA before commercial promotion.
+
+### Direct previews
+- Fashion original: `/market-space-world-v10/?world=fashion&preview=106`
+- Interactive golden-hour outfit designer: `/market-space-world-v10/?world=fashion&mood=golden&finish=rose&studio=1&preview=106`
+- Living sage showroom: `/market-space-world-v10/?world=home&mood=gallery&finish=sage&studio=1&preview=106`
+- Sales site: `/market-space-showcase-v10/`
