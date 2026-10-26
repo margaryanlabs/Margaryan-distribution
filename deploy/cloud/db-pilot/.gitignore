@@ -1,0 +1,3 @@
+# NEVER commit generated passwords or local state.
+secrets/
+.env
