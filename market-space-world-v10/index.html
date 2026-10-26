@@ -1611,11 +1611,31 @@ canvas.addEventListener('pointermove',e=>{if(!dragging||e.pointerId!==dragId)ret
 canvas.addEventListener('pointerup',e=>{if(e.pointerId!==dragId)return;dragging=false;dragId=null;if(!dragMoved)selectAt(e.clientX,e.clientY);});
 canvas.addEventListener('pointercancel',()=>{dragging=false;dragId=null;});
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(renderPixelRatio);});
+// Big right-hand action button: inspect the nearest product or open the current store's lab.
+function nearestProduct(maxDistance=5.4){
+ let result=null,distance=maxDistance;
+ const p=new THREE.Vector3();
+ for(const h of hotspots){
+  h.g.getWorldPosition(p);
+  const len=p.distanceTo(camera.position);
+  if(len<distance&&Number.isInteger(h.index)){
+   result=h.index;distance=len;
+  }
+ }
+ return result;
+}
+$('interactionBtn').addEventListener('click',()=>{
+ if(!$('experiencePanel').hidden||!$('stylePanel').hidden||!$('lookbookPanel').hidden)return;
+ const nearest=nearestProduct();
+ if(nearest!==null)openItem(nearest);
+ else if(active==='fashion')openLookbook();
+ else openExperience();
+});
 const productTip=$('objectTip'),tipLabel=$('tipProductName');
 let tipCurrent=-1,tipFrame=0;
 $('tipProductAction').addEventListener('click',()=>{if(tipCurrent>=0){stopTour();openItem(tipCurrent);}});
 function updateProductTip(){
- if($('drawerOverlay').classList.contains('open')||!$('lookbookPanel').hidden||touring){productTip.classList.remove('show');return;}
+ if($('drawerOverlay').classList.contains('open')||!$('lookbookPanel').hidden||!$('experiencePanel').hidden||touring){productTip.classList.remove('show');return;}
  const pos3=new THREE.Vector3(),projected=new THREE.Vector3();
  let best=Infinity,bestIndex=-1;
  for(const h of hotspots){
@@ -1691,7 +1711,10 @@ function animate(t){
    perfElapsed=0;perfFrames=0;
   }
  }
- if(++tipFrame%8===0)updateProductTip();
+ if(++tipFrame%8===0){
+  updateProductTip();
+  $('interactionBtn').setAttribute('aria-label',nearestProduct()!==null?'Осмотреть ближайший товар':'Открыть интерактивную студию магазина');
+}
  // Single bounded quality downgrade on sustained mobile GPU pressure.
  if(coarse&&qualityMode==='auto'&&!qualityReduced&&delta>.002){
   perfWindow+=delta;perfSamples++;
