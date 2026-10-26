@@ -72,8 +72,8 @@ check('Garment mesh rings generate bounded finite triangle geometry',()=>{
  const THREE={BufferGeometry:Geometry,Float32BufferAttribute:FloatAttr};
  const f=new Function('THREE','coarse','mesh',world.slice(a,b)+'return garmentShell;')(THREE,false,g=>g);
  const geo=f([[.58,.29,.16],[.43,.4,.23],[.18,.36,.23],[-.19,.28,.20],[-.49,.37,.27],[-.86,.51,.36],[-1.26,.65,.45],[-1.44,.69,.47]],{},1);
- assert.equal(geo.attributes.position.array.length/3,160);
- assert.equal(geo.indices.length/3,280);
+ assert.equal(geo.attributes.position.array.length/3,880);
+ assert.equal(geo.indices.length/3,1680);
  assert.ok(geo.attributes.position.array.every(Number.isFinite));
 });
 check('Premium world interaction layer exposes nearby 3D products and labels',()=>{
