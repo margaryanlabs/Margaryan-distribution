@@ -30,3 +30,12 @@ Isolated premium sales/showcase site for Margaryan Labs virtual retail. This is 
 5. Integrate real inventory and payments only with production merchant configuration; current shopping interactions are illustrative demos.
 
 No revenue or conversion claims without evidence.
+
+## V9 architectural pass (2026-10-26)
+- Underlying WebGL mesh now has theme-specific perimeter wall insets, ceiling ribs, recessed spotlights, coves, columns, warm inlaid floor guide tracks and richer visual backdrops for all five scenes.
+- Decorative pendant fixtures are geometric torus rings rather than opaque discs.
+- Mobile Lite Canvas2D renderer now projects equivalent architectural panels and ceiling beams, with warmer colors. It remains a stylized perspective fallback, not WebGL.
+- Existing navigation, collision obstacles, product interactions, GLB fallback and basket logic were not intentionally modified.
+- Isolated geometry checks: all five styles produced valid positive-sized boxes/cylinders and finite coordinates, within x ±13.74; ring quad samples were finite. Inline JS scripts parsed.
+- The new root test script can be executed after checkout: node scripts/market-space/test-v9-visual-contract.mjs
+- Do not interpret geometry/syntax tests as real browser visual QA, pixel parity, performance certification, photorealism, PBR or payment readiness.
