@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#10110f">
 <meta name="description" content="MARKET SPACE V10 — новая экспериментальная 3D-архитектура retail: полноценная прогулка по бутику, мебели, beauty и супермаркету.">
-<title>MARKET SPACE — Immersive World V10.5</title>
+<title>MARKET SPACE — Immersive World V10.6</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"}}</script>
 <style>
 :root{color-scheme:dark;font:14px/1.5 Inter,"Helvetica Neue",Arial,sans-serif;background:#111311;color:#f5f0e7;--paper:#f4eee3;--mute:#b7b3a8;--line:#d3c6b64b;--warm:#e4c79d}*{box-sizing:border-box}
@@ -37,6 +37,26 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 border:1px solid #d6b98b70;padding:9px 11px;font:11px/1.5 ui-monospace,SFMono-Regular,monospace;
 pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
 #perfHud[hidden]{display:none!important}
+
+/* V10.6 — a compact editing console, not a full-screen obstructing shopping modal. */
+#stylePanel{position:fixed;z-index:14;right:clamp(12px,3vw,52px);top:91px;width:min(330px,calc(100vw - 26px));background:#111917f2;color:#f2ecdf;
+ border:1px solid #e0cbaa84;box-shadow:0 18px 60px #000a;backdrop-filter:blur(24px);padding:19px 20px 18px;border-radius:12px}
+#stylePanel[hidden]{display:none!important}
+#stylePanel .styleTop{display:flex;justify-content:space-between;align-items:start;gap:10px}
+#stylePanel .styleKicker{font-size:10px;letter-spacing:.22em;color:#d9bc95;text-transform:uppercase}
+#stylePanel h2{font:normal 36px/1 Georgia,serif;letter-spacing:-.06em;margin:9px 0 12px}
+#stylePanel p{color:#c4c8bf;font-size:11px;line-height:1.6;margin:0 0 16px}
+#stylePanel .styleClose{background:none;color:#e9ddc9;border:1px solid #e3d4bd77;width:30px;height:30px;border-radius:5px}
+#stylePanel .styleLabel{display:block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.15em;color:#e0d6c5;margin:15px 0 9px}
+#stylePanel .styleChoices{display:flex;gap:7px}
+#stylePanel .styleChoices button{flex:1;min-width:0;border:1px solid #e2d1b45d;border-radius:6px;padding:10px 5px;background:#ffffff08;color:#e9e0d0;font-size:10px}
+#stylePanel .styleChoices button[aria-pressed="true"]{background:#e6cfad;color:#121814;font-weight:750;border-color:#e6cfad}
+#stylePanel .styleSwatches button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 3px 7px}
+#stylePanel .styleSwatches i{width:25px;height:25px;display:block;border-radius:50%;border:2px solid #ffffff4d;box-shadow:0 2px 8px #0005}
+#stylePanel #shareStyle{width:100%;background:#ebd7b8;border:0;border-radius:6px;color:#22251e;font-size:11px;font-weight:800;letter-spacing:.08em;padding:13px;margin-top:18px}
+#stylePanel #shareStyle:hover{background:#f8e8d0}
+#stylePanel .styleDisclosure{margin-top:11px;color:#b6b8af;font-size:10px;line-height:1.45}
+
 #hotspotHint{position:fixed;z-index:4;left:50%;top:49%;transform:translate(-50%,-50%);width:17px;height:17px;border:1px solid #e1d7bf8a;border-radius:50%;pointer-events:none;opacity:.65}#hotspotHint:after{content:"";position:absolute;top:7px;left:7px;width:2px;height:2px;background:#f2e5cd;border-radius:50%}
 .bottomWrap{position:fixed;z-index:9;bottom:clamp(16px,2vw,35px);left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;max-width:calc(100vw - 30px)}
 .worldDock{background:#101510e8;border:1px solid #e3d1af73;backdrop-filter:blur(24px);padding:6px;display:flex;gap:5px;box-shadow:0 18px 48px #0008;border-radius:12px}
@@ -92,9 +112,9 @@ pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
 
 @media(max-width:900px){.headercenter{display:none}.header .topAction:first-of-type{margin-left:auto}.titlePanel{top:126px}.titlePanel h1{font-size:57px}.worldTab{min-width:90px}.help{bottom:118px}}
 @media(max-width:620px){
- .header{min-height:66px;padding:11px 12px;gap:7px}.logo{gap:8px}.logomark{height:30px;width:30px}.logomark b{font-size:20px}.brand{font-size:10px;letter-spacing:.12em}.brand small{font-size:7px;letter-spacing:.13em}.topAction{padding:9px 8px;font-size:9px}
+ .header{min-height:66px;padding:11px 9px;gap:5px}.logo{gap:8px}.logomark{height:30px;width:30px}.logomark b{font-size:20px}.brand{font-size:10px;letter-spacing:.12em}.brand small{font-size:7px;letter-spacing:.13em}.topAction{padding:8px 6px;font-size:8px}#styleBtn{border-color:#f0cfa799}
  .titlePanel{top:88px;left:17px;width:calc(100% - 115px);max-width:320px}.titlePanel h1{font-size:39px;margin:12px 0 8px}.titlePanel p{font-size:10px;max-width:235px;line-height:1.5}.titlePanel .kicker{font-size:8px}.titlePanel button{padding:10px 12px;font-size:9px;margin-top:11px}
- #worldNote{top:84px;right:10px;font-size:8px;padding:7px 8px;max-width:100px;line-height:1.4;text-align:center}#qualityBtn{top:124px;right:10px;font-size:8px;padding:8px 10px}#assetCredits{top:163px;right:10px;font-size:9px;max-width:165px}.bottomWrap{bottom:8px;width:calc(100vw - 10px);display:block}.worldDock{width:100%;justify-content:space-around;gap:1px;padding:5px}.worldTab{flex:1;min-width:0;font-size:8px;padding:9px 2px}.worldTab .n{font-size:15px}.tourBtn{position:fixed;bottom:105px;left:50%;transform:translateX(-50%);min-height:38px;padding:8px 14px;font-size:9px}
+ #stylePanel{top:75px;right:8px;width:min(320px,calc(100vw - 16px));max-height:calc(100dvh - 190px);overflow-y:auto;padding:13px}#stylePanel h2{font-size:29px;margin:6px 0 10px}#worldNote{top:84px;right:10px;font-size:8px;padding:7px 8px;max-width:100px;line-height:1.4;text-align:center}#qualityBtn{top:124px;right:10px;font-size:8px;padding:8px 10px}#assetCredits{top:163px;right:10px;font-size:9px;max-width:165px}.bottomWrap{bottom:8px;width:calc(100vw - 10px);display:block}.worldDock{width:100%;justify-content:space-around;gap:1px;padding:5px}.worldTab{flex:1;min-width:0;font-size:8px;padding:9px 2px}.worldTab .n{font-size:15px}.tourBtn{position:fixed;bottom:105px;left:50%;transform:translateX(-50%);min-height:38px;padding:8px 14px;font-size:9px}
  #objectTip{right:10px;bottom:181px;min-width:156px;max-width:183px;padding:11px}#objectTip strong{font-size:20px}#objectTip button{padding:8px 10px;font-size:9px}.help{display:none}.movePad{display:block}.touchHelp{display:block;position:fixed;right:16px;bottom:136px;z-index:4;font-size:10px;text-align:right;color:#f3e7cfc9;letter-spacing:.1em}#hotspotHint{top:53%}
  #notice{bottom:190px;right:12px}.drawer{padding:22px}
 }
@@ -105,11 +125,29 @@ pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
 <div id="viewport" aria-label="Интерактивное 3D-пространство"></div><div class="scrim"></div>
 <header class="header">
 <a class="logo" href="../market-space-showcase-v10/" aria-label="Вернуться на MARKET SPACE"><span class="logomark"><b>M</b></span><span class="brand">MARKET SPACE<small>BY MARGARYAN LABS</small></span></a>
-<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.5</span>
-<button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
+<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.6</span>
+<button class="topAction" id="styleBtn" aria-controls="stylePanel" aria-expanded="false">✦ Студия</button><button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
 </header>
 <div class="titlePanel" id="titlePanel"><div class="kicker" id="eyebrow">01 / THE ATELIER</div><h1 id="worldTitle">The<br>Atelier</h1><p id="worldDescription">Мода — это не карточки в каталоге. Исследуй коллекцию, подойди к манекенам и выбери вещи прямо в пространстве.</p><button id="introButton">Исследовать пространство ↗</button></div>
-<div id="worldNote">V10.5 / INTERACTIVE 3D PREVIEW</div><button id="qualityBtn" type="button" aria-label="Переключить качество 3D-графики" aria-live="polite">Качество: Авто</button>
+<div id="worldNote">V10.6 / INTERACTIVE 3D PREVIEW</div><section id="stylePanel" role="dialog" aria-label="Style Studio — оформление 3D-магазина" hidden>
+ <div class="styleTop"><div><div class="styleKicker">Персонализируй пространство</div><h2>Style Studio</h2></div>
+ <button class="styleClose" id="closeStyle" aria-label="Закрыть студию">✕</button></div>
+ <p>Меняй свет, материалы и настроение магазина прямо во время прогулки.</p>
+ <span class="styleLabel">01 / Атмосфера</span>
+ <div class="styleChoices" role="group" aria-label="Выбор освещения">
+ <button type="button" data-mood="gallery" aria-pressed="true">Галерея</button>
+ <button type="button" data-mood="golden" aria-pressed="false">Закат</button>
+ <button type="button" data-mood="noir" aria-pressed="false">Noir</button></div>
+ <span class="styleLabel">02 / Текстура и цвет</span>
+ <div class="styleChoices styleSwatches" role="group" aria-label="Выбор палитры">
+ <button type="button" data-finish="linen" aria-pressed="true"><i style="background:#cab4a0"></i>Лён</button>
+ <button type="button" data-finish="rose" aria-pressed="false"><i style="background:#a16b75"></i>Rose</button>
+ <button type="button" data-finish="sage" aria-pressed="false"><i style="background:#778b77"></i>Sage</button>
+ <button type="button" data-finish="graphite" aria-pressed="false"><i style="background:#444a4c"></i>Noir</button></div>
+ <button type="button" id="shareStyle">Поделиться этим пространством ↗</button>
+ <div class="styleDisclosure">Ссылка сохранит магазин, свет и палитру. Это демонстрация дизайна, не персональный заказ и не покупка.</div>
+ </section>
+<button id="qualityBtn" type="button" aria-label="Переключить качество 3D-графики" aria-live="polite">Качество: Авто</button>
 <details id="assetCredits"><summary>3D-модели · источники</summary><div class="creditContent">
 <p>Демонстрационные 3D-ассеты, не реальные товары брендов. Детализированные модели загружаются по возможности; процедурные модели остаются резервными.</p><p id="premiumStatus" role="status" aria-live="polite">3D-ассеты: готовность</p>
 <p>Кресло Sheen Chair: © 2020 Wayfair, Eric Chadwick, CC0. <a href="https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/SheenChair" target="_blank" rel="noopener noreferrer">Источник</a>.</p>
