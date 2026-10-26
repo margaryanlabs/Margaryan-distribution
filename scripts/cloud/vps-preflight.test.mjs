@@ -16,7 +16,10 @@ test('missing daemon is a wait even when Docker CLI exists', () => {
   assert.deepEqual(report.checks.find(x => x.id === 'docker_daemon_access'),
     { id: 'docker_daemon_access', status: 'WAIT' });
 });
-test('unexpected remote Docker context blocks the staging pilot', () => {\n  assert.equal(evaluateVps({ ...good, localDockerContext: false }).gate, 'NOT_READY');\n});\ntest('missing Compose blocks the staging pilot', () => {
+test('unexpected remote Docker context blocks the staging pilot', () => {
+  assert.equal(evaluateVps({ ...good, localDockerContext: false }).gate, 'NOT_READY');
+});
+test('missing Compose blocks the staging pilot', () => {
   assert.equal(evaluateVps({ ...good, compose: false }).gate, 'NOT_READY');
 });
 test('thresholds are intended for the pilot, not every Margaryan product', () => {
