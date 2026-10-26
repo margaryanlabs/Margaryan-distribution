@@ -140,3 +140,33 @@ Instead of adding further glossy CSS-only decorations, this iteration adds **cus
 
 ### Next asset milestone
 Commission/licence high-resolution real garment glTF + PBR textures and optimized mobile LODs, implement source-bound catalog, and verify device visuals. The current clothes remain handmade procedural stylizations rather than photoreal fabric simulation.
+
+## V10.8 — interactive labs in every store + two mobile joysticks (2026-10-26)
+
+The flagship showroom no longer confines active product experimentation to Fashion:
+
+- **Market Mix:** visitors choose produce/coffee/olive oil/milk from actual demo grocery catalog items, select individual / couple / family bundle size, see price scale by SKU quantity, and change the colors of **real 3D produce meshes**. Family mode scales the existing 3D fruit from its original proportions rather than destroying the shape. One-tap demo cart and shareable configuration URLs.
+- **Beauty / Scent Atelier:** choose Rose, Citrus or Amber; Clear or Frosted glass. The central displayed **3D perfume bottles** have their actual clearcoat/glass shader materials updated: color, roughness and opacity. This is visual customization, **not actual chemical scent formulation** or manufacturing.
+- **Living Composer:** choose fabric Sand/Sage/Rose/Graphite and Gallery/Conversation layout. Changes the real sofa upholstery materials and pivots real 3D furniture groups, not static images. The existing Style Studio lights remain independently usable.
+- Each of these three stores has a dedicated compact mobile `Experience` drawer with accessible pressed-state buttons, a real demo catalog price estimate, functional add-to-basket, and share links restoring the exact chosen options. Deep link `?world=food|beauty|home&experience=1&exp_<store>_<key>=...` opens the configured experience.
+- Fashion retains the interactive 3D Lookbook; the new Experience button is replaced by Lookbook only in Fashion, so the mobile header is not overloaded.
+- The commercial landing has three direct calls-to-action leading to all other experiences, not just Fashion.
+
+### Mobile navigation improvements
+
+- The existing small left movement pad was reworked into a larger thumb joystick with a 16% dead zone and vector magnitude normalization, so diagonal walks cannot exceed the set speed.
+- Added **independent right joystick for camera yaw/pitch**; users can move and look at the same time, and can still drag the free canvas to turn the view. Both pads use distinct pointer IDs and pointer capture with pointerup/cancel handling.
+- Large right-side **◎ inspect** action selects the nearest registered catalog item, or opens the current category's interaction panel when not near a product.
+- Joystick states are reset on app blur, shop switches and overlay transitions. Scrolling overlays pause walking. Touch pads appear on mobile; desktop retains pointer dragging and WASD.
+- Responsive changes preserve top navigation on narrow Fold screens.
+
+### Engineering verification & limits
+- All **29** pre-existing core source/isolation checks pass, plus **3** standalone Lookbook checks, plus **8** new behavioral checks for Market, Beauty, Living, deep links and dual joystick event infrastructure; module/classic JS parse. Total: **40 checks**.
+- The 8 new tests simulate three stores' actual 3D material changes and furniture transforms. These are **not** browser render or touch device tests.
+- Commercial data remains illustrative: no production checkout, manufacturing, user account or CRM is enabled. Physical Samsung Fold/Android/Safari GPU visuals and user touch reachability still require end-to-end tests.
+
+### Preview links
+- Food family mix: `/market-space-world-v10/?world=food&experience=1&exp_food_pick=produce&exp_food_bundle=family&preview=108`
+- Beauty amber/frosted: `/market-space-world-v10/?world=beauty&experience=1&exp_beauty_scent=amber&exp_beauty_glass=frost&preview=108`
+- Living conversation/sage: `/market-space-world-v10/?world=home&experience=1&exp_home_fabric=sage&exp_home_layout=conversation&preview=108`
+- Fashion Lookbook: `/market-space-world-v10/?world=fashion&lookbook=1&preview=108`
