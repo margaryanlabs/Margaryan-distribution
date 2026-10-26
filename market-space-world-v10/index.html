@@ -383,6 +383,95 @@ function applyStudioLook(){
 function markStudioSurface(mesh,role){
  mesh.userData.styleSurface=role;return mesh;
 }
+// Each category has a genuinely different visitor interaction, not an identical generic swatch sheet.
+const EXPERIENCE_OPTIONS={
+ food:{
+  title:'Market Mix',intro:'Собери продуктовую подборку и посмотри, как меняется центральная экспозиция.',
+  groups:[{key:'pick',title:'01 / Главный продукт',choices:[['produce','Фрукты'],['coffee','Кофе'],['olive','Оливки'],['milk','Молоко']]},
+          {key:'bundle',title:'02 / Размер набора',choices:[['one','Один'],['two','Для двоих'],['family','Семейный']]}]
+ },
+ beauty:{
+  title:'Scent Atelier',intro:'Создай аромат: выбери ноту и характер стекла. Флаконы перестраиваются в 3D.',
+  groups:[{key:'scent',title:'01 / Нота аромата',choices:[['rose','Rose'],['citrus','Citrus'],['amber','Amber']]},
+          {key:'glass',title:'02 / Отделка флакона',choices:[['clear','Прозрачный'],['frost','Матовый']]}]
+ },
+ home:{
+  title:'Living Composer',intro:'Подбери ткань диванов и поменяй расположение мебели для интерьера.',
+  groups:[{key:'fabric',title:'01 / Обивка',choices:[['sand','Sand'],['sage','Sage'],['rose','Rose'],['charcoal','Graphite']]},
+          {key:'layout',title:'02 / Сценография',choices:[['gallery','Галерея'],['conversation','Для беседы']]}]
+ }
+};
+const EXPERIENCE_DEFAULTS={food:{pick:'produce',bundle:'one'},beauty:{scent:'rose',glass:'clear'},home:{fabric:'sand',layout:'gallery'}};
+const EXPERIENCE_PRICES={one:1,two:2,family:3};
+function initialExperienceState(){
+ const params=new URLSearchParams(location.search),result={};
+ for(const [store,defaults] of Object.entries(EXPERIENCE_DEFAULTS)){
+  result[store]={};
+  for(const [key,value] of Object.entries(defaults)){
+   const options=EXPERIENCE_OPTIONS[store].groups.find(g=>g.key===key).choices.map(c=>c[0]);
+   const requested=params.get('exp_'+store+'_'+key);
+   result[store][key]=requested&&options.includes(requested)?requested:value;
+  }
+ }
+ return result;
+}
+let experienceState=initialExperienceState(),experienceVisuals={fruit:[],perfume:[],sofas:[]};
+function selectedExperienceItem(store){
+ if(store==='food')return {produce:2,coffee:0,olive:1,milk:3}[experienceState.food.pick];
+ if(store==='beauty')return 0;
+ if(store==='home')return 0;
+ return null;
+}
+function selectedExperienceQty(store){return store==='food'?EXPERIENCE_PRICES[experienceState.food.bundle]:1;}
+function experienceTotal(store){
+ const index=selectedExperienceItem(store);
+ return index==null?0:DATA[store].items[index][2]*selectedExperienceQty(store);
+}
+function applyExperienceVisuals(){
+ if(active==='food'){
+  const colours={produce:['#dc995c','#ad6644','#84965a'],coffee:['#926e47','#c39a61','#846249'],
+   olive:['#7d9160','#a2a974','#718055'],milk:['#e4d7c4','#d0cbbe','#f0dfb5']};
+  const shades=colours[experienceState.food.pick];
+  experienceVisuals.fruit.forEach((obj,i)=>{
+   if(!obj.userData.experienceBaseMaterial){
+    obj.material=obj.material.clone();obj.userData.experienceBaseMaterial=true;
+   }
+   obj.material.color.set(shades[i%3]);
+   obj.scale.setScalar(experienceState.food.bundle==='family'?1.14:1);
+  });
+ }else if(active==='beauty'){
+  const tint={rose:'#d6a3ad',citrus:'#dbbb75',amber:'#b48a5c'}[experienceState.beauty.scent];
+  experienceVisuals.perfume.forEach(obj=>{
+   if(!obj.userData.experienceBaseMaterial){
+    obj.material=obj.material.clone();obj.userData.experienceBaseMaterial=true;
+   }
+   obj.material.color.set(tint);
+   obj.material.roughness=experienceState.beauty.glass==='frost'?.6:.10;
+   obj.material.opacity=experienceState.beauty.glass==='frost'?.97:.84;
+   obj.material.needsUpdate=true;
+  });
+ }else if(active==='home'){
+  const tint={sand:'#c3aa91',sage:'#8d9d8c',rose:'#c19a9e',charcoal:'#545d5d'}[experienceState.home.fabric];
+  experienceVisuals.sofas.forEach((group,i)=>{
+   group.rotation.y=experienceState.home.layout==='conversation'?(i%2===0?.22:-.22):0;
+   group.traverse(obj=>{
+    if(!obj.isMesh||obj.userData.styleSurface!=='upholstery')return;
+    if(!obj.userData.experienceBaseMaterial){
+     obj.material=obj.material.clone();obj.userData.experienceBaseMaterial=true;
+    }
+    obj.material.color.set(tint);
+   });
+  });
+ }
+}
+function experienceURL(){
+ const url=new URL(location.href);url.searchParams.set('world',active);
+ if(EXPERIENCE_OPTIONS[active]){
+  for(const [k,v] of Object.entries(experienceState[active]))url.searchParams.set('exp_'+active+'_'+k,v);
+ }
+ history.replaceState(null,'',url);return url;
+}
+
 let active='fashion',root=new THREE.Group(), hotspots=[],pickables=[],blockers=[],keys=new Set(),yaw=0,pitch=-.03,touring=false,tourT=0,tourRoute=[],joy={x:0,y:0},walkVelocity={x:0,z:0},curProduct=null,cart={},lastActive=null;
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(61,1,.07,120);
@@ -964,7 +1053,7 @@ function chair(x,z){const g=new THREE.Group();g.position.set(x,0,z);root.add(g);
 function homeScene(){
  for(const z of [0,-16])for(const x of [-6.6,6.6]){
   soft(x,.02,z,6.8,.035,6.0,mat(z===0?'#a39582':'#aaa396',.99),.05);
-  const sofa=upholsteredSofa(x,z,x>0?'#b6b7ad':'#c5aa95');sofa.userData.itemIndex=z===0?0:1;pickables.push(sofa);
+  const sofa=upholsteredSofa(x,z,x>0?'#b6b7ad':'#c5aa95');experienceVisuals.sofas.push(sofa);sofa.userData.itemIndex=z===0?0:1;pickables.push(sofa);
   table(x,z+2.0);
   floorLamp(x+(x>0?2.8:-2.8),z-1.6);
   plant(x+(x>0?-2.8:2.8),z-2.1);
@@ -1018,8 +1107,12 @@ function beautyScene(){
   }
  }
  for(const z of [-7,-20]){
-   soft(0,.50,z,3.6,.45,1.2,mat('#a68c88',.92),.23);
-   ball(0,1.27,z,.96,.73,.36,mat('#b9a19d',.8));
+  soft(0,.50,z,3.6,.45,1.2,mat('#a68c88',.92),.23);
+  const hero=perfumeBottle(root,0,z,'#d9a1ad',0,.96);
+  hero.scale.setScalar(1.75);
+  if(hero.children[0]?.isMesh)experienceVisuals.perfume.push(hero.children[0]);
+  ring(0,1.04,z,.85,.025,brass);
+  selectHotspot(0,2.12,z+1.15,0);
  }
 }
 // Shared graphic identity is embossed as actual small mesh labels on selected product faces.
@@ -1110,7 +1203,7 @@ function produceIsland(x,z,index){
  for(let i=0;i<14;i++){
   const a=i*2.4,r=.8*Math.sqrt(i/14),shade=i%3;
   const xx=Math.sin(a)*r,zz=Math.cos(a)*r*.8,yy=.90+(i%3)*.055;
-  const fruit=ball(xx,yy,zz,.17,.16,.18,mat(shade===0?'#dd9957':shade===1?'#ac5e44':'#738e59',.66),g);
+  const fruit=ball(xx,yy,zz,.17,.16,.18,mat(shade===0?'#dd9957':shade===1?'#ac5e44':'#738e59',.66),g);experienceVisuals.fruit.push(fruit);
   tube(xx,yy+.162,zz,.017,.022,.08,wood,g);
   if(i%2===0){const leaf=ball(xx+.055,yy+.215,zz,.085,.018,.044,mat('#4f704a',.91),g);leaf.rotation.z=.3;}
  }
@@ -1153,14 +1246,15 @@ function disposeWorld(){
 }
 function setStore(key){
  if(!DATA[key])return;
- closeLookbook();closeStyleStudio();active=key;lookbookStage=null;showroomGeneration++;premiumSlots=[];touring=false;tourRoute=[];walkVelocity.x=walkVelocity.z=0;
+ closeExperience();closeLookbook();closeStyleStudio();active=key;lookbookStage=null;showroomGeneration++;premiumSlots=[];touring=false;tourRoute=[];walkVelocity.x=walkVelocity.z=0;
  keys.clear();resetTouchSticks();$('tourBtn').textContent='▶ Кинотур';
  disposeWorld();
- hotspots=[];pickables=[];blockers=[];marketPackBatches.clear();tipCurrent=-1;$('objectTip').classList.remove('show');premiumState='idle';updatePremiumStatus();architecture(key);
+ hotspots=[];pickables=[];blockers=[];experienceVisuals={fruit:[],perfume:[],sofas:[]};marketPackBatches.clear();tipCurrent=-1;$('objectTip').classList.remove('show');premiumState='idle';updatePremiumStatus();architecture(key);
  try{if(key==='fashion')fashionScene();else if(key==='home')homeScene();else if(key==='beauty')beautyScene();else foodScene();}
  catch(err){console.error('Scene build error:',err);toast('Часть объектов не загрузилась: '+err.message);}
- upgradePremiumAssets(key);reconcilePremiumModels();applyStudioLook();
+ upgradePremiumAssets(key);reconcilePremiumModels();applyStudioLook();applyExperienceVisuals();
  camera.position.set(0,1.68,10.7);yaw=0;pitch=-.065;updateCamera();
+ $('experienceBtn').hidden=key==='fashion';$('lookbookBtn').hidden=key!=='fashion';
  const d=DATA[key];$('worldTitle').innerHTML=d.name.replace(' ','<br>');$('eyebrow').textContent=d.tag;$('worldDescription').textContent=d.desc;
  $('titlePanel').style.opacity='1';$('titlePanel').style.pointerEvents='auto';
  document.querySelectorAll('[data-store]').forEach(b=>{b.classList.toggle('active',b.dataset.store===key);b.setAttribute('aria-pressed',String(b.dataset.store===key));});
