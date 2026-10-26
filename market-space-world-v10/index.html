@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#10110f">
 <meta name="description" content="MARKET SPACE V10 — новая экспериментальная 3D-архитектура retail: полноценная прогулка по бутику, мебели, beauty и супермаркету.">
-<title>MARKET SPACE — Immersive World V10.5</title>
+<title>MARKET SPACE — Immersive World V10.6</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"}}</script>
 <style>
 :root{color-scheme:dark;font:14px/1.5 Inter,"Helvetica Neue",Arial,sans-serif;background:#111311;color:#f5f0e7;--paper:#f4eee3;--mute:#b7b3a8;--line:#d3c6b64b;--warm:#e4c79d}*{box-sizing:border-box}
@@ -37,6 +37,26 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 border:1px solid #d6b98b70;padding:9px 11px;font:11px/1.5 ui-monospace,SFMono-Regular,monospace;
 pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
 #perfHud[hidden]{display:none!important}
+
+/* V10.6 — a compact editing console, not a full-screen obstructing shopping modal. */
+#stylePanel{position:fixed;z-index:14;right:clamp(12px,3vw,52px);top:91px;width:min(330px,calc(100vw - 26px));background:#111917f2;color:#f2ecdf;
+ border:1px solid #e0cbaa84;box-shadow:0 18px 60px #000a;backdrop-filter:blur(24px);padding:19px 20px 18px;border-radius:12px}
+#stylePanel[hidden]{display:none!important}
+#stylePanel .styleTop{display:flex;justify-content:space-between;align-items:start;gap:10px}
+#stylePanel .styleKicker{font-size:10px;letter-spacing:.22em;color:#d9bc95;text-transform:uppercase}
+#stylePanel h2{font:normal 36px/1 Georgia,serif;letter-spacing:-.06em;margin:9px 0 12px}
+#stylePanel p{color:#c4c8bf;font-size:11px;line-height:1.6;margin:0 0 16px}
+#stylePanel .styleClose{background:none;color:#e9ddc9;border:1px solid #e3d4bd77;width:30px;height:30px;border-radius:5px}
+#stylePanel .styleLabel{display:block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.15em;color:#e0d6c5;margin:15px 0 9px}
+#stylePanel .styleChoices{display:flex;gap:7px}
+#stylePanel .styleChoices button{flex:1;min-width:0;border:1px solid #e2d1b45d;border-radius:6px;padding:10px 5px;background:#ffffff08;color:#e9e0d0;font-size:10px}
+#stylePanel .styleChoices button[aria-pressed="true"]{background:#e6cfad;color:#121814;font-weight:750;border-color:#e6cfad}
+#stylePanel .styleSwatches button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 3px 7px}
+#stylePanel .styleSwatches i{width:25px;height:25px;display:block;border-radius:50%;border:2px solid #ffffff4d;box-shadow:0 2px 8px #0005}
+#stylePanel #shareStyle{width:100%;background:#ebd7b8;border:0;border-radius:6px;color:#22251e;font-size:11px;font-weight:800;letter-spacing:.08em;padding:13px;margin-top:18px}
+#stylePanel #shareStyle:hover{background:#f8e8d0}
+#stylePanel .styleDisclosure{margin-top:11px;color:#b6b8af;font-size:10px;line-height:1.45}
+
 #hotspotHint{position:fixed;z-index:4;left:50%;top:49%;transform:translate(-50%,-50%);width:17px;height:17px;border:1px solid #e1d7bf8a;border-radius:50%;pointer-events:none;opacity:.65}#hotspotHint:after{content:"";position:absolute;top:7px;left:7px;width:2px;height:2px;background:#f2e5cd;border-radius:50%}
 .bottomWrap{position:fixed;z-index:9;bottom:clamp(16px,2vw,35px);left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;max-width:calc(100vw - 30px)}
 .worldDock{background:#101510e8;border:1px solid #e3d1af73;backdrop-filter:blur(24px);padding:6px;display:flex;gap:5px;box-shadow:0 18px 48px #0008;border-radius:12px}
@@ -92,9 +112,9 @@ pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
 
 @media(max-width:900px){.headercenter{display:none}.header .topAction:first-of-type{margin-left:auto}.titlePanel{top:126px}.titlePanel h1{font-size:57px}.worldTab{min-width:90px}.help{bottom:118px}}
 @media(max-width:620px){
- .header{min-height:66px;padding:11px 12px;gap:7px}.logo{gap:8px}.logomark{height:30px;width:30px}.logomark b{font-size:20px}.brand{font-size:10px;letter-spacing:.12em}.brand small{font-size:7px;letter-spacing:.13em}.topAction{padding:9px 8px;font-size:9px}
+ .header{min-height:66px;padding:11px 9px;gap:5px}.logo{gap:8px}.logomark{height:30px;width:30px}.logomark b{font-size:20px}.brand{font-size:10px;letter-spacing:.12em}.brand small{font-size:7px;letter-spacing:.13em}.topAction{padding:8px 6px;font-size:8px}#styleBtn{border-color:#f0cfa799}
  .titlePanel{top:88px;left:17px;width:calc(100% - 115px);max-width:320px}.titlePanel h1{font-size:39px;margin:12px 0 8px}.titlePanel p{font-size:10px;max-width:235px;line-height:1.5}.titlePanel .kicker{font-size:8px}.titlePanel button{padding:10px 12px;font-size:9px;margin-top:11px}
- #worldNote{top:84px;right:10px;font-size:8px;padding:7px 8px;max-width:100px;line-height:1.4;text-align:center}#qualityBtn{top:124px;right:10px;font-size:8px;padding:8px 10px}#assetCredits{top:163px;right:10px;font-size:9px;max-width:165px}.bottomWrap{bottom:8px;width:calc(100vw - 10px);display:block}.worldDock{width:100%;justify-content:space-around;gap:1px;padding:5px}.worldTab{flex:1;min-width:0;font-size:8px;padding:9px 2px}.worldTab .n{font-size:15px}.tourBtn{position:fixed;bottom:105px;left:50%;transform:translateX(-50%);min-height:38px;padding:8px 14px;font-size:9px}
+ #stylePanel{top:75px;right:8px;width:min(320px,calc(100vw - 16px));max-height:calc(100dvh - 190px);overflow-y:auto;padding:13px}#stylePanel h2{font-size:29px;margin:6px 0 10px}#worldNote{top:84px;right:10px;font-size:8px;padding:7px 8px;max-width:100px;line-height:1.4;text-align:center}#qualityBtn{top:124px;right:10px;font-size:8px;padding:8px 10px}#assetCredits{top:163px;right:10px;font-size:9px;max-width:165px}.bottomWrap{bottom:8px;width:calc(100vw - 10px);display:block}.worldDock{width:100%;justify-content:space-around;gap:1px;padding:5px}.worldTab{flex:1;min-width:0;font-size:8px;padding:9px 2px}.worldTab .n{font-size:15px}.tourBtn{position:fixed;bottom:105px;left:50%;transform:translateX(-50%);min-height:38px;padding:8px 14px;font-size:9px}
  #objectTip{right:10px;bottom:181px;min-width:156px;max-width:183px;padding:11px}#objectTip strong{font-size:20px}#objectTip button{padding:8px 10px;font-size:9px}.help{display:none}.movePad{display:block}.touchHelp{display:block;position:fixed;right:16px;bottom:136px;z-index:4;font-size:10px;text-align:right;color:#f3e7cfc9;letter-spacing:.1em}#hotspotHint{top:53%}
  #notice{bottom:190px;right:12px}.drawer{padding:22px}
 }
@@ -105,11 +125,30 @@ pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
 <div id="viewport" aria-label="Интерактивное 3D-пространство"></div><div class="scrim"></div>
 <header class="header">
 <a class="logo" href="../market-space-showcase-v10/" aria-label="Вернуться на MARKET SPACE"><span class="logomark"><b>M</b></span><span class="brand">MARKET SPACE<small>BY MARGARYAN LABS</small></span></a>
-<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.5</span>
-<button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
+<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.6</span>
+<button class="topAction" id="styleBtn" aria-controls="stylePanel" aria-expanded="false">✦ Студия</button><button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
 </header>
 <div class="titlePanel" id="titlePanel"><div class="kicker" id="eyebrow">01 / THE ATELIER</div><h1 id="worldTitle">The<br>Atelier</h1><p id="worldDescription">Мода — это не карточки в каталоге. Исследуй коллекцию, подойди к манекенам и выбери вещи прямо в пространстве.</p><button id="introButton">Исследовать пространство ↗</button></div>
-<div id="worldNote">V10.5 / INTERACTIVE 3D PREVIEW</div><button id="qualityBtn" type="button" aria-label="Переключить качество 3D-графики" aria-live="polite">Качество: Авто</button>
+<div id="worldNote">V10.6 / INTERACTIVE 3D PREVIEW</div><section id="stylePanel" role="dialog" aria-label="Style Studio — оформление 3D-магазина" hidden>
+ <div class="styleTop"><div><div class="styleKicker">Персонализируй пространство</div><h2>Style Studio</h2></div>
+ <button class="styleClose" id="closeStyle" aria-label="Закрыть студию">✕</button></div>
+ <p>Меняй свет, материалы и настроение магазина прямо во время прогулки.</p>
+ <span class="styleLabel">01 / Атмосфера</span>
+ <div class="styleChoices" role="group" aria-label="Выбор освещения">
+ <button type="button" data-mood="gallery" aria-pressed="true">Галерея</button>
+ <button type="button" data-mood="golden" aria-pressed="false">Закат</button>
+ <button type="button" data-mood="noir" aria-pressed="false">Noir</button></div>
+ <span class="styleLabel">02 / Текстура и цвет</span>
+ <div class="styleChoices styleSwatches" role="group" aria-label="Выбор палитры">
+ <button type="button" data-finish="original" aria-pressed="true"><i style="background:conic-gradient(#bd9981 0 25%,#a5b0a1 25% 50%,#cfb9b0 50% 75%,#595a55 75%)"></i>Original</button>
+ <button type="button" data-finish="linen" aria-pressed="false"><i style="background:#cab4a0"></i>Лён</button>
+ <button type="button" data-finish="rose" aria-pressed="false"><i style="background:#a16b75"></i>Rose</button>
+ <button type="button" data-finish="sage" aria-pressed="false"><i style="background:#778b77"></i>Sage</button>
+ <button type="button" data-finish="graphite" aria-pressed="false"><i style="background:#444a4c"></i>Noir</button></div>
+ <button type="button" id="shareStyle">Поделиться этим пространством ↗</button>
+ <div class="styleDisclosure">Ссылка сохранит магазин, свет и палитру. Это демонстрация дизайна, не персональный заказ и не покупка.</div>
+ </section>
+<button id="qualityBtn" type="button" aria-label="Переключить качество 3D-графики" aria-live="polite">Качество: Авто</button>
 <details id="assetCredits"><summary>3D-модели · источники</summary><div class="creditContent">
 <p>Демонстрационные 3D-ассеты, не реальные товары брендов. Детализированные модели загружаются по возможности; процедурные модели остаются резервными.</p><p id="premiumStatus" role="status" aria-live="polite">3D-ассеты: готовность</p>
 <p>Кресло Sheen Chair: © 2020 Wayfair, Eric Chadwick, CC0. <a href="https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/SheenChair" target="_blank" rel="noopener noreferrer">Источник</a>.</p>
@@ -182,6 +221,55 @@ const DATA={
  beauty:{name:'Beauty Maison',tag:'03 / BEAUTY MAISON',desc:'Парфюмерная галерея с округлыми флаконами, стеклом, металлом и спокойной атмосферой.',floor:'#bfafa9',wall:'#d8c7c3',accent:'#e3bda5',items:[['Parfum No.05','🌸',34900,'Флакон с полупрозрачным стеклом.'],['Glow Serum','🧴',13500,'Сыворотка во флаконе с пипеткой.'],['Velvet Rouge','💄',5990,'Помада в металлическом футляре.'],['Skin Elixir','✨',14900,'Коллекционный уход.']]},
  home:{name:'Living Gallery',tag:'04 / LIVING GALLERY',desc:'Диваны с мягкими подушками, интерьерные объекты, дерево, ковры и галерейная подсветка.',floor:'#afada3',wall:'#c8c9c0',accent:'#d5bd9c',items:[['Диван Forma','🛋️',339000,'Трёхместный модульный диван.'],['Кресло Sola','🪑',119000,'Мягкое дизайнерское кресло.'],['Стол Travertine','🪨',99000,'Каменный журнальный стол.'],['Торшер Halo','💡',89000,'Скульптурный интерьерный светильник.']]}
 };
+// Style Studio — three actually different lighting setups and four real mesh material palettes.
+// Values are URL-based and validated against closed enums; no tracking or remote saves.
+const STUDIO_MOODS={
+ gallery:{exposure:1.10,light:1,ambient:1,point:1,env:1,bg:'#ded3c2',mix:0,tint:'#fff1db'},
+ golden:{exposure:1.18,light:.94,ambient:.84,point:1.36,env:1.14,bg:'#a07662',mix:.28,tint:'#ffcf99'},
+ noir:{exposure:.91,light:.53,ambient:.57,point:1.42,env:.67,bg:'#25333e',mix:.64,tint:'#a9c5db'}
+};
+const STUDIO_FINISHES={original:null,linen:'#c9b5a0',rose:'#a16b75',sage:'#778b77',graphite:'#50565a'};
+const initialStudioQuery=new URLSearchParams(location.search);
+let studioMood=Object.hasOwn(STUDIO_MOODS,initialStudioQuery.get('mood'))?initialStudioQuery.get('mood'):'gallery';
+let studioFinish=Object.hasOwn(STUDIO_FINISHES,initialStudioQuery.get('finish'))?initialStudioQuery.get('finish'):'original';
+let studioWallMaterial=null,studioBackgroundColor=null,studioBaseWall=null;
+function applyStudioLook(){
+ const mode=STUDIO_MOODS[studioMood],color=STUDIO_FINISHES[studioFinish]?new THREE.Color(STUDIO_FINISHES[studioFinish]):null;
+ renderer.toneMappingExposure=mode.exposure;
+ if(scene.environment)scene.environmentIntensity=.88*mode.env;
+ if(studioBackgroundColor&&scene.background){
+  scene.background.copy(studioBackgroundColor).lerp(new THREE.Color(mode.bg),mode.mix);
+  if(scene.fog)scene.fog.color.copy(scene.background);
+ }
+ if(studioWallMaterial&&studioBaseWall)studioWallMaterial.color.copy(studioBaseWall).lerp(new THREE.Color(mode.bg),mode.mix*.47);
+ root.traverse(n=>{
+  if(n.isLight){
+   if(n.userData.studioIntensity==null){
+    n.userData.studioIntensity=n.intensity;
+    n.userData.studioColor=n.color.clone();
+   }
+   const gain=n.isHemisphereLight?mode.ambient:n.isPointLight?mode.point:mode.light;
+   n.intensity=n.userData.studioIntensity*gain;
+   n.color.copy(n.userData.studioColor).lerp(new THREE.Color(mode.tint),studioMood==='gallery'?0:.34);
+  }
+  if(n.isMesh&&n.userData.styleSurface){
+   if(!n.userData.studioMaterial){
+    // Clone per editable item to avoid recoloring shared material of every product.
+    const unique=n.material.clone();
+    n.userData.studioBaseColor=n.material.color.clone();
+    n.material=unique;n.userData.studioMaterial=true;
+   }
+   const muted=n.userData.styleSurface==='upholstery'?.16:.25;
+   if(color)n.material.color.copy(color).lerp(n.userData.studioBaseColor,muted);
+   else n.material.color.copy(n.userData.studioBaseColor);
+  }
+ });
+ document.querySelectorAll('[data-mood]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mood===studioMood)));
+ document.querySelectorAll('[data-finish]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.finish===studioFinish)));
+}
+function markStudioSurface(mesh,role){
+ mesh.userData.styleSurface=role;return mesh;
+}
 let active='fashion',root=new THREE.Group(), hotspots=[],pickables=[],blockers=[],keys=new Set(),yaw=0,pitch=-.03,touring=false,tourT=0,tourRoute=[],joy={x:0,y:0},walkVelocity={x:0,z:0},curProduct=null,cart={},lastActive=null;
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(61,1,.07,120);
@@ -441,7 +529,7 @@ function architecture(key){
  const d=DATA[key];
  scene.background=new THREE.Color(key==='fashion'?'#b1a69a':key==='food'?'#a7b5a8':key==='beauty'?'#c9b8b5':'#b9beb6');
  scene.fog=new THREE.Fog(scene.background,26,56);
- const wallmat=mat(d.wall,.91),floorMat=mat(d.floor,.54,.08,{map:stoneTexture(key==='beauty'?'#d9c7c1':'#c9c4b8')});
+ const wallmat=mat(d.wall,.91).clone(),floorMat=mat(d.floor,.54,.08,{map:stoneTexture(key==='beauty'?'#d9c7c1':'#c9c4b8')});studioWallMaterial=wallmat;studioBaseWall=new THREE.Color(d.wall);studioBackgroundColor=scene.background.clone();
  let floor=add(mesh(new THREE.PlaneGeometry(22,46),floorMat),0,-.01,-9);floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;
  block(0,6.4,-9,22,1,46,mat('#b5b0a5',.9));block(0,3.1,-31.8,22,6.2,.35,wallmat);
  for(const side of [-1,1]){
@@ -512,12 +600,12 @@ function clothBody(color,kind='jacket'){
   [[.58,.29,.16],[.43,.40,.23],[.18,.36,.23],[-.19,.28,.20],[-.49,.37,.27],[-.86,.51,.36],[-1.26,.65,.45],[-1.44,.69,.47]]:
   isCoat?[[.58,.30,.18],[.44,.43,.23],[.18,.40,.27],[-.19,.38,.28],[-.55,.42,.31],[-.90,.48,.35],[-1.17,.51,.39]]:
   [[.58,.28,.18],[.44,.43,.23],[.20,.38,.27],[-.18,.33,.25],[-.53,.34,.27],[-.73,.35,.27]];
- group.add(garmentShell(rings,cloth,isDress?1:.45));
+ const shell=garmentShell(rings,cloth,isDress?1:.45);markStudioSurface(shell,'fabric');group.add(shell);
  for(const side of [-1,1]){
   // Each sleeve is a tapered fully dimensional piece with an individual cuff.
   const sleeve=mesh(new THREE.CylinderGeometry(.165,.115,isDress?.69:.91,coarse?10:14,2),sleeveColor);
   sleeve.position.set(side*.53,isDress?.09:.02,0);
-  sleeve.rotation.z=side*(isDress?.25:.15);group.add(sleeve);
+  sleeve.rotation.z=side*(isDress?.25:.15);markStudioSurface(sleeve,'fabric');group.add(sleeve);
   tube(side*(isDress?.65:.63),isDress?-.24:-.42,0,.115,.115,.075,cloth,group);
  }
  if(!isDress){
@@ -635,12 +723,12 @@ function fashionScene(){
 function upholsteredSofa(x,z,color='#c6b9a4'){
  const group=new THREE.Group();group.position.set(x,0,z);root.add(group);registerBlocker(x,z,3.7,2.1);contactShadow(x,z,4.6,3.25);
  const cushion=textile(color,THREE.FrontSide);
- soft(0,.48,0,3.5,.45,1.48,cushion,.21,group);
- soft(0,.91,-.57,3.64,1.25,.34,cushion,.13,group);
- for(const side of [-1,1])soft(side*1.63,.74,.02,.40,.91,1.65,cushion,.16,group);
+ markStudioSurface(soft(0,.48,0,3.5,.45,1.48,cushion,.21,group),'upholstery');
+ markStudioSurface(soft(0,.91,-.57,3.64,1.25,.34,cushion,.13,group),'upholstery');
+ for(const side of [-1,1])markStudioSurface(soft(side*1.63,.74,.02,.40,.91,1.65,cushion,.16,group),'upholstery');
  for(const i of [-1,0,1]){
-  soft(i*1.03,.72,.25,.98,.25,1.07,textile(i===0?'#c7b8a0':color,THREE.FrontSide),.12,group);
-  const pillow=soft(i*1.09,1.1,-.35,.65,.56,.19,textile(i===0?'#eee1d0':'#acaa9d',THREE.FrontSide),.09,group);pillow.rotation.z=i*.12;
+  markStudioSurface(soft(i*1.03,.72,.25,.98,.25,1.07,textile(i===0?'#c7b8a0':color,THREE.FrontSide),.12,group),'upholstery');
+  const pillow=soft(i*1.09,1.1,-.35,.65,.56,.19,textile(i===0?'#eee1d0':'#acaa9d',THREE.FrontSide),.09,group);pillow.rotation.z=i*.12;if(i===0)markStudioSurface(pillow,'upholstery');
   // Fine hand-sewn front cushion piping catches warm showroom light.
   soft(i*1.03,.72,.786,.96,.025,.036,mat('#9d9383',.83),.01,group);
  }
@@ -845,18 +933,18 @@ function disposeWorld(){
 }
 function setStore(key){
  if(!DATA[key])return;
- active=key;showroomGeneration++;premiumSlots=[];touring=false;tourRoute=[];walkVelocity.x=walkVelocity.z=0;
+ closeStyleStudio();active=key;showroomGeneration++;premiumSlots=[];touring=false;tourRoute=[];walkVelocity.x=walkVelocity.z=0;
  keys.clear();joy.x=joy.y=0;$('tourBtn').textContent='▶ Кинотур';
  disposeWorld();
  hotspots=[];pickables=[];blockers=[];marketPackBatches.clear();tipCurrent=-1;$('objectTip').classList.remove('show');premiumState='idle';updatePremiumStatus();architecture(key);
  try{if(key==='fashion')fashionScene();else if(key==='home')homeScene();else if(key==='beauty')beautyScene();else foodScene();}
  catch(err){console.error('Scene build error:',err);toast('Часть объектов не загрузилась: '+err.message);}
- upgradePremiumAssets(key);reconcilePremiumModels();
+ upgradePremiumAssets(key);reconcilePremiumModels();applyStudioLook();
  camera.position.set(0,1.68,10.7);yaw=0;pitch=-.065;updateCamera();
  const d=DATA[key];$('worldTitle').innerHTML=d.name.replace(' ','<br>');$('eyebrow').textContent=d.tag;$('worldDescription').textContent=d.desc;
  $('titlePanel').style.opacity='1';$('titlePanel').style.pointerEvents='auto';
  document.querySelectorAll('[data-store]').forEach(b=>{b.classList.toggle('active',b.dataset.store===key);b.setAttribute('aria-pressed',String(b.dataset.store===key));});
- const url=new URL(location.href);url.searchParams.set('world',key);history.replaceState(null,'',url);
+ const url=new URL(location.href);url.searchParams.set('world',key);url.searchParams.set('mood',studioMood);url.searchParams.set('finish',studioFinish);history.replaceState(null,'',url);
 }
 function updateCamera(){camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;}
 function blocked(x,z){
@@ -928,6 +1016,60 @@ function openCart(){
  buildRows(items);if(!items.length){const p=document.createElement('p');p.textContent='Пока пусто — загляни в коллекцию и выбери предмет.';$('drawerProducts').append(p);}
  $('drawerFoot').replaceChildren();const sum=document.createElement('strong');sum.textContent=money(priceTotal());const cap=document.createElement('span');cap.textContent='Итого (демо)';$('drawerFoot').append(cap,sum);showDrawer();
 }
+// Style Studio is intentionally local-only: URL state, no accounts, no tracking or hidden uploads.
+function closeStyleStudio(){
+ $('stylePanel').hidden=true;
+ $('styleBtn').setAttribute('aria-expanded','false');
+}
+function openStyleStudio(){
+ hideDrawer();stopTour();keys.clear();joy.x=joy.y=0;
+ $('stylePanel').hidden=false;
+ $('styleBtn').setAttribute('aria-expanded','true');
+ $('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';
+ applyStudioLook();
+ $('closeStyle').focus();
+}
+function updateStyleURL(){
+ const url=new URL(location.href);
+ url.searchParams.set('world',active);
+ url.searchParams.set('mood',studioMood);
+ url.searchParams.set('finish',studioFinish);
+ history.replaceState(null,'',url);
+ return url;
+}
+$('styleBtn').addEventListener('click',()=>$('stylePanel').hidden?openStyleStudio():closeStyleStudio());
+$('closeStyle').addEventListener('click',()=>{closeStyleStudio();$('styleBtn').focus();});
+document.querySelectorAll('[data-mood]').forEach(b=>b.addEventListener('click',()=>{
+ if(!Object.hasOwn(STUDIO_MOODS,b.dataset.mood))return;
+ studioMood=b.dataset.mood;applyStudioLook();updateStyleURL();
+}));
+document.querySelectorAll('[data-finish]').forEach(b=>b.addEventListener('click',()=>{
+ if(!Object.hasOwn(STUDIO_FINISHES,b.dataset.finish))return;
+ studioFinish=b.dataset.finish;applyStudioLook();updateStyleURL();
+}));
+$('shareStyle').addEventListener('click',async()=>{
+ const url=updateStyleURL();
+ url.searchParams.delete('diagnostics');url.searchParams.delete('assets');
+ if(qualityMode==='high')url.searchParams.set('quality','high');
+ else if(qualityMode==='eco')url.searchParams.set('quality','eco');
+ else url.searchParams.delete('quality');
+ const href=url.toString(),title='MARKET SPACE · '+DATA[active].name+' / Style Studio';
+ if(navigator.share&&coarse){
+  try{await navigator.share({title,url:href});return;}
+  catch(e){if(e?.name==='AbortError')return;}
+ }
+ try{
+  if(navigator.clipboard?.writeText){
+   await navigator.clipboard.writeText(href);toast('Ссылка на этот дизайн скопирована');return;
+  }
+  const input=document.createElement('textarea');input.value=href;input.style.position='fixed';
+  input.style.opacity='0';document.body.append(input);input.select();
+  const copied=document.execCommand('copy');input.remove();
+  if(copied){toast('Ссылка на этот дизайн скопирована');return;}
+ }catch(e){console.info('Copy is unavailable',e);}
+ window.prompt('Скопируй ссылку на свой дизайн:',href);
+});
+
 $('catalogBtn').onclick=openCatalog;$('cartBtn').onclick=openCart;$('closeDrawer').onclick=hideDrawer;
 $('drawerOverlay').addEventListener('pointerdown',e=>{if(e.target===$('drawerOverlay'))hideDrawer();});
 document.querySelectorAll('[data-store]').forEach(b=>b.onclick=()=>{hideDrawer();setStore(b.dataset.store);});
@@ -950,7 +1092,8 @@ function stopTour(){
 $('introButton').onclick=startTour;
 $('tourBtn').onclick=()=>touring?stopTour():startTour();
 document.addEventListener('keydown',e=>{
- if(e.code==='Escape'){hideDrawer();return;}
+ if(e.code==='Escape'){if(!$('stylePanel').hidden){closeStyleStudio();$('styleBtn').focus();}else hideDrawer();return;}
+ if(!$('stylePanel').hidden)return;
  if($('drawerOverlay').classList.contains('open')){
   if(e.code==='Tab'){
    const els=[...$('drawerOverlay').querySelectorAll('button:not([disabled]),a[href]')].filter(x=>x.offsetParent!==null);
@@ -1069,6 +1212,7 @@ function animate(t){
 try{
  const initial=new URLSearchParams(location.search).get('world');
  applyQuality();setStore(DATA[initial]?initial:'fashion');priceTotal();
+ if(new URLSearchParams(location.search).get('studio')==='1')openStyleStudio();
  $('loading').classList.add('ready');window.__marketSpaceReady=true;
  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
  requestAnimationFrame(animate);
