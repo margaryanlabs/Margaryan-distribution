@@ -47,3 +47,35 @@ There is no fixed $50 policy, no arbitrary machine-count ceiling and no automati
 The existing `Capacity Planner` remains a **single-node estimate** with custom CPU and RAM fields. The fleet JSON tool is the source of truth for multi-node placement until a proper live inventory and verified orchestration backend exists.
 
 Related drafts: Markarian Cloud #115, #118; VETOGRAM #186; Promptence #337. All remain staging/review-only until actual host and application checks pass.
+
+## Live Coolify node reconciliation (GET only; source implementation V2)
+
+Coolify documents the self-hosted REST API at `https://<owner-coolify-domain>/api/v1`. `GET /servers` requires a bearer token. The authoritative API docs are https://coolify.io/docs/api/overview and https://coolify.io/docs/api/endpoints/servers/list-servers. Create a **read-only team-scoped token** using Coolify's API permissions and enable the API with an IP allowlist, preferably accessible through VPN/Zero Trust.
+
+When an owned Coolify host and deployment servers exist:
+
+1. Ensure `CLOUD_COOLIFY_URL` is the trusted HTTPS Coolify panel origin. Never send a token to an untrusted site.
+2. Copy `bindings.example.json` to **an owner-controlled secret directory outside the repository**, replacing placeholder server UUIDs with exact UUIDs from Coolify. Preserve exactly one UUID for each planned node. This is a mapping, not a proof that zones are independent.
+3. Set permissions on the binding file and API token file to mode 0600; own them as the user invoking Node. Do not add them to git, screenshots, chat, or logs.
+4. Run the source-only check first. This performs **no network requests**:
+
+```sh
+node scripts/cloud/fleet-live.mjs --plan "$(pwd)/deploy/cloud/fleet/staging.example.json"
+```
+
+5. On an operator-controlled host, with the read-only API enabled, run the GET-only reconciliation:
+
+```sh
+export CLOUD_COOLIFY_URL="https://cloud.example.com"
+export CLOUD_COOLIFY_READ_TOKEN_FILE="/private/secure/location/coolify-read.token"
+node scripts/cloud/fleet-live.mjs --verify "$(pwd)/deploy/cloud/fleet/staging.example.json" \
+  --bindings "/private/secure/location/fleet-bindings.json"
+```
+
+The CLI queries **only** `GET /api/v1/servers` with no redirects, an 8-second timeout and a bounded 1 MiB response. Tokens stay in local private files and never appear in the JSON receipt; network errors are sanitized. It checks the planned node ID ↔ selected Coolify UUID, rejects duplicate identities, and requires `settings.is_reachable === true` AND `settings.is_usable === true`.
+
+**What it proves:** the connected Coolify server records match the reviewed manifest and Coolify reports them reachable/usable at that moment.
+
+**What it does NOT prove:** that the servers occupy separate physical zones, have the planned vCPU/RAM/disk capacity, can communicate over the required private network, have matching application image SHAs, have working load balancing, tolerate failure, or have a replicated and restorable database. The receipt always has `independentFailureDomainsVerified=false`, `databaseReplicationVerified=false`, `canClaimHa=false`, and `canDeploy=false`. Even a complete match exits with review-only code 3 rather than a production-ready code 0. Missing or unhealthy server, unsafe private file, invalid inventory or inaccessible API exits 1.
+
+**Still mandatory:** verify actual cloud provider account topology, health probes and load balancer behavior, real Docker image/runtime across machines, offsite backups and a **real** restore, least-privilege networking and authentication, plus a controlled failover drill. A UUID binding and healthy API status are not evidence of those properties.
