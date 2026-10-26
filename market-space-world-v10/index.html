@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#10110f">
 <meta name="description" content="MARKET SPACE V10 — новая экспериментальная 3D-архитектура retail: полноценная прогулка по бутику, мебели, beauty и супермаркету.">
-<title>MARKET SPACE — Immersive World V10.4</title>
+<title>MARKET SPACE — Immersive World V10.5</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"}}</script>
 <style>
 :root{color-scheme:dark;font:14px/1.5 Inter,"Helvetica Neue",Arial,sans-serif;background:#111311;color:#f5f0e7;--paper:#f4eee3;--mute:#b7b3a8;--line:#d3c6b64b;--warm:#e4c79d}*{box-sizing:border-box}
@@ -100,11 +100,11 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 <div id="viewport" aria-label="Интерактивное 3D-пространство"></div><div class="scrim"></div>
 <header class="header">
 <a class="logo" href="../market-space-showcase-v10/" aria-label="Вернуться на MARKET SPACE"><span class="logomark"><b>M</b></span><span class="brand">MARKET SPACE<small>BY MARGARYAN LABS</small></span></a>
-<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.4</span>
+<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.5</span>
 <button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
 </header>
 <div class="titlePanel" id="titlePanel"><div class="kicker" id="eyebrow">01 / THE ATELIER</div><h1 id="worldTitle">The<br>Atelier</h1><p id="worldDescription">Мода — это не карточки в каталоге. Исследуй коллекцию, подойди к манекенам и выбери вещи прямо в пространстве.</p><button id="introButton">Исследовать пространство ↗</button></div>
-<div id="worldNote">V10.4 / INTERACTIVE 3D PREVIEW</div><button id="qualityBtn" type="button" aria-label="Переключить качество 3D-графики" aria-live="polite">Качество: Авто</button>
+<div id="worldNote">V10.5 / INTERACTIVE 3D PREVIEW</div><button id="qualityBtn" type="button" aria-label="Переключить качество 3D-графики" aria-live="polite">Качество: Авто</button>
 <details id="assetCredits"><summary>3D-модели · источники</summary><div class="creditContent">
 <p>Демонстрационные 3D-ассеты, не реальные товары брендов. Детализированные модели загружаются по возможности; процедурные модели остаются резервными.</p>
 <p>Кресло Sheen Chair: © 2020 Wayfair, Eric Chadwick, CC0. <a href="https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/SheenChair" target="_blank" rel="noopener noreferrer">Источник</a>.</p>
@@ -292,6 +292,7 @@ const gltfLoader=new GLTFLoader();
 gltfLoader.setCrossOrigin('anonymous');
 const gltfPromises=new Map(),assetGeometry=new WeakSet();
 let showroomGeneration=0, premiumSlots=[];
+let premiumState='idle';
 function premiumAllowed(){
  return new URLSearchParams(location.search).get('assets')!=='off'&&(!coarse||qualityMode==='high');
 }
@@ -319,6 +320,29 @@ function fetchPremiumAsset(name){
  }
  return gltfPromises.get(name);
 }
+function reconcilePremiumModels(){
+ // A loaded GLB stays cached, but Eco hides it and re-enables the lightweight sculpt.
+ const enabled=premiumAllowed();
+ for(const slot of premiumSlots){
+  if(slot.clone){
+   slot.clone.visible=enabled;
+   if(slot.placeholder)slot.placeholder.visible=!enabled;
+  }else if(slot.placeholder)slot.placeholder.visible=true;
+ }
+ premiumState=enabled?(premiumSlots.some(x=>x.resolved)?'ready':'loading'):'eco';
+ updatePremiumStatus();
+}
+function updatePremiumStatus(){
+ const el=$('premiumStatus');if(!el)return;
+ const states={
+  idle:'3D-ассеты: готовность',
+  loading:'3D-ассеты: загрузка HD…',
+  ready:'3D-ассеты: HD активен',
+  eco:'3D-ассеты: лёгкие модели',
+  unavailable:'3D-ассеты: запасной режим'
+ };
+ el.textContent=states[premiumState]||states.idle;
+}
 function installPremiumModel(slot,source,generation){
  if(!source||generation!==showroomGeneration||active!==slot.store||!premiumAllowed())return false;
  if(slot.resolved)return false;
@@ -335,28 +359,33 @@ function installPremiumModel(slot,source,generation){
  const mid=placedBox.getCenter(new THREE.Vector3());
  clone.position.set(slot.x-mid.x,slot.base-placedBox.min.y,slot.z-mid.z);
  clone.userData.itemIndex=slot.index;
- root.add(clone);pickables.push(clone);
+ root.add(clone);pickables.push(clone);slot.clone=clone;
  if(slot.placeholder){
   slot.placeholder.visible=false;
   pickables=pickables.filter(obj=>obj!==slot.placeholder);
  }
  slot.resolved=true;
+ reconcilePremiumModels();
  return true;
 }
 function upgradePremiumAssets(store){
- if(!premiumAllowed())return;
+ if(!premiumAllowed()){reconcilePremiumModels();return;}
+ premiumState='loading';updatePremiumStatus();
  const generation=showroomGeneration;
  for(const slot of premiumSlots.filter(s=>s.store===store&&!s.resolved)){
   fetchPremiumAsset(slot.name).then(source=>{
-   try{installPremiumModel(slot,source,generation);}
-   catch(e){console.warn('Detailed 3D model placement skipped:',e?.message||e);}
+   if(generation!==showroomGeneration)return;
+   try{
+    if(!source){premiumState='unavailable';updatePremiumStatus();return;}
+    installPremiumModel(slot,source,generation);
+   }catch(e){premiumState='unavailable';updatePremiumStatus();console.warn('Detailed 3D model placement skipped:',e?.message||e);}
   });
  }
 }
 function slotPremiumModel(name,store,x,z,base,placeholder,index){
  const cfg=PREMIUM_ASSETS[name];
  if(!cfg||cfg.store!==store)return;
- premiumSlots.push({name,store,x,z,base,placeholder,index,height:cfg.height,width:cfg.maxWidth,resolved:false});
+ premiumSlots.push({name,store,x,z,base,placeholder,index,height:cfg.height,width:cfg.maxWidth,resolved:false,clone:null});
 }
 
 const boxGeo=new THREE.BoxGeometry(1,1,1);
@@ -807,10 +836,10 @@ function setStore(key){
  active=key;showroomGeneration++;premiumSlots=[];touring=false;tourRoute=[];walkVelocity.x=walkVelocity.z=0;
  keys.clear();joy.x=joy.y=0;$('tourBtn').textContent='▶ Кинотур';
  disposeWorld();
- hotspots=[];pickables=[];blockers=[];marketPackBatches.clear();tipCurrent=-1;$('objectTip').classList.remove('show');architecture(key);
+ hotspots=[];pickables=[];blockers=[];marketPackBatches.clear();tipCurrent=-1;$('objectTip').classList.remove('show');premiumState='idle';updatePremiumStatus();architecture(key);
  try{if(key==='fashion')fashionScene();else if(key==='home')homeScene();else if(key==='beauty')beautyScene();else foodScene();}
  catch(err){console.error('Scene build error:',err);toast('Часть объектов не загрузилась: '+err.message);}
- upgradePremiumAssets(key);
+ upgradePremiumAssets(key);reconcilePremiumModels();
  camera.position.set(0,1.68,10.7);yaw=0;pitch=-.065;updateCamera();
  const d=DATA[key];$('worldTitle').innerHTML=d.name.replace(' ','<br>');$('eyebrow').textContent=d.tag;$('worldDescription').textContent=d.desc;
  $('titlePanel').style.opacity='1';$('titlePanel').style.pointerEvents='auto';
@@ -930,7 +959,7 @@ pad.addEventListener('pointerup',joyUp);pad.addEventListener('pointercancel',joy
 let dragging=false,dragId=null,dragX=0,dragY=0,dragMoved=false,downX=0,downY=0;
 $('qualityBtn').addEventListener('click',()=>{
  qualityMode=qualityCycle[(qualityCycle.indexOf(qualityMode)+1)%qualityCycle.length];
- qualityReduced=qualityMode!=='auto';applyQuality();if(qualityMode==='high')upgradePremiumAssets(active);
+ qualityReduced=qualityMode!=='auto';applyQuality();reconcilePremiumModels();if(qualityMode==='high'||qualityMode==='auto')upgradePremiumAssets(active);
 });
 const canvas=renderer.domElement;
 canvas.addEventListener('pointerdown',e=>{dragging=true;dragId=e.pointerId;dragX=downX=e.clientX;dragY=downY=e.clientY;dragMoved=false;canvas.setPointerCapture(e.pointerId);$('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';});
