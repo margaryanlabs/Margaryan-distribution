@@ -14,6 +14,7 @@ test('two scoped jobs cover offline Cloud safety and optional full build',()=>{
  assert.match(workflow,/npm run typecheck/);
  assert.match(workflow,/npm run build/);
  assert.match(workflow,/ci-run-gate.test.mjs/);
+ assert.match(workflow,/test-deploy-stage-dockerfile.mjs/);
  assert.match(workflow,/test-cloud-stack-workflow.mjs/);
 });
 test('no secrets, trading, deploy, or production infrastructure actions in validation steps',()=>{

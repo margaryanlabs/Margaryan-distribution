@@ -41,7 +41,7 @@ jobs:
         with:
           node-version: '22'
       - name: Verify release evidence and project safety (offline, no secrets)
-        run: node --test scripts/cloud/release-guardian.test.mjs scripts/cloud/release-evidence.test.mjs scripts/cloud/deploy-stage.test.mjs
+        run: node --test scripts/cloud/release-guardian.test.mjs scripts/cloud/release-evidence.test.mjs scripts/cloud/deploy-stage.test.mjs scripts/cloud/test-deploy-stage-dockerfile.mjs
       - name: Classify runner startup failures without mislabeling application code
         run: node --test scripts/cloud/ci-run-gate.test.mjs scripts/cloud/test-cloud-stack-workflow.mjs
       - name: Verify staging marker is opt-in and private secrets stay private

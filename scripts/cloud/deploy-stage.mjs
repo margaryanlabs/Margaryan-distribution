@@ -35,15 +35,43 @@ export function createStagingRequest(input){
  if(!BRANCH.test(input.git_branch||"")||input.git_branch.includes("..")||input.git_branch.includes("//")||input.git_branch.endsWith("/"))
   fail("Invalid Git branch");
  if(!["nixpacks","railpack","dockerfile","static"].includes(input.build_pack))fail("Unsupported Coolify build pack");
+ // A repository-owned Dockerfile may be nested; never allow traversal or
+ // a caller-controlled URL/shell path. Coolify expects a repository-relative
+ // dockerfile_location and the build context remains the repository root.
+ let dockerfileLocation;
+ if(input.dockerfile_location!==undefined){
+  if(input.build_pack!=="dockerfile")fail("Dockerfile location requires Dockerfile build pack");
+  const value=input.dockerfile_location;
+  if(typeof value!=="string"||value.length>150||value.startsWith("/")||
+   value.includes("\\")||value.includes("%")||value.includes("//"))
+   fail("Invalid repository-relative Dockerfile location");
+  const parts=value.split("/");
+  if(parts.length>6||parts.some(x=>!x||x==="."||x===".."||
+   !/^[a-zA-Z0-9_-][a-zA-Z0-9_.-]{0,45}$/.test(x))||
+   !/^Dockerfile(?:\.[A-Za-z0-9][A-Za-z0-9_.-]{0,45})?$/.test(parts.at(-1)))
+   fail("Unsafe Dockerfile location");
+  dockerfileLocation=value;
+ }
  const port=Number(input.ports_exposes);
  if(!Number.isInteger(port)||port<1||port>65535)fail("Invalid application port");
  if(!SLUG.test(input.name||"")||input.name.includes("--"))fail("Invalid staging application slug");
+ // App-container caps are staging defaults only, not build-server quotas.
+ // Constrain overrides to reviewed small sizes to avoid unbounded workers.
+ const memoryLimit=input.limits_memory===undefined?"1g":input.limits_memory;
+ const cpuLimit=input.limits_cpus===undefined?"1":input.limits_cpus;
+ if(!["512m","1g","2g","4g"].includes(memoryLimit))fail("Unreviewed staging memory limit");
+ if(!["0.5","1","2"].includes(cpuLimit))fail("Unreviewed staging CPU limit");
  if(input.domains&&(!DOMAIN.test(input.domains)||input.domains.includes("..")))
   fail("Provide at most one reviewed staging DNS hostname");
  return {
   project_uuid:input.project_uuid,server_uuid:input.server_uuid,
   environment_name:"staging",git_repository:input.git_repository,git_branch:input.git_branch,
   build_pack:input.build_pack,ports_exposes:String(port),name:input.name,
+  // Creation must not implicitly deploy or allocate a public fallback URL.
+  instant_deploy:false,autogenerate_domain:false,is_auto_deploy_enabled:false,
+  base_directory:"/",
+  limits_memory:memoryLimit,limits_cpus:cpuLimit,
+  ...(dockerfileLocation?{dockerfile_location:dockerfileLocation}:{}),
   ...(privateSource?{github_app_uuid:input.github_app_uuid}:{}),
   ...(input.domains?{domains:"https://"+input.domains}: {})
  };
