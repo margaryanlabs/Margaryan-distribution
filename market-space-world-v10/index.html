@@ -140,7 +140,8 @@ pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
  <button type="button" data-mood="noir" aria-pressed="false">Noir</button></div>
  <span class="styleLabel">02 / Текстура и цвет</span>
  <div class="styleChoices styleSwatches" role="group" aria-label="Выбор палитры">
- <button type="button" data-finish="linen" aria-pressed="true"><i style="background:#cab4a0"></i>Лён</button>
+ <button type="button" data-finish="original" aria-pressed="true"><i style="background:conic-gradient(#bd9981 0 25%,#a5b0a1 25% 50%,#cfb9b0 50% 75%,#595a55 75%)"></i>Original</button>
+ <button type="button" data-finish="linen" aria-pressed="false"><i style="background:#cab4a0"></i>Лён</button>
  <button type="button" data-finish="rose" aria-pressed="false"><i style="background:#a16b75"></i>Rose</button>
  <button type="button" data-finish="sage" aria-pressed="false"><i style="background:#778b77"></i>Sage</button>
  <button type="button" data-finish="graphite" aria-pressed="false"><i style="background:#444a4c"></i>Noir</button></div>
@@ -227,13 +228,13 @@ const STUDIO_MOODS={
  golden:{exposure:1.18,light:.94,ambient:.84,point:1.36,env:1.14,bg:'#a07662',mix:.28,tint:'#ffcf99'},
  noir:{exposure:.91,light:.53,ambient:.57,point:1.42,env:.67,bg:'#25333e',mix:.64,tint:'#a9c5db'}
 };
-const STUDIO_FINISHES={linen:'#c9b5a0',rose:'#a16b75',sage:'#778b77',graphite:'#50565a'};
+const STUDIO_FINISHES={original:null,linen:'#c9b5a0',rose:'#a16b75',sage:'#778b77',graphite:'#50565a'};
 const initialStudioQuery=new URLSearchParams(location.search);
 let studioMood=Object.hasOwn(STUDIO_MOODS,initialStudioQuery.get('mood'))?initialStudioQuery.get('mood'):'gallery';
-let studioFinish=Object.hasOwn(STUDIO_FINISHES,initialStudioQuery.get('finish'))?initialStudioQuery.get('finish'):'linen';
+let studioFinish=Object.hasOwn(STUDIO_FINISHES,initialStudioQuery.get('finish'))?initialStudioQuery.get('finish'):'original';
 let studioWallMaterial=null,studioBackgroundColor=null,studioBaseWall=null;
 function applyStudioLook(){
- const mode=STUDIO_MOODS[studioMood],color=new THREE.Color(STUDIO_FINISHES[studioFinish]);
+ const mode=STUDIO_MOODS[studioMood],color=STUDIO_FINISHES[studioFinish]?new THREE.Color(STUDIO_FINISHES[studioFinish]):null;
  renderer.toneMappingExposure=mode.exposure;
  if(scene.environment)scene.environmentIntensity=.88*mode.env;
  if(studioBackgroundColor&&scene.background){
@@ -259,7 +260,8 @@ function applyStudioLook(){
     n.material=unique;n.userData.studioMaterial=true;
    }
    const muted=n.userData.styleSurface==='upholstery'?.16:.25;
-   n.material.color.copy(color).lerp(n.userData.studioBaseColor,muted);
+   if(color)n.material.color.copy(color).lerp(n.userData.studioBaseColor,muted);
+   else n.material.color.copy(n.userData.studioBaseColor);
   }
  });
  document.querySelectorAll('[data-mood]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mood===studioMood)));
