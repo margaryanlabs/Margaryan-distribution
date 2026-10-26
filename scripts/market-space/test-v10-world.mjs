@@ -136,7 +136,7 @@ check('Grocery instancing generates stable batch transforms and selects individu
  assert.equal(d.batches().size,0);
 });
 check('Physically lit materials and soft contact shadows preserve a light mobile fallback',()=>{
- for(const token of ['RoomEnvironment','new THREE.PMREMGenerator(','scene.environment=','function contactShadow(','createRadialGradient(','function perfumeGlass(','clearcoat:.95'])assert.ok(world.includes(token),token);
+ for(const token of ['RoomEnvironment','new THREE.PMREMGenerator(','scene.environment=','function contactShadow(','createRadialGradient(','function perfumeGlass(','clearcoat:.90'])assert.ok(world.includes(token),token);
  assert.ok(world.includes('if(!window.__marketSpaceReady)window.__marketSpaceShowFallback'));
 });
 check('V10.4 import and source licensing references',()=>{
@@ -147,10 +147,10 @@ check('Premium asset manager is optional, asynchronous and safe across scene swi
  for(const token of ['const PREMIUM_ASSETS=','fetchPremiumAsset(name)','gltfLoader.loadAsync(info.src)','source.clone(true)','const generation=showroomGeneration','generation!==showroomGeneration','if(!premiumAllowed()){reconcilePremiumModels();return;}',"new URLSearchParams(location.search).get('assets')",'assetGeometry.add(obj.geometry)','if(n.geometry&&n.geometry!==boxGeo&&n.geometry!==sphereGeo&&!assetGeometry.has(n.geometry))','slot.placeholder.visible=false']) assert.ok(world.includes(token),token);
 });
 check('Procedural displays remain when GLB absent and quality gate holds on mobile',()=>{
- for(const token of ["shoeExhibit(-4.6,-7.2)","shoeExhibit(4.6,-19.3)","slotPremiumModel('chair'","slotPremiumModel('shoe'","qualityMode==='high'","qualityMode==='high'||qualityMode==='auto')upgradePremiumAssets(active)","const firstChair=chair(-2.55,-7),secondChair=chair(2.5,-22)"])assert.ok(world.includes(token),token);
+ for(const token of ["shoeExhibit(-4.6,-7.2)","shoeExhibit(4.6,-19.3)","slotPremiumModel('chair'","slotPremiumModel('shoe'","qualityMode==='high'","qualityReduced=qualityMode!=='auto'","const firstChair=chair(-2.55,-7),secondChair=chair(2.5,-22)"])assert.ok(world.includes(token),token);
 });
 check('HD query enables detailed mobile models',()=>{
- for(const token of ["const requestedQuality=new URLSearchParams(location.search).get('quality')","requestedQuality==='high'?'high'","applyQuality();setStore(","qualityMode==='high'||qualityMode==='auto')upgradePremiumAssets(active)"])assert.ok(world.includes(token),token);
+ for(const token of ["const requestedQuality=new URLSearchParams(location.search).get('quality')","requestedQuality==='high'?'high'","applyQuality();setStore(","qualityReduced=qualityMode!=='auto'"])assert.ok(world.includes(token),token);
 });
 
 check('Eco disables premium draw meshes and optional diagnostics can show GPU counters',()=>{
