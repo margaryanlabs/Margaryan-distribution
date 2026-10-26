@@ -100,4 +100,7 @@ check('Cinema tours steer around central Market/Beauty objects',()=>{
 check('Fashion accessories and sewn upholstery remain present',()=>{
  for(const k of ['function boutiqueHandbag(', 'const handle=mesh(new THREE.TorusGeometry', "const cushion=textile(", 'Fine hand-sewn front cushion piping'])assert.ok(world.includes(k),k);
 });
+check('WebGL error screen has labelled four-scene concept gallery and Lite action',()=>{
+ for(const str of ['id="galleryFallback"','data-fallback="fashion"','data-fallback="food"','data-fallback="beauty"','data-fallback="home"','Визуальная галерея / Концепция','не кадры реального 3D-движка','__marketSpaceShowFallback','mode=lite','webglcontextlost'])assert.ok(world.includes(str),str);
+});
 console.log('V10.2 source contracts: '+count+' passed. Real mobile GPU and external browser QA are not verified.');
