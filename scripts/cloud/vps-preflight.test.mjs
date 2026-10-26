@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { evaluateVps, parseArgs, main, PILOT_LIMITS } from './vps-preflight.mjs';
 const good = { platform: 'linux', arch: 'x64', nodeMajor: 22, cpu: 8,
-  ramMiB: 32768, freeDiskGiB: 150, dockerCli: true, compose: true, daemon: true };
+  ramMiB: 32768, freeDiskGiB: 150, dockerCli: true, localDockerContext: true, compose: true, daemon: true };
 
 test('sufficient Linux host allows disposable pilot but never production', () => {
   const report = evaluateVps(good);
@@ -16,7 +16,7 @@ test('missing daemon is a wait even when Docker CLI exists', () => {
   assert.deepEqual(report.checks.find(x => x.id === 'docker_daemon_access'),
     { id: 'docker_daemon_access', status: 'WAIT' });
 });
-test('missing Compose blocks the staging pilot', () => {
+test('unexpected remote Docker context blocks the staging pilot', () => {\n  assert.equal(evaluateVps({ ...good, localDockerContext: false }).gate, 'NOT_READY');\n});\ntest('missing Compose blocks the staging pilot', () => {
   assert.equal(evaluateVps({ ...good, compose: false }).gate, 'NOT_READY');
 });
 test('thresholds are intended for the pilot, not every Margaryan product', () => {
