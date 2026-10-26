@@ -48,7 +48,7 @@ export function createStagingRequest(input){
   const parts=value.split("/");
   if(parts.length>6||parts.some(x=>!x||x==="."||x===".."||
    !/^[a-zA-Z0-9_-][a-zA-Z0-9_.-]{0,45}$/.test(x))||
-   !/^Dockerfile(?:\\.[A-Za-z0-9][A-Za-z0-9_.-]{0,45})?$/.test(parts.at(-1)))
+   !/^Dockerfile(?:\.[A-Za-z0-9][A-Za-z0-9_.-]{0,45})?$/.test(parts.at(-1)))
    fail("Unsafe Dockerfile location");
   dockerfileLocation=value;
  }
