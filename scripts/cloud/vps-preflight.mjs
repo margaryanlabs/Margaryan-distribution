@@ -17,7 +17,7 @@ export function evaluateVps(snapshot) {
     ['cpu_for_staging', Number.isInteger(snapshot.cpu) && snapshot.cpu >= PILOT_LIMITS.cpu],
     ['ram_for_staging', Number.isFinite(snapshot.ramMiB) && snapshot.ramMiB >= PILOT_LIMITS.ramMiB],
     ['free_disk_for_staging', Number.isFinite(snapshot.freeDiskGiB) && snapshot.freeDiskGiB >= PILOT_LIMITS.freeDiskGiB],
-    ['docker_cli', snapshot.dockerCli === true],
+    ['docker_cli', snapshot.dockerCli === true],\n    ['local_docker_context', snapshot.localDockerContext === true],
     ['docker_compose', snapshot.compose === true],
     ['docker_daemon_access', snapshot.daemon === true],
   ].map(([id, pass]) => ({ id, status: pass ? 'PASS' : 'WAIT' }));
@@ -39,7 +39,7 @@ function probeDocker(args) {
   } catch { return false; }
 }
 
-export function readHost() {
+function probeLocalContext() {\n  try {\n    const context = execFileSync('docker', ['context', 'show'], { timeout: 4500, encoding: 'utf8',\n      env: { PATH: process.env.PATH || '/usr/bin:/bin', HOME: process.env.HOME || '/tmp' }, maxBuffer: 1024 });\n    return context.trim() === 'default';\n  } catch { return false; }\n}\n\nexport function readHost() {
   let freeDiskGiB = NaN;
   try {
     const fs = statfsSync('/');
@@ -48,7 +48,7 @@ export function readHost() {
   return {
     platform: platform(), arch: arch(), nodeMajor: Number(process.versions.node.split('.')[0]),
     cpu: cpus().length, ramMiB: totalmem() / 1048576, freeDiskGiB,
-    dockerCli: probeDocker(['--version']),
+    dockerCli: probeDocker(['--version']), localDockerContext: probeLocalContext(),
     compose: probeDocker(['compose', 'version']),
     daemon: probeDocker(['info', '--format', '{{.ServerVersion}}']),
   };
