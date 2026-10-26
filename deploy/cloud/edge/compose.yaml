@@ -1,0 +1,25 @@
+# STAGING ONLY. A separate HTTPS edge proxy must join markarian-edge-ingress.
+# No host ports or direct Internet ingress. Requires generated haproxy.cfg alongside this file.
+name: markarian-edge
+services:
+  edge:
+    image: haproxy:3.2-alpine
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: [/tmp]
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    expose: ["8081", "8082"]
+    networks: [ingress]
+    healthcheck:
+      # Config syntax only, NOT origin/server availability.
+      test: ["CMD", "haproxy", "-c", "-f", "/usr/local/etc/haproxy/haproxy.cfg"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+networks:
+  ingress:
+    external: true
+    name: markarian-edge-ingress
