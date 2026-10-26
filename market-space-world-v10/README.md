@@ -170,3 +170,41 @@ The flagship showroom no longer confines active product experimentation to Fashi
 - Beauty amber/frosted: `/market-space-world-v10/?world=beauty&experience=1&exp_beauty_scent=amber&exp_beauty_glass=frost&preview=108`
 - Living conversation/sage: `/market-space-world-v10/?world=home&experience=1&exp_home_fabric=sage&exp_home_layout=conversation&preview=108`
 - Fashion Lookbook: `/market-space-world-v10/?world=fashion&lookbook=1&preview=108`
+
+## V11.0 — material, geometry, architecture quality rebuild (2026-10-26)
+
+This milestone deliberately upgrades the actual Three.js scene content rather than adding more UI decoration.
+
+**More credible fashion materials and 3D silhouettes**
+- Garment shells now use smoothly interpolated 3D contour rings and nonrepeating drape/hem wrinkles, rather than sparse cross-sections.
+- HD: **880 surface vertices / 1,680 triangle faces** on the test garment; Eco: **128 vertices / 224 triangles**. HD detail is available on Android through `quality=high` even when the pointer is a touchscreen.
+- Sleeves are volumetric cloth lofts rather than simple rigid cylinders. Jacket/coat lapels have beveled extruded depth.
+- Fabrics use `MeshPhysicalMaterial` with a real `sheen` layer, cloth bump texture and more plausible roughness. A room PMREM environment is still used for subtle fabric, metal and clearcoat response.
+
+**Distinct stone, timber, reflective cosmetics**
+- Deterministic irregular marble/travertine veining replaces noisy tiny boxes and flat repetitive tile imagery. Actual canvas maps use 1,024² in HD versus 512² in Eco with corresponding anisotropic texture filtering.
+- Procedural wood grain and knotted timber texture introduced as a shared physically lit finish for Living details and retail furniture.
+- Selected cosmetics glass uses `MeshPhysicalMaterial.transmission`, `thickness`, `ior`, reflection clearcoat and absorption tint **only when the device is using HD or a desktop render**. Eco retains less expensive alpha transparency. The official Three.js material docs state opacity should equal one for nonzero transmission.
+- Original in-scene `MAISON` perfume labels are drawn as cached texture art directly on actual 3D bottle fronts.
+
+**Each retail sector has bespoke architectural geometry**
+- Fashion: bronze boutique arch portals, long light coves, sculptural wall panels and track hardware.
+- Beauty: ribbed translucent glass, rose stone, illuminated art-deco wall niches and central scent podiums.
+- Living: timber slat walls, textured niches, rug trims and residential cove lighting.
+- Market: dark green commercial fascia, warm-lit shelf headers, structured aisle panels and signage.
+- Dense detail is reduced on Eco/mobile by limiting rib and timber slat counts.
+
+**Quality switching is now a real mesh / material rebuild**
+- Auto / HD / Eco switch rebuilds the current room to apply mesh density and canvas texture LOD while restoring the visitor's position and camera angle.
+- Branded interactive tools (Lookbook, Style Studio, Market Mix, Beauty Scent Atelier, Living Composer, twin joysticks, local demo cart and selectable objects) continue to exist.
+- A new `scripts/market-space/test-v11-quality.mjs` verifies geometric counts, HD/Eco stone resolution, dynamic glass optical parameters, distinct interiors, and the actual quality rebuild path.
+- The previously installed Three.js WebGL module remains pinned; no new commercial infrastructure, no Vercel production deployment or paid asset service was required.
+
+**QA honest limits**
+- All offline regression suites pass, including 5 new V11 isolated quality checks.
+- **Physical Android Chrome / Fold / iPhone screenshot render, GPU timings, materials appearance and browser compatibility were not independently verified.**
+- This is a stronger bespoke procedural product-design prototype; genuinely photorealistic clothing, calibrated fabric scans, furniture catalog and client inventory still require original licensed/commissioned high-poly GLB assets plus PBR texture maps and mobile LOD validation.
+- Actual payment capture, merchant orders, product CRM and production checkout remain intentionally disabled.
+
+Preview HD: `/market-space-world-v10/?world=fashion&quality=high&preview=110`
+Preview Eco: `/market-space-world-v10/?world=fashion&quality=eco&assets=off&preview=110`
