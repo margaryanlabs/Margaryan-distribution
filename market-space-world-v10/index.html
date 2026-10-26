@@ -1154,7 +1154,7 @@ function disposeWorld(){
 function setStore(key){
  if(!DATA[key])return;
  closeLookbook();closeStyleStudio();active=key;lookbookStage=null;showroomGeneration++;premiumSlots=[];touring=false;tourRoute=[];walkVelocity.x=walkVelocity.z=0;
- keys.clear();joy.x=joy.y=0;$('tourBtn').textContent='▶ Кинотур';
+ keys.clear();resetTouchSticks();$('tourBtn').textContent='▶ Кинотур';
  disposeWorld();
  hotspots=[];pickables=[];blockers=[];marketPackBatches.clear();tipCurrent=-1;$('objectTip').classList.remove('show');premiumState='idle';updatePremiumStatus();architecture(key);
  try{if(key==='fashion')fashionScene();else if(key==='home')homeScene();else if(key==='beauty')beautyScene();else foodScene();}
@@ -1200,7 +1200,7 @@ function selectAt(cx,cy){
   }
  }
 }
-function showDrawer(){closeLookbook();const d=$('drawerOverlay');d.classList.add('open');d.setAttribute('aria-hidden','false');lastActive=document.activeElement;$('closeDrawer').focus();keys.clear();joy.x=joy.y=0;}
+function showDrawer(){closeLookbook();resetTouchSticks();const d=$('drawerOverlay');d.classList.add('open');d.setAttribute('aria-hidden','false');lastActive=document.activeElement;$('closeDrawer').focus();keys.clear();joy.x=joy.y=0;}
 function hideDrawer(){const d=$('drawerOverlay');d.classList.remove('open');d.setAttribute('aria-hidden','true');if(lastActive&&lastActive.focus)lastActive.focus();}
 function money(v){return Number(v).toLocaleString('ru-RU')+' ֏';}
 function priceTotal(){let sum=0,cnt=0;Object.entries(cart).forEach(([key,qty])=>{const [store,i]=key.split(':');const item=DATA[store]?.items[Number(i)];if(item){sum+=item[2]*qty;cnt+=qty;}});$('cartCount').textContent=cnt;return sum;}
@@ -1250,7 +1250,7 @@ function openLookbook(){
  if(active!=='fashion')setStore('fashion');
  if(!lookbookStage){toast('Манекен Lookbook недоступен в этой сцене');return;}
  hideDrawer();closeStyleStudio();stopTour();
- keys.clear();joy.x=joy.y=0;
+ keys.clear();resetTouchSticks();
  $('lookbookPanel').hidden=false;$('lookbookBtn').setAttribute('aria-expanded','true');
  $('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';
  applyLookbookState();
@@ -1325,7 +1325,7 @@ function closeStyleStudio(){
  $('styleBtn').setAttribute('aria-expanded','false');
 }
 function openStyleStudio(){
- closeLookbook();hideDrawer();stopTour();keys.clear();joy.x=joy.y=0;
+ closeLookbook();hideDrawer();stopTour();keys.clear();resetTouchSticks();
  $('stylePanel').hidden=false;
  $('styleBtn').setAttribute('aria-expanded','true');
  $('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';
@@ -1413,12 +1413,33 @@ document.addEventListener('keydown',e=>{
  if(near&&Number.isInteger(near.index))openItem(near.index);
 }});
 document.addEventListener('keyup',e=>keys.delete(e.code));
-window.addEventListener('blur',()=>{keys.clear();joy.x=joy.y=0;});
-const pad=$('movePad');let joyPointer=null;
-function joyMove(e){const r=pad.getBoundingClientRect(),dx=(e.clientX-r.left-r.width/2)/(r.width*.31),dy=(e.clientY-r.top-r.height/2)/(r.height*.31);joy.x=clamp(dx,-1,1);joy.y=clamp(dy,-1,1);$('padThumb').style.transform='translate('+(joy.x*23)+'px,'+(joy.y*23)+'px)';}
-pad.addEventListener('pointerdown',e=>{joyPointer=e.pointerId;pad.setPointerCapture(e.pointerId);joyMove(e);});pad.addEventListener('pointermove',e=>{if(e.pointerId===joyPointer)joyMove(e);});
+window.addEventListener('blur',()=>{keys.clear();resetTouchSticks();});
+const pad=$('movePad'),lookPad=$('lookPad');let joyPointer=null,lookPointer=null,lookJoy={x:0,y:0};
+function stickVector(e,element){
+ const r=element.getBoundingClientRect(),dx=(e.clientX-r.left-r.width/2)/(r.width*.32),dy=(e.clientY-r.top-r.height/2)/(r.height*.32);
+ const magnitude=Math.hypot(dx,dy),adjusted=magnitude<.16?0:Math.min(1,(magnitude-.16)/.84),normal=Math.max(.0001,magnitude);
+ return {x:dx/normal*adjusted,y:dy/normal*adjusted};
+}
+function joyMove(e){
+ const v=stickVector(e,pad);joy.x=v.x;joy.y=v.y;
+ $('padThumb').style.transform='translate('+(joy.x*29)+'px,'+(joy.y*29)+'px)';
+}
+function lookMove(e){
+ const v=stickVector(e,lookPad);lookJoy.x=v.x;lookJoy.y=v.y;
+ $('lookThumb').style.transform='translate('+(lookJoy.x*29)+'px,'+(lookJoy.y*29)+'px)';
+}
+function resetTouchSticks(){
+ joyPointer=lookPointer=null;joy.x=joy.y=lookJoy.x=lookJoy.y=0;
+ $('padThumb').style.transform='';$('lookThumb').style.transform='';
+}
+pad.addEventListener('pointerdown',e=>{if(joyPointer!==null)return;joyPointer=e.pointerId;pad.setPointerCapture(e.pointerId);joyMove(e);stopTour();});pad.addEventListener('pointermove',e=>{if(e.pointerId===joyPointer)joyMove(e);});
 function joyUp(e){if(e.pointerId!==joyPointer)return;joyPointer=null;joy.x=joy.y=0;$('padThumb').style.transform='';}
 pad.addEventListener('pointerup',joyUp);pad.addEventListener('pointercancel',joyUp);
+lookPad.addEventListener('pointerdown',e=>{if(lookPointer!==null)return;lookPointer=e.pointerId;lookPad.setPointerCapture(e.pointerId);lookMove(e);stopTour();});
+lookPad.addEventListener('pointermove',e=>{if(e.pointerId===lookPointer)lookMove(e)});
+function lookUp(e){if(e.pointerId!==lookPointer)return;lookPointer=null;lookJoy.x=lookJoy.y=0;$('lookThumb').style.transform='';}
+lookPad.addEventListener('pointerup',lookUp);
+lookPad.addEventListener('pointercancel',lookUp);
 let dragging=false,dragId=null,dragX=0,dragY=0,dragMoved=false,downX=0,downY=0;
 $('qualityBtn').addEventListener('click',()=>{
  qualityMode=qualityCycle[(qualityCycle.indexOf(qualityMode)+1)%qualityCycle.length];
@@ -1459,7 +1480,7 @@ function animate(t){
  requestAnimationFrame(animate);
  const delta=Math.min(.04,(t-(animate.prev||t))/1000);animate.prev=t;
  if(document.hidden)return;
- if(!$('drawerOverlay').classList.contains('open')&&$('lookbookPanel').hidden){
+ if(!$('drawerOverlay').classList.contains('open')&&$('lookbookPanel').hidden&&$('stylePanel').hidden&&$('experiencePanel').hidden){
   if(touring&&tourRoute.length>1){
    tourT+=delta/(reduced?2.4:3.65);
    const n=tourRoute.length-1,seg=Math.min(n-1,Math.floor(tourT));
@@ -1481,6 +1502,9 @@ function animate(t){
    move(walkVelocity.x*delta,walkVelocity.z*delta);
    if(keys.has('ArrowLeft'))yaw+=delta*1.3;
    if(keys.has('ArrowRight'))yaw-=delta*1.3;
+   if(lookPointer!==null){
+    yaw-=lookJoy.x*delta*1.7;pitch=clamp(pitch-lookJoy.y*delta*1.03,-.58,.52);
+   }
   }
  }
  if(lookbookFocus){
