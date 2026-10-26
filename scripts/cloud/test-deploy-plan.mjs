@@ -20,10 +20,12 @@ test("Rejects injected branches and unusual repo URLs",()=>{
  for(const repo of ["https://evil.test/a","foo/bar;rm -rf /","../x","foo/bar/../../../etc"])
   assert.ok(validateDeployInput({...sample,repository:repo}).length>0,repo);
 });
-test("Validates resource limits, DNS, published workers and health path",()=>{
- assert.ok(validateDeployInput({...sample,memoryMB:99999}).length>0);
- assert.ok(validateDeployInput({...sample,cpu:99}).length>0);
- assert.ok(validateDeployInput({...sample,replicas:12}).length>0);
+test("Allows large fleet allocations but still rejects invalid values, DNS and worker exposure",()=>{
+ for(const expanded of [{cpu:99},{memoryMB:131072},{replicas:100}])
+  assert.equal(validateDeployInput({...sample,...expanded}).length,0);
+ for(const bad of [{cpu:0},{cpu:1.5},{memoryMB:-1},{memoryMB:Infinity},
+  {replicas:0},{replicas:Number.MAX_SAFE_INTEGER+1}])
+  assert.ok(validateDeployInput({...sample,...bad}).length>0);
  assert.ok(validateDeployInput({...sample,port:-1}).length>0);
  assert.ok(validateDeployInput({...sample,healthPath:"/../../admin"}).length>0);
  assert.ok(validateDeployInput({...sample,domain:"http://example.com"}).length>0);

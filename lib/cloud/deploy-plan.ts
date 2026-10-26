@@ -23,9 +23,11 @@ export function validateDeployInput(value:DeployInput):string[]{
   problems.push("Use a valid, unambiguous Git branch.");
  if(!["staging","production"].includes(value.environment))problems.push("Unknown environment.");
  if(!["nextjs","node","static","worker"].includes(value.kind))problems.push("Unsupported runtime type.");
- if(!Number.isInteger(value.cpu)||value.cpu<1||value.cpu>16)problems.push("CPU limit must be 1–16 vCPU.");
- if(!Number.isInteger(value.memoryMB)||value.memoryMB<256||value.memoryMB>32768||value.memoryMB%256!==0)problems.push("RAM limit must be 256–32768 MB in steps of 256.");
- if(!Number.isInteger(value.replicas)||value.replicas<1||value.replicas>5)problems.push("Replicas must be 1–5.");
+ // No arbitrary preview-only ceilings: actual deployment capacity and quotas
+ // must be checked against target hosts and provider constraints before execution.
+ if(!Number.isSafeInteger(value.cpu)||value.cpu<1)problems.push("CPU must be a positive safe integer.");
+ if(!Number.isSafeInteger(value.memoryMB)||value.memoryMB<128)problems.push("RAM must be at least 128 MB and a safe integer.");
+ if(!Number.isSafeInteger(value.replicas)||value.replicas<1)problems.push("Replicas must be a positive safe integer.");
  if(!Number.isInteger(value.port)||value.port<1||value.port>65535)problems.push("Port must be 1–65535.");
  if(!PATH.test(value.healthPath)||value.healthPath.includes("..")||value.healthPath.includes("//"))problems.push("Invalid healthcheck path.");
  const domain=value.domain.trim().toLowerCase();

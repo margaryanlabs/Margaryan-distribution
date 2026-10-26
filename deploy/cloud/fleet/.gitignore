@@ -1,0 +1,7 @@
+# Never commit owned Coolify UUID bindings, runtime credentials, incident logs or actual customer fleet inventory.
+*bindings*.private.json
+fleet-bindings.json
+*.token
+secrets/
+.env
+.env.*

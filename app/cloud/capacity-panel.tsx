@@ -11,7 +11,10 @@ const sizes=[
  {label:"Enterprise",cpu:64,ramMiB:131072}
 ] as const;
 const formatMemory=(n:number)=>n>=1024?(n/1024).toLocaleString("en",{maximumFractionDigits:1})+" GiB":n+" MiB";
-export default function CapacityPanel({onDeploy,onSetup}:{onDeploy:()=>void;onSetup:()=>void}){
+type ObservedServer={uuid:string;name:string;status:string};
+export default function CapacityPanel({onDeploy,onSetup,observedServers=[],inventoryConnected=false}:{
+ onDeploy:()=>void;onSetup:()=>void;observedServers?:ObservedServer[];inventoryConnected?:boolean
+}){
  const [node,setNode]=useState<NodeCapacity>({cpu:16,ramMiB:32768,reservedCpu:2,reservedRamMiB:4096});
  const [workloads,setWorkloads]=useState<Workload[]>(twoProductWorkloads);
  const [scenario,setScenario]=useState<"first-two"|"portfolio">("first-two");
@@ -73,6 +76,18 @@ export default function CapacityPanel({onDeploy,onSetup}:{onDeploy:()=>void;onSe
     <p>Cost is an operational signal, not an automatic block on architecture. A one-VPS estimate does not equal managed multi-zone availability. Database replication, verified backups and incident recovery remain separate engineering requirements.</p>
    </div>
    <a href="https://github.com/margaryanlabs/Margaryan-distribution/tree/feat/cloud-fleet-runtime-architecture-20261026/deploy/cloud/fleet" target="_blank" rel="noopener noreferrer">Review fleet manifest ↗</a>
+  </section>
+  <section className={styles.liveServers} aria-label="Coolify read-only server inventory">
+   <div><span className={styles.kicker}>LIVE COOLIFY / READ-ONLY SERVER INVENTORY</span>
+    <h2>{inventoryConnected?"Connected server records":"Live inventory not connected"}</h2>
+    <p>These are actual Coolify records when authenticated, not evidence of physical zone separation, spare capacity, database replication, backups or verified failover. The private fleet UUID verifier must be run by the operator to match planned nodes.</p>
+   </div>
+   {inventoryConnected&&observedServers.length>0?
+     <ul>{observedServers.slice(0,30).map(server=><li key={server.uuid}>
+       <strong>{server.name||"Unnamed node"}</strong>
+       <span>{server.status==="healthy"?"Reachable / usable":server.status||"Unknown"}</span>
+     </li>)}</ul>:
+     <p>No verified owned servers are currently available in the connected snapshot.</p>}
   </section>
   <section className={styles.workloads}>
    <div className={styles.workHeader}><div><span className={styles.kicker}>03 / OUR APPLICATIONS</span><h2>Plan workloads</h2></div><span>{active.length} enabled / {workloads.length} profiles</span></div>
