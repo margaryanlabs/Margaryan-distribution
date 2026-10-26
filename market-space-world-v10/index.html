@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#10110f">
 <meta name="description" content="MARKET SPACE V10 — новая экспериментальная 3D-архитектура retail: полноценная прогулка по бутику, мебели, beauty и супермаркету.">
-<title>MARKET SPACE — Immersive World V10.6</title>
+<title>MARKET SPACE — Immersive World V10.7</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"}}</script>
 <style>
 :root{color-scheme:dark;font:14px/1.5 Inter,"Helvetica Neue",Arial,sans-serif;background:#111311;color:#f5f0e7;--paper:#f4eee3;--mute:#b7b3a8;--line:#d3c6b64b;--warm:#e4c79d}*{box-sizing:border-box}
@@ -37,6 +37,41 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 border:1px solid #d6b98b70;padding:9px 11px;font:11px/1.5 ui-monospace,SFMono-Regular,monospace;
 pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
 #perfHud[hidden]{display:none!important}
+
+/* V10.7 immersive wardrobe configurator: one secondary mobile sheet, with 3D viewport unobstructed. */
+#lookbookPanel{position:fixed;z-index:15;left:clamp(12px,3vw,52px);top:96px;width:min(365px,calc(100vw - 26px));max-height:calc(100dvh - 208px);overflow-y:auto;overscroll-behavior:contain;
+ background:linear-gradient(156deg,#20241ee9,#111917f5 60%);border:1px solid #d7c29c93;box-shadow:0 22px 65px #000b;backdrop-filter:blur(20px);padding:19px 18px;color:#f1e7d6;border-radius:12px}
+#lookbookPanel[hidden]{display:none!important}
+.lookbookTop{display:flex;align-items:flex-start;justify-content:space-between;gap:13px}
+.lookbookTop h2{font:normal 38px/.98 Georgia,serif;letter-spacing:-.05em;margin:7px 0 8px}
+.lookbookKicker{font:700 9px Inter,Arial,sans-serif;letter-spacing:.22em;color:#d9c5a6;text-transform:uppercase}
+.lookbookClose{background:transparent;border:1px solid #e0d1b080;border-radius:5px;color:#eee4d2;padding:7px 11px}
+.lookbookLead{margin:0 0 13px;font-size:11px;line-height:1.6;color:#d1c9b8}
+.lookbookGroup{padding:12px 0;border-top:1px solid #e6d0ad38}
+.lookbookGroup strong{display:block;text-transform:uppercase;letter-spacing:.16em;color:#d9c5a9;font-size:9px;margin-bottom:9px}
+.lookbookChoices{display:flex;flex-wrap:wrap;gap:6px}
+.lookbookChoices button{border:1px solid #ebd8b966;color:#eae1d3;background:#ffffff08;padding:9px 10px;border-radius:6px;font-size:11px;min-height:38px}
+.lookbookChoices button[aria-pressed="true"]{background:#e7d1b1;color:#1d2520;border-color:#e7d1b1;font-weight:800}
+.lookbookChoices button:hover:not([aria-pressed="true"]){background:#ffffff20}
+.lookbookLooks button{font-family:Georgia,serif;font-size:14px;letter-spacing:.01em}
+.lookbookColors button{padding:7px;min-width:52px;font-size:9px}
+.lookbookColors i{display:block;width:25px;height:25px;border:1px solid #eee9de99;border-radius:50%;margin:0 auto 5px;box-shadow:0 3px 9px #0008}
+.lookbookTotal{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #dfc9a75c;padding:13px 0 9px;font-size:11px;color:#c7c4b8}
+.lookbookTotal b{font:normal 21px Georgia,serif;color:#f4e2c5}
+.lookbookActions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.lookbookActions button{min-height:41px;border:1px solid #dfc9a58a;border-radius:5px;color:#e9ddc7;background:#ffffff0d;padding:9px 7px;font-size:10px;font-weight:750;cursor:pointer}
+.lookbookActions .main{background:#ead5b7;color:#18221c;border-color:#ead5b7}
+.lookbookActions button:hover{filter:brightness(1.15)}
+.lookbookDisclaimer{margin:11px 0 0;color:#b0b5ab;font-size:10px;line-height:1.5}
+#lookbookBtn{border-color:#e4c49cba;color:#f5e1bf}
+@media(max-width:620px){
+ #lookbookPanel{left:6px;right:6px;top:auto;bottom:92px;width:auto;max-height:min(46dvh,420px);padding:12px 14px}
+ .lookbookTop h2{font-size:28px;margin:4px 0 7px}
+ .lookbookLead{font-size:10px;margin-bottom:8px}
+ .lookbookGroup{padding:9px 0}.lookbookChoices button{padding:7px 9px;min-height:34px}
+ .lookbookActions button{min-height:36px}
+ #lookbookBtn{font-size:8px}
+}
 
 /* V10.6 — a compact editing console, not a full-screen obstructing shopping modal. */
 #stylePanel{position:fixed;z-index:14;right:clamp(12px,3vw,52px);top:91px;width:min(330px,calc(100vw - 26px));background:#111917f2;color:#f2ecdf;
@@ -118,6 +153,16 @@ pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
  #objectTip{right:10px;bottom:181px;min-width:156px;max-width:183px;padding:11px}#objectTip strong{font-size:20px}#objectTip button{padding:8px 10px;font-size:9px}.help{display:none}.movePad{display:block}.touchHelp{display:block;position:fixed;right:16px;bottom:136px;z-index:4;font-size:10px;text-align:right;color:#f3e7cfc9;letter-spacing:.1em}#hotspotHint{top:53%}
  #notice{bottom:190px;right:12px}.drawer{padding:22px}
 }
+@media(max-width:430px){
+ .header{padding-inline:8px;gap:4px}
+ .header .brand{display:none}
+ .logo{gap:0;margin-right:auto}
+ .header .topAction{padding:8px 5px;font-size:8px;letter-spacing:0}
+}
+@media(max-width:340px){
+ .header .topAction{font-size:7px;padding:8px 4px}
+ #lookbookPanel{bottom:88px;max-height:42dvh}
+}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -125,11 +170,43 @@ pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
 <div id="viewport" aria-label="Интерактивное 3D-пространство"></div><div class="scrim"></div>
 <header class="header">
 <a class="logo" href="../market-space-showcase-v10/" aria-label="Вернуться на MARKET SPACE"><span class="logomark"><b>M</b></span><span class="brand">MARKET SPACE<small>BY MARGARYAN LABS</small></span></a>
-<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.6</span>
-<button class="topAction" id="styleBtn" aria-controls="stylePanel" aria-expanded="false">✦ Студия</button><button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
+<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.7</span>
+<button class="topAction" id="lookbookBtn" aria-controls="lookbookPanel" aria-expanded="false">◈ Lookbook</button><button class="topAction" id="styleBtn" aria-controls="stylePanel" aria-expanded="false">✦ Студия</button><button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
 </header>
 <div class="titlePanel" id="titlePanel"><div class="kicker" id="eyebrow">01 / THE ATELIER</div><h1 id="worldTitle">The<br>Atelier</h1><p id="worldDescription">Мода — это не карточки в каталоге. Исследуй коллекцию, подойди к манекенам и выбери вещи прямо в пространстве.</p><button id="introButton">Исследовать пространство ↗</button></div>
-<div id="worldNote">V10.6 / INTERACTIVE 3D PREVIEW</div><section id="stylePanel" role="dialog" aria-label="Style Studio — оформление 3D-магазина" hidden>
+<div id="worldNote">V10.7 / INTERACTIVE 3D PREVIEW</div><section id="lookbookPanel" role="dialog" aria-label="Interactive Lookbook — собрать образ" hidden>
+<div class="lookbookTop"><div><span class="lookbookKicker">Fashion / Personal Styling</span><h2>My Lookbook.</h2></div>
+<button id="closeLookbook" class="lookbookClose" type="button" aria-label="Закрыть Lookbook">✕</button></div>
+<p class="lookbookLead">Собери образ, посмотри его на 3D-манекене и отправь ссылку. Изменения происходят в самом пространстве.</p>
+<div class="lookbookGroup"><strong>01 / Кураторские образы</strong><div class="lookbookChoices lookbookLooks">
+<button type="button" data-look-preset="atelier">Atelier</button>
+<button type="button" data-look-preset="sunset">Golden</button>
+<button type="button" data-look-preset="noir">After Dark</button></div></div>
+<div class="lookbookGroup"><strong>02 / Главный предмет</strong><div class="lookbookChoices">
+<button type="button" data-look-garment="coat">Пальто</button>
+<button type="button" data-look-garment="dress">Платье</button>
+<button type="button" data-look-garment="jacket">Пиджак</button>
+<button type="button" data-look-garment="edition">Edition</button></div></div>
+<div class="lookbookGroup"><strong>03 / Цвет ткани</strong><div class="lookbookChoices lookbookColors">
+<button type="button" data-look-color="sand"><i style="background:#ba9e80"></i>Sand</button>
+<button type="button" data-look-color="rose"><i style="background:#ba8b91"></i>Rose</button>
+<button type="button" data-look-color="sage"><i style="background:#657b71"></i>Sage</button>
+<button type="button" data-look-color="night"><i style="background:#393d43"></i>Night</button></div></div>
+<div class="lookbookGroup"><strong>04 / Детали</strong><div class="lookbookChoices">
+<button type="button" data-look-shoes="sneaker">Кроссовки</button>
+<button type="button" data-look-shoes="dark">Тёмные</button>
+<button type="button" data-look-shoes="none">Без обуви</button>
+<button type="button" data-look-bag="yes">Сумка ✓</button>
+<button type="button" data-look-bag="no">Без сумки</button></div></div>
+<div class="lookbookTotal"><span>Примерная стоимость комплекта</span><b id="lookbookPrice">—</b></div>
+<div class="lookbookActions">
+<button type="button" id="lookbookTurn">↻ Вращать манекен</button>
+<button type="button" id="lookbookShare">↗ Поделиться</button>
+<button type="button" id="lookbookReset">Сбросить</button>
+<button type="button" id="lookbookAdd" class="main">＋ Добавить образ</button>
+</div>
+<p class="lookbookDisclaimer">Виртуальная примерка на стандартном манекене, не сканирование тела. Цены демонстрационные, реальная оплата отключена.</p>
+</section><section id="stylePanel" role="dialog" aria-label="Style Studio — оформление 3D-магазина" hidden>
  <div class="styleTop"><div><div class="styleKicker">Персонализируй пространство</div><h2>Style Studio</h2></div>
  <button class="styleClose" id="closeStyle" aria-label="Закрыть студию">✕</button></div>
  <p>Меняй свет, материалы и настроение магазина прямо во время прогулки.</p>
@@ -701,6 +778,112 @@ function shoeExhibit(x,z,index=4){
  slotPremiumModel('shoe','fashion',x,z,.37,g,index);
  return g;
 }
+// V10.7 LOOKBOOK: assembled live inside the fashion world, never a static overlay picture.
+// It demonstrates combinations on a generic mannequin, not a personalized body scan.
+const LOOKBOOK_GARMENTS={
+ coat:{index:0,label:'Пальто Atelier',kind:'coat',base:'#b8a18b'},
+ dress:{index:1,label:'Платье Sculpt',kind:'dress',base:'#cbb3a9'},
+ jacket:{index:2,label:'Пиджак Line',kind:'jacket',base:'#606d63'},
+ edition:{index:3,label:'Edition',kind:'jacket',base:'#aa9380'}
+};
+const LOOKBOOK_COLORS={sand:'#b99d80',rose:'#b88992',sage:'#637c70',night:'#393e47'};
+const LOOKBOOK_PRESETS={
+ atelier:{garment:'coat',color:'sand',shoes:'sneaker',bag:'yes',mood:'gallery'},
+ sunset:{garment:'dress',color:'rose',shoes:'sneaker',bag:'yes',mood:'golden'},
+ noir:{garment:'edition',color:'night',shoes:'dark',bag:'no',mood:'noir'}
+};
+function safeLookParam(key,options,fallback){
+ const raw=new URLSearchParams(location.search).get(key);
+ return raw&&Object.hasOwn(options,raw)?raw:fallback;
+}
+let lookbookState={
+ garment:safeLookParam('look',LOOKBOOK_GARMENTS,'coat'),
+ color:safeLookParam('lookTone',LOOKBOOK_COLORS,'sand'),
+ shoes:safeLookParam('lookShoes',{sneaker:1,dark:1,none:1},'sneaker'),
+ bag:safeLookParam('lookBag',{yes:1,no:1},'yes')
+};
+let lookbookStage=null;
+function createLookbookStage(){
+ const x=4.55,z=-3.6;
+ platform(x,z,1.38);registerBlocker(x,z,2.7,2.7);
+ const pivot=new THREE.Group();
+ pivot.position.set(x,.37,z);pivot.userData.lookbookOpen=true;root.add(pivot);pickables.push(pivot);
+ // Same 3D sculpt vocabulary as the rest of Fashion. No expensive new external GLBs.
+ tube(0,.48,0,.045,.045,.94,darkMetal,pivot);
+ const mannequinMat=mat('#bca992',.86);
+ ball(0,1.04,0,.215,.32,.16,mannequinMat,pivot);
+ tube(0,1.58,0,.07,.07,.27,mannequinMat,pivot);
+ ball(0,1.85,0,.145,.22,.135,mannequinMat,pivot);
+ for(const side of [-1,1]){
+  const leg=ball(side*.16,.43,0,.13,.55,.16,mannequinMat,pivot);leg.rotation.z=side*.04;
+  const arm=ball(side*.38,1.02,0,.115,.44,.14,mannequinMat,pivot);arm.rotation.z=side*.15;
+ }
+ const garments={};
+ for(const [key,def] of Object.entries(LOOKBOOK_GARMENTS)){
+  const g=clothBody(def.base,def.kind);
+  g.scale.set(1.06,.84,1);g.position.set(0,1.1,.12);
+  g.traverse(obj=>{
+   if(obj.isMesh&&obj.userData.styleSurface){
+    delete obj.userData.styleSurface;
+    obj.material=obj.material.clone();obj.userData.lookbookFabric=true;
+   }
+  });
+  pivot.add(g);garments[key]=g;
+ }
+ const shoes={};
+ for(const shade of ['sneaker','dark']){
+  const g=new THREE.Group();pivot.add(g);
+  const main=mat(shade==='dark'?'#353b40':'#e8dfd5',.63),sole=ivory;
+  for(const sign of [-1,1]){
+   soft(sign*.16,-.07,.13,.29,.14,.58,sole,.055,g);
+   soft(sign*.16,.035,.09,.285,.20,.46,main,.09,g);
+   for(let k=0;k<3;k++)soft(sign*.16,.148,.02+k*.09,.20,.015,.035,brass,.006,g);
+  }
+  shoes[shade]=g;
+ }
+ const bag=new THREE.Group();bag.position.set(.73,.62,.02);pivot.add(bag);
+ soft(0,0,0,.37,.44,.18,textile('#776052'),.09,bag);
+ const handle=mesh(new THREE.TorusGeometry(.14,.022,6,20,Math.PI),brass);
+ handle.position.set(0,.29,0);bag.add(handle);
+ soft(0,.18,.105,.11,.055,.025,brass,.012,bag);
+ const plaque=soft(0,.75,.51,1.25,.21,.08,mat('#262b26',.63),.025,pivot);
+ plaque.userData.lookbookNoPick=true;
+ lookbookStage={pivot,garments,shoes,bag,rotationEnabled:false};
+ applyLookbookState();
+}
+function applyLookbookState(){
+ if(!lookbookStage)return;
+ for(const [key,g] of Object.entries(lookbookStage.garments)){
+  g.visible=key===lookbookState.garment;
+  if(!g.visible)continue;
+  g.traverse(obj=>{
+   if(obj.isMesh&&obj.userData.lookbookFabric&&obj.material.color)
+    obj.material.color.set(LOOKBOOK_COLORS[lookbookState.color]);
+  });
+ }
+ for(const [key,g] of Object.entries(lookbookStage.shoes))g.visible=key===lookbookState.shoes;
+ lookbookStage.bag.visible=lookbookState.bag==='yes';
+ document.querySelectorAll('[data-look-garment]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lookGarment===lookbookState.garment)));
+ document.querySelectorAll('[data-look-color]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lookColor===lookbookState.color)));
+ document.querySelectorAll('[data-look-shoes]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lookShoes===lookbookState.shoes)));
+ document.querySelectorAll('[data-look-bag]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lookBag===lookbookState.bag)));
+ const price=DATA.fashion.items[LOOKBOOK_GARMENTS[lookbookState.garment].index][2]+
+  (lookbookState.shoes==='none'?0:DATA.fashion.items[4][2]);
+ $('lookbookPrice').textContent=money(price);
+}
+function updateLookbookURL(){
+ const url=new URL(location.href);
+ url.searchParams.set('world','fashion');
+ url.searchParams.set('look',lookbookState.garment);
+ url.searchParams.set('lookTone',lookbookState.color);
+ url.searchParams.set('lookShoes',lookbookState.shoes);
+ url.searchParams.set('lookBag',lookbookState.bag);
+ url.searchParams.set('mood',studioMood);
+ url.searchParams.set('finish',studioFinish);
+ history.replaceState(null,'',url);
+ return url;
+}
+
 function fashionScene(){
  const colors=['#b5a08a','#e9d8c4','#525951','#ae8a7d'];
  for(const side of [-1,1])for(const z of [3,-9,-22]){
@@ -715,6 +898,7 @@ function fashionScene(){
   boutiqueHandbag(side*4.3,z,side>0?'#746359':'#ae8c7b');
  shoeExhibit(-4.6,-7.2);
  shoeExhibit(4.6,-19.3);
+ createLookbookStage();
  for(const x of [-8,8])for(const z of [-3,-15,-27]){
   soft(x,4.45,z,.09,3.3,2.9,brass,.03);
   const mirror=mat('#c0c5bf',.09,.86);plane(x+(x>0?-.085:.085),4.45,z,2.55,3.1,mirror,root,x>0?-Math.PI/2:Math.PI/2);
@@ -933,7 +1117,7 @@ function disposeWorld(){
 }
 function setStore(key){
  if(!DATA[key])return;
- closeStyleStudio();active=key;showroomGeneration++;premiumSlots=[];touring=false;tourRoute=[];walkVelocity.x=walkVelocity.z=0;
+ closeLookbook();closeStyleStudio();active=key;lookbookStage=null;showroomGeneration++;premiumSlots=[];touring=false;tourRoute=[];walkVelocity.x=walkVelocity.z=0;
  keys.clear();joy.x=joy.y=0;$('tourBtn').textContent='▶ Кинотур';
  disposeWorld();
  hotspots=[];pickables=[];blockers=[];marketPackBatches.clear();tipCurrent=-1;$('objectTip').classList.remove('show');premiumState='idle';updatePremiumStatus();architecture(key);
@@ -974,12 +1158,13 @@ function selectAt(cx,cy){
   }
   let node=hit.object;
   while(node&&node!==root){
+   if(node.userData.lookbookOpen){openLookbook();return;}
    if(Number.isInteger(node.userData.itemIndex)){openItem(node.userData.itemIndex);return;}
    node=node.parent;
   }
  }
 }
-function showDrawer(){const d=$('drawerOverlay');d.classList.add('open');d.setAttribute('aria-hidden','false');lastActive=document.activeElement;$('closeDrawer').focus();keys.clear();joy.x=joy.y=0;}
+function showDrawer(){closeLookbook();const d=$('drawerOverlay');d.classList.add('open');d.setAttribute('aria-hidden','false');lastActive=document.activeElement;$('closeDrawer').focus();keys.clear();joy.x=joy.y=0;}
 function hideDrawer(){const d=$('drawerOverlay');d.classList.remove('open');d.setAttribute('aria-hidden','true');if(lastActive&&lastActive.focus)lastActive.focus();}
 function money(v){return Number(v).toLocaleString('ru-RU')+' ֏';}
 function priceTotal(){let sum=0,cnt=0;Object.entries(cart).forEach(([key,qty])=>{const [store,i]=key.split(':');const item=DATA[store]?.items[Number(i)];if(item){sum+=item[2]*qty;cnt+=qty;}});$('cartCount').textContent=cnt;return sum;}
@@ -1016,13 +1201,95 @@ function openCart(){
  buildRows(items);if(!items.length){const p=document.createElement('p');p.textContent='Пока пусто — загляни в коллекцию и выбери предмет.';$('drawerProducts').append(p);}
  $('drawerFoot').replaceChildren();const sum=document.createElement('strong');sum.textContent=money(priceTotal());const cap=document.createElement('span');cap.textContent='Итого (демо)';$('drawerFoot').append(cap,sum);showDrawer();
 }
+// Lookbook acts on the 3D model inside Fashion. Sharing is user-initiated, without backend.
+let lookbookFocus=null;
+function closeLookbook(){
+ $('lookbookPanel').hidden=true;
+ $('lookbookBtn').setAttribute('aria-expanded','false');
+ if(lookbookStage)lookbookStage.rotationEnabled=false;
+ $('lookbookTurn').setAttribute('aria-pressed','false');
+ lookbookFocus=null;
+}
+function openLookbook(){
+ if(active!=='fashion')setStore('fashion');
+ if(!lookbookStage){toast('Манекен Lookbook недоступен в этой сцене');return;}
+ hideDrawer();closeStyleStudio();stopTour();
+ keys.clear();joy.x=joy.y=0;
+ $('lookbookPanel').hidden=false;$('lookbookBtn').setAttribute('aria-expanded','true');
+ $('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';
+ applyLookbookState();
+ // An ease-in tour focuses on the sculpted mannequin without interfering with the scene.
+ const end=new THREE.Vector3(1.20,1.68,1.08);
+ const desiredYaw=-Math.atan2(4.55-end.x,end.z+3.6);
+ lookbookFocus={start:camera.position.clone(),end,t:0,initialYaw:yaw,endYaw:desiredYaw,initialPitch:pitch};
+ $('closeLookbook').focus();
+}
+function updateLookbookControls(){
+ document.querySelectorAll('[data-look-preset]').forEach(b=>{
+  const p=LOOKBOOK_PRESETS[b.dataset.lookPreset];
+  const selected=p&&p.garment===lookbookState.garment&&p.color===lookbookState.color&&
+   p.shoes===lookbookState.shoes&&p.bag===lookbookState.bag&&p.mood===studioMood;
+  b.setAttribute('aria-pressed',String(!!selected));
+ });
+ applyLookbookState();updateLookbookURL();
+}
+$('lookbookBtn').addEventListener('click',()=>$('lookbookPanel').hidden?openLookbook():closeLookbook());
+$('closeLookbook').addEventListener('click',()=>{closeLookbook();$('lookbookBtn').focus();});
+document.querySelectorAll('[data-look-preset]').forEach(b=>b.addEventListener('click',()=>{
+ const p=LOOKBOOK_PRESETS[b.dataset.lookPreset];if(!p)return;
+ lookbookState={garment:p.garment,color:p.color,shoes:p.shoes,bag:p.bag};
+ studioMood=p.mood;applyStudioLook();updateLookbookControls();
+}));
+for(const [selector,key,options] of [
+ ['[data-look-garment]','garment',LOOKBOOK_GARMENTS],
+ ['[data-look-color]','color',LOOKBOOK_COLORS],
+ ['[data-look-shoes]','shoes',{sneaker:1,dark:1,none:1}],
+ ['[data-look-bag]','bag',{yes:1,no:1}]
+ ]){
+ document.querySelectorAll(selector).forEach(b=>b.addEventListener('click',()=>{
+  const value=b.dataset['look'+key[0].toUpperCase()+key.slice(1)];
+  if(!Object.hasOwn(options,value))return;
+  lookbookState[key]=value;updateLookbookControls();
+ }));
+}
+$('lookbookTurn').addEventListener('click',()=>{
+ if(!lookbookStage)return;
+ lookbookStage.rotationEnabled=!lookbookStage.rotationEnabled;
+ $('lookbookTurn').setAttribute('aria-pressed',String(lookbookStage.rotationEnabled));
+ $('lookbookTurn').textContent=lookbookStage.rotationEnabled?'Ⅱ Стоп вращение':'↻ Вращать манекен';
+});
+$('lookbookReset').addEventListener('click',()=>{
+ const base=LOOKBOOK_PRESETS.atelier;
+ lookbookState={garment:base.garment,color:base.color,shoes:base.shoes,bag:base.bag};
+ if(lookbookStage)lookbookStage.pivot.rotation.y=0;
+ updateLookbookControls();
+});
+$('lookbookAdd').addEventListener('click',()=>{
+ if(active!=='fashion')return;
+ addToCart('fashion',LOOKBOOK_GARMENTS[lookbookState.garment].index);
+ if(lookbookState.shoes!=='none')addToCart('fashion',4);
+ toast('Предметы образа добавлены в демо-корзину');
+});
+$('lookbookShare').addEventListener('click',async()=>{
+ const url=updateLookbookURL();
+ url.searchParams.set('lookbook','1');
+ url.searchParams.delete('diagnostics');url.searchParams.delete('assets');
+ const href=url.toString();
+ if(navigator.share&&coarse){
+  try{await navigator.share({title:'MARKET SPACE · My Lookbook',url:href});return;}
+  catch(e){if(e?.name==='AbortError')return;}
+ }
+ try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(href);toast('Ссылка на образ скопирована');return;}}catch(e){}
+ window.prompt('Скопируй ссылку на свой 3D-образ:',href);
+});
+
 // Style Studio is intentionally local-only: URL state, no accounts, no tracking or hidden uploads.
 function closeStyleStudio(){
  $('stylePanel').hidden=true;
  $('styleBtn').setAttribute('aria-expanded','false');
 }
 function openStyleStudio(){
- hideDrawer();stopTour();keys.clear();joy.x=joy.y=0;
+ closeLookbook();hideDrawer();stopTour();keys.clear();joy.x=joy.y=0;
  $('stylePanel').hidden=false;
  $('styleBtn').setAttribute('aria-expanded','true');
  $('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';
@@ -1092,8 +1359,8 @@ function stopTour(){
 $('introButton').onclick=startTour;
 $('tourBtn').onclick=()=>touring?stopTour():startTour();
 document.addEventListener('keydown',e=>{
- if(e.code==='Escape'){if(!$('stylePanel').hidden){closeStyleStudio();$('styleBtn').focus();}else hideDrawer();return;}
- if(!$('stylePanel').hidden)return;
+ if(e.code==='Escape'){if(!$('lookbookPanel').hidden){closeLookbook();$('lookbookBtn').focus();}else if(!$('stylePanel').hidden){closeStyleStudio();$('styleBtn').focus();}else hideDrawer();return;}
+ if(!$('stylePanel').hidden||!$('lookbookPanel').hidden)return;
  if($('drawerOverlay').classList.contains('open')){
   if(e.code==='Tab'){
    const els=[...$('drawerOverlay').querySelectorAll('button:not([disabled]),a[href]')].filter(x=>x.offsetParent!==null);
@@ -1131,7 +1398,7 @@ const productTip=$('objectTip'),tipLabel=$('tipProductName');
 let tipCurrent=-1,tipFrame=0;
 $('tipProductAction').addEventListener('click',()=>{if(tipCurrent>=0){stopTour();openItem(tipCurrent);}});
 function updateProductTip(){
- if($('drawerOverlay').classList.contains('open')||touring){productTip.classList.remove('show');return;}
+ if($('drawerOverlay').classList.contains('open')||!$('lookbookPanel').hidden||touring){productTip.classList.remove('show');return;}
  const pos3=new THREE.Vector3(),projected=new THREE.Vector3();
  let best=Infinity,bestIndex=-1;
  for(const h of hotspots){
@@ -1156,7 +1423,7 @@ function animate(t){
  requestAnimationFrame(animate);
  const delta=Math.min(.04,(t-(animate.prev||t))/1000);animate.prev=t;
  if(document.hidden)return;
- if(!$('drawerOverlay').classList.contains('open')){
+ if(!$('drawerOverlay').classList.contains('open')&&$('lookbookPanel').hidden){
   if(touring&&tourRoute.length>1){
    tourT+=delta/(reduced?2.4:3.65);
    const n=tourRoute.length-1,seg=Math.min(n-1,Math.floor(tourT));
@@ -1180,7 +1447,17 @@ function animate(t){
    if(keys.has('ArrowRight'))yaw-=delta*1.3;
   }
  }
- camera.position.y=1.68+(reduced?0:.012*Math.sin(t*.0014));updateCamera();
+ if(lookbookFocus){
+  lookbookFocus.t=Math.min(1,lookbookFocus.t+delta/(reduced?.25:1.1));
+  const v=lookbookFocus.t*lookbookFocus.t*(3-2*lookbookFocus.t);
+  camera.position.lerpVectors(lookbookFocus.start,lookbookFocus.end,v);
+  yaw=THREE.MathUtils.lerp(lookbookFocus.initialYaw,lookbookFocus.endYaw,v);
+  pitch=THREE.MathUtils.lerp(lookbookFocus.initialPitch,-.035,v);
+  if(lookbookFocus.t>=1)lookbookFocus=null;
+ }else camera.position.y=1.68+(reduced?0:.012*Math.sin(t*.0014));
+ if(lookbookStage&&lookbookStage.rotationEnabled&&!reduced&&active==='fashion')
+   lookbookStage.pivot.rotation.y+=delta*.42;
+ updateCamera();
  hotspots.forEach((h,i)=>{h.g.rotation.y+=delta*.26;h.halo.scale.setScalar(1+(reduced?0:.11*Math.sin(t*.0028+i)));});
  renderer.render(scene,camera);
  if(showPerformance){
@@ -1213,6 +1490,7 @@ try{
  const initial=new URLSearchParams(location.search).get('world');
  applyQuality();setStore(DATA[initial]?initial:'fashion');priceTotal();
  if(new URLSearchParams(location.search).get('studio')==='1')openStyleStudio();
+ else if(new URLSearchParams(location.search).get('lookbook')==='1')openLookbook();
  $('loading').classList.add('ready');window.__marketSpaceReady=true;
  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
  requestAnimationFrame(animate);
