@@ -56,6 +56,21 @@ This independently sends GET to each declared RFC1918 origin + port + health pat
 7. Test each backend by stopping one **staging-only** instance at a time. Confirm the other continues serving test requests, failed health checks remove unhealthy servers, and recovery returns them. Record latency, errors, active users/sessions, and network traces. Never perform these tests against customer production data.
 8. If both backends fail, the load balancer must fail closed rather than route traffic to an unhealthy instance. Monitor HAProxy's 503 responses and alert an operator.
 
+## Review exact staged source markers on EVERY origin
+
+VETOGRAM and Promptence each have optional stage-only source endpoints under `/api/markarian-release` in their separate PRs. Their dedicated Dockerfiles require `MARKARIAN_SOURCE_SHA` (exact 40 hex lowercase) as a build argument, and the runtime exports `MARKARIAN_RELEASE_ENABLED=staging-only`, `MARKARIAN_ENVIRONMENT=staging` and `MARKARIAN_SOURCE_SHA`. No stage marker is exposed in the existing Vercel configurations.
+
+After making sure `deploy/cloud/edge/staging.example.json` has the **real reviewed SHA for each application** and private routing to every actual instance, run:
+
+```sh
+node --test scripts/cloud/edge-release.test.mjs
+node scripts/cloud/edge-release.mjs --verify "$(pwd)/deploy/cloud/edge/staging.example.json"
+```
+
+This checks the genuine `/api/health` endpoint followed by a bounded `/api/markarian-release` response from **each** node. Every HTTP response must report the expected staging product, exact repo and full SHA; one stale, missing, malformed or unhealthy origin blocks review. It never deploys or changes traffic. The marker is still **self-reported**, NOT an immutable running Docker image digest; compare with independently recorded registry digests and Coolify's exact deployment queue before customer cutover.
+
+Promptence's new staging `/api/health` validates HTTPS access to the configured Supabase GoTrue `/auth/v1/health`; it checks auth transport only, **not** RLS, Storage objects, API data integrity, payment receipts or client activation. VETOGRAM's `/api/health` already depends on real Telegram bot and storage health. Never point a staging instance at production Telegram credentials or customer data merely to make a health check pass.
+
 ## Critical properties this code deliberately DOES NOT assert
 
 - HAProxy is **not** a TLS certificate manager here. TLS termination, hostname routing and trusted forwarded headers must be tested at the upstream HTTPS edge. An untrusted public HTTP listener is forbidden.
