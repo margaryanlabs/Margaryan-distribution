@@ -187,4 +187,56 @@ check('Keyboard inspection finds nearest registered product hotspot',()=>{
  for(const token of ["if(e.code==='KeyE'){","near&&Number.isInteger(near.index)","hotspots.map(h=>","openItem(near.index)"])
   assert.ok(world.includes(token),token);
 });
-console.log('V10.5 offline contracts: '+count+' passed. Physical-device WebGL tests still required.');
+check('Style Studio visible controls and landing invitation exist',()=>{
+ for(const k of ['id="styleBtn"','id="stylePanel"','id="shareStyle"','data-mood="golden"',
+ 'data-mood="noir"','data-finish="rose"','data-finish="sage"','data-finish="graphite"',
+ 'studioMood=b.dataset.mood;applyStudioLook();updateStyleURL()',
+ 'studioFinish=b.dataset.finish;applyStudioLook();updateStyleURL()']){
+  assert.ok(world.includes(k),k);
+ }
+ for(const k of ['studioTeaser','Создать свой стиль','studio=1','mood=golden','finish=rose'])assert.ok(showcase.includes(k),k);
+});
+check('Studio changes real material clones and light intensity on each preset',()=>{
+ const a=world.indexOf('const STUDIO_MOODS='),b=world.indexOf("let active='fashion',",a);
+ assert.ok(a>0&&b>a);
+ class Color {
+  constructor(v){this.value=String(v)}
+  clone(){return new Color(this.value)}
+  copy(v){this.value=v.value;return this}
+  lerp(v,n){this.value=this.value+'|'+v.value+'@'+n;return this}
+ }
+ const THREE={Color},renderer={toneMappingExposure:0};
+ const scene={environment:{},environmentIntensity:0,background:new Color('room'),fog:{color:new Color('room')}};
+ const material={color:new Color('original'),clone(){return {color:this.color.clone()}}};
+ const fabric={isMesh:true,userData:{styleSurface:'fabric'},material};
+ const light={isLight:true,isHemisphereLight:true,intensity:2,color:new Color('white'),userData:{}};
+ const root={traverse(cb){for(const obj of [light,fabric])cb(obj)}};
+ const document={querySelectorAll:()=>[]};
+ class Params{
+  constructor(str){this.args=Object.fromEntries(str.replace(/^\?/,'').split('&').filter(Boolean).map(pair=>pair.split('=')))}
+  get(k){return this.args[k]??null}
+ }
+ const fn=new Function('THREE','location','URLSearchParams','renderer','scene','root','document',
+ world.slice(a,b)+
+ "return {run:()=>applyStudioLook(),style:(m,f)=>{studioMood=m;studioFinish=f;applyStudioLook()}};");
+ const studio=fn(THREE,{search:'?mood=golden&finish=sage'},Params,renderer,scene,root,document);
+ studio.run();assert.equal(renderer.toneMappingExposure,1.18);
+ assert.ok(Math.abs(light.intensity-1.68)<1e-6);
+ assert.ok(fabric.material!==material);
+ assert.ok(fabric.material.color.value.includes('#778b77'));
+ const preserved=fabric.material;
+ studio.style('noir','rose');assert.equal(renderer.toneMappingExposure,.91);
+ assert.ok(Math.abs(light.intensity-1.14)<1e-6);
+ assert.ok(fabric.material===preserved);
+ assert.ok(fabric.material.color.value.includes('#a16b75'));
+ assert.ok(scene.fog.color.value===scene.background.value);
+});
+check('Studio link is shareable through explicit native actions with local URL state',()=>{
+ for(const k of ["url.searchParams.set('world',active)","url.searchParams.set('mood',studioMood)",
+  "url.searchParams.set('finish',studioFinish)","url.searchParams.delete('diagnostics')",
+  "navigator.share({title,url:href})","navigator.clipboard.writeText(href)",
+  "window.prompt('Скопируй ссылку на свой дизайн:',href)"]){
+  assert.ok(world.includes(k),k);
+ }
+});
+console.log('V10.6 offline source contracts: '+count+' passed. Real mobile visual QA remains pending.');
