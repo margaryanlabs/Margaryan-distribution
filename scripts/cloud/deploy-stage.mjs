@@ -62,7 +62,8 @@ export function createStagingRequest(input){
   environment_name:"staging",git_repository:input.git_repository,git_branch:input.git_branch,
   build_pack:input.build_pack,ports_exposes:String(port),name:input.name,
   // Creation must not implicitly deploy or allocate a public fallback URL.
-  instant_deploy:false,autogenerate_domain:false,
+  instant_deploy:false,autogenerate_domain:false,is_auto_deploy_enabled:false,
+  base_directory:"/",
   ...(dockerfileLocation?{dockerfile_location:dockerfileLocation}:{}),
   ...(privateSource?{github_app_uuid:input.github_app_uuid}:{}),
   ...(input.domains?{domains:"https://"+input.domains}: {})
