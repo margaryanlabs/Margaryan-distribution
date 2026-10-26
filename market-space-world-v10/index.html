@@ -277,7 +277,7 @@ function clothBody(color,kind='jacket'){
  return group;
 }
 function mannequin(x,z,kind,color,index){
- const g=new THREE.Group();g.position.set(x,.38,z);root.add(g);
+ const g=new THREE.Group();g.position.set(x,.38,z);root.add(g);registerBlocker(x,z,1.7,1.7);
  platform(x,z,1.08);
  tube(0,.49,0,.048,.048,.86,darkMetal,g);
  ball(0,1.07,0,.22,.34,.18,mat('#c6b4a1',.68),g);
@@ -295,7 +295,7 @@ function mannequin(x,z,kind,color,index){
  return g;
 }
 function garmentsRail(x,z,colors){
- const rail=new THREE.Group();rail.position.set(x,0,z);root.add(rail);
+ const rail=new THREE.Group();rail.position.set(x,0,z);root.add(rail);registerBlocker(x,z,4.5,1.1);
  for(const dx of [-2,2]){tube(dx,1.6,0,.045,.045,3.0,brass,rail);tube(dx,.1,0,.11,.11,.16,darkMetal,rail);}
  const cross=tube(0,3.05,0,.042,.042,4.1,brass,rail);cross.rotation.z=Math.PI/2;
  soft(0,.35,0,4.1,.25,.8,wood,.06,rail);
@@ -321,7 +321,7 @@ function fashionScene(){
  }
 }
 function upholsteredSofa(x,z,color='#c6b9a4'){
- const group=new THREE.Group();group.position.set(x,0,z);root.add(group);
+ const group=new THREE.Group();group.position.set(x,0,z);root.add(group);registerBlocker(x,z,3.7,2.1);
  const cushion=mat(color,.98);
  soft(0,.48,0,3.5,.45,1.48,cushion,.21,group);
  soft(0,.91,-.57,3.64,1.25,.34,cushion,.13,group);
@@ -338,11 +338,11 @@ function floorLamp(x,z){const g=new THREE.Group();g.position.set(x,0,z);root.add
 function plant(x,z){const g=new THREE.Group();g.position.set(x,0,z);root.add(g);tube(0,.39,0,.36,.27,.73,ceramic,g);tube(0,1.25,0,.046,.07,1.1,mat('#626e4e',.84),g);
  for(let i=0;i<10;i++){const a=i*2.399;const leaf=ball(Math.cos(a)*.52,1.24+(i%4)*.17,Math.sin(a)*.53,.16,.53,.29,mat(i%2?'#6c765b':'#778365',.95),g);leaf.rotation.z=Math.cos(a)*.54;leaf.rotation.x=Math.sin(a)*.48;}
 }
-function chair(x,z){const g=new THREE.Group();g.position.set(x,0,z);root.add(g);soft(0,.55,0,1.25,.36,1.12,mat('#acaca0',.92),.23,g);soft(0,1.12,-.38,1.3,1.22,.34,mat('#adaca1',.95),.25,g);for(const xx of [-.45,.45])for(const zz of [-.3,.36])tube(xx,.2,zz,.07,.09,.4,wood,g);}
+function chair(x,z){const g=new THREE.Group();g.position.set(x,0,z);root.add(g);registerBlocker(x,z,1.3,1.2);soft(0,.55,0,1.25,.36,1.12,mat('#acaca0',.92),.23,g);soft(0,1.12,-.38,1.3,1.22,.34,mat('#adaca1',.95),.25,g);for(const xx of [-.45,.45])for(const zz of [-.3,.36])tube(xx,.2,zz,.07,.09,.4,wood,g);}
 function homeScene(){
  for(const z of [0,-16])for(const x of [-6.6,6.6]){
   soft(x,.02,z,6.8,.035,6.0,mat(z===0?'#a39582':'#aaa396',.99),.05);
-  upholsteredSofa(x,z,x>0?'#b6b7ad':'#c5aa95');
+  const sofa=upholsteredSofa(x,z,x>0?'#b6b7ad':'#c5aa95');sofa.userData.itemIndex=z===0?0:1;pickables.push(sofa);
   table(x,z+2.0);
   floorLamp(x+(x>0?2.8:-2.8),z-1.6);
   plant(x+(x>0?-2.8:2.8),z-2.1);
@@ -362,7 +362,7 @@ function perfumeBottle(g,x,z,color,kind=0,y=0){
  return gp;
 }
 function beautyIsland(x,z,index){
- const g=new THREE.Group();g.position.set(x,0,z);root.add(g);
+ const g=new THREE.Group();g.position.set(x,0,z);g.userData.itemIndex=index;root.add(g);pickables.push(g);registerBlocker(x,z,2.8,2.3);
  tube(0,.47,0,1.25,1.13,.94,mat('#b4a39d',.33),g);
  tube(0,.96,0,1.36,1.28,.11,ceramic,g);
  ring(0,1.03,0,1.19,.023,brass,Math.PI/2,g);
@@ -399,6 +399,8 @@ function brandBox(g,x,y,z,index){
 }
 function groceryShelves(x,z){
  const g=new THREE.Group();g.position.set(x,0,z);root.add(g);
+ g.userData.itemIndex=Math.abs(Math.round(x)+Math.round(z))%4;
+ pickables.push(g);registerBlocker(x,z,1.65,5.55);
  soft(0,.12,0,1.45,.22,5.4,darkMetal,.06,g);
  for(const y of [.57,1.24,1.91,2.58,3.24]){
   soft(0,y,0,1.48,.10,5.45,mat('#bba88f',.67),.025,g);
@@ -411,7 +413,7 @@ function groceryShelves(x,z){
  for(const s of [-1,1])soft(s*.75,3.6,0,.11,.35,5.4,brass,.02,g);
 }
 function produceIsland(x,z,index){
- const g=new THREE.Group();g.position.set(x,0,z);root.add(g);
+ const g=new THREE.Group();g.position.set(x,0,z);g.userData.itemIndex=index;root.add(g);pickables.push(g);registerBlocker(x,z,2.75,1.95);
  soft(0,.38,0,2.75,.73,1.85,mat('#806d57',.77),.12,g);soft(0,.76,0,2.83,.12,1.95,wood,.045,g);
  for(let i=0;i<14;i++){
   const a=i*2.4,r=.8*Math.sqrt(i/14),shade=i%3;
@@ -428,6 +430,7 @@ function foodScene(){
  }
  for(const x of [-3,3])for(const z of [-5,-23])selectHotspot(x,1.35,z,x>0?1:0);
 }
+function registerBlocker(x,z,w,d){blockers.push({x,z,w,d});}
 function selectHotspot(x,y,z,index){
  const g=new THREE.Group();g.position.set(x,y,z);root.add(g);
  const shell=mesh(new THREE.SphereGeometry(.14,18,12),new THREE.MeshBasicMaterial({color:'#efe1cb'}));
@@ -465,17 +468,31 @@ function setStore(key){
 }
 function updateCamera(){camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;}
 function blocked(x,z){
- if(active==='food'&&(Math.hypot(x,z-1)<1.8||Math.hypot(x,z+15)<1.8))return true;
- if(active==='fashion'&&[[-2.55,-4],[2.65,-8],[-2.4,-17],[2.55,-23]].some(p=>Math.hypot(x-p[0],z-p[1])<1.1))return true;
- if(active==='home'&&[[-2.55,-7],[2.5,-22]].some(p=>Math.hypot(x-p[0],z-p[1])<.85))return true;
- return false;
+ if(x<-9.5||x>9.5||z<-30.6||z>12.25)return true;
+ const radius=.32;
+ return blockers.some(b=>{
+  const cx=clamp(x,b.x-b.w/2,b.x+b.w/2),cz=clamp(z,b.z-b.d/2,b.z+b.d/2);
+  return (x-cx)*(x-cx)+(z-cz)*(z-cz)<radius*radius;
+ });
 }
-function move(dx,dz){const nx=clamp(camera.position.x+dx,-5.5,5.5),nz=clamp(camera.position.z+dz,-29.3,11.3);if(!blocked(nx,camera.position.z))camera.position.x=nx;if(!blocked(camera.position.x,nz))camera.position.z=nz;}
+function move(dx,dz){
+ const nx=camera.position.x+dx,nz=camera.position.z+dz;
+ // Resolve individual axes for natural sliding instead of walking through merch.
+ if(!blocked(nx,camera.position.z))camera.position.x=nx;
+ if(!blocked(camera.position.x,nz))camera.position.z=nz;
+}
 const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
 function selectAt(cx,cy){
  mouse.set(cx/innerWidth*2-1,-(cy/innerHeight)*2+1);ray.setFromCamera(mouse,camera);
- const hits=ray.intersectObjects(pickables,false);
- if(hits.length){openItem(hits[0].object.userData.itemIndex);return;}
+ const hits=ray.intersectObjects(pickables,true);
+ for(const hit of hits){
+  if(hit.distance>22)break;
+  let node=hit.object;
+  while(node&&node!==root){
+   if(Number.isInteger(node.userData.itemIndex)){openItem(node.userData.itemIndex);return;}
+   node=node.parent;
+  }
+ }
 }
 function showDrawer(){const d=$('drawerOverlay');d.classList.add('open');d.setAttribute('aria-hidden','false');lastActive=document.activeElement;$('closeDrawer').focus();keys.clear();joy.x=joy.y=0;}
 function hideDrawer(){const d=$('drawerOverlay');d.classList.remove('open');d.setAttribute('aria-hidden','true');if(lastActive&&lastActive.focus)lastActive.focus();}
