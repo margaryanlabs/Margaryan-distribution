@@ -1154,7 +1154,7 @@ function selectAt(cx,cy){
   }
  }
 }
-function showDrawer(){const d=$('drawerOverlay');d.classList.add('open');d.setAttribute('aria-hidden','false');lastActive=document.activeElement;$('closeDrawer').focus();keys.clear();joy.x=joy.y=0;}
+function showDrawer(){closeLookbook();const d=$('drawerOverlay');d.classList.add('open');d.setAttribute('aria-hidden','false');lastActive=document.activeElement;$('closeDrawer').focus();keys.clear();joy.x=joy.y=0;}
 function hideDrawer(){const d=$('drawerOverlay');d.classList.remove('open');d.setAttribute('aria-hidden','true');if(lastActive&&lastActive.focus)lastActive.focus();}
 function money(v){return Number(v).toLocaleString('ru-RU')+' ֏';}
 function priceTotal(){let sum=0,cnt=0;Object.entries(cart).forEach(([key,qty])=>{const [store,i]=key.split(':');const item=DATA[store]?.items[Number(i)];if(item){sum+=item[2]*qty;cnt+=qty;}});$('cartCount').textContent=cnt;return sum;}
@@ -1191,13 +1191,95 @@ function openCart(){
  buildRows(items);if(!items.length){const p=document.createElement('p');p.textContent='Пока пусто — загляни в коллекцию и выбери предмет.';$('drawerProducts').append(p);}
  $('drawerFoot').replaceChildren();const sum=document.createElement('strong');sum.textContent=money(priceTotal());const cap=document.createElement('span');cap.textContent='Итого (демо)';$('drawerFoot').append(cap,sum);showDrawer();
 }
+// Lookbook acts on the 3D model inside Fashion. Sharing is user-initiated, without backend.
+let lookbookFocus=null;
+function closeLookbook(){
+ $('lookbookPanel').hidden=true;
+ $('lookbookBtn').setAttribute('aria-expanded','false');
+ if(lookbookStage)lookbookStage.rotationEnabled=false;
+ $('lookbookTurn').setAttribute('aria-pressed','false');
+ lookbookFocus=null;
+}
+function openLookbook(){
+ if(active!=='fashion')setStore('fashion');
+ if(!lookbookStage){toast('Манекен Lookbook недоступен в этой сцене');return;}
+ hideDrawer();closeStyleStudio();stopTour();
+ keys.clear();joy.x=joy.y=0;
+ $('lookbookPanel').hidden=false;$('lookbookBtn').setAttribute('aria-expanded','true');
+ $('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';
+ applyLookbookState();
+ // An ease-in tour focuses on the sculpted mannequin without interfering with the scene.
+ const end=new THREE.Vector3(1.20,1.68,1.08);
+ const desiredYaw=-Math.atan2(4.55-end.x,end.z+3.6);
+ lookbookFocus={start:camera.position.clone(),end,t:0,initialYaw:yaw,endYaw:desiredYaw,initialPitch:pitch};
+ $('closeLookbook').focus();
+}
+function updateLookbookControls(){
+ document.querySelectorAll('[data-look-preset]').forEach(b=>{
+  const p=LOOKBOOK_PRESETS[b.dataset.lookPreset];
+  const selected=p&&p.garment===lookbookState.garment&&p.color===lookbookState.color&&
+   p.shoes===lookbookState.shoes&&p.bag===lookbookState.bag&&p.mood===studioMood;
+  b.setAttribute('aria-pressed',String(!!selected));
+ });
+ applyLookbookState();updateLookbookURL();
+}
+$('lookbookBtn').addEventListener('click',()=>$('lookbookPanel').hidden?openLookbook():closeLookbook());
+$('closeLookbook').addEventListener('click',()=>{closeLookbook();$('lookbookBtn').focus();});
+document.querySelectorAll('[data-look-preset]').forEach(b=>b.addEventListener('click',()=>{
+ const p=LOOKBOOK_PRESETS[b.dataset.lookPreset];if(!p)return;
+ lookbookState={garment:p.garment,color:p.color,shoes:p.shoes,bag:p.bag};
+ studioMood=p.mood;applyStudioLook();updateLookbookControls();
+}));
+for(const [selector,key,options] of [
+ ['[data-look-garment]','garment',LOOKBOOK_GARMENTS],
+ ['[data-look-color]','color',LOOKBOOK_COLORS],
+ ['[data-look-shoes]','shoes',{sneaker:1,dark:1,none:1}],
+ ['[data-look-bag]','bag',{yes:1,no:1}]
+ ]){
+ document.querySelectorAll(selector).forEach(b=>b.addEventListener('click',()=>{
+  const value=b.dataset['look'+key[0].toUpperCase()+key.slice(1)];
+  if(!Object.hasOwn(options,value))return;
+  lookbookState[key]=value;updateLookbookControls();
+ }));
+}
+$('lookbookTurn').addEventListener('click',()=>{
+ if(!lookbookStage)return;
+ lookbookStage.rotationEnabled=!lookbookStage.rotationEnabled;
+ $('lookbookTurn').setAttribute('aria-pressed',String(lookbookStage.rotationEnabled));
+ $('lookbookTurn').textContent=lookbookStage.rotationEnabled?'Ⅱ Стоп вращение':'↻ Вращать манекен';
+});
+$('lookbookReset').addEventListener('click',()=>{
+ const base=LOOKBOOK_PRESETS.atelier;
+ lookbookState={garment:base.garment,color:base.color,shoes:base.shoes,bag:base.bag};
+ if(lookbookStage)lookbookStage.pivot.rotation.y=0;
+ updateLookbookControls();
+});
+$('lookbookAdd').addEventListener('click',()=>{
+ if(active!=='fashion')return;
+ addToCart('fashion',LOOKBOOK_GARMENTS[lookbookState.garment].index);
+ if(lookbookState.shoes!=='none')addToCart('fashion',4);
+ toast('Предметы образа добавлены в демо-корзину');
+});
+$('lookbookShare').addEventListener('click',async()=>{
+ const url=updateLookbookURL();
+ url.searchParams.set('lookbook','1');
+ url.searchParams.delete('diagnostics');url.searchParams.delete('assets');
+ const href=url.toString();
+ if(navigator.share&&coarse){
+  try{await navigator.share({title:'MARKET SPACE · My Lookbook',url:href});return;}
+  catch(e){if(e?.name==='AbortError')return;}
+ }
+ try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(href);toast('Ссылка на образ скопирована');return;}}catch(e){}
+ window.prompt('Скопируй ссылку на свой 3D-образ:',href);
+});
+
 // Style Studio is intentionally local-only: URL state, no accounts, no tracking or hidden uploads.
 function closeStyleStudio(){
  $('stylePanel').hidden=true;
  $('styleBtn').setAttribute('aria-expanded','false');
 }
 function openStyleStudio(){
- hideDrawer();stopTour();keys.clear();joy.x=joy.y=0;
+ closeLookbook();hideDrawer();stopTour();keys.clear();joy.x=joy.y=0;
  $('stylePanel').hidden=false;
  $('styleBtn').setAttribute('aria-expanded','true');
  $('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';
@@ -1267,8 +1349,8 @@ function stopTour(){
 $('introButton').onclick=startTour;
 $('tourBtn').onclick=()=>touring?stopTour():startTour();
 document.addEventListener('keydown',e=>{
- if(e.code==='Escape'){if(!$('stylePanel').hidden){closeStyleStudio();$('styleBtn').focus();}else hideDrawer();return;}
- if(!$('stylePanel').hidden)return;
+ if(e.code==='Escape'){if(!$('lookbookPanel').hidden){closeLookbook();$('lookbookBtn').focus();}else if(!$('stylePanel').hidden){closeStyleStudio();$('styleBtn').focus();}else hideDrawer();return;}
+ if(!$('stylePanel').hidden||!$('lookbookPanel').hidden)return;
  if($('drawerOverlay').classList.contains('open')){
   if(e.code==='Tab'){
    const els=[...$('drawerOverlay').querySelectorAll('button:not([disabled]),a[href]')].filter(x=>x.offsetParent!==null);
@@ -1306,7 +1388,7 @@ const productTip=$('objectTip'),tipLabel=$('tipProductName');
 let tipCurrent=-1,tipFrame=0;
 $('tipProductAction').addEventListener('click',()=>{if(tipCurrent>=0){stopTour();openItem(tipCurrent);}});
 function updateProductTip(){
- if($('drawerOverlay').classList.contains('open')||touring){productTip.classList.remove('show');return;}
+ if($('drawerOverlay').classList.contains('open')||!$('lookbookPanel').hidden||touring){productTip.classList.remove('show');return;}
  const pos3=new THREE.Vector3(),projected=new THREE.Vector3();
  let best=Infinity,bestIndex=-1;
  for(const h of hotspots){
@@ -1331,7 +1413,7 @@ function animate(t){
  requestAnimationFrame(animate);
  const delta=Math.min(.04,(t-(animate.prev||t))/1000);animate.prev=t;
  if(document.hidden)return;
- if(!$('drawerOverlay').classList.contains('open')){
+ if(!$('drawerOverlay').classList.contains('open')&&$('lookbookPanel').hidden){
   if(touring&&tourRoute.length>1){
    tourT+=delta/(reduced?2.4:3.65);
    const n=tourRoute.length-1,seg=Math.min(n-1,Math.floor(tourT));
@@ -1355,7 +1437,17 @@ function animate(t){
    if(keys.has('ArrowRight'))yaw-=delta*1.3;
   }
  }
- camera.position.y=1.68+(reduced?0:.012*Math.sin(t*.0014));updateCamera();
+ if(lookbookFocus){
+  lookbookFocus.t=Math.min(1,lookbookFocus.t+delta/(reduced?.25:1.1));
+  const v=lookbookFocus.t*lookbookFocus.t*(3-2*lookbookFocus.t);
+  camera.position.lerpVectors(lookbookFocus.start,lookbookFocus.end,v);
+  yaw=THREE.MathUtils.lerp(lookbookFocus.initialYaw,lookbookFocus.endYaw,v);
+  pitch=THREE.MathUtils.lerp(lookbookFocus.initialPitch,-.035,v);
+  if(lookbookFocus.t>=1)lookbookFocus=null;
+ }else camera.position.y=1.68+(reduced?0:.012*Math.sin(t*.0014));
+ if(lookbookStage&&lookbookStage.rotationEnabled&&!reduced)
+   lookbookStage.pivot.rotation.y+=delta*.42;
+ updateCamera();
  hotspots.forEach((h,i)=>{h.g.rotation.y+=delta*.26;h.halo.scale.setScalar(1+(reduced?0:.11*Math.sin(t*.0028+i)));});
  renderer.render(scene,camera);
  if(showPerformance){
@@ -1388,6 +1480,7 @@ try{
  const initial=new URLSearchParams(location.search).get('world');
  applyQuality();setStore(DATA[initial]?initial:'fashion');priceTotal();
  if(new URLSearchParams(location.search).get('studio')==='1')openStyleStudio();
+ else if(new URLSearchParams(location.search).get('lookbook')==='1')openLookbook();
  $('loading').classList.add('ready');window.__marketSpaceReady=true;
  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
  requestAnimationFrame(animate);
