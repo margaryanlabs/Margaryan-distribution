@@ -56,3 +56,17 @@ Built as a new isolated static browser experience in the existing Margaryan Dist
 - Real-browser screenshots and physical GPU/touch checks were not available. Source tests cannot certify shader render correctness or image fidelity.
 - High-end production quality still requires licensed/commissioned GLB assets, physically based textures, proper environment lighting, profiling and a quality-assurance pass on several Android/iOS device classes.
 - No real payment integration or checkout; product pricing is illustrative.
+
+
+## V10.3 — visual grounding and GPU batching (2026-10-26)
+- Grocery shelf merchandise now uses Three.js InstancedMesh keyed by base shape/material. Each carton/bottle keeps a per-instance product index so clicking the individual object still opens the correct demo product. This reduces WebGL draw calls compared with per-item mesh construction while preserving visible objects. One shelf's 50 products (100 mesh parts) were validated as 12 instanced groups with finite transforms; **real FPS gains were not measured**.
+- Disposal now includes InstancedMesh GPU instance resources on store transitions.
+- RoomEnvironment + PMREM is used for reflective studio illumination, surrounded by safe direct-light fallback if environment generation fails. This is physically inspired scene lighting, not a claim of photoreal lighting calibration.
+- Shared radial contact-shadow textures ground mannequins, couches, groceries, produce displays and cosmetic islands even on phones without expensive shadow maps.
+- Glass cosmetic bottles use reused clearcoat materials, reduced roughness and environment reflections.
+- 18 offline static and isolated behavior checks pass. Browser screenshots, real WebGL availability, GPU profiling, actual materials and Android interaction remain unverified.
+
+### Asset quality threshold for the premium commercial version
+The existing four experimental V7 GLBs in /assets/v7/ were inspected. They are tiny models with a single mesh each (approximately 8–47 KB) and no image texture references. They may be suitable for a light procedural prototype, but they cannot credibly be marketed as professional photorealistic fashion/furniture assets. Real high-fidelity assets must be commissioned or acquired with explicit licenses, verified glTF/GLB PBR material channels, quality-controlled geometry and separate mobile LODs before replacing V10.3 showroom content.
+
+Do not confuse GPU batching, clearcoat settings or enhanced lighting with verified final photography-level realism.
