@@ -38,7 +38,8 @@ node scripts/cloud/vps-preflight.mjs --check --json
 
 ## Database and worker rollout (not part of pilot success)
 
-- **Postgres durability pilot:** disposable private `deploy/cloud/db-pilot/compose.yaml`, generated secret via `scripts/cloud/prepare-db-pilot.mjs`, instructions at `deploy/cloud/db-pilot/README.md`. This tests persistence only; it is not the production database.\n- **Supabase:** official self-hosted Docker stack, each project separated where needed. Follow `docs/cloud/SELF_HOSTED_DATA.md`; Auth, Storage, Realtime, email and callback URLs are not supplied by bare Postgres.
+- **Postgres durability pilot:** disposable private `deploy/cloud/db-pilot/compose.yaml`, generated secret via `scripts/cloud/prepare-db-pilot.mjs`, instructions at `deploy/cloud/db-pilot/README.md`. This tests persistence only; it is not the production database.
+- **Supabase:** official self-hosted Docker stack, each project separated where needed. Follow `docs/cloud/SELF_HOSTED_DATA.md`; Auth, Storage, Realtime, email and callback URLs are not supplied by bare Postgres.
 - **Queue and monitoring:** private `deploy/cloud/ops/compose.yaml`, using `scripts/cloud/prepare-ops.mjs`. Do not publish ports.
 - **Encrypted offsite backup:** separate failure domain and real restore per `docs/cloud/RECOVERY.md` and `docs/cloud/RESTORE_LAB.md`. Storage objects and application secrets need independent recovery plans.
 - **Agents:** Sentinel, Guardian and Supervisor remain read-only until private tokens, timers and incident evidence exist.
