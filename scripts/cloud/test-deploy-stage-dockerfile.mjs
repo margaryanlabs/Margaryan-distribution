@@ -22,6 +22,8 @@ test("nested private VETO Dockerfile is included but staging remains non-deployi
   assert.equal(actual.autogenerate_domain, false);
   assert.equal(actual.is_auto_deploy_enabled, false);
   assert.equal(actual.base_directory, "/");
+  assert.equal(actual.limits_memory, "1g");
+  assert.equal(actual.limits_cpus, "1");
   assert.equal(actual.environment_name, "staging");
   assert.equal(actual.github_app_uuid, basic.github_app_uuid);
   assert.equal(actual.domains, undefined);
@@ -35,6 +37,19 @@ test("no application is automatically built on creation or subsequent pushes", (
     assert.deepEqual([req.instant_deploy,req.is_auto_deploy_enabled,req.autogenerate_domain],
       [false,false,false]);
     assert.equal(req.base_directory, "/");
+  }
+});
+
+test("resource caps reject unexpectedly large or unlimited staging containers", () => {
+  assert.deepEqual(
+    [createStagingRequest({...basic,limits_memory:"2g",limits_cpus:"0.5"}).limits_memory,
+      createStagingRequest({...basic,limits_memory:"2g",limits_cpus:"0.5"}).limits_cpus],
+    ["2g","0.5"]);
+  for (const value of ["0","999g","8g","1g;echo",0,null]) {
+    assert.throws(()=>createStagingRequest({...basic,limits_memory:value}), undefined, String(value));
+  }
+  for (const value of ["0","8","100","1;rm",1,null]) {
+    assert.throws(()=>createStagingRequest({...basic,limits_cpus:value}), undefined, String(value));
   }
 });
 
