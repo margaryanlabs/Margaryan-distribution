@@ -19,11 +19,13 @@ First observed run: https://github.com/margaryanlabs/Margaryan-distribution/acti
 
 Node.js 22+ on a trusted machine with a COMPLETE GitHub checkout:
 
-    npm ci --no-audit --no-fund
+    npm install --no-audit --no-fund
     node scripts/cloud/local-ci.mjs --cloud
     node scripts/cloud/local-ci.mjs --full
     npm run typecheck
     npm run build
+
+There is currently no committed package-lock.json; npm ci cannot run. The unlocked npm install matches main CI, but is not a reproducible dependency lock. Generate and review a committed lockfile before treating a full-build result as a reproducible release.
 
 No production keys are needed for these offline checks. This assistant environment cannot clone the full public GitHub repo due network/DNS restrictions, so these complete commands were not executed here.
 

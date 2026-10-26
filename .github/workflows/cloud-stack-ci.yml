@@ -47,7 +47,7 @@ jobs:
       - name: Verify staging marker is opt-in and private secrets stay private
         run: node --experimental-strip-types --test scripts/cloud/test-release-marker.mjs
       - name: Verify agent supervision, rollback lab and first-node guards
-        run: node --test scripts/cloud/portfolio-guardian.test.mjs scripts/cloud/agent-supervisor.test.mjs scripts/cloud/decision-specialist.test.mjs scripts/cloud/recovery.test.mjs scripts/cloud/restore-lab.test.mjs scripts/cloud/first-node.test.mjs
+        run: node --test scripts/cloud/portfolio-guardian.test.mjs scripts/cloud/agent-supervisor.test.mjs scripts/cloud/decision-specialist.test.mjs scripts/cloud/recovery.test.mjs scripts/cloud/restore-lab.test.mjs scripts/cloud/first-node.test.mjs scripts/cloud/vps-preflight.test.mjs scripts/cloud/prepare-db-pilot.test.mjs scripts/cloud/app-portability.test.mjs
       - name: Verify local release gate registration and Mission Control contracts
         run: node --test scripts/cloud/local-ci.test.mjs scripts/cloud/test-mission-control-v3.mjs
 
@@ -64,9 +64,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-      - name: Install exactly locked dependencies
-        run: npm ci --no-audit --no-fund
+
+      - name: Install dependencies (no committed npm lockfile yet)
+        run: npm install --no-audit --no-fund
       - name: Full TypeScript check
         run: npm run typecheck
       - name: Production build with existing Motion prebuild tests

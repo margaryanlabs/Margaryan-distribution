@@ -1,0 +1,29 @@
+# Disposable, isolated PostgreSQL durability pilot. NOT a production Supabase replacement.
+name: markarian-db-pilot
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: "no"
+    environment:
+      POSTGRES_USER: markarian_pilot
+      POSTGRES_DB: markarian_pilot
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    secrets: [postgres_password]
+    volumes: [pilot_pgdata:/var/lib/postgresql/data]
+    networks: [isolated]
+    expose: ["5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U markarian_pilot -d markarian_pilot || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    security_opt: ["no-new-privileges:true"]
+networks:
+  isolated:
+    internal: true
+volumes:
+  pilot_pgdata:
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password
