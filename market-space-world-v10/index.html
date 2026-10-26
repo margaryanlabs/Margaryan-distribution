@@ -108,7 +108,7 @@ renderer.setPixelRatio(renderPixelRatio);
 renderer.setSize(innerWidth,innerHeight);
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.36;
+renderer.toneMappingExposure=1.10;
 renderer.shadowMap.enabled=!coarse;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 $('viewport').appendChild(renderer.domElement);
@@ -184,7 +184,7 @@ function stoneTexture(colorA='#d5cdc0',colorB='#ada498'){
  for(let v=0;v<=512;v+=128){q.beginPath();q.moveTo(v,0);q.lineTo(v,512);q.stroke();q.beginPath();q.moveTo(0,v);q.lineTo(512,v);q.stroke();}
  q.globalAlpha=1;const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(4,8);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t;
 }
-function areaLight(x,z,color='#ffe0b5',strength=8){const l=new THREE.PointLight(color,strength,9,2);l.position.set(x,5.25,z);root.add(l);}
+function areaLight(x,z,color='#ffe0b5',strength=5.6){const l=new THREE.PointLight(color,strength,9,2);l.position.set(x,5.25,z);root.add(l);}
 function spotlight(x,z){
  const gold=new THREE.MeshBasicMaterial({color:'#ffe6b6'});
  tube(x,5.25,z,.16,.18,.13,darkMetal);
@@ -214,11 +214,11 @@ function architecture(key){
  for(const x of [-9.8,9.8])block(x,.24,-10,.085,.25,37,brass);
  block(0,.01,-30,21,.03,.13,brass);
  for(let z of [6,-7,-20]){ring(0,5.3,z,1.05,.048,new THREE.MeshBasicMaterial({color:'#ffdfb7'}));ring(0,5.45,z,1.13,.025,brass);areaLight(0,z);}
- const hemi=new THREE.HemisphereLight('#fff5e4','#777369',2.3);root.add(hemi);
- const directional=new THREE.DirectionalLight('#fff4dd',2.9);directional.position.set(-4,9,6);
+ const hemi=new THREE.HemisphereLight('#fff5e4','#777369',1.5);root.add(hemi);
+ const directional=new THREE.DirectionalLight('#fff4dd',2.15);directional.position.set(-4,9,6);
  directional.castShadow=!coarse;directional.shadow.mapSize.set(1024,1024);directional.shadow.camera.left=-15;directional.shadow.camera.right=15;directional.shadow.camera.top=16;directional.shadow.camera.bottom=-20;directional.shadow.bias=-.001;
  root.add(directional);
- const fill=new THREE.DirectionalLight('#dce9ed',1.15);fill.position.set(8,6,-13);root.add(fill);
+ const fill=new THREE.DirectionalLight('#dce9ed',.75);fill.position.set(8,6,-13);root.add(fill);
  framedSign(d.name,key==='fashion'?'COLLECTION  /  2026':key==='food'?'FRESH   /   EVERY DAY':key==='beauty'?'THE RITUAL OF BEAUTY':'SPACES TO LIVE',0,3.9,-31.36,6,2.15);
 }
 function platform(x,z,r=1.18){
@@ -466,6 +466,7 @@ function selectHotspot(x,y,z,index){
 function disposeWorld(){
  const geometries=new Set(),materials=new Set();
  root.traverse(n=>{
+  if(n.isLight&&n.shadow?.map)n.shadow.map.dispose();
   if(n.geometry&&n.geometry!==boxGeo&&n.geometry!==sphereGeo)geometries.add(n.geometry);
   if(n.material)for(const m of (Array.isArray(n.material)?n.material:[n.material])){
    if(m&&!reusableMaterials.has(m))materials.add(m);
