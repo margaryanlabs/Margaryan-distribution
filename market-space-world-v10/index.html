@@ -199,41 +199,90 @@ function hanger(g,x=0,y=0,z=0){
  const right=mesh(cyl(.018,.018,.51,7),material);right.rotation.z=1.18;right.position.set(.22,-.05,0);p.add(right);
  block(0,-.14,0,.52,.035,.04,material,p);
 }
-function clothBody(color,kind='jacket'){
- const group=new THREE.Group(),cloth=mat(color,.93,.03,{side:THREE.DoubleSide});
- const shape=new THREE.Shape();
- shape.moveTo(-.28,.62);shape.lineTo(-.46,.49);shape.lineTo(-.53,-.24);shape.lineTo(-.37,-.36);
- shape.lineTo(-.31,-.26);shape.lineTo(-.28,-.76);shape.lineTo(.28,-.76);
- shape.lineTo(.31,-.26);shape.lineTo(.37,-.36);shape.lineTo(.53,-.24);
- shape.lineTo(.46,.49);shape.lineTo(.28,.62);shape.lineTo(.12,.52);shape.lineTo(-.12,.52);shape.closePath();
- const body=mesh(new THREE.ExtrudeGeometry(shape,{depth:.12,bevelEnabled:true,bevelSegments:2,steps:1,bevelSize:.038,bevelThickness:.034}),cloth);
- group.add(body);
- const seam=mat('#a39580',.83);
- if(kind==='dress'){
-   const skirt=mesh(new THREE.CylinderGeometry(.26,.56,1.04,18,3,true),cloth);skirt.position.set(0,-1.23,.08);group.add(skirt);
-   for(let k=0;k<10;k++){const a=k/10*Math.PI*2;const line=mesh(new THREE.CylinderGeometry(.007,.007,.83,5),seam);line.position.set(Math.sin(a)*.39,-1.35,Math.cos(a)*.39+.06);line.rotation.z=Math.sin(a)*.19;line.rotation.x=-Math.cos(a)*.19;group.add(line);}
- }else if(kind==='jacket'){
-   // Separate structural lapels, fabric seams and buttons rather than printed jacket textures.
-   const lap=mat('#e0d2bf',.89,0);
-   const a=new THREE.Shape();a.moveTo(-.15,.52);a.lineTo(-.39,.34);a.lineTo(-.13,-.12);a.lineTo(-.015,.12);a.closePath();
-   const l=mesh(new THREE.ShapeGeometry(a),lap);l.position.z=.18;group.add(l);
-   const b=mesh(new THREE.ShapeGeometry(a),lap);b.scale.x=-1;b.position.z=.18;group.add(b);
-   for(let j=0;j<4;j++)ball(.06,.10-j*.17,.22,.027,.027,.02,brass,group);
+// V10.1: garment shells built from smoothly shaded 3D fabric rings, not flat extrusions.
+// Silhouettes vary in waist, shoulder, sleeves and lower hem; styling remains procedural.
+function garmentShell(rings,cloth,detail=0){
+ const count=coarse?12:20,positions=[],uvs=[],indices=[];
+ for(let j=0;j<rings.length;j++){
+  const [y,rx,rz]=rings[j];
+  for(let i=0;i<count;i++){
+   const a=i/count*Math.PI*2;
+   const wrinkle=1+(detail*.038*Math.cos(a*10+j*.83));
+   const px=Math.cos(a)*rx*wrinkle;
+   const pz=Math.sin(a)*rz*(1+detail*.04*Math.sin(a*8+j*.62));
+   positions.push(px,y,pz);
+   uvs.push(i/count,j/(rings.length-1));
+   if(j<rings.length-1){const b=j*count+i,n=j*count+(i+1)%count;
+     indices.push(b,n,b+count,n,n+count,b+count);}
+  }
  }
- soft(0,-.75,.05,.57,.085,.2,cloth,.035,group);
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+ geometry.setIndex(indices);geometry.computeVertexNormals();
+ return mesh(geometry,cloth);
+}
+function clothBody(color,kind='jacket'){
+ const group=new THREE.Group();
+ const cloth=mat(color,.96,.0,{side:THREE.DoubleSide});
+ const sleeveColor=mat(color,.97,.0);
+ const isDress=kind==='dress',isCoat=kind==='coat';
+ const rings=isDress?
+  [[.58,.29,.16],[.43,.40,.23],[.18,.36,.23],[-.19,.28,.20],[-.49,.37,.27],[-.86,.51,.36],[-1.26,.65,.45],[-1.44,.69,.47]]:
+  isCoat?[[.58,.30,.18],[.44,.43,.23],[.18,.40,.27],[-.19,.38,.28],[-.55,.42,.31],[-.90,.48,.35],[-1.17,.51,.39]]:
+  [[.58,.28,.18],[.44,.43,.23],[.20,.38,.27],[-.18,.33,.25],[-.53,.34,.27],[-.73,.35,.27]];
+ group.add(garmentShell(rings,cloth,isDress?1:.45));
+ for(const side of [-1,1]){
+  // Each sleeve is a tapered fully dimensional piece with an individual cuff.
+  const sleeve=mesh(new THREE.CylinderGeometry(.165,.115,isDress?.69:.91,coarse?10:14,2),sleeveColor);
+  sleeve.position.set(side*.53,isDress?.09:.02,0);
+  sleeve.rotation.z=side*(isDress?.25:.15);group.add(sleeve);
+  tube(side*(isDress?.65:.63),isDress?-.24:-.42,0,.115,.115,.075,cloth,group);
+ }
+ if(!isDress){
+  // Layered satin lapels and front stitched opening.
+  const satin=mat('#ddd0bc',.91,0,{side:THREE.DoubleSide});
+  const mkLapel=side=>{
+   const sh=new THREE.Shape();
+   sh.moveTo(side*.04,.50);sh.lineTo(side*.28,.39);
+   sh.lineTo(side*.145,-.06);sh.lineTo(side*.02,.16);sh.closePath();
+   const obj=mesh(new THREE.ShapeGeometry(sh),satin);obj.position.z=.27;group.add(obj);
+  };
+  mkLapel(-1);mkLapel(1);
+  for(let j=0;j<(isCoat?5:3);j++)ball(.075,.08-j*.17,.31,.028,.028,.02,brass,group);
+  // Tailoring vents and a distinct underlayer peeking out at the neckline.
+  soft(0,.36,.17,.19,.23,.06,ivory,.02,group);
+ }else{
+  // A sculpted belt and gently draping pleat seams.
+  const belt=mat('#a68f7a',.63,.1);
+  soft(0,-.19,.01,.62,.064,.41,belt,.022,group);
+  if(!coarse)for(let k=0;k<12;k++){
+   const a=k*Math.PI*2/12;
+   const rr=.54;
+   const seam=mesh(new THREE.CylinderGeometry(.004,.004,.43,5),mat('#cbbcab',1));
+   seam.position.set(Math.cos(a)*rr,-1.08,Math.sin(a)*rr*.7);
+   seam.rotation.z=Math.cos(a)*.26;seam.rotation.x=Math.sin(a)*.18;
+   group.add(seam);
+  }
+ }
  return group;
 }
 function mannequin(x,z,kind,color,index){
- const g=new THREE.Group();g.position.set(x,.38,z);root.add(g);platform(x,z,1.08);
- tube(0,.47,0,.045,.045,.88,darkMetal,g);
+ const g=new THREE.Group();g.position.set(x,.38,z);root.add(g);
+ platform(x,z,1.08);
+ tube(0,.49,0,.048,.048,.86,darkMetal,g);
  ball(0,1.07,0,.22,.34,.18,mat('#c6b4a1',.68),g);
- ball(0,1.49,0,.11,.17,.12,mat('#c6b4a1',.68),g);
+ tube(0,1.62,0,.085,.085,.29,mat('#c9b4a2',.71),g);
+ ball(0,1.91,0,.14,.22,.145,mat('#c6b4a1',.67),g);
  for(const side of [-1,1]){
-  const arm=ball(side*.38,.66,0,.12,.49,.14,mat('#c6b4a1',.68),g);arm.rotation.z=side*.13;
-  const leg=ball(side*.16,-.25,0,.15,.62,.18,mat('#bdab98',.73),g);leg.rotation.z=-side*.05;
+  const arm=ball(side*.37,1.08,0,.115,.44,.13,mat('#c6b4a1',.7),g);arm.rotation.z=side*.13;
+  const leg=ball(side*.16,.39,0,.14,.55,.16,mat('#bdab98',.75),g);leg.rotation.z=-side*.06;
  }
- const garment=clothBody(color,kind);garment.scale.set(1.22,1.2,1.55);garment.position.set(0,.74,.16);g.add(garment);
- selectHotspot(x,2.4,z+1.25,index);
+ const garment=clothBody(color,kind);
+ garment.scale.set(1.01,.83,.96);garment.position.set(0,1.13,.11);g.add(garment);
+ // Group is selectable via raycasting against actual 3D geometry.
+ g.userData.itemIndex=index;pickables.push(g);
+ selectHotspot(x,2.12,z+1.04,index);
  return g;
 }
 function garmentsRail(x,z,colors){
