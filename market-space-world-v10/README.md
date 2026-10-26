@@ -119,3 +119,24 @@ Instead of adding further glossy CSS-only decorations, this iteration adds **cus
 - Interactive golden-hour outfit designer: `/market-space-world-v10/?world=fashion&mood=golden&finish=rose&studio=1&preview=106`
 - Living sage showroom: `/market-space-world-v10/?world=home&mood=gallery&finish=sage&studio=1&preview=106`
 - Sales site: `/market-space-showcase-v10/`
+
+## V10.7 — 3D Lookbook: shareable outfits inside the actual Fashion showroom (2026-10-26)
+
+- An interactive Lookbook panel, reached from the 3D header or automatically with `?lookbook=1`, is integrated in the real existing Fashion world, not a separate mocked site or static promotional image.
+- A sculptural mannequin on its own circular podium assembles one of **four distinct 3D garment meshes** (Atelier coat, Sculpt dress, Line jacket, Edition), **four selectable fabric hues**, two sneaker finishes or no footwear, and an optional 3D handbag. The object uses existing mesh generation, woven material and lighting resources.
+- Curated combinations: Atelier, Golden and After Dark. Buttons change garment geometry visibility, fabric color, shoe and bag visibility, and optionally the existing Style Studio lighting mood.
+- Opening the Lookbook smoothly focuses the 3D camera on the real mannequin; optional rotation exposes the garment's silhouette from every side. Controls use a compact, scrollable bottom sheet on phones, do not erase the 3D scene, and remain reversible.
+- A total is computed only from **existing illustrative Fashion catalog line items**. Shoes are the existing demonstration sneaker SKU; the decorative handbag is explicitly not treated as a commercial sellable SKU. The add-look action puts only the chosen garment and optional demo sneaker in the existing local cart. No checkout is connected.
+- Outfit parameters `look`, `lookTone`, `lookShoes`, `lookBag` and `lookbook=1` are encoded in shareable URLs with the room and Style Studio lighting state. Visitors can open the configured look directly via native mobile share or clipboard.
+- The V10 commercial landing now has a "Собрать 3D-образ" call-to-action; this links straight to a preselected 3D outfit.
+- Explicit in-app disclaimer: this is a **generic virtual mannequin** demo, **not** a body scan, AR try-on, fit prediction, actual clothing draping simulation, real sale, or completed payment gateway.
+- Added narrow-screen navigation handling to retain the four navigation actions on compact Android/Fold viewports.
+- QA: **29 earlier core checks passed**, plus **3 new behavior checks** for Lookbook UI, actual 3D garment variant selection, color switches, and demo pricing. JS sources parse. Real screenshot, mobile GPU performance, asset rendering and user-device input testing remain pending.
+
+### Previews
+- Live Lookbook: `/market-space-world-v10/?world=fashion&lookbook=1&look=dress&lookTone=rose&lookShoes=sneaker&lookBag=yes&preview=107`
+- Dark curated look: `/market-space-world-v10/?world=fashion&lookbook=1&look=edition&lookTone=night&lookShoes=dark&lookBag=no&mood=noir&preview=107`
+- Commercial landing with direct Lookbook entry: `/market-space-showcase-v10/`
+
+### Next asset milestone
+Commission/licence high-resolution real garment glTF + PBR textures and optimized mobile LODs, implement source-bound catalog, and verify device visuals. The current clothes remain handmade procedural stylizations rather than photoreal fabric simulation.
