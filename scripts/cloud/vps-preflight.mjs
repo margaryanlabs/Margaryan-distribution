@@ -17,7 +17,8 @@ export function evaluateVps(snapshot) {
     ['cpu_for_staging', Number.isInteger(snapshot.cpu) && snapshot.cpu >= PILOT_LIMITS.cpu],
     ['ram_for_staging', Number.isFinite(snapshot.ramMiB) && snapshot.ramMiB >= PILOT_LIMITS.ramMiB],
     ['free_disk_for_staging', Number.isFinite(snapshot.freeDiskGiB) && snapshot.freeDiskGiB >= PILOT_LIMITS.freeDiskGiB],
-    ['docker_cli', snapshot.dockerCli === true],\n    ['local_docker_context', snapshot.localDockerContext === true],
+    ['docker_cli', snapshot.dockerCli === true],
+    ['local_docker_context', snapshot.localDockerContext === true],
     ['docker_compose', snapshot.compose === true],
     ['docker_daemon_access', snapshot.daemon === true],
   ].map(([id, pass]) => ({ id, status: pass ? 'PASS' : 'WAIT' }));
@@ -39,7 +40,15 @@ function probeDocker(args) {
   } catch { return false; }
 }
 
-function probeLocalContext() {\n  try {\n    const context = execFileSync('docker', ['context', 'show'], { timeout: 4500, encoding: 'utf8',\n      env: { PATH: process.env.PATH || '/usr/bin:/bin', HOME: process.env.HOME || '/tmp' }, maxBuffer: 1024 });\n    return context.trim() === 'default';\n  } catch { return false; }\n}\n\nexport function readHost() {
+function probeLocalContext() {
+  try {
+    const context = execFileSync('docker', ['context', 'show'], { timeout: 4500, encoding: 'utf8',
+      env: { PATH: process.env.PATH || '/usr/bin:/bin', HOME: process.env.HOME || '/tmp' }, maxBuffer: 1024 });
+    return context.trim() === 'default';
+  } catch { return false; }
+}
+
+export function readHost() {
   let freeDiskGiB = NaN;
   try {
     const fs = statfsSync('/');
