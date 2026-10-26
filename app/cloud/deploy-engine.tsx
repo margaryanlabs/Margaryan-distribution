@@ -37,7 +37,7 @@ export default function DeployEngine({onOpenSetup}:{onOpenSetup:()=>void}){
   <header className={styles.hero}>
    <div><span className={styles.kicker}>MARKARIAN CLOUD OS / DEPLOYMENT WORKSPACE</span>
     <h1>Deploy with <em>control.</em></h1>
-    <p>Create a reproducible release manifest, set resource limits and review every production gate. Nothing is deployed without a secured VPS and an approved execution service.</p></div>
+    <p>Create a reproducible release manifest, model as many resource units or replicas as necessary, and review release gates. Real deployment still depends on measured target-host capacity and a secured execution service.</p></div>
    <span className={styles.lock}>PREVIEW · NO LIVE WRITES</span>
   </header>
   <div className={styles.grid}>
@@ -55,9 +55,9 @@ export default function DeployEngine({onOpenSetup}:{onOpenSetup:()=>void}){
      <label>Application type<select value={input.kind} onChange={e=>update("kind",e.target.value as DeployKind)}>
       {kinds.map(x=><option value={x.value} key={x.value}>{x.label}</option>)}</select></label>
      <label>Internal port<input type="number" min={1} max={65535} value={input.port} onChange={e=>update("port",Number(e.target.value))}/></label>
-     <label>CPU limit<input type="number" min={1} max={16} value={input.cpu} onChange={e=>update("cpu",Number(e.target.value))}/></label>
-     <label>RAM (MB)<input type="number" min={256} max={32768} step={256} value={input.memoryMB} onChange={e=>update("memoryMB",Number(e.target.value))}/></label>
-     <label>Replicas<input type="number" min={1} max={5} value={input.replicas} onChange={e=>update("replicas",Number(e.target.value))}/></label>
+     <label>CPU allocation<input type="number" min={1} step={1} value={input.cpu} onChange={e=>update("cpu",Number(e.target.value))}/></label>
+     <label>RAM (MB)<input type="number" min={128} step={128} value={input.memoryMB} onChange={e=>update("memoryMB",Number(e.target.value))}/></label>
+     <label>Replicas<input type="number" min={1} step={1} value={input.replicas} onChange={e=>update("replicas",Number(e.target.value))}/></label>
      <label>Healthcheck path<input value={input.healthPath} onChange={e=>update("healthPath",e.target.value)}/></label>
      <label className={styles.wide}>Custom hostname (optional)<input value={input.domain} onChange={e=>update("domain",e.target.value)} placeholder="preview.your-domain.com"/></label>
     </div>
