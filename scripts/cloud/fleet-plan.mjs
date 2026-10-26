@@ -61,9 +61,9 @@ export function planFleet(raw){
     n.free.cpu>=s.cpu&&n.free.memoryMiB>=s.memoryMiB&&n.free.diskGiB>=s.diskGiB);
    // Zone spread never silently falls back to one zone for the second replica.
    const zonesAssigned=new Set(assigned.values());
-   const availableZones=new Set(candidates.map(n=>n.zone));
-   const requiresNewZone=s.requireZoneSpread&&zonesAssigned.size<2&&zonesAssigned.size>0&&
-    [...availableZones].some(zone=>!zonesAssigned.has(zone));
+   // The second HA replica MUST occupy a different failure zone. If none
+   // exists, leave it unplaced instead of silently accepting false HA.
+   const requiresNewZone=s.requireZoneSpread&&zonesAssigned.size===1;
    const filtered=candidates.filter(n=>!requiresNewZone||!zonesAssigned.has(n.zone));
    filtered.sort((a,b)=>{
     const za=[...assigned.values()].filter(z=>z===a.zone).length;
