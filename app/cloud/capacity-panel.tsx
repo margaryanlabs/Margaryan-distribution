@@ -1,6 +1,6 @@
 "use client";
 import {useMemo,useState} from "react";
-import {defaultWorkloads,planCapacity,type NodeCapacity,type Workload} from "@/lib/cloud/capacity";
+import {defaultWorkloads,twoProductWorkloads,planCapacity,type NodeCapacity,type Workload} from "@/lib/cloud/capacity";
 import styles from "./capacity-panel.module.css";
 
 const sizes=[
@@ -11,13 +11,18 @@ const sizes=[
 ] as const;
 const formatMemory=(n:number)=>n>=1024?(n/1024).toLocaleString("en",{maximumFractionDigits:1})+" GiB":n+" MiB";
 export default function CapacityPanel({onDeploy,onSetup}:{onDeploy:()=>void;onSetup:()=>void}){
- const [node,setNode]=useState<NodeCapacity>({cpu:16,ramMiB:32768,reservedCpu:2,reservedRamMiB:2048});
- const [workloads,setWorkloads]=useState<Workload[]>(defaultWorkloads);
+ const [node,setNode]=useState<NodeCapacity>({cpu:16,ramMiB:32768,reservedCpu:2,reservedRamMiB:4096});
+ const [workloads,setWorkloads]=useState<Workload[]>(twoProductWorkloads);
+ const [scenario,setScenario]=useState<"first-two"|"portfolio">("first-two");
  const [guide,setGuide]=useState(false);
  const result=useMemo(()=>planCapacity(node,workloads),[node,workloads]);
  function setPreset(v:{cpu:number;ramMiB:number}){
   setNode({cpu:v.cpu,ramMiB:v.ramMiB,reservedCpu:v.cpu>2?2:1,
-   reservedRamMiB:Math.min(v.ramMiB/4,2048)});
+   reservedRamMiB:Math.min(v.ramMiB/4,4096)});
+ }
+ function chooseScenario(next:"first-two"|"portfolio"){
+  setScenario(next);
+  setWorkloads(next==="first-two"?[...twoProductWorkloads]:[...defaultWorkloads]);
  }
  function toggle(id:string,enabled:boolean){setWorkloads(items=>items.map(x=>x.id===id?{...x,enabled}:x));}
  const active=workloads.filter(x=>x.enabled);
@@ -29,6 +34,11 @@ export default function CapacityPanel({onDeploy,onSetup}:{onDeploy:()=>void;onSe
    <h1>Buy the right <em>capacity.</em></h1>
    <p>Before paying for VPS, model what our applications may need. These are manual allocation assumptions, not measured demand, vendor quotes or a guarantee of 1,000 users.</p>
   </header>
+  <section className={styles.scenarios} aria-label="Workload planning scenario">
+   <button type="button" aria-pressed={scenario==="first-two"} onClick={()=>chooseScenario("first-two")}>VETOGRAM + Promptence</button>
+   <button type="button" aria-pressed={scenario==="portfolio"} onClick={()=>chooseScenario("portfolio")}>Original portfolio model</button>
+   <p>Two-product preset isolates Neon-compatible VETOGRAM PostgreSQL from Promptence Supabase. All figures are hypothetical allocations, not observed CPU/RAM use.</p>
+  </section>
   <div className={styles.top}>
    <section className={styles.host}>
     <div className={styles.header}><span className={styles.kicker}>01 / SERVER PROFILE</span><h2>Choose a candidate host</h2></div>
@@ -46,6 +56,13 @@ export default function CapacityPanel({onDeploy,onSetup}:{onDeploy:()=>void;onSe
     <p>{result.fit?"The selected allocations fit on paper. Real hosts still need disk, I/O, CPU burst and failure headroom.":"The selected host cannot fit these planned allocations. Increase capacity or split workloads."}</p>
    </section>
   </div>
+  <section className={styles.cost} aria-label="Read-only hosting cost reference">
+   <div><span className={styles.kicker}>COST POLICY / 26 OCT 2026 / NOT A QUOTE</span><h2>Hosting budget: $50 / month</h2>
+    <p>Reference only: Hetzner CX53 $34.99 + IPv4 $0.60 + external Object Storage approx. $7.99 = <strong>$43.58 before VAT</strong>. A $5 reserve leaves $1.42 headroom. Optional server snapshots (~$7), taxes, traffic, domains, AI models and email can exceed $50.</p>
+    <p>Hetzner usage alerts do not enforce a spending cap. This page never provisions a server and cannot approve payment or production cutover.</p>
+   </div>
+   <a href="https://docs.hetzner.com/general/infrastructure-and-availability/price-adjustment/" target="_blank" rel="noopener noreferrer">Review official pricing ↗</a>
+  </section>
   <section className={styles.workloads}>
    <div className={styles.workHeader}><div><span className={styles.kicker}>03 / OUR APPLICATIONS</span><h2>Plan workloads</h2></div><span>{active.length} enabled / {workloads.length} profiles</span></div>
    <div className={styles.rows}>{workloads.map(w=><label className={styles.row} key={w.id}>
@@ -61,7 +78,7 @@ export default function CapacityPanel({onDeploy,onSetup}:{onDeploy:()=>void;onSe
    {result.notes.length?result.notes.map((n,i)=><p key={i}>— {n}</p>):
     <p>— Keep primary databases separate from analytics and media rendering when moving beyond a disposable pilot.</p>}
    <p>— The inexpensive shared-vCPU plans do not reserve CPU exclusively. Check disk IOPS, bandwidth, geography and supplier availability before ordering.</p>
-   <p>— This page does not fetch current VPS prices or create a server.</p>
+   <p>— This page does not fetch current VPS prices or create a server. Separate offsite backups, data isolation and verified restores are mandatory before production.</p>
   </div>
   <div className={styles.actions}>
    <button type="button" onClick={onSetup}>VPS launch checklist ↗</button>

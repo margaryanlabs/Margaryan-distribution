@@ -32,3 +32,18 @@ export function planCapacity(node:NodeCapacity,workloads:Workload[]){
  if(usedRamMiB/availableRamMiB>.8)notes.push("Memory reserve is under 20%; leave extra space for spikes, OS cache and migrations.");
  return {valid:true,usedCpu,usedRamMiB,availableCpu,availableRamMiB,fit,cpuPercent:usedCpu/availableCpu*100,ramPercent:usedRamMiB/availableRamMiB*100,notes};
 }
+
+/** Stage-only resource allowances for first two products on ONE VPS.
+ * These are NOT load-test results or production SLO promises.
+ * Keep VETOGRAM Neon-compatible PostgreSQL isolated from Promptence Supabase.
+ */
+export const twoProductWorkloads:Workload[]=[
+ {id:"control-plane",name:"Coolify + Markarian control",role:"ops",cpu:1,ramMiB:1536,replicas:1,enabled:true,notes:"Staging allowance, no production HA"},
+ {id:"vetogram-http",name:"VETOGRAM Node API and WebApp",role:"web",cpu:2,ramMiB:2048,replicas:1,enabled:true,notes:"No media rendering or concurrency load test"},
+ {id:"promptence-http",name:"Promptence Nitro runtime",role:"web",cpu:2,ramMiB:2048,replicas:1,enabled:true,notes:"AI API billed separately; jobs off by default"},
+ {id:"vetogram-neon-compat",name:"VETOGRAM isolated PostgreSQL",role:"data",cpu:2,ramMiB:4096,replicas:1,enabled:true,notes:"Neon v6 schema and roles need independent compatibility tests"},
+ {id:"promptence-supabase",name:"Promptence full Supabase stack",role:"data",cpu:4,ramMiB:8192,replicas:1,enabled:true,notes:"Auth, Storage, Realtime; object data may need off-host S3"},
+ {id:"ops-light",name:"Light monitoring and queue",role:"ops",cpu:1,ramMiB:2048,replicas:1,enabled:true,notes:"External offsite backups not counted in RAM"},
+ {id:"media",name:"Video renderer",role:"worker",cpu:4,ramMiB:4096,replicas:1,enabled:false,notes:"Must not co-locate heavy rendering by default"},
+ {id:"clickhouse",name:"VETO analytics",role:"analytics",cpu:4,ramMiB:8192,replicas:1,enabled:false,notes:"Not required for VETOGRAM and Promptence launch"}
+];

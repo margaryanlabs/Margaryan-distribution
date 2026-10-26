@@ -23,6 +23,14 @@ Coolify + reverse proxy + Docker workloads:
 
 **Capacity warning:** a 32 GiB single machine may host light pilot load, but that is not measured capacity. On one server all apps, the database and Coolify share a failure domain. No automatic high availability, regional failover, point-in-time recovery or zero-downtime migration is promised.
 
+## Capacity and spending gates (added 2026-10-26)
+
+- Cloud Capacity Planner now defaults to a **first-two-products** scenario with separately budgeted VETOGRAM Node and Neon-compatible PostgreSQL and Promptence Nitro and Supabase. The allocations are hypothetical, not measured.
+- The 16 GiB shared VPS does **not** fit both estimated persistent data stacks plus the OS reserve; a 32 GiB node fits on paper if media workers and VETO ClickHouse remain disabled.
+- Cost reference: CX53 $34.99, IPv4 $0.60, separate Object Storage about $7.99 = **$43.58 before taxes, overruns and other subscriptions**. A $5 planning reserve yields **$48.58**. Adding 20% cloud server snapshots increases this to **$55.58**.
+- Usage alerts are **not spending caps**. See `docs/cloud/COST_POLICY.md`, `scripts/cloud/budget-gate.mjs --example`, and the private `--assess` mode. The sample stays blocked when taxes, spending caps or usage are unknown.
+- Do not automatically upgrade instance size, purchase replicas, disable independent backups, or collapse VETOGRAM and Promptence tenant databases to meet an artificial budget. Scale based on measured data and explicit approval.
+
 ## Mandatory staged acceptance order
 
 1. On a trusted complete checkout of each review branch, run all recorded tests (not merely component fixture tests). For Cloud run `node scripts/cloud/local-ci.mjs --full`. Resolve the pre-step GitHub Actions failure or use an independently observed complete local release receipt.
