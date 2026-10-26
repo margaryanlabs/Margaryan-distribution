@@ -16,7 +16,11 @@ The first success is **one disposable HTTPS NGINX pilot on Coolify**, not a clai
 4. Install Docker Engine and Docker Compose plugin from official instructions (or reviewed Coolify installer on a fresh host). Ensure access to the *local* daemon, not arbitrary remote Docker context. Docker group membership is root-equivalent.
 5. Install Node.js >=22 and Git. Check out the reviewed Cloud branch and run the full local source quality gate on a separate trusted build machine before promoting real apps.
 
-## Budget before purchase (no service changes)
+## Scalable fleet (independent of any single VPS price)
+
+Use `node scripts/cloud/fleet-plan.mjs --plan "$(pwd)/deploy/cloud/fleet/staging.example.json"` to review placement of VETOGRAM and Promptence across separate application zones and private data pools. This is a source plan only, never a deployment or proof of real HA. See `deploy/cloud/fleet/README.md`.
+
+## Optional cost review (no service changes)
 
 Run the read-only hosting budget estimator in `scripts/cloud/budget-gate.mjs --example`, then create an owner-only quote file and `--assess /absolute/private/quote.json`. It blocks stale quotes, missing tax and hosting-cost categories, estimates above the cap, and unverified provider metered limits. **Even a reviewed estimate is not a real vendor spending limit or purchase approval.** See `docs/cloud/COST_POLICY.md`.
 
