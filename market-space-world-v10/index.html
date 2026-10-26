@@ -184,7 +184,7 @@ pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
 <button type="button" data-look-color="night"><i style="background:#393d43"></i>Night</button></div></div>
 <div class="lookbookGroup"><strong>04 / Детали</strong><div class="lookbookChoices">
 <button type="button" data-look-shoes="sneaker">Кроссовки</button>
-<button type="button" data-look-shoes="boot">Ботинки</button>
+<button type="button" data-look-shoes="dark">Тёмные</button>
 <button type="button" data-look-shoes="none">Без обуви</button>
 <button type="button" data-look-bag="yes">Сумка ✓</button>
 <button type="button" data-look-bag="no">Без сумки</button></div></div>
@@ -768,6 +768,112 @@ function shoeExhibit(x,z,index=4){
  slotPremiumModel('shoe','fashion',x,z,.37,g,index);
  return g;
 }
+// V10.7 LOOKBOOK: assembled live inside the fashion world, never a static overlay picture.
+// It demonstrates combinations on a generic mannequin, not a personalized body scan.
+const LOOKBOOK_GARMENTS={
+ coat:{index:0,label:'Пальто Atelier',kind:'coat',base:'#b8a18b'},
+ dress:{index:1,label:'Платье Sculpt',kind:'dress',base:'#cbb3a9'},
+ jacket:{index:2,label:'Пиджак Line',kind:'jacket',base:'#606d63'},
+ edition:{index:3,label:'Edition',kind:'jacket',base:'#aa9380'}
+};
+const LOOKBOOK_COLORS={sand:'#b99d80',rose:'#b88992',sage:'#637c70',night:'#393e47'};
+const LOOKBOOK_PRESETS={
+ atelier:{garment:'coat',color:'sand',shoes:'sneaker',bag:'yes',mood:'gallery'},
+ sunset:{garment:'dress',color:'rose',shoes:'sneaker',bag:'yes',mood:'golden'},
+ noir:{garment:'edition',color:'night',shoes:'dark',bag:'no',mood:'noir'}
+};
+function safeLookParam(key,options,fallback){
+ const raw=new URLSearchParams(location.search).get(key);
+ return raw&&Object.hasOwn(options,raw)?raw:fallback;
+}
+let lookbookState={
+ garment:safeLookParam('look',LOOKBOOK_GARMENTS,'coat'),
+ color:safeLookParam('lookTone',LOOKBOOK_COLORS,'sand'),
+ shoes:safeLookParam('lookShoes',{sneaker:1,dark:1,none:1},'sneaker'),
+ bag:safeLookParam('lookBag',{yes:1,no:1},'yes')
+};
+let lookbookStage=null;
+function createLookbookStage(){
+ const x=4.55,z=-3.6;
+ platform(x,z,1.38);registerBlocker(x,z,2.7,2.7);
+ const pivot=new THREE.Group();
+ pivot.position.set(x,.37,z);pivot.userData.lookbookOpen=true;root.add(pivot);pickables.push(pivot);
+ // Same 3D sculpt vocabulary as the rest of Fashion. No expensive new external GLBs.
+ tube(0,.48,0,.045,.045,.94,darkMetal,pivot);
+ const mannequinMat=mat('#bca992',.86);
+ ball(0,1.04,0,.215,.32,.16,mannequinMat,pivot);
+ tube(0,1.58,0,.07,.07,.27,mannequinMat,pivot);
+ ball(0,1.85,0,.145,.22,.135,mannequinMat,pivot);
+ for(const side of [-1,1]){
+  const leg=ball(side*.16,.43,0,.13,.55,.16,mannequinMat,pivot);leg.rotation.z=side*.04;
+  const arm=ball(side*.38,1.02,0,.115,.44,.14,mannequinMat,pivot);arm.rotation.z=side*.15;
+ }
+ const garments={};
+ for(const [key,def] of Object.entries(LOOKBOOK_GARMENTS)){
+  const g=clothBody(def.base,def.kind);
+  g.scale.set(1.06,.84,1);g.position.set(0,1.1,.12);
+  g.traverse(obj=>{
+   if(obj.isMesh&&obj.userData.styleSurface){
+    delete obj.userData.styleSurface;
+    obj.material=obj.material.clone();obj.userData.lookbookFabric=true;
+   }
+  });
+  pivot.add(g);garments[key]=g;
+ }
+ const shoes={};
+ for(const shade of ['sneaker','dark']){
+  const g=new THREE.Group();pivot.add(g);
+  const main=mat(shade==='dark'?'#353b40':'#e8dfd5',.63),sole=ivory;
+  for(const sign of [-1,1]){
+   soft(sign*.16,-.07,.13,.29,.14,.58,sole,.055,g);
+   soft(sign*.16,.035,.09,.285,.20,.46,main,.09,g);
+   for(let k=0;k<3;k++)soft(sign*.16,.148,.02+k*.09,.20,.015,.035,brass,.006,g);
+  }
+  shoes[shade]=g;
+ }
+ const bag=new THREE.Group();bag.position.set(.73,.62,.02);pivot.add(bag);
+ soft(0,0,0,.37,.44,.18,textile('#776052'),.09,bag);
+ const handle=mesh(new THREE.TorusGeometry(.14,.022,6,20,Math.PI),brass);
+ handle.position.set(0,.29,0);bag.add(handle);
+ soft(0,.18,.105,.11,.055,.025,brass,.012,bag);
+ const plaque=soft(0,.75,.51,1.25,.21,.08,mat('#262b26',.63),.025,pivot);
+ plaque.userData.lookbookNoPick=true;
+ lookbookStage={pivot,garments,shoes,bag,rotationEnabled:false};
+ applyLookbookState();
+}
+function applyLookbookState(){
+ if(!lookbookStage)return;
+ for(const [key,g] of Object.entries(lookbookStage.garments)){
+  g.visible=key===lookbookState.garment;
+  if(!g.visible)continue;
+  g.traverse(obj=>{
+   if(obj.isMesh&&obj.userData.lookbookFabric&&obj.material.color)
+    obj.material.color.set(LOOKBOOK_COLORS[lookbookState.color]);
+  });
+ }
+ for(const [key,g] of Object.entries(lookbookStage.shoes))g.visible=key===lookbookState.shoes;
+ lookbookStage.bag.visible=lookbookState.bag==='yes';
+ document.querySelectorAll('[data-look-garment]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lookGarment===lookbookState.garment)));
+ document.querySelectorAll('[data-look-color]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lookColor===lookbookState.color)));
+ document.querySelectorAll('[data-look-shoes]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lookShoes===lookbookState.shoes)));
+ document.querySelectorAll('[data-look-bag]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lookBag===lookbookState.bag)));
+ const price=DATA.fashion.items[LOOKBOOK_GARMENTS[lookbookState.garment].index][2]+
+  (lookbookState.shoes==='none'?0:DATA.fashion.items[4][2]);
+ $('lookbookPrice').textContent=money(price);
+}
+function updateLookbookURL(){
+ const url=new URL(location.href);
+ url.searchParams.set('world','fashion');
+ url.searchParams.set('look',lookbookState.garment);
+ url.searchParams.set('lookTone',lookbookState.color);
+ url.searchParams.set('lookShoes',lookbookState.shoes);
+ url.searchParams.set('lookBag',lookbookState.bag);
+ url.searchParams.set('mood',studioMood);
+ url.searchParams.set('finish',studioFinish);
+ history.replaceState(null,'',url);
+ return url;
+}
+
 function fashionScene(){
  const colors=['#b5a08a','#e9d8c4','#525951','#ae8a7d'];
  for(const side of [-1,1])for(const z of [3,-9,-22]){
@@ -782,6 +888,7 @@ function fashionScene(){
   boutiqueHandbag(side*4.3,z,side>0?'#746359':'#ae8c7b');
  shoeExhibit(-4.6,-7.2);
  shoeExhibit(4.6,-19.3);
+ createLookbookStage();
  for(const x of [-8,8])for(const z of [-3,-15,-27]){
   soft(x,4.45,z,.09,3.3,2.9,brass,.03);
   const mirror=mat('#c0c5bf',.09,.86);plane(x+(x>0?-.085:.085),4.45,z,2.55,3.1,mirror,root,x>0?-Math.PI/2:Math.PI/2);
@@ -1000,7 +1107,7 @@ function disposeWorld(){
 }
 function setStore(key){
  if(!DATA[key])return;
- closeStyleStudio();active=key;showroomGeneration++;premiumSlots=[];touring=false;tourRoute=[];walkVelocity.x=walkVelocity.z=0;
+ closeLookbook();closeStyleStudio();active=key;lookbookStage=null;showroomGeneration++;premiumSlots=[];touring=false;tourRoute=[];walkVelocity.x=walkVelocity.z=0;
  keys.clear();joy.x=joy.y=0;$('tourBtn').textContent='▶ Кинотур';
  disposeWorld();
  hotspots=[];pickables=[];blockers=[];marketPackBatches.clear();tipCurrent=-1;$('objectTip').classList.remove('show');premiumState='idle';updatePremiumStatus();architecture(key);
@@ -1041,6 +1148,7 @@ function selectAt(cx,cy){
   }
   let node=hit.object;
   while(node&&node!==root){
+   if(node.userData.lookbookOpen){openLookbook();return;}
    if(Number.isInteger(node.userData.itemIndex)){openItem(node.userData.itemIndex);return;}
    node=node.parent;
   }
