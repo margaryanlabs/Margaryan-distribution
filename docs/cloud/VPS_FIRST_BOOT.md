@@ -38,6 +38,7 @@ node scripts/cloud/vps-preflight.mjs --check --json
 
 ## Database and worker rollout (not part of pilot success)
 
+- **VETOGRAM + Promptence source portability:** use `node scripts/cloud/app-portability.mjs --audit vetogram /absolute/Telegram-story-bot` and `--audit promptence /absolute/ai-revenue-navigator` on actual reviewed checkouts. This inventory cannot approve production and flags Vercel-only start commands, hardcoded links, cron schedules, and managed database assumptions.
 - **Postgres durability pilot:** disposable private `deploy/cloud/db-pilot/compose.yaml`, generated secret via `scripts/cloud/prepare-db-pilot.mjs`, instructions at `deploy/cloud/db-pilot/README.md`. This tests persistence only; it is not the production database.
 - **Supabase:** official self-hosted Docker stack, each project separated where needed. Follow `docs/cloud/SELF_HOSTED_DATA.md`; Auth, Storage, Realtime, email and callback URLs are not supplied by bare Postgres.
 - **Queue and monitoring:** private `deploy/cloud/ops/compose.yaml`, using `scripts/cloud/prepare-ops.mjs`. Do not publish ports.
