@@ -534,8 +534,24 @@ function openCart(){
 $('catalogBtn').onclick=openCatalog;$('cartBtn').onclick=openCart;$('closeDrawer').onclick=hideDrawer;
 $('drawerOverlay').addEventListener('pointerdown',e=>{if(e.target===$('drawerOverlay'))hideDrawer();});
 document.querySelectorAll('[data-store]').forEach(b=>b.onclick=()=>{hideDrawer();setStore(b.dataset.store);});
-$('introButton').onclick=()=>{touring=true;tourT=0;$('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';$('tourBtn').textContent='Ⅱ Остановить';};
-$('tourBtn').onclick=()=>{touring=!touring;if(touring){tourT=0;$('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';} $('tourBtn').textContent=touring?'Ⅱ Остановить':'▶ Кинотур';};
+// Directed camera choreography stays in walkable central routes, starting at current location.
+const directorRoutes={
+ fashion:[{x:0,z:5,yaw:.28,pitch:-.09},{x:.3,z:-4,yaw:-.38,pitch:-.08},{x:-.2,z:-12.7,yaw:.40,pitch:-.075},{x:.4,z:-21.5,yaw:-.31,pitch:-.08},{x:0,z:-28,yaw:0,pitch:-.03}],
+ food:[{x:0,z:5,yaw:.30,pitch:-.09},{x:0,z:-4.5,yaw:-.35,pitch:-.08},{x:.5,z:-11,yaw:.32,pitch:-.07},{x:0,z:-21,yaw:-.30,pitch:-.06},{x:0,z:-28,yaw:0,pitch:-.02}],
+ beauty:[{x:0,z:4,yaw:.38,pitch:-.08},{x:.3,z:-5,yaw:-.36,pitch:-.1},{x:-.2,z:-13,yaw:.35,pitch:-.08},{x:0,z:-24,yaw:-.25,pitch:-.05},{x:0,z:-28,yaw:0,pitch:-.04}],
+ home:[{x:0,z:5,yaw:.33,pitch:-.10},{x:-.3,z:-3,yaw:-.40,pitch:-.07},{x:.3,z:-12,yaw:.31,pitch:-.08},{x:0,z:-21,yaw:-.36,pitch:-.06},{x:0,z:-28,yaw:0,pitch:-.05}]
+};
+function startTour(){
+ tourRoute=[{x:camera.position.x,z:camera.position.z,yaw,pitch},...directorRoutes[active]];
+ tourT=0;touring=true;walkVelocity.x=walkVelocity.z=0;
+ $('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';
+ $('tourBtn').textContent='Ⅱ Остановить';
+}
+function stopTour(){
+ touring=false;tourRoute=[];$('tourBtn').textContent='▶ Кинотур';
+}
+$('introButton').onclick=startTour;
+$('tourBtn').onclick=()=>touring?stopTour():startTour();
 document.addEventListener('keydown',e=>{if(e.code==='Escape')hideDrawer();if($('drawerOverlay').classList.contains('open'))return;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.code==='KeyT')$('tourBtn').click();if(e.code==='KeyE'){const near=pickables.find(p=>p.getWorldPosition(new THREE.Vector3()).distanceTo(camera.position)<3.5);if(near)openItem(near.userData.itemIndex);}});
 document.addEventListener('keyup',e=>keys.delete(e.code));
 window.addEventListener('blur',()=>{keys.clear();joy.x=joy.y=0;});
@@ -547,31 +563,56 @@ pad.addEventListener('pointerup',joyUp);pad.addEventListener('pointercancel',joy
 let dragging=false,dragId=null,dragX=0,dragY=0,dragMoved=false,downX=0,downY=0;
 const canvas=renderer.domElement;
 canvas.addEventListener('pointerdown',e=>{dragging=true;dragId=e.pointerId;dragX=downX=e.clientX;dragY=downY=e.clientY;dragMoved=false;canvas.setPointerCapture(e.pointerId);});
-canvas.addEventListener('pointermove',e=>{if(!dragging||e.pointerId!==dragId)return;let dx=e.clientX-dragX,dy=e.clientY-dragY;if(Math.abs(e.clientX-downX)+Math.abs(e.clientY-downY)>8)dragMoved=true;yaw-=dx*(coarse?.005:.0036);pitch=clamp(pitch-dy*.0028,-.58,.52);dragX=e.clientX;dragY=e.clientY;if(Math.abs(dx)+Math.abs(dy)>0){touring=false;$('tourBtn').textContent='▶ Кинотур';}});
+canvas.addEventListener('pointermove',e=>{if(!dragging||e.pointerId!==dragId)return;let dx=e.clientX-dragX,dy=e.clientY-dragY;if(Math.abs(e.clientX-downX)+Math.abs(e.clientY-downY)>8)dragMoved=true;yaw-=dx*(coarse?.005:.0036);pitch=clamp(pitch-dy*.0028,-.58,.52);dragX=e.clientX;dragY=e.clientY;if(Math.abs(dx)+Math.abs(dy)>0){stopTour();}});
 canvas.addEventListener('pointerup',e=>{if(e.pointerId!==dragId)return;dragging=false;dragId=null;if(!dragMoved)selectAt(e.clientX,e.clientY);});
 canvas.addEventListener('pointercancel',()=>{dragging=false;dragId=null;});
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(renderPixelRatio);});
+let perfWindow=0,perfSamples=0,qualityReduced=false;
 function animate(t){
- requestAnimationFrame(animate);const delta=Math.min(.04,(t-(animate.prev||t))/1000);animate.prev=t;
+ requestAnimationFrame(animate);
+ const delta=Math.min(.04,(t-(animate.prev||t))/1000);animate.prev=t;
+ if(document.hidden)return;
  if(!$('drawerOverlay').classList.contains('open')){
-  if(touring){
-   tourT+=delta*.19;const phase=Math.min(1,tourT);
-   camera.position.z=THREE.MathUtils.lerp(10.8,-25.5,phase);
-   camera.position.x=Math.sin(phase*5.2)*1.1;
-   yaw=-.16*Math.sin(phase*Math.PI*5.2);pitch=-.08+.026*Math.cos(phase*6.28);
-   if(phase>=1){touring=false;$('tourBtn').textContent='↻ Кинотур';}
+  if(touring&&tourRoute.length>1){
+   tourT+=delta/(reduced?2.4:3.65);
+   const n=tourRoute.length-1,seg=Math.min(n-1,Math.floor(tourT));
+   const u=clamp(tourT-seg,0,1),ease=u*u*(3-2*u),a=tourRoute[seg],b=tourRoute[seg+1];
+   camera.position.x=THREE.MathUtils.lerp(a.x,b.x,ease);
+   camera.position.z=THREE.MathUtils.lerp(a.z,b.z,ease);
+   const angular=Math.atan2(Math.sin(b.yaw-a.yaw),Math.cos(b.yaw-a.yaw));
+   yaw=a.yaw+angular*ease;pitch=THREE.MathUtils.lerp(a.pitch,b.pitch,ease);
+   if(tourT>=n)stopTour();
   }else{
    const forward=(keys.has('KeyW')||keys.has('ArrowUp')?1:0)-(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-joy.y;
    const side=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0)+joy.x;
-   const rate=delta*3.9/Math.max(1,Math.hypot(forward,side));
-   move((Math.sin(yaw)*forward+Math.cos(yaw)*side)*rate,(-Math.cos(yaw)*forward+Math.sin(yaw)*side)*rate);
-   if(keys.has('ArrowLeft'))yaw+=delta*1.3;if(keys.has('ArrowRight'))yaw-=delta*1.3;
+   const norm=Math.max(1,Math.hypot(forward,side)),speed=3.45;
+   const targetX=(Math.sin(yaw)*forward+Math.cos(yaw)*side)/norm*speed;
+   const targetZ=(-Math.cos(yaw)*forward+Math.sin(yaw)*side)/norm*speed;
+   const smooth=1-Math.exp(-12*delta);
+   walkVelocity.x=THREE.MathUtils.lerp(walkVelocity.x,targetX,smooth);
+   walkVelocity.z=THREE.MathUtils.lerp(walkVelocity.z,targetZ,smooth);
+   move(walkVelocity.x*delta,walkVelocity.z*delta);
+   if(keys.has('ArrowLeft'))yaw+=delta*1.3;
+   if(keys.has('ArrowRight'))yaw-=delta*1.3;
   }
  }
  camera.position.y=1.68+(reduced?0:.012*Math.sin(t*.0014));updateCamera();
  hotspots.forEach((h,i)=>{h.g.rotation.y+=delta*.26;h.halo.scale.setScalar(1+(reduced?0:.11*Math.sin(t*.0028+i)));});
  renderer.render(scene,camera);
+ // Single bounded quality downgrade on sustained mobile GPU pressure.
+ if(coarse&&!qualityReduced&&delta>.002){
+  perfWindow+=delta;perfSamples++;
+  if(perfWindow>6){
+   const fps=perfSamples/perfWindow;
+   if(fps<27 && renderPixelRatio>1){
+    qualityReduced=true;renderPixelRatio=Math.min(1,devicePixelRatio||1);
+    renderer.setPixelRatio(renderPixelRatio);renderer.setSize(innerWidth,innerHeight);
+   }
+   perfWindow=0;perfSamples=0;
+  }
+ }
 }
+
 try{
  const initial=new URLSearchParams(location.search).get('world');
  setStore(DATA[initial]?initial:'fashion');priceTotal();
