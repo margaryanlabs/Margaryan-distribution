@@ -85,7 +85,7 @@ jobs:
         run: node --test scripts/cloud/deploy-stage.test.mjs
       - name: Verify first owned staging node and identified disposable pilot (offline)
         run: node --test scripts/cloud/first-node.test.mjs
-      - name: Validate first VPS host readiness without deployment (offline)\n        run: node --test scripts/cloud/vps-preflight.test.mjs\n      - name: Validate owner-run local release gate (offline)
+      - name: Validate first VPS host readiness without deployment (offline)\n        run: node --test scripts/cloud/vps-preflight.test.mjs\n      - name: Verify private PostgreSQL durability pilot source and secrets (offline)\n        run: node --test scripts/cloud/prepare-db-pilot.test.mjs\n      - name: Validate owner-run local release gate (offline)
         run: node --test scripts/cloud/local-ci.test.mjs
       - name: Test infrastructure health and ClickHouse connector
         run: node --experimental-strip-types --test scripts/cloud/test-health-signals.mjs
