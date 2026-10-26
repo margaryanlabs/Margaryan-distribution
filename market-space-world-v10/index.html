@@ -525,7 +525,38 @@ function mat(color,rough=.68,metal=0,other={}){
  return m;
 }
 const ivory=mat('#ebe5d8',.92), brass=mat('#ad8c62',.32,.75),darkMetal=mat('#33352e',.34,.72);
-const ceramic=mat('#e8dbca',.28,.1),wood=mat('#93735a',.75),black=mat('#252521',.52);
+const ceramic=mat('#e8dbca',.28,.1),black=mat('#252521',.52);
+function timberTexture(){
+ const size=512,c=document.createElement('canvas');c.width=c.height=size;
+ const ctx=c.getContext('2d');
+ ctx.fillStyle='#95755a';ctx.fillRect(0,0,size,size);
+ let state=721;
+ const rand=()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;};
+ for(let k=0;k<118;k++){
+  const y=rand()*size,shade=rand()>.48?'#d9aa77':'#3e2419';
+  ctx.strokeStyle=shade;ctx.globalAlpha=.028+rand()*.18;ctx.lineWidth=.4+rand()*2.3;
+  ctx.beginPath();
+  for(let x=0;x<=size;x+=14){
+   const yy=y+Math.sin(x*.018+y*.03)*3.1+Math.sin(x*.067+y*.16)*1.2;
+   if(x===0)ctx.moveTo(x,yy);else ctx.lineTo(x,yy);
+  }
+  ctx.stroke();
+ }
+ for(let knot=0;knot<7;knot++){
+  const x=rand()*size,y=rand()*size;
+  ctx.globalAlpha=.08;ctx.strokeStyle='#533926';
+  for(let r=3;r<20;r+=3){ctx.beginPath();ctx.ellipse(x,y,r*1.5,r*.42,.08,0,Math.PI*2);ctx.stroke();}
+ }
+ ctx.globalAlpha=1;
+ const texture=new THREE.CanvasTexture(c);
+ texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+ texture.repeat.set(1,2);
+ texture.colorSpace=THREE.SRGBColorSpace;
+ texture.anisotropy=4;
+ return texture;
+}
+const wood=new THREE.MeshStandardMaterial({color:'#ffffff',map:timberTexture(),metalness:0,roughness:.62});
+reusableMaterials.add(wood);
 const glass=new THREE.MeshPhysicalMaterial({color:'#e7dacc',roughness:.11,metalness:0,transparent:true,opacity:.57,depthWrite:false});
 const fabricColors=['#a98a72','#eee2d0','#65645e','#bca8a1','#5a6560','#d3b7a2'];
 // Fine woven microrelief creates fabric response under real lights without image downloads.
@@ -722,12 +753,49 @@ function framedSign(text,sub,x,y,z,w=3.8,h=1.6,rotation=0){
  plane(0,0,.03,w,h,t,grp);
 }
 function stoneTexture(colorA='#d5cdc0',colorB='#ada498'){
- const c=document.createElement('canvas');c.width=512;c.height=512;const q=c.getContext('2d');q.fillStyle=colorA;q.fillRect(0,0,512,512);
- let seed=37;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;}
- for(let i=0;i<1700;i++){const v=random();q.globalAlpha=.03+random()*.14;q.fillStyle=v>.45?colorB:'#ffffff';q.fillRect(random()*512,random()*512,1+random()*18,1+random()*3);}
- q.globalAlpha=.2;q.strokeStyle=colorB;q.lineWidth=2;
- for(let v=0;v<=512;v+=128){q.beginPath();q.moveTo(v,0);q.lineTo(v,512);q.stroke();q.beginPath();q.moveTo(0,v);q.lineTo(512,v);q.stroke();}
- q.globalAlpha=1;const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(4,8);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t;
+ // Deterministic irregular marble and travertine veins instead of blurred repeated boxes.
+ const resolution=coarse?512:1024,c=document.createElement('canvas');
+ c.width=c.height=resolution;
+ const ctx=c.getContext('2d');
+ ctx.fillStyle=colorA;ctx.fillRect(0,0,resolution,resolution);
+ let state=37;
+ function random(){state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;}
+ // Fine sediment/grain at multiple scales, with high-res only on capable devices.
+ for(let i=0,n=coarse?3900:11500;i<n;i++){
+  const p=random(),x=random()*resolution,y=random()*resolution;
+  ctx.globalAlpha=.016+random()*.10;
+  ctx.fillStyle=p>.48?colorB:'#ffffff';
+  ctx.fillRect(x,y,.6+random()*7,.6+random()*3);
+ }
+ // Drifting stone veins: independent branches, narrow colored core and diffuse edges.
+ const scale=resolution/512;
+ for(let line=0;line<23;line++){
+  const start=random()*resolution,tilt=(random()-.5)*resolution*.32;
+  for(const [strokeAlpha,thickness] of [[.065,5.0],[.19,.9]]){
+   ctx.globalAlpha=strokeAlpha*(line%3===0?1:.7);
+   ctx.strokeStyle=line%2?colorB:'#857a70';
+   ctx.lineWidth=thickness*scale;
+   ctx.beginPath();
+   for(let step=0;step<=52;step++){
+    const y=step/52*resolution;
+    const x=start+tilt*y/resolution+
+      Math.sin(y/resolution*8+line*1.8)*resolution*.018+
+      Math.sin(y/resolution*19+line*.9)*resolution*.005;
+    if(step===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+   }
+   ctx.stroke();
+  }
+ }
+ // Large architectural slab joins stay subordinate to the stone pattern.
+ ctx.globalAlpha=.13;ctx.strokeStyle='#685a4f';ctx.lineWidth=1.1*scale;
+ ctx.strokeRect(1,1,resolution-2,resolution-2);
+ ctx.globalAlpha=1;
+ const texture=new THREE.CanvasTexture(c);
+ texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+ texture.repeat.set(9,18);
+ texture.colorSpace=THREE.SRGBColorSpace;
+ texture.anisotropy=coarse?4:8;
+ return texture;
 }
 function areaLight(x,z,color='#ffe0b5',strength=5.6){const l=new THREE.PointLight(color,strength,9,2);l.position.set(x,5.25,z);root.add(l);}
 function spotlight(x,z){
@@ -739,7 +807,7 @@ function architecture(key){
  const d=DATA[key];
  scene.background=new THREE.Color(key==='fashion'?'#b1a69a':key==='food'?'#a7b5a8':key==='beauty'?'#c9b8b5':'#b9beb6');
  scene.fog=new THREE.Fog(scene.background,26,56);
- const wallmat=mat(d.wall,.91).clone(),floorMat=mat(d.floor,.54,.08,{map:stoneTexture(key==='beauty'?'#d9c7c1':'#c9c4b8')});studioWallMaterial=wallmat;studioBaseWall=new THREE.Color(d.wall);studioBackgroundColor=scene.background.clone();
+ const wallmat=mat(d.wall,.91).clone(),floorMat=mat('#fffaf4',.40,.015,{map:stoneTexture(key==='beauty'?'#d9c7c1':'#c9c4b8')});studioWallMaterial=wallmat;studioBaseWall=new THREE.Color(d.wall);studioBackgroundColor=scene.background.clone();
  let floor=add(mesh(new THREE.PlaneGeometry(22,46),floorMat),0,-.01,-9);floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;
  block(0,6.4,-9,22,1,46,mat('#b5b0a5',.9));block(0,3.1,-31.8,22,6.2,.35,wallmat);
  for(const side of [-1,1]){
