@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#090b0d">
 <meta name="description" content="MARKET SPACE by Margaryan Labs — виртуальные магазины нового поколения. Fashion, beauty, grocery и интерьерные шоурумы с интерактивными 3D-прогулками.">
-<title>MARKET SPACE V10.7 — Interactive 3D Lookbook and Style Studio</title>
+<title>MARKET SPACE V10.8 — Four Interactive 3D Retail Experiences</title>
 <style>
 :root{color-scheme:dark;--ink:#0a0b0d;--panel:#151719;--surface:#1a1d1d;--paper:#f1eee7;--soft:#c8c4ba;--mute:#8e938f;--line:rgba(244,241,230,.19);--warm:#decab0;--edge:clamp(22px,5vw,92px);font:16px/1.5 Inter,"Helvetica Neue",Arial,sans-serif}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--paper);background:var(--ink);overflow-x:hidden}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.5;cursor:wait}a{color:inherit;text-decoration:none}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #e8cc9b;outline-offset:4px}
@@ -15,7 +15,17 @@ background:linear-gradient(112deg,#d7af8031,#d7af8007 60%);max-width:450px}
 .studioTeaser>span{font-size:9px;letter-spacing:.23em;color:#e4c59a;font-weight:750}
 .studioTeaser p{margin:7px 0;font-size:12px;line-height:1.6;color:#cfc9bc}
 .studioTeaser a{font-size:12px;color:#e7cfaa;text-underline-offset:4px;text-decoration:underline;font-weight:750}
-.studioTeaser a:hover{color:#fff2d9}.studioLinks{display:flex;flex-wrap:wrap;gap:16px;margin-top:13px}
+.studioTeaser a:hover{color:#fff2d9}
+.experiencesPreview{padding:24px var(--edge) 70px;max-width:1320px;margin:auto}
+.experiencesPreview h2{font:normal clamp(30px,4vw,49px) Georgia,serif;letter-spacing:-.045em;margin:14px 0}
+.experiencesPreview p{color:#c7bead;line-height:1.8;font-size:13px;max-width:720px;margin:0 0 21px}
+.experienceLinks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.experienceLinks a{display:block;background:linear-gradient(140deg,#d7b78a17,#11140f9c);border:1px solid #d4c3a056;padding:22px 18px;min-height:138px;transition:transform .2s,border-color .2s}
+.experienceLinks a:hover{transform:translateY(-4px);border-color:#e4cba5}
+.experienceLinks a b{font:normal 25px Georgia,serif;display:block;margin:8px 0;letter-spacing:-.025em}
+.experienceLinks a small{display:block;font-size:11px;color:#b9b8af;line-height:1.6}
+@media(max-width:700px){.experienceLinks{grid-template-columns:1fr}.experienceLinks a{min-height:95px;padding:14px 16px}.experiencesPreview{padding-top:10px}}
+.studioLinks{display:flex;flex-wrap:wrap;gap:16px;margin-top:13px}
 .grain{position:fixed;inset:0;pointer-events:none;z-index:30;opacity:.13;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.68' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.14' filter='url(%23n)'/%3E%3C/svg%3E")}
 .skip{position:absolute;left:12px;top:-80px;background:white;color:black;padding:10px 14px;z-index:200}.skip:focus{top:12px}
 .header{height:84px;position:absolute;inset:0 0 auto;z-index:20;display:flex;align-items:center;gap:32px;padding:0 var(--edge);border-bottom:1px solid var(--line);background:linear-gradient(#05050594,#05050500)}
@@ -83,8 +93,8 @@ background:linear-gradient(112deg,#d7af8031,#d7af8007 60%);max-width:450px}
 <div class="actions"><button class="button js-demo" data-world="fashion">Войти в демо <span class="arr">↗</span></button><a class="button ghost" href="#solutions">Исследовать концепции <span class="arr">↓</span></a></div>
 <div class="studioTeaser"><span>✦ NEW / LIVE STUDIO</span><p>Собери собственный образ на 3D-манекене, измени свет и ткани будущего магазина — и поделись результатом.</p>
 <div class="studioLinks">
-<a href="../market-space-world-v10/?world=fashion&lookbook=1&look=dress&lookTone=rose&lookShoes=sneaker&lookBag=yes&preview=107" aria-label="Открыть интерактивный 3D-Lookbook и собрать свой образ">Собрать 3D-образ ↗</a>
-<a href="../market-space-world-v10/?world=fashion&mood=golden&finish=rose&studio=1&preview=107" aria-label="Открыть Style Studio с настроенным 3D-бутиком">Дизайн магазина ↗</a>
+<a href="../market-space-world-v10/?world=fashion&lookbook=1&look=dress&lookTone=rose&lookShoes=sneaker&lookBag=yes&preview=108" aria-label="Открыть интерактивный 3D-Lookbook и собрать свой образ">Собрать 3D-образ ↗</a>
+<a href="../market-space-world-v10/?world=fashion&mood=golden&finish=rose&studio=1&preview=108" aria-label="Открыть Style Studio с настроенным 3D-бутиком">Дизайн магазина ↗</a>
 </div></div></div>
 <div class="heroVisual"><div class="artFrame">
 <div class="imageStage" id="imageStage" aria-label="Фотографический референс атмосферы выбранного магазина">
@@ -100,6 +110,16 @@ background:linear-gradient(112deg,#d7af8031,#d7af8007 60%);max-width:450px}
 </div><div class="frameBadge">Commerce<br>meets<br>emotion.</div>
 </div></div>
 <div class="heroFoot"><span>Scroll to explore ↓</span><span>Digital flagship experience</span><span>Designed for humans / built for web</span></div>
+</section>
+<section class="experiencesPreview" aria-labelledby="experiencesTitle">
+<span class="eyebrow">03 / LIVE IMMERSIVE WORLDS</span>
+<h2 id="experiencesTitle">Каждый магазин — собственный опыт.</h2>
+<p>Не просто гуляй между виртуальными полками. Создавай продуктовый набор, меняй характер аромата или проектируй мебельную обстановку прямо в 3D.</p>
+<div class="experienceLinks">
+<a href="../market-space-world-v10/?world=food&experience=1&exp_food_pick=produce&exp_food_bundle=family&preview=108"><span class="eyebrow">MARKET / MIX</span><b>Собрать продукты ↗</b><small>Визуальные наборы, разные товары и демо-корзина.</small></a>
+<a href="../market-space-world-v10/?world=beauty&experience=1&exp_beauty_scent=amber&exp_beauty_glass=frost&preview=108"><span class="eyebrow">BEAUTY / SCENT ATELIER</span><b>Создать аромат ↗</b><small>Цвет стекла, ароматические ноты и смена отделки флаконов.</small></a>
+<a href="../market-space-world-v10/?world=home&experience=1&exp_home_fabric=sage&exp_home_layout=conversation&preview=108"><span class="eyebrow">LIVING / COMPOSER</span><b>Создать интерьер ↗</b><small>Материалы обивки, планировка мебели и живое пространство.</small></a>
+</div>
 </section>
 <div class="ticker" aria-hidden="true"><div class="tickerTrack"><span>Immersive commerce</span><b>✳</b><span>Fashion</span><b>✳</b><span>Virtual showroom</span><b>✳</b><span>Beauty</span><b>✳</b><span>Interactive retail</span><b>✳</b><span>Supermarket</span><b>✳</b><span>Immersive commerce</span><b>✳</b><span>Fashion</span><b>✳</b><span>Virtual showroom</span><b>✳</b><span>Beauty</span><b>✳</b><span>Interactive retail</span><b>✳</b><span>Supermarket</span><b>✳</b></div></div>
 <section class="section work" id="solutions">
