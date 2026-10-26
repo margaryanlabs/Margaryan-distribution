@@ -1,0 +1,48 @@
+{
+  "schema": "markarian-edge/v1",
+  "environment": "staging",
+  "tlsTermination": "external",
+  "publishHostPorts": false,
+  "services": [
+    {
+      "id": "vetogram",
+      "listenPort": 8081,
+      "healthPath": "/api/health",
+      "expectedSourceSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "backends": [
+        {
+          "id": "vetogram-a",
+          "ip": "10.77.0.11",
+          "port": 3000,
+          "zone": "zone-a"
+        },
+        {
+          "id": "vetogram-b",
+          "ip": "10.77.0.12",
+          "port": 3000,
+          "zone": "zone-b"
+        }
+      ]
+    },
+    {
+      "id": "promptence",
+      "listenPort": 8082,
+      "healthPath": "/api/health",
+      "expectedSourceSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "backends": [
+        {
+          "id": "promptence-a",
+          "ip": "10.77.0.21",
+          "port": 3000,
+          "zone": "zone-a"
+        },
+        {
+          "id": "promptence-b",
+          "ip": "10.77.0.22",
+          "port": 3000,
+          "zone": "zone-b"
+        }
+      ]
+    }
+  ]
+}

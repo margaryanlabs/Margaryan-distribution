@@ -44,6 +44,10 @@ node scripts/cloud/vps-preflight.mjs --check --json
 
 An operator-gated Coolify API release command exists at `scripts/cloud/rollout.mjs` with read-only `--verify`, digest-reviewed `--start-staging` and GET-only `--status`. It checks exact approved Git SHA and an isolated staging app. See `docs/cloud/STAGING_ROLLOUT.md`. It never deploys production, migrates databases or changes DNS.
 
+## Private health-aware edge (offline before buying or moving production)
+
+Use `scripts/cloud/edge-render.mjs --plan|--render` and private `scripts/cloud/edge-probe.mjs --verify` with `deploy/cloud/edge/staging.example.json` to prepare two independent staging app backend pools and HAProxy HTTP 200 health checks. Configuration can run on one private edge, but **that edge remains a single point of failure**. Full instructions: `deploy/cloud/edge/README.md`. No public ports or DNS are changed automatically.
+
 ## Coolify + disposable real deploy
 
 1. Review the published install instructions at https://coolify.io/docs/start-with-self-hosted. Run the official installer on the fresh secured VPS after inspecting it, not unreviewed shell code.

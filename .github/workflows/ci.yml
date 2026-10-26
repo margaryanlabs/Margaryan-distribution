@@ -99,6 +99,8 @@ jobs:
         run: node --test scripts/cloud/fleet-live.test.mjs
       - name: Verify SHA-bound Coolify staging-only rollout protocol (offline)
         run: node --test scripts/cloud/rollout.test.mjs
+      - name: Validate isolated private HAProxy edge and origin health tests
+        run: node --test scripts/cloud/edge-render.test.mjs scripts/cloud/edge-probe.test.mjs
       - name: Validate owner-run local release gate (offline)
         run: node --test scripts/cloud/local-ci.test.mjs
       - name: Test infrastructure health and ClickHouse connector
