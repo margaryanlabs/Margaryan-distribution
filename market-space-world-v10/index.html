@@ -1210,6 +1210,7 @@ function animate(t){
 try{
  const initial=new URLSearchParams(location.search).get('world');
  applyQuality();setStore(DATA[initial]?initial:'fashion');priceTotal();
+ if(new URLSearchParams(location.search).get('studio')==='1')openStyleStudio();
  $('loading').classList.add('ready');window.__marketSpaceReady=true;
  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
  requestAnimationFrame(animate);
