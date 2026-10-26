@@ -144,7 +144,7 @@ check('V10.4 import and source licensing references',()=>{
  for(const token of ['id="assetCredits"','CC0','CC BY 4.0','© 2021 Shopify','Wayfair','KhronosGroup/glTF-Sample-Assets','https://creativecommons.org/licenses/by/4.0/'])assert.ok(world.includes(token),token);
 });
 check('Premium asset manager is optional, asynchronous and safe across scene switches',()=>{
- for(const token of ['const PREMIUM_ASSETS=','fetchPremiumAsset(name)','gltfLoader.loadAsync(info.src)','source.clone(true)','const generation=showroomGeneration','generation!==showroomGeneration','if(!premiumAllowed())return',"new URLSearchParams(location.search).get('assets')",'assetGeometry.add(obj.geometry)','if(n.geometry&&n.geometry!==boxGeo&&n.geometry!==sphereGeo&&!assetGeometry.has(n.geometry))','slot.placeholder.visible=false']) assert.ok(world.includes(token),token);
+ for(const token of ['const PREMIUM_ASSETS=','fetchPremiumAsset(name)','gltfLoader.loadAsync(info.src)','source.clone(true)','const generation=showroomGeneration','generation!==showroomGeneration','if(!premiumAllowed()){reconcilePremiumModels();return;}',"new URLSearchParams(location.search).get('assets')",'assetGeometry.add(obj.geometry)','if(n.geometry&&n.geometry!==boxGeo&&n.geometry!==sphereGeo&&!assetGeometry.has(n.geometry))','slot.placeholder.visible=false']) assert.ok(world.includes(token),token);
 });
 check('Procedural displays remain when GLB absent and quality gate holds on mobile',()=>{
  for(const token of ["shoeExhibit(-4.6,-7.2)","shoeExhibit(4.6,-19.3)","slotPremiumModel('chair'","slotPremiumModel('shoe'","qualityMode==='high'","qualityMode==='high')upgradePremiumAssets(active)","const firstChair=chair(-2.55,-7),secondChair=chair(2.5,-22)"])assert.ok(world.includes(token),token);
@@ -152,4 +152,39 @@ check('Procedural displays remain when GLB absent and quality gate holds on mobi
 check('HD query enables detailed mobile models',()=>{
  for(const token of ["const requestedQuality=new URLSearchParams(location.search).get('quality')","requestedQuality==='high'?'high'","applyQuality();setStore(","qualityMode==='high')upgradePremiumAssets(active)"])assert.ok(world.includes(token),token);
 });
-console.log('V10.4 offline source checks: '+count+' passed; remote GLB rendering and physical GPU QA still required.');
+
+check('Eco disables premium draw meshes and optional diagnostics can show GPU counters',()=>{
+ for(const token of ["qualityMode!=='eco'","function reconcilePremiumModels(){","slot.clone.visible=enabled",
+  "pickables=pickables.filter(obj=>obj!==slot.clone&&obj!==slot.placeholder)",
+  'id="premiumStatus"','id="perfHud"',"get('diagnostics')==='1'",
+  'renderer.info','info.render.calls','info.memory.geometries','selectHotspot(x,1.28,z+1.05,index)']){
+  assert.ok(world.includes(token),token);
+ }
+});
+check('HD Eco and Auto synchronize visibility and hit targets on mobile and desktop',()=>{
+ const a=world.indexOf('function premiumAllowed(){'),b=world.indexOf('function fetchPremiumAsset(',a);
+ const c=world.indexOf('function reconcilePremiumModels(){'),d=world.indexOf('function updatePremiumStatus(){',c);
+ assert.ok(a>=0&&b>a&&c>=0&&d>c);
+ const fakeSearch=class{constructor(query){this.s=query}get(k){return this.s.includes(k+'=off')?'off':null;}};
+ for(const touch of [true,false]){
+  const high={visible:true},low={visible:false},slot={clone:high,placeholder:low,resolved:true};
+  let targets=[high,low],state='';
+  const script='let qualityMode="high",premiumState="idle",pickables=getTargets();'+
+    world.slice(a,b)+world.slice(c,d)+
+    'return {allowed:()=>premiumAllowed(),setQuality:m=>{qualityMode=m},sync:()=>{reconcilePremiumModels();setTargets(pickables);setState(premiumState)}};';
+  const run=new Function('coarse','location','URLSearchParams','premiumSlots','getTargets','setTargets','setState','updatePremiumStatus',script)(
+    touch,{search:''},fakeSearch,[slot],()=>targets,arr=>targets=arr,val=>state=val,()=>{});
+  assert.ok(run.allowed());run.sync();
+  assert.equal(high.visible,true);assert.equal(low.visible,false);assert.equal(targets.length,1);assert.ok(targets[0]===high);
+  run.setQuality('eco');assert.equal(run.allowed(),false);run.sync();
+  assert.equal(high.visible,false);assert.equal(low.visible,true);assert.equal(targets.length,1);assert.ok(targets[0]===low);
+  run.setQuality('high');run.sync();
+  assert.equal(high.visible,true);assert.equal(low.visible,false);assert.equal(targets.length,1);
+  run.setQuality('auto');assert.equal(run.allowed(),!touch);
+ }
+});
+check('Keyboard inspection finds nearest registered product hotspot',()=>{
+ for(const token of ["if(e.code==='KeyE'){","near&&Number.isInteger(near.index)","hotspots.map(h=>","openItem(near.index)"])
+  assert.ok(world.includes(token),token);
+});
+console.log('V10.5 offline contracts: '+count+' passed. Physical-device WebGL tests still required.');
