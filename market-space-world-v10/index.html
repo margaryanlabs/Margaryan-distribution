@@ -33,6 +33,10 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 #premiumStatus{padding:7px 9px;border:1px solid #e2c69b6a;color:#f1d6b6;font-size:10px;letter-spacing:.04em}
 #assetCredits a{text-decoration:underline;text-underline-offset:3px;color:#f5dcb0}
 #assetCredits a:focus-visible{outline:2px solid #f5dcb0}
+#perfHud{position:fixed;z-index:9;left:16px;top:94px;background:#0e1914e8;color:#e3d8bf;
+border:1px solid #d6b98b70;padding:9px 11px;font:11px/1.5 ui-monospace,SFMono-Regular,monospace;
+pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
+#perfHud[hidden]{display:none!important}
 #hotspotHint{position:fixed;z-index:4;left:50%;top:49%;transform:translate(-50%,-50%);width:17px;height:17px;border:1px solid #e1d7bf8a;border-radius:50%;pointer-events:none;opacity:.65}#hotspotHint:after{content:"";position:absolute;top:7px;left:7px;width:2px;height:2px;background:#f2e5cd;border-radius:50%}
 .bottomWrap{position:fixed;z-index:9;bottom:clamp(16px,2vw,35px);left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;max-width:calc(100vw - 30px)}
 .worldDock{background:#101510e8;border:1px solid #e3d1af73;backdrop-filter:blur(24px);padding:6px;display:flex;gap:5px;box-shadow:0 18px 48px #0008;border-radius:12px}
@@ -109,7 +113,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 <details id="assetCredits"><summary>3D-модели · источники</summary><div class="creditContent">
 <p>Демонстрационные 3D-ассеты, не реальные товары брендов. Детализированные модели загружаются по возможности; процедурные модели остаются резервными.</p><p id="premiumStatus" role="status" aria-live="polite">3D-ассеты: готовность</p>
 <p>Кресло Sheen Chair: © 2020 Wayfair, Eric Chadwick, CC0. <a href="https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/SheenChair" target="_blank" rel="noopener noreferrer">Источник</a>.</p>
-<p>Обувь Materials Variants Shoe: © 2021 Shopify, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. <a href="https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/MaterialsVariantsShoe" target="_blank" rel="noopener noreferrer">Источник</a>.</p></div></details><div id="hotspotHint" aria-hidden="true"></div>
+<p>Обувь Materials Variants Shoe: © 2021 Shopify, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. <a href="https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/MaterialsVariantsShoe" target="_blank" rel="noopener noreferrer">Источник</a>.</p></div></details><div id="perfHud" hidden aria-label="Диагностика производительности"></div><div id="hotspotHint" aria-hidden="true"></div>
 <div class="help">WASD — <b>двигаться</b> · мышь — <b>осмотреться</b> · клик — <b>товар</b> · T — <b>тур</b></div><div class="touchHelp">Проведи по экрану,<br>чтобы осмотреться</div>
 <div class="movePad" id="movePad" aria-label="Виртуальный джойстик движения"><div class="padThumb" id="padThumb"></div></div>
 <div class="bottomWrap"><nav class="worldDock" aria-label="Выбор 3D-магазина">
@@ -171,6 +175,7 @@ import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 const $=id=>document.getElementById(id), clamp=THREE.MathUtils.clamp;
 const coarse=matchMedia('(pointer:coarse)').matches, reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const showPerformance=new URLSearchParams(location.search).get('diagnostics')==='1';
 const DATA={
  fashion:{name:'The Atelier',tag:'01 / FASHION GALLERY',desc:'Настоящие объёмные манекены, коллекция на рейлах, мягкий свет и материал, который ощущается как ткань.',floor:'#bcb0a0',wall:'#d1c4b7',accent:'#dfb98c',items:[['Пальто Atelier','🧥',34900,'Объёмный силуэт, мягкая шерстяная фактура.'],['Платье Sculpt','👗',28900,'Драпировка и линии, подчёркивающие форму.'],['Пиджак Line','👔',27500,'Структурированный крой с латунными пуговицами.'],['Костюм Edition','🪡',46900,'Сдержанный премиальный образ.'],['Кроссовки Studio','👟',19500,'Тестовая модель обуви с PBR-текстурами.']]},
  food:{name:'Future Market',tag:'02 / GROCERY EXPERIENCE',desc:'Новая геометрия стеллажей, настоящие формы упаковок, овощные острова и прогулка между отделами.',floor:'#a8aaa0',wall:'#afb7ab',accent:'#e5bc83',items:[['Кофе Atelier','☕',2690,'Зёрна обжарки, демонстрационная упаковка.'],['Оливковое масло','🫒',3490,'Стеклянная бутылка, базовая модель.'],['Фруктовый набор','🍊',2190,'Свежие фрукты в декоративной корзине.'],['Молоко фермерское','🥛',890,'Экологичный картонный пакет.']]},
@@ -604,6 +609,7 @@ function shoeExhibit(x,z,index=4){
   laces.rotation.z=.11;
  }
  g.userData.itemIndex=index;pickables.push(g);
+ selectHotspot(x,1.28,z+1.05,index);
  slotPremiumModel('shoe','fashion',x,z,.37,g,index);
  return g;
 }
@@ -656,6 +662,7 @@ function homeScene(){
   plant(x+(x>0?-2.8:2.8),z-2.1);
  }
  const firstChair=chair(-2.55,-7),secondChair=chair(2.5,-22);
+ selectHotspot(-2.55,1.55,-5.6,1);selectHotspot(2.5,1.55,-20.6,1);
  slotPremiumModel('chair','home',-2.55,-7,0,firstChair,1);
  slotPremiumModel('chair','home',2.5,-22,0,secondChair,1);
  const book=mat('#5b594d',.78);
@@ -953,7 +960,12 @@ document.addEventListener('keydown',e=>{
    }
   }
   return;
- }if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.code==='KeyT')$('tourBtn').click();if(e.code==='KeyE'){const near=pickables.find(p=>p.getWorldPosition(new THREE.Vector3()).distanceTo(camera.position)<3.5);if(near)openItem(near.userData.itemIndex);}});
+ }if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.code==='KeyT')$('tourBtn').click();if(e.code==='KeyE'){
+ const at=new THREE.Vector3(),near=hotspots.map(h=>{
+  h.g.getWorldPosition(at);return {index:h.index,distance:at.distanceTo(camera.position)};
+ }).filter(a=>a.distance<3.5).sort((a,b)=>a.distance-b.distance)[0];
+ if(near&&Number.isInteger(near.index))openItem(near.index);
+}});
 document.addEventListener('keyup',e=>keys.delete(e.code));
 window.addEventListener('blur',()=>{keys.clear();joy.x=joy.y=0;});
 const pad=$('movePad');let joyPointer=null;
@@ -995,6 +1007,8 @@ function updateProductTip(){
  productTip.classList.add('show');
 }
 let perfWindow=0,perfSamples=0,qualityReduced=false;
+let perfElapsed=0,perfFrames=0;
+if(showPerformance)$('perfHud').hidden=false;
 function animate(t){
  requestAnimationFrame(animate);
  const delta=Math.min(.04,(t-(animate.prev||t))/1000);animate.prev=t;
@@ -1026,6 +1040,17 @@ function animate(t){
  camera.position.y=1.68+(reduced?0:.012*Math.sin(t*.0014));updateCamera();
  hotspots.forEach((h,i)=>{h.g.rotation.y+=delta*.26;h.halo.scale.setScalar(1+(reduced?0:.11*Math.sin(t*.0028+i)));});
  renderer.render(scene,camera);
+ if(showPerformance){
+  perfElapsed+=delta;perfFrames++;
+  if(perfElapsed>=1){
+   const hud=$('perfHud'),info=renderer.info;
+   hud.textContent='FPS '+Math.round(perfFrames/perfElapsed)+' | '+qualityMode.toUpperCase()+
+    '\nDraw calls '+info.render.calls+' | triangles '+info.render.triangles+
+    '\nGeometry '+info.memory.geometries+' | textures '+info.memory.textures+
+    '\nScreen DPR '+renderPixelRatio.toFixed(2)+' | store '+active;
+   perfElapsed=0;perfFrames=0;
+  }
+ }
  if(++tipFrame%8===0)updateProductTip();
  // Single bounded quality downgrade on sustained mobile GPU pressure.
  if(coarse&&qualityMode==='auto'&&!qualityReduced&&delta>.002){
