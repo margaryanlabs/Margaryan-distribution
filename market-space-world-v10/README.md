@@ -70,3 +70,16 @@ Built as a new isolated static browser experience in the existing Margaryan Dist
 The existing four experimental V7 GLBs in /assets/v7/ were inspected. They are tiny models with a single mesh each (approximately 8–47 KB) and no image texture references. They may be suitable for a light procedural prototype, but they cannot credibly be marketed as professional photorealistic fashion/furniture assets. Real high-fidelity assets must be commissioned or acquired with explicit licenses, verified glTF/GLB PBR material channels, quality-controlled geometry and separate mobile LODs before replacing V10.3 showroom content.
 
 Do not confuse GPU batching, clearcoat settings or enhanced lighting with verified final photography-level realism.
+
+## V10.4 — Licensed GLB showroom examples (2026-10-26)
+- Added optional Khronos GLTFLoader with two detailed PBR assets (third-party examples, not merchant inventory):
+  - Sheen Chair: © 2020 Wayfair / Eric Chadwick, CC0-1.0, approx. 3.9 MB. https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/SheenChair
+  - Materials Variants Shoe: © 2021 Shopify, CC BY 4.0, approx. 7.8 MB. https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/MaterialsVariantsShoe
+- Licenses and original creator credit are displayed in the interactive page via 3D-модели / источники. Retain attribution when using the Shopify model.
+- Models are optional and load asynchronously after procedural stores render. Cached GLB instances are sized to exhibit plinths, linked to demo item cards, and retained safely across store switches. Old late results are rejected via a generation token.
+- Desktop Auto and mobile HD load detailed examples. A link with query quality=high enables HD immediately on mobile. quality=eco and assets=off keep the light procedural version.
+- Failed external GLB requests do not break the WebGL storefront or replace the ordinary models.
+- This is a validated static integration path, not a proof of mobile GPU performance, real texture rendering, or commercial photorealism.
+- Before production, use licensed commissioned brand merchandise assets, self-host optimized GLBs, implement LOD variants and data budgets, verify all PBR channels and test Android/iOS. Remote model files currently live on GitHub raw hosting.
+- Example HD: /market-space-world-v10/?world=fashion&quality=high&preview=104
+- Example Lite: /market-space-world-v10/?world=fashion&quality=eco&assets=off&preview=104
