@@ -194,7 +194,7 @@ check('Style Studio visible controls and landing invitation exist',()=>{
  'studioFinish=b.dataset.finish;applyStudioLook();updateStyleURL()']){
   assert.ok(world.includes(k),k);
  }
- for(const k of ['studioTeaser','Создать свой стиль','studio=1','mood=golden','finish=rose'])assert.ok(showcase.includes(k),k);
+ for(const k of ['studioTeaser','Дизайн магазина','studio=1','mood=golden','finish=rose'])assert.ok(showcase.includes(k),k);
 });
 check('Studio changes real material clones and light intensity on each preset',()=>{
  const a=world.indexOf('const STUDIO_MOODS='),b=world.indexOf("let active='fashion',",a);
