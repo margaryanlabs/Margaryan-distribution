@@ -65,7 +65,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 <body>
 <div id="viewport" aria-label="Интерактивное 3D-пространство"></div><div class="scrim"></div>
 <header class="header">
-<a class="logo" href="../market-space-showcase-v9/" aria-label="Вернуться на MARKET SPACE"><span class="logomark"><b>M</b></span><span class="brand">MARKET SPACE<small>BY MARGARYAN LABS</small></span></a>
+<a class="logo" href="../market-space-showcase-v10/" aria-label="Вернуться на MARKET SPACE"><span class="logomark"><b>M</b></span><span class="brand">MARKET SPACE<small>BY MARGARYAN LABS</small></span></a>
 <span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.1</span>
 <button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
 </header>
@@ -409,6 +409,23 @@ function beautyScene(){
    ball(0,1.27,z,.96,.73,.36,mat('#b9a19d',.8));
  }
 }
+// Shared graphic identity is embossed as actual small mesh labels on selected product faces.
+const goodsLabelMaterials=new Map();
+const goodsLabelNames=['ATELIER / COFFEE','TERRA / OLIVE','FARM / FRESH','ORIGIN / MILK','MAISON / PASTA'];
+function groceryLabel(index){
+ const id=((index%5)+5)%5;
+ if(goodsLabelMaterials.has(id))return goodsLabelMaterials.get(id);
+ const cv=document.createElement('canvas');cv.width=256;cv.height=128;const q=cv.getContext('2d');
+ q.fillStyle=['#e9d6b6','#e0e4d5','#ead1b5','#e0e6df','#dfcaba'][id];q.fillRect(0,0,256,128);
+ q.fillStyle='#242d27';q.fillRect(12,12,232,2);
+ q.font='bold 16px Arial';q.textAlign='center';q.fillText('M  A  R  K  E  T',128,38);
+ q.font='bold 19px Arial';q.fillText(goodsLabelNames[id].split(' / ')[0],128,71);
+ q.font='12px Arial';q.fillText(goodsLabelNames[id].split(' / ')[1],128,98);
+ const map=new THREE.CanvasTexture(cv);map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=4;
+ const m=new THREE.MeshBasicMaterial({map,side:THREE.DoubleSide,toneMapped:false});
+ goodsLabelMaterials.set(id,m);reusableMaterials.add(m);
+ return m;
+}
 function brandBox(g,x,y,z,index){
  const shades=['#c3a476','#9fae9c','#bd8d75','#c7c0ab','#a9b7ad'];
  const mt=mat(shades[index%5],.85);
@@ -419,6 +436,12 @@ function brandBox(g,x,y,z,index){
  }else{
    soft(x,y+.31,z,.40,.56,.31,mt,.04,g);
    block(x,y+.36,z+.17,.32,.12,.02,ivory,g);
+ }
+ // Only selected facing cartons receive a real textured label to preserve mobile draw calls.
+ if(index%3===0){
+  const side=x>=0?1:-1;
+  const sticker=plane(x+side*.217,y+.34,z,.34,.25,groceryLabel(index),g,side*Math.PI/2);
+  sticker.castShadow=false;sticker.receiveShadow=false;
  }
 }
 function groceryShelves(x,z){
@@ -441,7 +464,10 @@ function produceIsland(x,z,index){
  soft(0,.38,0,2.75,.73,1.85,mat('#806d57',.77),.12,g);soft(0,.76,0,2.83,.12,1.95,wood,.045,g);
  for(let i=0;i<14;i++){
   const a=i*2.4,r=.8*Math.sqrt(i/14),shade=i%3;
-  ball(Math.sin(a)*r,.90+(i%3)*.055,Math.cos(a)*r*.8,.17,.16,.18,mat(shade===0?'#dd9957':shade===1?'#ac5e44':'#738e59',.66),g);
+  const xx=Math.sin(a)*r,zz=Math.cos(a)*r*.8,yy=.90+(i%3)*.055;
+  const fruit=ball(xx,yy,zz,.17,.16,.18,mat(shade===0?'#dd9957':shade===1?'#ac5e44':'#738e59',.66),g);
+  tube(xx,yy+.162,zz,.017,.022,.08,wood,g);
+  if(i%2===0){const leaf=ball(xx+.055,yy+.215,zz,.085,.018,.044,mat('#4f704a',.91),g);leaf.rotation.z=.3;}
  }
  selectHotspot(x,1.3,z+1.45,index);
 }
@@ -563,8 +589,8 @@ document.querySelectorAll('[data-store]').forEach(b=>b.onclick=()=>{hideDrawer()
 // Directed camera choreography stays in walkable central routes, starting at current location.
 const directorRoutes={
  fashion:[{x:0,z:5,yaw:.28,pitch:-.09},{x:.3,z:-4,yaw:-.38,pitch:-.08},{x:-.2,z:-12.7,yaw:.40,pitch:-.075},{x:.4,z:-21.5,yaw:-.31,pitch:-.08},{x:0,z:-28,yaw:0,pitch:-.03}],
- food:[{x:0,z:5,yaw:.30,pitch:-.09},{x:0,z:-4.5,yaw:-.35,pitch:-.08},{x:.5,z:-11,yaw:.32,pitch:-.07},{x:0,z:-21,yaw:-.30,pitch:-.06},{x:0,z:-28,yaw:0,pitch:-.02}],
- beauty:[{x:0,z:4,yaw:.38,pitch:-.08},{x:.3,z:-5,yaw:-.36,pitch:-.1},{x:-.2,z:-13,yaw:.35,pitch:-.08},{x:0,z:-24,yaw:-.25,pitch:-.05},{x:0,z:-28,yaw:0,pitch:-.04}],
+ food:[{x:3.1,z:5,yaw:.30,pitch:-.09},{x:3.1,z:-4.5,yaw:-.35,pitch:-.08},{x:3.1,z:-11,yaw:.32,pitch:-.07},{x:3.1,z:-21,yaw:-.30,pitch:-.06},{x:3.1,z:-28,yaw:0,pitch:-.02}],
+ beauty:[{x:3,z:4,yaw:.38,pitch:-.08},{x:3,z:-5,yaw:-.36,pitch:-.1},{x:3,z:-13,yaw:.35,pitch:-.08},{x:3,z:-24,yaw:-.25,pitch:-.05},{x:3,z:-28,yaw:0,pitch:-.04}],
  home:[{x:0,z:5,yaw:.33,pitch:-.10},{x:-.3,z:-3,yaw:-.40,pitch:-.07},{x:.3,z:-12,yaw:.31,pitch:-.08},{x:0,z:-21,yaw:-.36,pitch:-.06},{x:0,z:-28,yaw:0,pitch:-.05}]
 };
 function startTour(){
