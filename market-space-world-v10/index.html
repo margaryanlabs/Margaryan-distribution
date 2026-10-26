@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#10110f">
 <meta name="description" content="MARKET SPACE V10 — новая экспериментальная 3D-архитектура retail: полноценная прогулка по бутику, мебели, beauty и супермаркету.">
-<title>MARKET SPACE — Immersive World V10.8</title>
+<title>MARKET SPACE — Immersive World V11.0</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"}}</script>
 <style>
 :root{color-scheme:dark;font:14px/1.5 Inter,"Helvetica Neue",Arial,sans-serif;background:#111311;color:#f5f0e7;--paper:#f4eee3;--mute:#b7b3a8;--line:#d3c6b64b;--warm:#e4c79d}*{box-sizing:border-box}
@@ -198,11 +198,11 @@ background:linear-gradient(135deg,#263029ed,#0e1612f5);backdrop-filter:blur(20px
 <div id="viewport" aria-label="Интерактивное 3D-пространство"></div><div class="scrim"></div>
 <header class="header">
 <a class="logo" href="../market-space-showcase-v10/" aria-label="Вернуться на MARKET SPACE"><span class="logomark"><b>M</b></span><span class="brand">MARKET SPACE<small>BY MARGARYAN LABS</small></span></a>
-<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.8</span>
+<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 11.0</span>
 <button class="topAction" id="experienceBtn" aria-controls="experiencePanel" aria-expanded="false">✦ Experience</button><button class="topAction" id="lookbookBtn" aria-controls="lookbookPanel" aria-expanded="false">◈ Lookbook</button><button class="topAction" id="styleBtn" aria-controls="stylePanel" aria-expanded="false">✦ Студия</button><button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
 </header>
 <div class="titlePanel" id="titlePanel"><div class="kicker" id="eyebrow">01 / THE ATELIER</div><h1 id="worldTitle">The<br>Atelier</h1><p id="worldDescription">Мода — это не карточки в каталоге. Исследуй коллекцию, подойди к манекенам и выбери вещи прямо в пространстве.</p><button id="introButton">Исследовать пространство ↗</button></div>
-<div id="worldNote">V10.8 / INTERACTIVE 3D PREVIEW</div><section id="experiencePanel" role="dialog" aria-label="Интерактивная студия магазина" hidden>
+<div id="worldNote">V11.0 / INTERACTIVE 3D PREVIEW</div><section id="experiencePanel" role="dialog" aria-label="Интерактивная студия магазина" hidden>
 <div class="experienceTop"><div><span class="experienceKicker" id="experienceKicker">IMMERSIVE SHOPPING</span><h2 id="experienceTitle">Experience Lab</h2></div><button id="closeExperience" aria-label="Закрыть Experience Lab" type="button">✕</button></div>
 <p class="experienceIntro" id="experienceIntro"></p>
 <div id="experienceOptions"></div>
@@ -547,7 +547,13 @@ const sharedWeaveTexture=weaveBump(),garmentMaterialCache=new Map();
 function textile(color,side=THREE.DoubleSide){
  const key=color+'|'+side;
  if(garmentMaterialCache.has(key))return garmentMaterialCache.get(key);
- const material=mat(color,.96,.005,{side,bumpMap:sharedWeaveTexture,bumpScale:.014});
+ // Sheen catches grazing showroom lights like woven cotton and wool instead of flat plastic.
+ const material=new THREE.MeshPhysicalMaterial({
+  color,metalness:0,roughness:.88,side,
+  sheen:.66,sheenColor:new THREE.Color(color).lerp(new THREE.Color('#fff4e4'),.28),
+  sheenRoughness:.78,bumpMap:sharedWeaveTexture,bumpScale:.013,
+  envMapIntensity:.68
+ });
  garmentMaterialCache.set(key,material);reusableMaterials.add(material);
  return material;
 }
@@ -775,18 +781,29 @@ function hanger(g,x=0,y=0,z=0){
 // V10.1: garment shells built from smoothly shaded 3D fabric rings, not flat extrusions.
 // Silhouettes vary in waist, shoulder, sleeves and lower hem; styling remains procedural.
 function garmentShell(rings,cloth,detail=0){
- const count=coarse?12:20,positions=[],uvs=[],indices=[];
- for(let j=0;j<rings.length;j++){
-  const [y,rx,rz]=rings[j];
-  for(let i=0;i<count;i++){
-   const a=i/count*Math.PI*2;
-   const wrinkle=1+(detail*.038*Math.cos(a*10+j*.83));
-   const px=Math.cos(a)*rx*wrinkle;
-   const pz=Math.sin(a)*rz*(1+detail*.04*Math.sin(a*8+j*.62));
-   positions.push(px,y,pz);
-   uvs.push(i/count,j/(rings.length-1));
-   if(j<rings.length-1){const b=j*count+i,n=j*count+(i+1)%count;
-     indices.push(b,n,b+count,n,n+count,b+count);}
+ // Smoothed longitudinally sampled cloth loft with physical waist/hem shaping.
+ // Increased silhouette fidelity at HD, while preserving lightweight mobile geometry.
+ const segments=coarse?16:40,steps=coarse?1:3;
+ const rowCount=(rings.length-1)*steps+1;
+ const positions=[],uvs=[],indices=[];
+ function shapeAt(j){
+  const a=Math.min(rings.length-2,Math.floor(j/steps)),t=j===rowCount-1?1:(j-a*steps)/steps;
+  // Cubic easing avoids sharp sectional creases at waist or lower skirt.
+  const t2=t*t*(3-2*t);
+  return [0,1,2].map(k=>THREE.MathUtils.lerp(rings[a][k],rings[a+1][k],t2));
+ }
+ for(let j=0;j<rowCount;j++){
+  const [y,rx,rz]=shapeAt(j),lower=Math.max(0,Math.min(1,(-y-.25)/1.25));
+  for(let i=0;i<segments;i++){
+   const angle=i/segments*Math.PI*2;
+   const radialFold=1+detail*(.016*Math.cos(angle*9+j*.34)+.018*lower*Math.sin(angle*13+j*.19));
+   const drape=detail*lower*.018*Math.cos(angle*5+y*2.2);
+   positions.push(Math.cos(angle)*rx*radialFold+drape,y,Math.sin(angle)*rz*radialFold);
+   uvs.push(i/segments,j/(rowCount-1));
+   if(j<rowCount-1){
+    const x=j*segments+i,n=j*segments+(i+1)%segments;
+    indices.push(x,n,x+segments,n,n+segments,x+segments);
+   }
   }
  }
  const geometry=new THREE.BufferGeometry();
@@ -807,10 +824,13 @@ function clothBody(color,kind='jacket'){
  const shell=garmentShell(rings,cloth,isDress?1:.45);markStudioSurface(shell,'fabric');group.add(shell);
  for(const side of [-1,1]){
   // Each sleeve is a tapered fully dimensional piece with an individual cuff.
-  const sleeve=mesh(new THREE.CylinderGeometry(.165,.115,isDress?.69:.91,coarse?10:14,2),sleeveColor);
-  sleeve.position.set(side*.53,isDress?.09:.02,0);
-  sleeve.rotation.z=side*(isDress?.25:.15);markStudioSurface(sleeve,'fabric');group.add(sleeve);
-  tube(side*(isDress?.65:.63),isDress?-.24:-.42,0,.115,.115,.075,cloth,group);
+  const sleeve=garmentShell(
+   [[.40,.17,.158],[.17,.158,.148],[-.12,.145,.136],[-.39,.119,.112]],
+   sleeveColor,.16);
+  sleeve.position.set(side*.53,isDress?.10:.02,0);
+  sleeve.rotation.z=side*(isDress?.25:.15);
+  markStudioSurface(sleeve,'fabric');group.add(sleeve);
+  tube(side*(isDress?.64:.62),isDress?-.23:-.40,0,.12,.12,.052,cloth,group);
  }
  if(!isDress){
   // Layered satin lapels and front stitched opening.
@@ -819,7 +839,9 @@ function clothBody(color,kind='jacket'){
    const sh=new THREE.Shape();
    sh.moveTo(side*.04,.50);sh.lineTo(side*.28,.39);
    sh.lineTo(side*.145,-.06);sh.lineTo(side*.02,.16);sh.closePath();
-   const obj=mesh(new THREE.ShapeGeometry(sh),satin);obj.position.z=.27;group.add(obj);
+   const obj=mesh(new THREE.ExtrudeGeometry(sh,{depth:.022,bevelEnabled:!coarse,
+    bevelSize:.009,bevelThickness:.008,bevelSegments:2,steps:1}),satin);
+   obj.position.z=.272;group.add(obj);
   };
   mkLapel(-1);mkLapel(1);
   for(let j=0;j<(isCoat?5:3);j++)ball(.075,.08-j*.17,.31,.028,.028,.02,brass,group);
