@@ -57,8 +57,8 @@ export function createStagingRequest(input){
  if(!SLUG.test(input.name||"")||input.name.includes("--"))fail("Invalid staging application slug");
  // App-container caps are staging defaults only, not build-server quotas.
  // Constrain overrides to reviewed small sizes to avoid unbounded workers.
- const memoryLimit=input.limits_memory??"1g";
- const cpuLimit=input.limits_cpus??"1";
+ const memoryLimit=input.limits_memory===undefined?"1g":input.limits_memory;
+ const cpuLimit=input.limits_cpus===undefined?"1":input.limits_cpus;
  if(!["512m","1g","2g","4g"].includes(memoryLimit))fail("Unreviewed staging memory limit");
  if(!["0.5","1","2"].includes(cpuLimit))fail("Unreviewed staging CPU limit");
  if(input.domains&&(!DOMAIN.test(input.domains)||input.domains.includes("..")))
