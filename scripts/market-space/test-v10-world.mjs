@@ -76,4 +76,25 @@ check('Garment mesh rings generate bounded finite triangle geometry',()=>{
  assert.equal(geo.indices.length/3,280);
  assert.ok(geo.attributes.position.array.every(Number.isFinite));
 });
-console.log('V10.1 source contracts: '+count+' passed. Separate real-browser WebGL and touch QA still required.');
+check('Premium world interaction layer exposes nearby 3D products and labels',()=>{
+ for(const str of ['function groceryLabel(','goodsLabelMaterials','groceryLabel(index)','function updateProductTip()','tipProductAction','objectTip.show'])assert.ok(world.includes(str),str);
+ assert.ok(world.includes('href="../market-space-showcase-v10/"'));
+});
+check('Graphics settings are user-controlled and have mobile safeguards',()=>{
+ for(const str of ['qualityCycle','qualityMode','applyQuality()','qualityLabels','qualityBtn','fps<27'])assert.ok(world.includes(str),str);
+});
+check('Cinema tours steer around central Market/Beauty objects',()=>{
+ const a=world.indexOf('const directorRoutes='),b=world.indexOf('function startTour()',a);
+ const routes=new Function(world.slice(a,b)+'return directorRoutes;')();
+ for(const key of ['food','beauty']){
+  const points=routes[key];assert.ok(points.length>=5);
+  for(let j=0;j<points.length-1;j++){
+   const a=points[j],b=points[j+1];
+   for(let i=0;i<=15;i++){
+    const t=i/15,x=a.x+(b.x-a.x)*t,z=a.z+(b.z-a.z)*t;
+    assert.ok(Math.abs(x)>2.5,'Tour too near central displays: '+key+' at '+x+','+z);
+   }
+  }
+ }
+});
+console.log('V10.2 source contracts: '+count+' passed. Real mobile GPU and external browser QA are not verified.');
