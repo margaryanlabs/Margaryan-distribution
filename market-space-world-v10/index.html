@@ -449,7 +449,7 @@ function applyExperienceVisuals(){
    }
    obj.material.color.set(tint);
    obj.material.roughness=experienceState.beauty.glass==='frost'?.6:.10;
-   obj.material.opacity=experienceState.beauty.glass==='frost'?.97:.84;
+   obj.material.opacity=obj.material.transmission>0?1:(experienceState.beauty.glass==='frost'?.97:.84);
    obj.material.needsUpdate=true;
   });
  }else if(active==='home'){
@@ -1162,13 +1162,46 @@ function homeScene(){
 const perfumeGlassCache=new Map();
 function perfumeGlass(color){
  if(perfumeGlassCache.has(color))return perfumeGlassCache.get(color);
+ const high=!coarse||qualityMode==='high';
  const material=new THREE.MeshPhysicalMaterial({
-  color,roughness:.085,metalness:.035,transparent:true,opacity:.84,
-  depthWrite:false,clearcoat:.95,clearcoatRoughness:.07,ior:1.45,
-  envMapIntensity:1.18
+  color,roughness:.09,metalness:.025,
+  transparent:!high,opacity:high?1:.84,depthWrite:high,
+  transmission:high?.67:0,thickness:high?.28:0,ior:1.46,
+  attenuationColor:new THREE.Color(color),attenuationDistance:1.8,
+  clearcoat:.90,clearcoatRoughness:.075,envMapIntensity:1.12
  });
  perfumeGlassCache.set(color,material);reusableMaterials.add(material);
  return material;
+}
+// Print small original brand art directly onto real bottle fronts, never reusing stock photos.
+const scentLabelCache=new Map();
+function scentLabel(kind){
+ const id=((kind%4)+4)%4;
+ if(scentLabelCache.has(id))return scentLabelCache.get(id);
+ const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
+ const ctx=canvas.getContext('2d');
+ ctx.fillStyle='#f0e4d4';ctx.fillRect(0,0,256,256);
+ ctx.fillStyle='#54483e';ctx.textAlign='center';
+ ctx.font='700 17px Georgia';ctx.fillText('M A I S O N',128,45);
+ ctx.fillRect(48,63,160,1);
+ ctx.font='normal 48px Georgia';ctx.fillText(['05','09','12','21'][id],128,141);
+ ctx.font='13px Arial';ctx.fillText(['ROSE','SOLAR','AMBER','ELIXIR'][id],128,180);
+ ctx.font='10px Arial';ctx.fillText('EAU DE PARFUM  /  50 ML',128,224);
+ const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+ const material=new THREE.MeshBasicMaterial({map:texture,transparent:false,toneMapped:false,side:THREE.DoubleSide});
+ scentLabelCache.set(id,material);reusableMaterials.add(material);return material;
+}
+function syncPhysicalGlass(){
+ const high=!coarse||qualityMode==='high';
+ const change=m=>{
+  if(!m||!m.isMeshPhysicalMaterial)return;
+  const enabled=high;
+  if((m.transmission>0)===enabled)return;
+  m.transparent=!enabled;m.depthWrite=enabled;m.opacity=enabled?1:.84;
+  m.transmission=enabled?.67:0;m.thickness=enabled?.28:0;m.needsUpdate=true;
+ };
+ for(const m of perfumeGlassCache.values())change(m);
+ for(const obj of experienceVisuals.perfume)change(obj.material);
 }
 function perfumeBottle(g,x,z,color,kind=0,y=0){
  const gp=new THREE.Group();gp.position.set(x,y,z);g.add(gp);
@@ -1177,6 +1210,12 @@ function perfumeBottle(g,x,z,color,kind=0,y=0){
  else soft(0,.29,0,.46,.53,.26,tinted,.09,gp);
  soft(0,.62,0,.20,.13,.19,brass,.022,gp);
  tube(0,.73,0,.055,.055,.16,brass,gp);
+ // Label reserved for large hero/gallery bottles to respect mobile draw-call budgets.
+ if(kind%4===0){
+  const m=scentLabel(kind);
+  const sign=mesh(new THREE.PlaneGeometry(.26,.26),m);
+  sign.position.set(0,.30,.143);sign.castShadow=false;gp.add(sign);
+ }
  return gp;
 }
 function beautyIsland(x,z,index){
@@ -1696,7 +1735,7 @@ lookPad.addEventListener('pointercancel',lookUp);
 let dragging=false,dragId=null,dragX=0,dragY=0,dragMoved=false,downX=0,downY=0;
 $('qualityBtn').addEventListener('click',()=>{
  qualityMode=qualityCycle[(qualityCycle.indexOf(qualityMode)+1)%qualityCycle.length];
- qualityReduced=qualityMode!=='auto';applyQuality();reconcilePremiumModels();if(qualityMode==='high'||qualityMode==='auto')upgradePremiumAssets(active);
+ qualityReduced=qualityMode!=='auto';applyQuality();syncPhysicalGlass();reconcilePremiumModels();if(qualityMode==='high'||qualityMode==='auto')upgradePremiumAssets(active);
 });
 const canvas=renderer.domElement;
 canvas.addEventListener('pointerdown',e=>{dragging=true;dragId=e.pointerId;dragX=downX=e.clientX;dragY=downY=e.clientY;dragMoved=false;canvas.setPointerCapture(e.pointerId);$('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';});
