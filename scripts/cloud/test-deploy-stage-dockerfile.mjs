@@ -20,9 +20,22 @@ test("nested private VETO Dockerfile is included but staging remains non-deployi
   assert.equal(actual.dockerfile_location, "deploy/selfhost/Dockerfile.web");
   assert.equal(actual.instant_deploy, false);
   assert.equal(actual.autogenerate_domain, false);
+  assert.equal(actual.is_auto_deploy_enabled, false);
+  assert.equal(actual.base_directory, "/");
   assert.equal(actual.environment_name, "staging");
   assert.equal(actual.github_app_uuid, basic.github_app_uuid);
   assert.equal(actual.domains, undefined);
+});
+
+test("no application is automatically built on creation or subsequent pushes", () => {
+  for (const source of ["private-github-app", undefined]) {
+    const c = source === undefined ? {...basic, source:undefined, github_app_uuid:undefined,
+      git_repository:"https://github.com/example/public-app"} : basic;
+    const req=createStagingRequest(c);
+    assert.deepEqual([req.instant_deploy,req.is_auto_deploy_enabled,req.autogenerate_domain],
+      [false,false,false]);
+    assert.equal(req.base_directory, "/");
+  }
 });
 
 test("nested private PROMPTENCE Dockerfile is supported", () => {
