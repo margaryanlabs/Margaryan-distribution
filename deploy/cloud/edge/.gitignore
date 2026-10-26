@@ -1,0 +1,5 @@
+# Local generated routing may reveal private infrastructure topology.
+haproxy.cfg
+*.private.json
+secrets/
+.env*
