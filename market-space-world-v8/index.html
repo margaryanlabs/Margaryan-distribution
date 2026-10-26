@@ -495,8 +495,9 @@ function enableLite(reason){
  if(liteCtx){liteCanvas.style.display='block';$('photoFallback').classList.remove('visible');$('photoFallback').style.opacity='0';}
  else{$('photoFallback').classList.add('visible')}
  $('walkWarning').style.display='block';
- const st=$('status');if(st)st.textContent=liteCtx?'● ИНТЕРАКТИВНЫЙ 2D · WEBGL НЕАКТИВЕН':'● РЕЖИМ СОВМЕСТИМОСТИ';
+ const st=$('status');if(st)st.textContent=liteCtx?'● ИНТЕРАКТИВНЫЙ 2D · WEBGL НЕАКТИВЕН':'● РЕЖИМ СОВМЕСТИМОСТИ'; const chip=$('detailChip');if(chip&&liteCtx)chip.textContent='ПРОГУЛКА БЕЗ WEBGL · MARKET SPACE LITE';
  $('walkWarning').title='Диагностика: '+liteDiag;
+ if(liteCtx)hideIntro();
 }
 function drawLiteWorld(){
  if(!liteCtx)return;
@@ -535,8 +536,8 @@ function drawLiteWorld(){
   for(let i=0;i<faces.length;i++){const face=polygonCam(faces[i],colors[i]||colors[0]);if(face)objects.push(face)}
  }
  function line3(a,b,color,width=1){let p1=proj(...a),p2=proj(...b);if(!p1||!p2)return;ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke()}
- function billboards(items){for(const it of items){const screen=proj(it.x,it.y,it.z);if(!screen||screen.d>42||screen.x< -90||screen.x>w+90)continue;
-   let size=Math.max(12,Math.min(46,29*9/screen.d));ctx.font='700 '+size+'px system-ui';ctx.textAlign='center';ctx.fillStyle='#102c44';ctx.fillText(it.text,screen.x+1,screen.y+1);ctx.fillStyle='#fff1d0';ctx.fillText(it.text,screen.x,screen.y);
+ function billboards(items){for(const it of items){const screen=proj(it.x,it.y,it.z);if(!screen||screen.d<7||screen.d>36||screen.x< -90||screen.x>w+90)continue;
+   let size=Math.max(11,Math.min(21,20*12/screen.d));ctx.font='700 '+size+'px system-ui';ctx.textAlign='center';ctx.fillStyle='#102c44';ctx.fillText(it.text,screen.x+1,screen.y+1);ctx.fillStyle='#fff1d0';ctx.fillText(it.text,screen.x,screen.y);
  }}
  const sky=ctx.createLinearGradient(0,0,0,horizon);sky.addColorStop(0,p.sky);sky.addColorStop(1,'#e9f0f6');ctx.fillStyle=sky;ctx.fillRect(0,0,w,Math.max(0,horizon));
  const floor=ctx.createLinearGradient(0,horizon,0,h);floor.addColorStop(0,p.floor);floor.addColorStop(1,'#405773');ctx.fillStyle=floor;ctx.fillRect(0,Math.max(0,horizon),w,h);
@@ -584,7 +585,8 @@ function drawLiteWorld(){
  for(let x=-12;x<=12;x+=4)for(let z=-40;z<22;z+=3)line3([x,.01,z],[x,.01,z+2.8],'#ffffff24',1);
  for(let z=-40;z<22;z+=3)line3([-13,.01,z],[13,.01,z],'#eef8ff22',1);
  for(const x of [-2.3,2.3])for(let z=-38;z<21;z+=4)line3([x,.025,z],[x,.025,z+2.5],p.accent,1.7);
- const signs=scene==='mall'?[{x:-9,y:4.25,z:-34,text:'FOOD'},{x:-3,y:4.25,z:-34,text:'FASHION'},{x:3,y:4.25,z:-34,text:'BEAUTY'},{x:9,y:4.25,z:-34,text:'HOME'}]:Array.from({length:4},(_,i)=>({x:0,y:4.39,z:12-i*11,text:['01 · NEW','02 · DISCOVER','03 · SELECT','04 · MARKET'][i]}));
+ const labels={food:['ОВОЩИ','МОЛОЧНОЕ','БАКАЛЕЯ','НАПИТКИ'],fashion:['НОВИНКИ','ОДЕЖДА','ПРИМЕРОЧНАЯ','АКСЕССУАРЫ'],beauty:['МАКИЯЖ','УХОД','ПАРФЮМ','КОСМЕТИКА'],home:['ГОСТИНАЯ','СПАЛЬНЯ','ОСВЕЩЕНИЕ','ДЕКОР']};
+ const signs=scene==='mall'?[{x:-9,y:4.25,z:-34,text:'FOOD'},{x:-3,y:4.25,z:-34,text:'FASHION'},{x:3,y:4.25,z:-34,text:'BEAUTY'},{x:9,y:4.25,z:-34,text:'HOME'}]:Array.from({length:4},(_,i)=>({x:0,y:4.39,z:12-i*11,text:labels[scene]?.[i]||'MARKET SPACE'}));
  billboards(signs);
  // Product markers scale with depth. Picking uses the existing 3D hotspot proximity logic.
  billboards(hotspots.filter((a,i)=>i%2===0).map(h=>({...h,y:Math.max(h.y||1.4,1.4),text:scene==='mall'?'◉':DATA[scene]?.[h.index]?.emoji||'◆'})));
