@@ -239,4 +239,22 @@ check('Studio link is shareable through explicit native actions with local URL s
   assert.ok(world.includes(k),k);
  }
 });
+check('Original apparel colours are preserved by default and recover after customization',()=>{
+ const a=world.indexOf('const STUDIO_MOODS='),b=world.indexOf("let active='fashion',",a);
+ assert.ok(a>=0&&b>a);
+ class Color{constructor(v){this.value=String(v)}clone(){return new Color(this.value)}copy(o){this.value=o.value;return this}lerp(o,n){this.value=this.value+'+'+o.value+':'+n;return this}}
+ const cloth={color:new Color('#52443b'),clone(){return {color:this.color.clone()}}};
+ const garment={isMesh:true,userData:{styleSurface:'fabric'},material:cloth};
+ const root={traverse(cb){cb(garment)}};
+ const scene={environment:null,background:new Color('room'),fog:{color:new Color('room')}};
+ const renderer={toneMappingExposure:1};
+ class Params{constructor(str){this.values=Object.fromEntries(str.replace(/^\?/,'').split('&').filter(Boolean).map(x=>x.split('=')))}get(k){return this.values[k]??null}}
+ const fn=new Function('THREE','location','URLSearchParams','renderer','scene','root','document',
+ world.slice(a,b)+"return {apply:()=>applyStudioLook(),set:f=>{studioFinish=f;applyStudioLook()},defaultFinish:()=>studioFinish};");
+ const manager=fn({Color},{search:''},Params,renderer,scene,root,{querySelectorAll:()=>[]});
+ assert.equal(manager.defaultFinish(),'original');manager.apply();
+ assert.equal(garment.material.color.value,'#52443b');
+ manager.set('rose');assert.ok(garment.material.color.value.includes('#a16b75'));
+ manager.set('original');assert.equal(garment.material.color.value,'#52443b');
+});
 console.log('V10.6 offline source contracts: '+count+' passed. Real mobile visual QA remains pending.');
