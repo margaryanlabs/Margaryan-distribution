@@ -19,7 +19,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 .titlePanel{position:fixed;z-index:3;left:clamp(18px,3vw,52px);top:clamp(125px,18vh,210px);pointer-events:none;width:min(460px,45vw)}
 .kicker{letter-spacing:.25em;font-size:10px;font-weight:740;color:#e6d2b0;text-transform:uppercase}.kicker:before{content:"";display:inline-block;width:25px;height:1px;background:currentColor;vertical-align:middle;margin-right:13px}
 .titlePanel h1{font:normal clamp(50px,6vw,104px)/.96 Georgia,"Times New Roman",serif;letter-spacing:-.06em;margin:20px 0 14px;text-shadow:0 12px 29px #0009}
-.titlePanel p{font-size:13px;max-width:320px;line-height:1.74;color:#eee9deb8;text-shadow:0 2px 10px #000c}
+.titlePanel p{font-size:13px;max-width:320px;line-height:1.74;color:#eee9deb8;text-shadow:0 2px 10px #000c}.titlePanel{transition:opacity .55s ease}
 .titlePanel button{pointer-events:auto;margin-top:20px;padding:14px 18px;border:1px solid #e8dcc8;background:#f1e7d8;color:#1c201e;font-weight:800;font-size:11px;letter-spacing:.11em}
 #worldNote{position:fixed;z-index:5;top:103px;right:clamp(18px,3vw,52px);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#fff6e8ab;border:1px solid #ffffff4c;background:#1419178c;padding:8px 12px}
 #hotspotHint{position:fixed;z-index:4;left:50%;top:49%;transform:translate(-50%,-50%);width:17px;height:17px;border:1px solid #e1d7bf8a;border-radius:50%;pointer-events:none;opacity:.65}#hotspotHint:after{content:"";position:absolute;top:7px;left:7px;width:2px;height:2px;background:#f2e5cd;border-radius:50%}
@@ -126,7 +126,31 @@ const ivory=mat('#ebe5d8',.92), brass=mat('#ad8c62',.32,.75),darkMetal=mat('#333
 const ceramic=mat('#e8dbca',.28,.1),wood=mat('#93735a',.75),black=mat('#252521',.52);
 const glass=new THREE.MeshPhysicalMaterial({color:'#e7dacc',roughness:.11,metalness:0,transparent:true,opacity:.57,depthWrite:false});
 const fabricColors=['#a98a72','#eee2d0','#65645e','#bca8a1','#5a6560','#d3b7a2'];
-const fabric=fabricColors.map(c=>mat(c,.95,.0,{side:THREE.DoubleSide}));
+// Fine woven microrelief creates fabric response under real lights without image downloads.
+function weaveBump(){
+ const c=document.createElement('canvas');c.width=c.height=128;
+ const q=c.getContext('2d');q.fillStyle='#808080';q.fillRect(0,0,128,128);
+ for(let k=0;k<128;k+=4){
+  q.fillStyle=k%8?'#929292':'#b0b0b0';q.fillRect(k,0,1,128);
+  q.fillStyle='#747474';q.fillRect(0,k,128,1);
+ }
+ for(let x=0;x<128;x+=8)for(let y=0;y<128;y+=8){
+  q.fillStyle='#a3a3a3';q.fillRect(x+1,y+1,2,2);
+ }
+ const t=new THREE.CanvasTexture(c);
+ t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(3,6);t.anisotropy=4;
+ return t;
+}
+const sharedWeaveTexture=weaveBump(),garmentMaterialCache=new Map();
+function textile(color,side=THREE.DoubleSide){
+ const key=color+'|'+side;
+ if(garmentMaterialCache.has(key))return garmentMaterialCache.get(key);
+ const material=mat(color,.96,.005,{side,bumpMap:sharedWeaveTexture,bumpScale:.014});
+ garmentMaterialCache.set(key,material);reusableMaterials.add(material);
+ return material;
+}
+
+const fabric=fabricColors.map(c=>textile(c));
 const boxGeo=new THREE.BoxGeometry(1,1,1);
 const sphereGeo=new THREE.SphereGeometry(1,18,12);
 const cyl=(r1,r2,h,segments=14)=>new THREE.CylinderGeometry(r1,r2,h,segments);
@@ -233,8 +257,8 @@ function garmentShell(rings,cloth,detail=0){
 }
 function clothBody(color,kind='jacket'){
  const group=new THREE.Group();
- const cloth=mat(color,.96,.0,{side:THREE.DoubleSide});
- const sleeveColor=mat(color,.97,.0);
+ const cloth=textile(color);
+ const sleeveColor=textile(color,THREE.FrontSide);
  const isDress=kind==='dress',isCoat=kind==='coat';
  const rings=isDress?
   [[.58,.29,.16],[.43,.40,.23],[.18,.36,.23],[-.19,.28,.20],[-.49,.37,.27],[-.86,.51,.36],[-1.26,.65,.45],[-1.44,.69,.47]]:
@@ -448,7 +472,7 @@ function disposeWorld(){
   }
  });
  for(const geo of geometries)geo.dispose();
- for(const m of materials){if(m.map)m.map.dispose();m.dispose();}
+ for(const m of materials){if(m.map)m.map.dispose();if(m.bumpMap&&m.bumpMap!==sharedWeaveTexture)m.bumpMap.dispose();m.dispose();}
  root.clear();
  renderer.renderLists.dispose();
 }
@@ -476,6 +500,7 @@ function blocked(x,z){
  });
 }
 function move(dx,dz){
+ if(Math.abs(dx)+Math.abs(dz)>.002){$('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';}
  const nx=camera.position.x+dx,nz=camera.position.z+dz;
  // Resolve individual axes for natural sliding instead of walking through merch.
  if(!blocked(nx,camera.position.z))camera.position.x=nx;
@@ -562,7 +587,7 @@ function joyUp(e){if(e.pointerId!==joyPointer)return;joyPointer=null;joy.x=joy.y
 pad.addEventListener('pointerup',joyUp);pad.addEventListener('pointercancel',joyUp);
 let dragging=false,dragId=null,dragX=0,dragY=0,dragMoved=false,downX=0,downY=0;
 const canvas=renderer.domElement;
-canvas.addEventListener('pointerdown',e=>{dragging=true;dragId=e.pointerId;dragX=downX=e.clientX;dragY=downY=e.clientY;dragMoved=false;canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener('pointerdown',e=>{dragging=true;dragId=e.pointerId;dragX=downX=e.clientX;dragY=downY=e.clientY;dragMoved=false;canvas.setPointerCapture(e.pointerId);$('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';});
 canvas.addEventListener('pointermove',e=>{if(!dragging||e.pointerId!==dragId)return;let dx=e.clientX-dragX,dy=e.clientY-dragY;if(Math.abs(e.clientX-downX)+Math.abs(e.clientY-downY)>8)dragMoved=true;yaw-=dx*(coarse?.005:.0036);pitch=clamp(pitch-dy*.0028,-.58,.52);dragX=e.clientX;dragY=e.clientY;if(Math.abs(dx)+Math.abs(dy)>0){stopTour();}});
 canvas.addEventListener('pointerup',e=>{if(e.pointerId!==dragId)return;dragging=false;dragId=null;if(!dragMoved)selectAt(e.clientX,e.clientY);});
 canvas.addEventListener('pointercancel',()=>{dragging=false;dragId=null;});
