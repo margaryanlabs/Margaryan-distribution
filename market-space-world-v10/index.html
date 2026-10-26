@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#10110f">
 <meta name="description" content="MARKET SPACE V10 — новая экспериментальная 3D-архитектура retail: полноценная прогулка по бутику, мебели, beauty и супермаркету.">
-<title>MARKET SPACE — Immersive World V10.7</title>
+<title>MARKET SPACE — Immersive World V10.8</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"}}</script>
 <style>
 :root{color-scheme:dark;font:14px/1.5 Inter,"Helvetica Neue",Arial,sans-serif;background:#111311;color:#f5f0e7;--paper:#f4eee3;--mute:#b7b3a8;--line:#d3c6b64b;--warm:#e4c79d}*{box-sizing:border-box}
@@ -37,6 +37,26 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 border:1px solid #d6b98b70;padding:9px 11px;font:11px/1.5 ui-monospace,SFMono-Regular,monospace;
 pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
 #perfHud[hidden]{display:none!important}
+
+
+#experiencePanel{position:fixed;z-index:15;top:94px;left:clamp(12px,3vw,52px);width:min(370px,calc(100vw - 24px));max-height:calc(100dvh - 190px);overflow-y:auto;
+background:linear-gradient(135deg,#263029ed,#0e1612f5);backdrop-filter:blur(20px);border:1px solid #e1caac88;border-radius:12px;padding:19px 18px;color:#ede6d6;box-shadow:0 20px 60px #000a}
+#experiencePanel[hidden]{display:none!important}
+.experienceTop{display:flex;gap:12px;justify-content:space-between;align-items:flex-start}
+.experienceTop h2{font:normal 33px Georgia,serif;letter-spacing:-.05em;margin:5px 0 9px}
+.experienceTop button{background:none;color:#f4e8d4;border:1px solid #d4c3a288;border-radius:5px;width:31px;height:31px}
+.experienceKicker{font-size:9px;letter-spacing:.20em;color:#e9cb9c}
+.experienceIntro{font-size:11px;line-height:1.6;color:#d4cbb7;margin:0 0 16px}
+.experienceSection{border-top:1px solid #e4d5ba46;padding:13px 0}
+.experienceSection strong{display:block;font-size:9px;letter-spacing:.15em;color:#d7c39f;text-transform:uppercase;margin:0 0 10px}
+.experienceOptions{display:flex;flex-wrap:wrap;gap:7px}
+.experienceOptions button{padding:9px 11px;min-height:37px;background:#ffffff0a;color:#efe4d3;border:1px solid #eed7b46e;border-radius:5px;font-size:11px}
+.experienceOptions button[aria-pressed="true"]{background:#e7cfaa;border-color:#e7cfaa;color:#202720;font-weight:800}
+.experienceActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:15px}
+.experienceActions button{min-height:42px;border:1px solid #e6cda8a6;background:#ffffff11;color:#f4e6cf;border-radius:5px;font-weight:750;font-size:11px;padding:9px 8px}
+.experienceActions button.main{background:#e8d1b2;color:#17231c}
+.experienceNote{font-size:10px;color:#c7c5b8;line-height:1.5;margin:13px 0 0}
+@media(max-width:620px){#experiencePanel{top:auto;left:7px;right:7px;bottom:92px;width:auto;max-height:min(49dvh,450px);padding:13px 14px}.experienceTop h2{font-size:27px}}
 
 /* V10.7 immersive wardrobe configurator: one secondary mobile sheet, with 3D viewport unobstructed. */
 #lookbookPanel{position:fixed;z-index:15;left:clamp(12px,3vw,52px);top:96px;width:min(365px,calc(100vw - 26px));max-height:calc(100dvh - 208px);overflow-y:auto;overscroll-behavior:contain;
@@ -100,7 +120,15 @@ pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
 .tourBtn{min-height:66px;padding:10px 23px;border:1px solid #d7c8b3;color:#141614;background:#dfcfb6;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.13em;white-space:nowrap;border-radius:7px}
 .tourBtn:hover{background:#f4ebdb}
 .help{position:fixed;z-index:4;left:clamp(18px,3vw,52px);bottom:39px;font-size:10px;color:#f1e9dcab;letter-spacing:.1em}.help b{color:#fff}
-.movePad{display:none;position:fixed;z-index:9;left:20px;bottom:128px;border:1px solid #e6ddc5a8;width:100px;height:100px;border-radius:50%;background:#1015134d;backdrop-filter:blur(7px);touch-action:none}.padThumb{width:43px;height:43px;position:absolute;left:28px;top:28px;border-radius:50%;background:#e5d5b9ba;box-shadow:0 5px 20px #0009}
+.movePad,.lookPad{display:none;position:fixed;z-index:9;bottom:125px;border:1px solid #e6ddc597;width:112px;height:112px;border-radius:50%;background:radial-gradient(circle,#24312a88,#0f1613a8);backdrop-filter:blur(9px);touch-action:none;user-select:none;-webkit-user-select:none}
+.movePad{left:17px}.lookPad{right:17px}
+.padThumb,.lookThumb{width:46px;height:46px;position:absolute;left:32px;top:32px;border-radius:50%;background:#e4d0afc2;box-shadow:0 5px 20px #0009;pointer-events:none;transition:transform .045s linear}
+.lookThumb{background:#cfdfd3a9}
+.movePad:before,.lookPad:before{position:absolute;top:-19px;left:0;right:0;text-align:center;color:#efe4d0bd;font:700 9px Arial,sans-serif;letter-spacing:.12em}
+.movePad:before{content:"ХОДИТЬ"}.lookPad:before{content:"СМОТРЕТЬ"}
+#interactionBtn{display:none;position:fixed;z-index:9;right:27px;bottom:251px;background:#e8d4b3;color:#222720;border:1px solid #fff1d3c9;border-radius:50%;width:48px;height:48px;font-weight:800;box-shadow:0 9px 22px #0008}
+#interactionBtn:disabled{opacity:.45}
+
 .touchHelp{display:none}
 #loading{position:fixed;inset:0;z-index:20;background:radial-gradient(circle at 50% 43%,#303a34,#151b18 58%,#0d110f);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;transition:opacity .6s,visibility .6s;padding:25px}
 #loading.ready{opacity:0;visibility:hidden;pointer-events:none}
@@ -150,7 +178,7 @@ pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
  .header{min-height:66px;padding:11px 9px;gap:5px}.logo{gap:8px}.logomark{height:30px;width:30px}.logomark b{font-size:20px}.brand{font-size:10px;letter-spacing:.12em}.brand small{font-size:7px;letter-spacing:.13em}.topAction{padding:8px 6px;font-size:8px}#styleBtn{border-color:#f0cfa799}
  .titlePanel{top:88px;left:17px;width:calc(100% - 115px);max-width:320px}.titlePanel h1{font-size:39px;margin:12px 0 8px}.titlePanel p{font-size:10px;max-width:235px;line-height:1.5}.titlePanel .kicker{font-size:8px}.titlePanel button{padding:10px 12px;font-size:9px;margin-top:11px}
  #stylePanel{top:75px;right:8px;width:min(320px,calc(100vw - 16px));max-height:calc(100dvh - 190px);overflow-y:auto;padding:13px}#stylePanel h2{font-size:29px;margin:6px 0 10px}#worldNote{top:84px;right:10px;font-size:8px;padding:7px 8px;max-width:100px;line-height:1.4;text-align:center}#qualityBtn{top:124px;right:10px;font-size:8px;padding:8px 10px}#assetCredits{top:163px;right:10px;font-size:9px;max-width:165px}.bottomWrap{bottom:8px;width:calc(100vw - 10px);display:block}.worldDock{width:100%;justify-content:space-around;gap:1px;padding:5px}.worldTab{flex:1;min-width:0;font-size:8px;padding:9px 2px}.worldTab .n{font-size:15px}.tourBtn{position:fixed;bottom:105px;left:50%;transform:translateX(-50%);min-height:38px;padding:8px 14px;font-size:9px}
- #objectTip{right:10px;bottom:181px;min-width:156px;max-width:183px;padding:11px}#objectTip strong{font-size:20px}#objectTip button{padding:8px 10px;font-size:9px}.help{display:none}.movePad{display:block}.touchHelp{display:block;position:fixed;right:16px;bottom:136px;z-index:4;font-size:10px;text-align:right;color:#f3e7cfc9;letter-spacing:.1em}#hotspotHint{top:53%}
+ #objectTip{right:10px;bottom:181px;min-width:156px;max-width:183px;padding:11px}#objectTip strong{font-size:20px}#objectTip button{padding:8px 10px;font-size:9px}#interactionBtn{display:block}.help{display:none}.movePad,.lookPad{display:block}.touchHelp{display:block;position:fixed;right:16px;bottom:136px;z-index:4;font-size:10px;text-align:right;color:#f3e7cfc9;letter-spacing:.1em}#hotspotHint{top:53%}
  #notice{bottom:190px;right:12px}.drawer{padding:22px}
 }
 @media(max-width:430px){
@@ -170,11 +198,17 @@ pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
 <div id="viewport" aria-label="Интерактивное 3D-пространство"></div><div class="scrim"></div>
 <header class="header">
 <a class="logo" href="../market-space-showcase-v10/" aria-label="Вернуться на MARKET SPACE"><span class="logomark"><b>M</b></span><span class="brand">MARKET SPACE<small>BY MARGARYAN LABS</small></span></a>
-<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.7</span>
-<button class="topAction" id="lookbookBtn" aria-controls="lookbookPanel" aria-expanded="false">◈ Lookbook</button><button class="topAction" id="styleBtn" aria-controls="stylePanel" aria-expanded="false">✦ Студия</button><button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
+<span class="headercenter"><i class="liveDot"></i> EXPERIMENTAL / WORLD ENGINE 10.8</span>
+<button class="topAction" id="experienceBtn" aria-controls="experiencePanel" aria-expanded="false">✦ Experience</button><button class="topAction" id="lookbookBtn" aria-controls="lookbookPanel" aria-expanded="false">◈ Lookbook</button><button class="topAction" id="styleBtn" aria-controls="stylePanel" aria-expanded="false">✦ Студия</button><button class="topAction" id="catalogBtn">Коллекция</button><button class="topAction" id="cartBtn">Корзина <span id="cartCount">0</span></button>
 </header>
 <div class="titlePanel" id="titlePanel"><div class="kicker" id="eyebrow">01 / THE ATELIER</div><h1 id="worldTitle">The<br>Atelier</h1><p id="worldDescription">Мода — это не карточки в каталоге. Исследуй коллекцию, подойди к манекенам и выбери вещи прямо в пространстве.</p><button id="introButton">Исследовать пространство ↗</button></div>
-<div id="worldNote">V10.7 / INTERACTIVE 3D PREVIEW</div><section id="lookbookPanel" role="dialog" aria-label="Interactive Lookbook — собрать образ" hidden>
+<div id="worldNote">V10.8 / INTERACTIVE 3D PREVIEW</div><section id="experiencePanel" role="dialog" aria-label="Интерактивная студия магазина" hidden>
+<div class="experienceTop"><div><span class="experienceKicker" id="experienceKicker">IMMERSIVE SHOPPING</span><h2 id="experienceTitle">Experience Lab</h2></div><button id="closeExperience" aria-label="Закрыть Experience Lab" type="button">✕</button></div>
+<p class="experienceIntro" id="experienceIntro"></p>
+<div id="experienceOptions"></div>
+<div class="experienceActions"><button id="experienceShare" type="button">↗ Поделиться</button><button id="experienceAdd" class="main" type="button">＋ В демо-корзину</button></div>
+<p class="experienceNote" id="experienceNote">Реальные товары и заказы не подключены. Демонстрация интерактивной торговли.</p>
+</section><section id="lookbookPanel" role="dialog" aria-label="Interactive Lookbook — собрать образ" hidden>
 <div class="lookbookTop"><div><span class="lookbookKicker">Fashion / Personal Styling</span><h2>My Lookbook.</h2></div>
 <button id="closeLookbook" class="lookbookClose" type="button" aria-label="Закрыть Lookbook">✕</button></div>
 <p class="lookbookLead">Собери образ, посмотри его на 3D-манекене и отправь ссылку. Изменения происходят в самом пространстве.</p>
@@ -231,7 +265,9 @@ pointer-events:none;white-space:pre;box-shadow:0 10px 28px #0008}
 <p>Кресло Sheen Chair: © 2020 Wayfair, Eric Chadwick, CC0. <a href="https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/SheenChair" target="_blank" rel="noopener noreferrer">Источник</a>.</p>
 <p>Обувь Materials Variants Shoe: © 2021 Shopify, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>. <a href="https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/MaterialsVariantsShoe" target="_blank" rel="noopener noreferrer">Источник</a>.</p></div></details><div id="perfHud" hidden aria-label="Диагностика производительности"></div><div id="hotspotHint" aria-hidden="true"></div>
 <div class="help">WASD — <b>двигаться</b> · мышь — <b>осмотреться</b> · клик — <b>товар</b> · T — <b>тур</b></div><div class="touchHelp">Проведи по экрану,<br>чтобы осмотреться</div>
-<div class="movePad" id="movePad" aria-label="Виртуальный джойстик движения"><div class="padThumb" id="padThumb"></div></div>
+<div class="movePad" id="movePad" role="group" aria-label="Левый джойстик: движение"><div class="padThumb" id="padThumb"></div></div>
+<div class="lookPad" id="lookPad" role="group" aria-label="Правый джойстик: взгляд"><div class="lookThumb" id="lookThumb"></div></div>
+<button type="button" id="interactionBtn" aria-label="Осмотреть ближайший товар">◎</button>
 <div class="bottomWrap"><nav class="worldDock" aria-label="Выбор 3D-магазина">
 <button class="worldTab active" data-store="fashion"><span class="n">01</span>Fashion</button>
 <button class="worldTab" data-store="food"><span class="n">02</span>Market</button>
