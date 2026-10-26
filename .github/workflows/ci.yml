@@ -89,6 +89,8 @@ jobs:
         run: node --test scripts/cloud/vps-preflight.test.mjs
       - name: Verify private PostgreSQL durability pilot source and secrets (offline)
         run: node --test scripts/cloud/prepare-db-pilot.test.mjs
+      - name: Audit VETOGRAM and Promptence Vercel portability contracts offline
+        run: node --test scripts/cloud/app-portability.test.mjs
       - name: Validate owner-run local release gate (offline)
         run: node --test scripts/cloud/local-ci.test.mjs
       - name: Test infrastructure health and ClickHouse connector
