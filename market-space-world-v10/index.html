@@ -931,7 +931,7 @@ function disposeWorld(){
 }
 function setStore(key){
  if(!DATA[key])return;
- active=key;showroomGeneration++;premiumSlots=[];touring=false;tourRoute=[];walkVelocity.x=walkVelocity.z=0;
+ closeStyleStudio();active=key;showroomGeneration++;premiumSlots=[];touring=false;tourRoute=[];walkVelocity.x=walkVelocity.z=0;
  keys.clear();joy.x=joy.y=0;$('tourBtn').textContent='▶ Кинотур';
  disposeWorld();
  hotspots=[];pickables=[];blockers=[];marketPackBatches.clear();tipCurrent=-1;$('objectTip').classList.remove('show');premiumState='idle';updatePremiumStatus();architecture(key);
@@ -1014,6 +1014,60 @@ function openCart(){
  buildRows(items);if(!items.length){const p=document.createElement('p');p.textContent='Пока пусто — загляни в коллекцию и выбери предмет.';$('drawerProducts').append(p);}
  $('drawerFoot').replaceChildren();const sum=document.createElement('strong');sum.textContent=money(priceTotal());const cap=document.createElement('span');cap.textContent='Итого (демо)';$('drawerFoot').append(cap,sum);showDrawer();
 }
+// Style Studio is intentionally local-only: URL state, no accounts, no tracking or hidden uploads.
+function closeStyleStudio(){
+ $('stylePanel').hidden=true;
+ $('styleBtn').setAttribute('aria-expanded','false');
+}
+function openStyleStudio(){
+ hideDrawer();stopTour();keys.clear();joy.x=joy.y=0;
+ $('stylePanel').hidden=false;
+ $('styleBtn').setAttribute('aria-expanded','true');
+ $('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';
+ applyStudioLook();
+ $('closeStyle').focus();
+}
+function updateStyleURL(){
+ const url=new URL(location.href);
+ url.searchParams.set('world',active);
+ url.searchParams.set('mood',studioMood);
+ url.searchParams.set('finish',studioFinish);
+ history.replaceState(null,'',url);
+ return url;
+}
+$('styleBtn').addEventListener('click',()=>$('stylePanel').hidden?openStyleStudio():closeStyleStudio());
+$('closeStyle').addEventListener('click',()=>{closeStyleStudio();$('styleBtn').focus();});
+document.querySelectorAll('[data-mood]').forEach(b=>b.addEventListener('click',()=>{
+ if(!Object.hasOwn(STUDIO_MOODS,b.dataset.mood))return;
+ studioMood=b.dataset.mood;applyStudioLook();updateStyleURL();
+}));
+document.querySelectorAll('[data-finish]').forEach(b=>b.addEventListener('click',()=>{
+ if(!Object.hasOwn(STUDIO_FINISHES,b.dataset.finish))return;
+ studioFinish=b.dataset.finish;applyStudioLook();updateStyleURL();
+}));
+$('shareStyle').addEventListener('click',async()=>{
+ const url=updateStyleURL();
+ url.searchParams.delete('diagnostics');url.searchParams.delete('assets');
+ if(qualityMode==='high')url.searchParams.set('quality','high');
+ else if(qualityMode==='eco')url.searchParams.set('quality','eco');
+ else url.searchParams.delete('quality');
+ const href=url.toString(),title='MARKET SPACE · '+DATA[active].name+' / Style Studio';
+ if(navigator.share&&coarse){
+  try{await navigator.share({title,url:href});return;}
+  catch(e){if(e?.name==='AbortError')return;}
+ }
+ try{
+  if(navigator.clipboard?.writeText){
+   await navigator.clipboard.writeText(href);toast('Ссылка на этот дизайн скопирована');return;
+  }
+  const input=document.createElement('textarea');input.value=href;input.style.position='fixed';
+  input.style.opacity='0';document.body.append(input);input.select();
+  const copied=document.execCommand('copy');input.remove();
+  if(copied){toast('Ссылка на этот дизайн скопирована');return;}
+ }catch(e){console.info('Copy is unavailable',e);}
+ window.prompt('Скопируй ссылку на свой дизайн:',href);
+});
+
 $('catalogBtn').onclick=openCatalog;$('cartBtn').onclick=openCart;$('closeDrawer').onclick=hideDrawer;
 $('drawerOverlay').addEventListener('pointerdown',e=>{if(e.target===$('drawerOverlay'))hideDrawer();});
 document.querySelectorAll('[data-store]').forEach(b=>b.onclick=()=>{hideDrawer();setStore(b.dataset.store);});
@@ -1036,7 +1090,8 @@ function stopTour(){
 $('introButton').onclick=startTour;
 $('tourBtn').onclick=()=>touring?stopTour():startTour();
 document.addEventListener('keydown',e=>{
- if(e.code==='Escape'){hideDrawer();return;}
+ if(e.code==='Escape'){if(!$('stylePanel').hidden){closeStyleStudio();$('styleBtn').focus();}else hideDrawer();return;}
+ if(!$('stylePanel').hidden)return;
  if($('drawerOverlay').classList.contains('open')){
   if(e.code==='Tab'){
    const els=[...$('drawerOverlay').querySelectorAll('button:not([disabled]),a[href]')].filter(x=>x.offsetParent!==null);
