@@ -18,10 +18,11 @@ Official sources:
 
 1. Create a separate project/environment and staging app in Coolify, with its own UUID, a real staging domain containing the DNS label `staging`, dedicated test credentials, and no live user data.
 2. Select the **Dockerfile** build type and `Dockerfile.selfhost`. Do not use Docker Compose or persistent application storage for multi-server staging. Both VETOGRAM and Promptence have portable Docker staging drafts; their full app builds and application health are not yet verified.
-3. Set a pinned 40-character lowercase source commit SHA in Coolify's `git_commit_sha` configuration. This may require an application setting or an API/CLI action, depending on the installed Coolify version. **If unavailable, deployment is blocked**; do not substitute an unpinned branch. Turn off automatic deployments during this operator-reviewed staging workflow.
-4. Enable a **real** app readiness endpoint `/api/health` or `/healthz`. It must be implemented and tested by the app; the CLI checks the configuration only and never assumes the endpoint is healthy.
-5. Create two separate Coolify tokens: team-scoped read (application and deployment metadata only) and minimally scoped write/deploy. Store each in its own absolute regular file, `chmod 600`, owned by the operator. NEVER put tokens in the repo, URL, CI logs or chat.
-6. Set `CLOUD_COOLIFY_URL` to the exact trusted HTTPS Coolify origin. Restrict operator API access through private connectivity/Zero Trust/IP allowlist and firewall; validating a hostname alone cannot prevent DNS rebinding.
+3. For multi-server rollout, configure an external Docker image registry in Coolify (`docker_registry_image_name` must be nonempty). The same reviewed image must be reachable by each attached server; registry configuration alone does not prove that the pushed digest is identical on every node.
+4. Set a pinned 40-character lowercase source commit SHA in Coolify's `git_commit_sha` configuration. This may require an application setting or an API/CLI action, depending on the installed Coolify version. **If unavailable, deployment is blocked**; do not substitute an unpinned branch. Turn off automatic deployments during this operator-reviewed staging workflow.
+5. Enable a **real** app readiness endpoint `/api/health` or `/healthz`. It must be implemented and tested by the app; the CLI checks the configuration only and never assumes the endpoint is healthy.
+6. Create two separate Coolify tokens: team-scoped read (application and deployment metadata only) and minimally scoped write/deploy. Store each in its own absolute regular file, `chmod 600`, owned by the operator. NEVER put tokens in the repo, URL, CI logs or chat.
+7. Set `CLOUD_COOLIFY_URL` to the exact trusted HTTPS Coolify origin. Restrict operator API access through private connectivity/Zero Trust/IP allowlist and firewall; validating a hostname alone cannot prevent DNS rebinding.
 
 ## Manifest and steps
 
@@ -43,7 +44,7 @@ node scripts/cloud/rollout.mjs --start-staging /absolute/operator/vetogram-stagi
 node scripts/cloud/rollout.mjs --status DEPLOYMENT_UUID_FROM_RESULT
 ```
 
-`--start-staging` first re-reads the live app with the read-only token, verifies that its git repo/branch/commit, staging-only name/domain, Dockerfile, healthcheck and disabled auto-deploy still match, then queues a Coolify deploy with a **separate** write token. The tool does not retry POST on failures to avoid duplicate jobs.
+`--start-staging` first re-reads the live app with the read-only token, verifies that its git repo/branch/commit, staging-only name/domain, Dockerfile, healthcheck and disabled auto-deploy still match, then queues a Coolify deploy with a **separate** write token. The tool rejects not only identical token file paths but also identical token values, to require genuinely separate read and write credential scopes. It does not retry POST on failures to avoid duplicate jobs.
 
 `--start-staging` always returns `QUEUED_UNVERIFIED`, even if the HTTP response is 200. `--status` can return `DEPLOYMENT_REPORTED_FINISHED_REVIEW`, **never** production approval. A write response might be ambiguous if the connection fails after Coolify accepted it; inspect the deployment queue before retrying.
 
