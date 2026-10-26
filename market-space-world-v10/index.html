@@ -379,6 +379,7 @@ function applyStudioLook(){
  });
  document.querySelectorAll('[data-mood]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mood===studioMood)));
  document.querySelectorAll('[data-finish]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.finish===studioFinish)));
+ if(active==='home')applyExperienceVisuals();
 }
 function markStudioSurface(mesh,role){
  mesh.userData.styleSurface=role;return mesh;
@@ -1294,7 +1295,7 @@ function selectAt(cx,cy){
   }
  }
 }
-function showDrawer(){closeLookbook();resetTouchSticks();const d=$('drawerOverlay');d.classList.add('open');d.setAttribute('aria-hidden','false');lastActive=document.activeElement;$('closeDrawer').focus();keys.clear();joy.x=joy.y=0;}
+function showDrawer(){closeExperience();closeLookbook();resetTouchSticks();const d=$('drawerOverlay');d.classList.add('open');d.setAttribute('aria-hidden','false');lastActive=document.activeElement;$('closeDrawer').focus();keys.clear();joy.x=joy.y=0;}
 function hideDrawer(){const d=$('drawerOverlay');d.classList.remove('open');d.setAttribute('aria-hidden','true');if(lastActive&&lastActive.focus)lastActive.focus();}
 function money(v){return Number(v).toLocaleString('ru-RU')+' ֏';}
 function priceTotal(){let sum=0,cnt=0;Object.entries(cart).forEach(([key,qty])=>{const [store,i]=key.split(':');const item=DATA[store]?.items[Number(i)];if(item){sum+=item[2]*qty;cnt+=qty;}});$('cartCount').textContent=cnt;return sum;}
@@ -1331,6 +1332,71 @@ function openCart(){
  buildRows(items);if(!items.length){const p=document.createElement('p');p.textContent='Пока пусто — загляни в коллекцию и выбери предмет.';$('drawerProducts').append(p);}
  $('drawerFoot').replaceChildren();const sum=document.createElement('strong');sum.textContent=money(priceTotal());const cap=document.createElement('span');cap.textContent='Итого (демо)';$('drawerFoot').append(cap,sum);showDrawer();
 }
+// Category-specific experience panel uses standard buttons and actual 3D material/geometry state.
+function closeExperience(){
+ $('experiencePanel').hidden=true;$('experienceBtn').setAttribute('aria-expanded','false');
+}
+function renderExperiencePanel(){
+ const cfg=EXPERIENCE_OPTIONS[active];if(!cfg)return;
+ $('experienceKicker').textContent=active.toUpperCase()+' / LIVE 3D EXPERIENCE';
+ $('experienceTitle').textContent=cfg.title;$('experienceIntro').textContent=cfg.intro;
+ const host=$('experienceOptions');host.replaceChildren();
+ for(const group of cfg.groups){
+  const section=document.createElement('div');section.className='experienceSection';
+  const head=document.createElement('strong');head.textContent=group.title;section.append(head);
+  const buttons=document.createElement('div');buttons.className='experienceOptions';buttons.setAttribute('role','group');buttons.setAttribute('aria-label',group.title);
+  for(const [value,label] of group.choices){
+   const b=document.createElement('button');b.type='button';b.textContent=label;
+   b.setAttribute('aria-pressed',String(experienceState[active][group.key]===value));
+   b.onclick=()=>{
+    experienceState[active][group.key]=value;
+    applyExperienceVisuals();experienceURL();renderExperiencePanel();
+   };
+   buttons.append(b);
+  }
+  section.append(buttons);host.append(section);
+ }
+ $('experienceAdd').textContent='＋ Добавить '+(active==='food'?'набор':active==='beauty'?'аромат':'интерьер');
+ $('experienceNote').textContent=active==='beauty'?
+ 'Это визуальный выбор оформления демо-флакона, не изготовление настоящего аромата. Заказы и оплата не подключены.':
+ active==='home'?'Выбираешь виртуальную обстановку, не реальные размеры мебели или доставку. Покупки пока демонстрационные.':
+ 'Выбираешь примерный набор, а не товары из действующего магазина. Списания и доставка отключены.';
+ const price=experienceTotal(active);
+ const total=document.createElement('div');total.className='lookbookTotal';
+ const lab=document.createElement('span');lab.textContent='Стоимость демо-набора';
+ const value=document.createElement('b');value.textContent=money(price);
+ total.append(lab,value);host.append(total);
+}
+function openExperience(){
+ if(active==='fashion'){openLookbook();return;}
+ if(!EXPERIENCE_OPTIONS[active])return;
+ closeLookbook();closeStyleStudio();hideDrawer();stopTour();resetTouchSticks();
+ $('experiencePanel').hidden=false;$('experienceBtn').setAttribute('aria-expanded','true');
+ $('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';
+ renderExperiencePanel();$('closeExperience').focus();
+}
+$('experienceBtn').addEventListener('click',()=>$('experiencePanel').hidden?openExperience():closeExperience());
+$('closeExperience').addEventListener('click',()=>{closeExperience();$('experienceBtn').focus();});
+$('experienceAdd').addEventListener('click',()=>{
+ if(!EXPERIENCE_OPTIONS[active])return;
+ const item=selectedExperienceItem(active),quantity=selectedExperienceQty(active);
+ if(!Number.isInteger(item))return;
+ for(let i=0;i<quantity;i++)addToCart(active,item);
+ toast('Выбранное добавлено в демо-корзину');
+});
+$('experienceShare').addEventListener('click',async()=>{
+ if(!EXPERIENCE_OPTIONS[active])return;
+ const url=experienceURL();url.searchParams.set('experience','1');
+ url.searchParams.delete('diagnostics');url.searchParams.delete('assets');
+ const href=url.toString();
+ if(navigator.share&&coarse){
+  try{await navigator.share({title:'MARKET SPACE · '+EXPERIENCE_OPTIONS[active].title,url:href});return;}
+  catch(e){if(e?.name==='AbortError')return;}
+ }
+ try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(href);toast('Ссылка на пространство скопирована');return;}}catch(e){}
+ window.prompt('Скопируй ссылку на свою 3D-подборку:',href);
+});
+
 // Lookbook acts on the 3D model inside Fashion. Sharing is user-initiated, without backend.
 let lookbookFocus=null;
 function closeLookbook(){
@@ -1341,7 +1407,7 @@ function closeLookbook(){
  lookbookFocus=null;
 }
 function openLookbook(){
- if(active!=='fashion')setStore('fashion');
+ closeExperience();if(active!=='fashion')setStore('fashion');
  if(!lookbookStage){toast('Манекен Lookbook недоступен в этой сцене');return;}
  hideDrawer();closeStyleStudio();stopTour();
  keys.clear();resetTouchSticks();
@@ -1419,7 +1485,7 @@ function closeStyleStudio(){
  $('styleBtn').setAttribute('aria-expanded','false');
 }
 function openStyleStudio(){
- closeLookbook();hideDrawer();stopTour();keys.clear();resetTouchSticks();
+ closeExperience();closeLookbook();hideDrawer();stopTour();keys.clear();resetTouchSticks();
  $('stylePanel').hidden=false;
  $('styleBtn').setAttribute('aria-expanded','true');
  $('titlePanel').style.opacity='0';$('titlePanel').style.pointerEvents='none';
@@ -1489,8 +1555,8 @@ function stopTour(){
 $('introButton').onclick=startTour;
 $('tourBtn').onclick=()=>touring?stopTour():startTour();
 document.addEventListener('keydown',e=>{
- if(e.code==='Escape'){if(!$('lookbookPanel').hidden){closeLookbook();$('lookbookBtn').focus();}else if(!$('stylePanel').hidden){closeStyleStudio();$('styleBtn').focus();}else hideDrawer();return;}
- if(!$('stylePanel').hidden||!$('lookbookPanel').hidden)return;
+ if(e.code==='Escape'){if(!$('experiencePanel').hidden){closeExperience();$('experienceBtn').focus();}else if(!$('lookbookPanel').hidden){closeLookbook();$('lookbookBtn').focus();}else if(!$('stylePanel').hidden){closeStyleStudio();$('styleBtn').focus();}else hideDrawer();return;}
+ if(!$('stylePanel').hidden||!$('lookbookPanel').hidden||!$('experiencePanel').hidden)return;
  if($('drawerOverlay').classList.contains('open')){
   if(e.code==='Tab'){
    const els=[...$('drawerOverlay').querySelectorAll('button:not([disabled]),a[href]')].filter(x=>x.offsetParent!==null);
@@ -1645,6 +1711,7 @@ try{
  applyQuality();setStore(DATA[initial]?initial:'fashion');priceTotal();
  if(new URLSearchParams(location.search).get('studio')==='1')openStyleStudio();
  else if(new URLSearchParams(location.search).get('lookbook')==='1')openLookbook();
+ else if(new URLSearchParams(location.search).get('experience')==='1')openExperience();
  $('loading').classList.add('ready');window.__marketSpaceReady=true;
  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
  requestAnimationFrame(animate);
