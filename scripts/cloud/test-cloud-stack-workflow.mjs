@@ -10,7 +10,7 @@ test('stacked Cloud PRs have an explicit read-only verification path',()=>{
 });
 test('two scoped jobs cover offline Cloud safety and optional full build',()=>{
  for(const name of ['cloud-safety:','web-build:'])assert.ok(workflow.includes(name));
- assert.match(workflow,/npm install --no-audit --no-fund/);\n assert.doesNotMatch(workflow,/npm ci/);\n assert.doesNotMatch(workflow,/cache: npm/);\n assert.match(workflow,/vps-preflight.test.mjs/);
+ assert.match(workflow,/npm install --no-audit --no-fund/);\n assert.doesNotMatch(workflow,/npm ci/);\n assert.doesNotMatch(workflow,/cache: npm/);\n assert.match(workflow,/vps-preflight.test.mjs/);\n assert.match(workflow,/prepare-db-pilot.test.mjs/);
  assert.match(workflow,/npm run typecheck/);
  assert.match(workflow,/npm run build/);
  assert.match(workflow,/ci-run-gate.test.mjs/);
