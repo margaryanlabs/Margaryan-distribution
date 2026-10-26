@@ -20,6 +20,10 @@ The first success is **one disposable HTTPS NGINX pilot on Coolify**, not a clai
 
 Use `node scripts/cloud/fleet-plan.mjs --plan "$(pwd)/deploy/cloud/fleet/staging.example.json"` to review placement of VETOGRAM and Promptence across separate application zones and private data pools. This is a source plan only, never a deployment or proof of real HA. See `deploy/cloud/fleet/README.md`.
 
+## Verify Coolify connected fleet (after owning servers)
+
+Use the **GET-only** verifier from `scripts/cloud/fleet-live.mjs`: store a private node UUID mapping in a mode-0600 file, configure an owner-held read-only Coolify API token, and run `--verify /absolute/staging.example.json --bindings /absolute/private/fleet-bindings.json`. It verifies source/server UUID identity and reachable/usable health. **Zone names are operator claims, not independently verified failure domains.** Consult `deploy/cloud/fleet/README.md`.
+
 ## Optional cost review (no service changes)
 
 Run the read-only hosting budget estimator in `scripts/cloud/budget-gate.mjs --example`, then create an owner-only quote file and `--assess /absolute/private/quote.json`. It blocks stale quotes, missing tax and hosting-cost categories, estimates above the cap, and unverified provider metered limits. **Even a reviewed estimate is not a real vendor spending limit or purchase approval.** See `docs/cloud/COST_POLICY.md`.
