@@ -51,12 +51,19 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 .drawerFoot strong{font-size:20px;color:#20251d}.itemDesc{font-size:14px;line-height:1.8;color:#59645a;margin-top:25px}
 #notice{position:fixed;z-index:40;bottom:120px;right:25px;max-width:340px;padding:13px 16px;background:#191e1af2;color:#e8d6bb;border:1px solid #c5ae8a93;font-size:12px;opacity:0;pointer-events:none;transition:opacity .25s}
 #notice.show{opacity:1}
+#objectTip{position:fixed;z-index:7;right:clamp(18px,3vw,52px);bottom:116px;max-width:270px;min-width:198px;padding:15px 16px 14px;background:#141a18dc;border:1px solid #e8d7b673;box-shadow:0 14px 45px #060908a8;backdrop-filter:blur(18px);opacity:0;visibility:hidden;transform:translateY(9px);transition:opacity .2s,transform .2s,visibility .2s;pointer-events:none}
+#objectTip.show{opacity:1;visibility:visible;transform:none;pointer-events:auto}
+#objectTip .tipKicker{font-size:9px;letter-spacing:.2em;color:#d6bd97;text-transform:uppercase}
+#objectTip strong{font:normal 24px/1.05 Georgia,serif;display:block;letter-spacing:-.04em;margin:8px 0 9px}
+#objectTip button{font-size:10px;letter-spacing:.11em;text-transform:uppercase;border:1px solid #e0cfb6;background:#eee1ca;color:#1a221d;padding:9px 12px;font-weight:750;cursor:pointer}
+#objectTip button:hover{background:#fff4e1}
+
 @media(max-width:900px){.headercenter{display:none}.header .topAction:first-of-type{margin-left:auto}.titlePanel{top:126px}.titlePanel h1{font-size:57px}.worldTab{min-width:90px}.help{bottom:118px}}
 @media(max-width:620px){
  .header{min-height:66px;padding:11px 12px;gap:7px}.logo{gap:8px}.logomark{height:30px;width:30px}.logomark b{font-size:20px}.brand{font-size:10px;letter-spacing:.12em}.brand small{font-size:7px;letter-spacing:.13em}.topAction{padding:9px 8px;font-size:9px}
  .titlePanel{top:88px;left:17px;width:calc(100% - 115px);max-width:320px}.titlePanel h1{font-size:39px;margin:12px 0 8px}.titlePanel p{font-size:10px;max-width:235px;line-height:1.5}.titlePanel .kicker{font-size:8px}.titlePanel button{padding:10px 12px;font-size:9px;margin-top:11px}
  #worldNote{top:84px;right:10px;font-size:8px;padding:7px 8px;max-width:100px;line-height:1.4;text-align:center}.bottomWrap{bottom:8px;width:calc(100vw - 10px);display:block}.worldDock{width:100%;justify-content:space-around;gap:1px;padding:5px}.worldTab{flex:1;min-width:0;font-size:8px;padding:9px 2px}.worldTab .n{font-size:15px}.tourBtn{position:fixed;bottom:105px;left:50%;transform:translateX(-50%);min-height:38px;padding:8px 14px;font-size:9px}
- .help{display:none}.movePad{display:block}.touchHelp{display:block;position:fixed;right:16px;bottom:136px;z-index:4;font-size:10px;text-align:right;color:#f3e7cfc9;letter-spacing:.1em}#hotspotHint{top:53%}
+ #objectTip{right:10px;bottom:181px;min-width:156px;max-width:183px;padding:11px}#objectTip strong{font-size:20px}#objectTip button{padding:8px 10px;font-size:9px}.help{display:none}.movePad{display:block}.touchHelp{display:block;position:fixed;right:16px;bottom:136px;z-index:4;font-size:10px;text-align:right;color:#f3e7cfc9;letter-spacing:.1em}#hotspotHint{top:53%}
  #notice{bottom:190px;right:12px}.drawer{padding:22px}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
@@ -80,7 +87,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 <button class="worldTab" data-store="home"><span class="n">04</span>Living</button></nav><button class="tourBtn" id="tourBtn">▶ Кинотур</button></div>
 <div id="loading" role="status" aria-live="polite"><div class="symbol">M.</div><h2>Создаём пространство</h2><p id="loadMessage">Загружается новый 3D-мир. Для наилучшего качества открой ссылку в Chrome.</p><div class="loaderTrack"><i></i></div><a id="loadFallback" href="../market-space-world-v9/">Открыть предыдущую 3D-версию ↗</a></div>
 <div class="drawerOverlay" id="drawerOverlay" role="dialog" aria-modal="true" aria-label="Каталог или корзина" aria-hidden="true"><section class="drawer"><header class="drawerHead"><div><small id="drawerKicker">MARKET SPACE / COLLECTION</small><h2 id="drawerTitle">Коллекция</h2></div><button class="closeBtn" id="closeDrawer" aria-label="Закрыть">✕</button></header><p class="drawerIntro" id="drawerIntro"></p><div class="products" id="drawerProducts"></div><div class="drawerFoot" id="drawerFoot"></div></section></div>
-<div id="notice" aria-live="polite"></div>
+<div id="objectTip" aria-live="polite"><div class="tipKicker">Доступен для просмотра</div><strong id="tipProductName"></strong><button id="tipProductAction">Открыть товар ↗</button></div><div id="notice" aria-live="polite"></div>
 <script>
 window.addEventListener("error",function(){if(!window.__marketSpaceReady){document.getElementById("loadMessage").textContent="3D-модуль не загрузился. Возможно, браузер заблокировал WebGL или сеть CDN.";document.getElementById("loadFallback").style.display="inline-block";}},true);
 window.setTimeout(function(){if(!window.__marketSpaceReady){document.getElementById("loadMessage").textContent="Загрузка занимает слишком много времени. Попробуй Chrome или открой предыдущую версию.";document.getElementById("loadFallback").style.display="inline-block";}},13500);
@@ -486,7 +493,7 @@ function selectHotspot(x,y,z,index){
  const shell=mesh(new THREE.SphereGeometry(.14,18,12),new THREE.MeshBasicMaterial({color:'#efe1cb'}));
  g.add(shell);
  const halo=mesh(new THREE.TorusGeometry(.24,.016,6,28),new THREE.MeshBasicMaterial({color:'#fff4d9',transparent:true,opacity:.75}));halo.position.z=.08;g.add(halo);
- const pick=mesh(new THREE.SphereGeometry(.43,10,8),new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:0,depthWrite:false}));pick.userData.itemIndex=index;g.add(pick);pickables.push(pick);hotspots.push({g,halo});
+ const pick=mesh(new THREE.SphereGeometry(.43,10,8),new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:0,depthWrite:false}));pick.userData.itemIndex=index;g.add(pick);pickables.push(pick);hotspots.push({g,halo,index});
  return g;
 }
 function disposeWorld(){
@@ -508,7 +515,7 @@ function setStore(key){
  active=key;touring=false;tourRoute=[];walkVelocity.x=walkVelocity.z=0;
  keys.clear();joy.x=joy.y=0;$('tourBtn').textContent='▶ Кинотур';
  disposeWorld();
- hotspots=[];pickables=[];blockers=[];architecture(key);
+ hotspots=[];pickables=[];blockers=[];tipCurrent=-1;$('objectTip').classList.remove('show');architecture(key);
  try{if(key==='fashion')fashionScene();else if(key==='home')homeScene();else if(key==='beauty')beautyScene();else foodScene();}
  catch(err){console.error('Scene build error:',err);toast('Часть объектов не загрузилась: '+err.message);}
  camera.position.set(0,1.68,10.7);yaw=0;pitch=-.065;updateCamera();
@@ -604,7 +611,18 @@ function stopTour(){
 }
 $('introButton').onclick=startTour;
 $('tourBtn').onclick=()=>touring?stopTour():startTour();
-document.addEventListener('keydown',e=>{if(e.code==='Escape')hideDrawer();if($('drawerOverlay').classList.contains('open'))return;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.code==='KeyT')$('tourBtn').click();if(e.code==='KeyE'){const near=pickables.find(p=>p.getWorldPosition(new THREE.Vector3()).distanceTo(camera.position)<3.5);if(near)openItem(near.userData.itemIndex);}});
+document.addEventListener('keydown',e=>{
+ if(e.code==='Escape'){hideDrawer();return;}
+ if($('drawerOverlay').classList.contains('open')){
+  if(e.code==='Tab'){
+   const els=[...$('drawerOverlay').querySelectorAll('button:not([disabled]),a[href]')].filter(x=>x.offsetParent!==null);
+   const first=els[0],last=els[els.length-1];
+   if(first&&last&&((e.shiftKey&&document.activeElement===first)||(!e.shiftKey&&document.activeElement===last))){
+    e.preventDefault();(e.shiftKey?last:first).focus();
+   }
+  }
+  return;
+ }if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();keys.add(e.code);if(e.code==='KeyT')$('tourBtn').click();if(e.code==='KeyE'){const near=pickables.find(p=>p.getWorldPosition(new THREE.Vector3()).distanceTo(camera.position)<3.5);if(near)openItem(near.userData.itemIndex);}});
 document.addEventListener('keyup',e=>keys.delete(e.code));
 window.addEventListener('blur',()=>{keys.clear();joy.x=joy.y=0;});
 const pad=$('movePad');let joyPointer=null;
@@ -619,6 +637,28 @@ canvas.addEventListener('pointermove',e=>{if(!dragging||e.pointerId!==dragId)ret
 canvas.addEventListener('pointerup',e=>{if(e.pointerId!==dragId)return;dragging=false;dragId=null;if(!dragMoved)selectAt(e.clientX,e.clientY);});
 canvas.addEventListener('pointercancel',()=>{dragging=false;dragId=null;});
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(renderPixelRatio);});
+const productTip=$('objectTip'),tipLabel=$('tipProductName');
+let tipCurrent=-1,tipFrame=0;
+$('tipProductAction').addEventListener('click',()=>{if(tipCurrent>=0){stopTour();openItem(tipCurrent);}});
+function updateProductTip(){
+ if($('drawerOverlay').classList.contains('open')||touring){productTip.classList.remove('show');return;}
+ const pos3=new THREE.Vector3(),projected=new THREE.Vector3();
+ let best=Infinity,bestIndex=-1;
+ for(const h of hotspots){
+  h.g.getWorldPosition(pos3);
+  const distance=pos3.distanceTo(camera.position);
+  if(distance>6.2)continue;
+  projected.copy(pos3).project(camera);
+  if(projected.z<-.95||projected.z>1||Math.abs(projected.x)>.80||Math.abs(projected.y)>.82)continue;
+  const rank=distance*.1+Math.hypot(projected.x,projected.y)*2.1;
+  if(rank<best){best=rank;bestIndex=h.index;}
+ }
+ if(bestIndex<0){productTip.classList.remove('show');tipCurrent=-1;return;}
+ if(tipCurrent!==bestIndex){
+  tipCurrent=bestIndex;tipLabel.textContent=DATA[active].items[bestIndex]?.[0]||'Товар';
+ }
+ productTip.classList.add('show');
+}
 let perfWindow=0,perfSamples=0,qualityReduced=false;
 function animate(t){
  requestAnimationFrame(animate);
@@ -651,6 +691,7 @@ function animate(t){
  camera.position.y=1.68+(reduced?0:.012*Math.sin(t*.0014));updateCamera();
  hotspots.forEach((h,i)=>{h.g.rotation.y+=delta*.26;h.halo.scale.setScalar(1+(reduced?0:.11*Math.sin(t*.0028+i)));});
  renderer.render(scene,camera);
+ if(++tipFrame%8===0)updateProductTip();
  // Single bounded quality downgrade on sustained mobile GPU pressure.
  if(coarse&&!qualityReduced&&delta>.002){
   perfWindow+=delta;perfSamples++;
