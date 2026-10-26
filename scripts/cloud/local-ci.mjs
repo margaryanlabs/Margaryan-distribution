@@ -15,7 +15,7 @@ export const CLOUD_TESTS=Object.freeze([
  'test-telemetry.mjs', 'recovery.test.mjs', 'restore-lab.test.mjs', 'test-deploy-plan.mjs',
  'test-capacity.mjs', 'deploy-stage.test.mjs', 'test-health-signals.mjs',
  'test-mission-control-v3.mjs', 'test-domain-plan.mjs', 'test-sentinel.mjs',
- 'test-sentinel-status.mjs', 'first-node.test.mjs', 'vps-preflight.test.mjs', 'portfolio-guardian.test.mjs',
+ 'test-sentinel-status.mjs', 'first-node.test.mjs', 'vps-preflight.test.mjs', 'prepare-db-pilot.test.mjs', 'portfolio-guardian.test.mjs',
  'agent-supervisor.test.mjs', 'test-agent-supervisor-status.mjs',
  'decision-specialist.test.mjs', 'release-guardian.test.mjs', 'release-evidence.test.mjs', 'test-release-marker.mjs', 'ci-run-gate.test.mjs', 'test-cloud-stack-workflow.mjs', 'cloud-stack-readiness.test.mjs'
 ]);
