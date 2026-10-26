@@ -25,7 +25,9 @@ Node.js 22+ on a trusted machine with a COMPLETE GitHub checkout:
     npm run typecheck
     npm run build
 
-There is currently no committed package-lock.json; npm ci cannot run. The unlocked npm install matches main CI, but is not a reproducible dependency lock. Generate and review a committed lockfile before treating a full-build result as a reproducible release.\n\nNo production keys are needed for these offline checks. This assistant environment cannot clone the full public GitHub repo due network/DNS restrictions, so these complete commands were not executed here.
+There is currently no committed package-lock.json; npm ci cannot run. The unlocked npm install matches main CI, but is not a reproducible dependency lock. Generate and review a committed lockfile before treating a full-build result as a reproducible release.
+
+No production keys are needed for these offline checks. This assistant environment cannot clone the full public GitHub repo due network/DNS restrictions, so these complete commands were not executed here.
 
 Read-only classification of GitHub run/job metadata:
 
