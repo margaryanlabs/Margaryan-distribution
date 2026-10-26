@@ -42,6 +42,23 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 .loaderTrack{width:180px;height:2px;background:#ffffff2a;overflow:hidden}.loaderTrack i{display:block;width:42%;height:100%;background:#e3c397;animation:loading 1.5s infinite alternate ease-in-out}
 @keyframes loading{to{transform:translateX(142px)}}
 #loadFallback{margin-top:28px;border:1px solid #d5c09c;color:#f7f1e7;padding:11px 14px;font-size:11px;letter-spacing:.08em;display:none}
+#loading.error{background-color:#252e2b;background-position:center;background-size:cover;background-blend-mode:multiply}
+#loading.error:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,#0c1210e6,#0c121087 70%),linear-gradient(0deg,#0c1210c7,transparent 48%)}
+#loading.error>*{position:relative}
+#loading.error .loaderTrack{display:none}
+#loading.error .symbol{font-size:45px}
+#loading.error h2{font:normal clamp(34px,5vw,58px) Georgia,serif;max-width:570px;letter-spacing:-.045em;margin:18px 0}
+#loading.error p{max-width:540px;font-size:13px;line-height:1.7}
+#loading.error #loadFallback{display:inline-flex;background:#ead5b4;color:#101a15;border:1px solid #ead5b4;font-weight:700}
+#galleryFallback{display:none;gap:9px;align-items:center;flex-wrap:wrap;justify-content:center;margin-top:30px}
+#loading.error #galleryFallback{display:flex}
+#galleryFallback button{background:#14211cc9;border:1px solid #e5d0a877;color:#ece0ca;padding:10px 13px;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+#galleryFallback button[aria-pressed="true"]{background:#e0c6a1;color:#181a16}
+#fallbackLabel{display:none;color:#e6d1ad;font-size:10px;letter-spacing:.21em;text-transform:uppercase;margin-top:26px}
+#loading.error #fallbackLabel{display:block}
+#fallbackDisclosure{display:none;font-size:10px!important;color:#dedbd2b0!important;max-width:540px!important;margin-top:16px!important}
+#loading.error #fallbackDisclosure{display:block}
+
 .drawerOverlay{position:fixed;inset:0;background:#020403a1;backdrop-filter:blur(6px);z-index:30;display:none;justify-content:flex-end}
 .drawerOverlay.open{display:flex}.drawer{height:100dvh;width:min(470px,100%);background:#ede9e1;color:#1d2420;overflow-y:auto;box-shadow:-15px 0 75px #0008;padding:clamp(20px,3vw,39px)}
 .drawerHead{display:flex;gap:12px;justify-content:space-between;align-items:center;border-bottom:1px solid #44444435;padding-bottom:20px}
@@ -87,12 +104,52 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden}button{font:inherit;cu
 <button class="worldTab" data-store="food"><span class="n">02</span>Market</button>
 <button class="worldTab" data-store="beauty"><span class="n">03</span>Beauty</button>
 <button class="worldTab" data-store="home"><span class="n">04</span>Living</button></nav><button class="tourBtn" id="tourBtn">▶ Кинотур</button></div>
-<div id="loading" role="status" aria-live="polite"><div class="symbol">M.</div><h2>Создаём пространство</h2><p id="loadMessage">Загружается новый 3D-мир. Для наилучшего качества открой ссылку в Chrome.</p><div class="loaderTrack"><i></i></div><a id="loadFallback" href="../market-space-world-v9/">Открыть предыдущую 3D-версию ↗</a></div>
+<div id="loading" role="status" aria-live="polite"><div class="symbol">M.</div><h2>Создаём пространство</h2><p id="loadMessage">Загружается новый 3D-мир. Для наилучшего качества открой ссылку в Chrome.</p><div class="loaderTrack"><i></i></div><span id="fallbackLabel">Визуальная галерея / Концепция</span>
+<div id="galleryFallback">
+<button type="button" data-fallback="fashion" aria-pressed="true">Fashion</button>
+<button type="button" data-fallback="food" aria-pressed="false">Market</button>
+<button type="button" data-fallback="beauty" aria-pressed="false">Beauty</button>
+<button type="button" data-fallback="home" aria-pressed="false">Living</button>
+</div>
+<p id="fallbackDisclosure">Фотографии показывают направление дизайна, а не кадры реального 3D-движка V10.</p>
+<a id="loadFallback" href="../market-space-world-v9/?mode=lite">Открыть интерактивную Lite-версию ↗</a></div>
 <div class="drawerOverlay" id="drawerOverlay" role="dialog" aria-modal="true" aria-label="Каталог или корзина" aria-hidden="true"><section class="drawer"><header class="drawerHead"><div><small id="drawerKicker">MARKET SPACE / COLLECTION</small><h2 id="drawerTitle">Коллекция</h2></div><button class="closeBtn" id="closeDrawer" aria-label="Закрыть">✕</button></header><p class="drawerIntro" id="drawerIntro"></p><div class="products" id="drawerProducts"></div><div class="drawerFoot" id="drawerFoot"></div></section></div>
 <div id="objectTip" aria-live="polite"><div class="tipKicker">Доступен для просмотра</div><strong id="tipProductName"></strong><button id="tipProductAction">Открыть товар ↗</button></div><div id="notice" aria-live="polite"></div>
 <script>
-window.addEventListener("error",function(){if(!window.__marketSpaceReady){document.getElementById("loadMessage").textContent="3D-модуль не загрузился. Возможно, браузер заблокировал WebGL или сеть CDN.";document.getElementById("loadFallback").style.display="inline-block";}},true);
-window.setTimeout(function(){if(!window.__marketSpaceReady){document.getElementById("loadMessage").textContent="Загрузка занимает слишком много времени. Попробуй Chrome или открой предыдущую версию.";document.getElementById("loadFallback").style.display="inline-block";}},13500);
+(function(){
+ const slides={
+  fashion:{title:'THE ATELIER',image:"https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&q=75&auto=format&fit=crop"},
+  food:{title:'FUTURE MARKET',image:"https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=75&auto=format&fit=crop"},
+  beauty:{title:'BEAUTY MAISON',image:"https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=1200&q=75&auto=format&fit=crop"},
+  home:{title:'LIVING GALLERY',image:"https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=1200&q=75&auto=format&fit=crop"}
+ };
+ const loader=document.getElementById('loading'),message=document.getElementById('loadMessage');
+ const params=new URLSearchParams(location.search);
+ function setSlide(key){
+  if(!slides[key])return;
+  const data=slides[key];
+  loader.style.backgroundImage='linear-gradient(110deg,#141b17bb,#11191580),url("'+data.image+'")';
+  document.querySelector('#loading h2').textContent=data.title;
+  document.querySelectorAll('[data-fallback]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.fallback===key)));
+  document.getElementById('loadFallback').href='../market-space-world-v9/?world='+encodeURIComponent(key)+'&mode=lite';
+ }
+ document.querySelectorAll('[data-fallback]').forEach(b=>b.addEventListener('click',()=>setSlide(b.dataset.fallback)));
+ window.__marketSpaceShowFallback=function(reason){
+  // After a running WebGL scene fails, expose an alternative that does not depend on WebGL.
+  window.__marketSpaceReady=false;
+  loader.classList.remove('ready');loader.classList.add('error');
+  message.textContent=reason||'3D недоступен в этом браузере. Можно посмотреть галерею или открыть интерактивный режим Lite.';
+  setSlide(slides[params.get('world')]?params.get('world'):'fashion');
+ };
+ window.addEventListener('error',function(e){
+  if(window.__marketSpaceReady||loader.classList.contains('error'))return;
+  const txt=e?.message||'3D-модуль не удалось загрузить.';
+  window.__marketSpaceShowFallback('WebGL-модуль не запустился: '+txt+'. Выберите пространство или откройте Lite.');
+ },true);
+ window.setTimeout(function(){
+  if(!window.__marketSpaceReady)window.__marketSpaceShowFallback('3D загружается слишком долго или не поддерживается браузером. Галерея доступна без WebGL.');
+ },13500);
+})();
 </script>
 <script type="module">
 import * as THREE from 'three';
@@ -111,7 +168,7 @@ const camera=new THREE.PerspectiveCamera(61,1,.07,120);
 camera.position.set(0,1.68,10.7);
 let renderer;
 try{renderer=new THREE.WebGLRenderer({alpha:false,antialias:!coarse,powerPreference:'high-performance'});}
-catch(e){$('loadMessage').textContent='WebGL недоступен: '+e.message;$('loadFallback').style.display='inline-block';throw e;}
+catch(e){window.__marketSpaceShowFallback('WebGL недоступен: '+e.message);throw e;}
 let renderPixelRatio=Math.min(devicePixelRatio||1,coarse?1.3:1.8),qualityMode='auto';
 const qualityCycle=['auto','high','eco'],qualityLabels={auto:'Авто',high:'HD',eco:'Eco'};
 function applyQuality(){
@@ -130,6 +187,10 @@ renderer.toneMappingExposure=1.10;
 renderer.shadowMap.enabled=!coarse;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 $('viewport').appendChild(renderer.domElement);
+renderer.domElement.addEventListener('webglcontextlost',e=>{
+ e.preventDefault();
+ window.__marketSpaceShowFallback('Графическое ускорение прервано. Доступна галерея концепций и Lite-прогулка.');
+});
 scene.add(root);
 // Cache globally reusable base PBR finishes; scene-specific texture maps remain disposable.
 const materialCache=new Map(),reusableMaterials=new WeakSet();
@@ -749,6 +810,6 @@ try{
  $('loading').classList.add('ready');window.__marketSpaceReady=true;
  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
  requestAnimationFrame(animate);
-}catch(err){console.error('MARKET SPACE scene initialization failed',err);$('loadMessage').textContent='Ошибка 3D-сцены: '+err.message;$('loadFallback').style.display='inline-block';}
+}catch(err){console.error('MARKET SPACE scene initialization failed',err);window.__marketSpaceShowFallback('Ошибка 3D-сцены: '+err.message);}
 </script>
 </body></html>
