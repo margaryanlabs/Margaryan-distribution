@@ -303,11 +303,24 @@ function ellipsoid(x,y,z,rx,ry,rz,color=[1,1,1],mat=34,seg=11,bands=7){
   }
  }
 }
+// A real annular 3D fixture instead of opaque disc-shaped ceiling lights.
+function torus(x,y,z,major=.94,tube=.062,color=[1.09,.91,.66],segments=24,sides=6){
+ const n=DETAIL?segments:12,m=DETAIL?sides:4;
+ const p=(a,b)=>[x+(major+tube*Math.cos(b))*Math.cos(a),y+tube*Math.sin(b),z+(major+tube*Math.cos(b))*Math.sin(a)];
+ for(let i=0;i<n;i++){
+  const a=i*Math.PI*2/n,b=(i+1)*Math.PI*2/n;
+  for(let j=0;j<m;j++){
+   const c=j*Math.PI*2/m,d=(j+1)*Math.PI*2/m;
+   rect(p(a,c),p(b,c),p(b,d),p(a,d),color,34);
+  }
+ }
+}
 function arcLight(x,z,ry=4.62,r=1.2){
- // A ceiling ring, illuminated through soft golden vertex materials.
- cylinder(x,ry+.02,z,r,.09,r,[.2,.32,.44],34,20);
- cylinder(x,ry-.05,z,r*.84,.04,r*.84,[1.16,.98,.66],34,20);
- cylinder(x,ry-.13,z,.10,.15,.10,[1.28,1.18,.83],34,10);
+ torus(x,ry,z,r,.075,[1.20,1.07,.83],28,6);
+ torus(x,ry+.11,z,r+.085,.037,[.39,.33,.29],28,5);
+ // Two suspension stays and a ceiling plate provide architectural plausibility.
+ for(const side of [-1,1])cylinder(x+side*r*.72,ry+.31,z,.025,.44,.025,[.49,.42,.33],34,7);
+ cylinder(x,5.30,z,.19,.12,.19,[.4,.36,.31],34,10);
 }
 function plant(x,z,s=1){
  cylinder(x,.35*s,z,.37*s,.64*s,.37*s,[.25,.26,.26],34,12);
@@ -534,7 +547,93 @@ function sceneDetail(){
   }
  }
 }
-function initMesh(){mesh=[];hotspots=[];obstacles=[];if(scene==='mall')mall();else if(scene==='food')grocery();else if(scene==='fashion')fashion();else if(scene==='beauty')beauty();else furniture();zoneSigns();sceneDetail();if(gl){gl.bindBuffer(gl.ARRAY_BUFFER,glBuffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(mesh),gl.STATIC_DRAW)}}
+
+// V9 DESIGN SYSTEM — authentic mesh-only architectural detailing; not a photographic overlay.
+// All features are additive visuals beside walls/ceiling so existing navigation and hotspots stay intact.
+function architecturalFinish(){
+ const themes={
+  mall:{wall:[.38,.42,.40],trim:[.87,.72,.51],metal:[.36,.33,.29],slat:[.29,.31,.30]},
+  food:{wall:[.48,.53,.46],trim:[.95,.81,.53],metal:[.38,.45,.42],slat:[.28,.35,.30]},
+  fashion:{wall:[.57,.49,.43],trim:[1.03,.85,.61],metal:[.36,.31,.29],slat:[.42,.36,.32]},
+  beauty:{wall:[.66,.49,.50],trim:[1.05,.82,.70],metal:[.41,.32,.37],slat:[.49,.37,.39]},
+  home:{wall:[.51,.47,.40],trim:[1.0,.82,.60],metal:[.35,.35,.32],slat:[.39,.35,.31]}
+ };
+ const a=themes[scene]||themes.mall;
+ // Narrow side-wall insets and vertical pilasters replace endless unbroken planes.
+ for(const side of [-1,1]){
+  const wallX=side*13.69;
+  for(let z=-35;z<=19;z+=6.75){
+   box(wallX,2.75,z,.10,4.4,5.95,a.wall,34);
+   box(side*13.59,2.79,z-2.8,.15,4.7,.11,a.metal,34);
+   box(side*13.56,2.79,z+2.8,.15,4.7,.11,a.metal,34);
+   box(side*13.49,4.68,z,.095,.075,5.61,a.trim,34);
+   box(side*13.48,.49,z,.11,.22,5.61,a.metal,34);
+   if(DETAIL) for(let j=-2;j<=2;j++){
+    box(side*13.50,2.5,z+j*.88,.065,3.5,.027,a.slat,34);
+   }
+  }
+  // Continuous luminous cove running down the space.
+  box(side*13.04,5.05,-8.5,.24,.075,62,a.metal,34);
+  box(side*13.03,4.99,-8.5,.115,.03,61.5,a.trim.map(c=>c*1.10),34);
+ }
+ // Ribbed ceiling canopy with independently modelled warm spotlights.
+ for(let z=18;z>=-38;z-=9.3){
+  box(0,5.23,z,25.6,.13,.21,a.metal,34);
+  for(const x of [-7.7,-4.2,0,4.2,7.7]){
+   cylinder(x,5.17,z,.19,.14,.19,a.metal,34,10);
+   cylinder(x,5.065,z,.125,.065,.125,[1.22,1.11,.84],34,10);
+  }
+ }
+ // Brass inlay and darker tile seams lead the visitor without adding collision.
+ for(const x of [-2.6,2.6])box(x,.023,-8.1,.019,.015,56,a.trim,34);
+ box(0,.015,-39.75,21.5,.026,.14,a.trim,34);
+ if(scene==='mall'){
+  // Sculpted atrium perimeter and illuminated entry portal.
+  for(const x of [-12.4,12.4]){
+   for(const z of [14,1,-12,-25]){
+    box(x,3.0,z,.55,4.8,.48,a.metal,34);
+    box(x+(x>0?-.18:.18),2.96,z,.08,4.18,.27,a.trim,34);
+   }
+  }
+  box(0,4.8,-40.25,18,.26,.23,a.trim,34);
+  box(0,4.47,-40.21,16.8,.035,.25,[1.16,1.06,.84],34);
+ } else if(scene==='fashion'){
+  // Quiet gallery niches behind the racks, with illuminated brass frames.
+  for(const side of [-1,1])for(const z of [12,-1,-14,-27]){
+   const x=side*13.44;
+   box(x,2.58,z,.12,3.25,3.5,[.31,.29,.28],34);
+   box(x-side*.06,2.58,z,.10,2.88,3.07,[.61,.55,.49],34);
+   for(const dz of [-1.58,1.58])box(x-side*.11,2.58,z+dz,.045,3.1,.052,a.trim,34);
+   box(x-side*.11,4.13,z,.05,.05,3.25,a.trim,34);
+   box(x-side*.10,1.04,z,.05,.05,3.25,a.trim,34);
+  }
+ } else if(scene==='food'){
+  // Retail wayfinding strips and wood-toned refrigerated section cornices.
+  for(const z of [14,1,-12,-25,-36]){
+   box(0,4.92,z,9.4,.21,.6,a.metal,34);
+   box(0,4.8,z+.17,8.9,.05,.15,a.trim,34);
+  }
+  for(const x of [-12.85,12.85])box(x,.31,-9.5,.13,.35,58,[.37,.31,.25],34);
+ } else if(scene==='beauty'){
+  // Vertical satin panels give the cosmetic room a softer gallery rhythm.
+  for(const side of [-1,1])for(const z of [12,1,-10,-21,-32]){
+   box(side*13.43,2.56,z,.12,3.5,3.4,[.75,.61,.59],34);
+   for(const dz of [-1.48,1.48])box(side*13.32,2.55,z+dz,.07,3.44,.07,a.trim,34);
+   cylinder(side*13.19,4.08,z,.12,.08,.12,[1.19,1.06,.91],34,9);
+  }
+ } else if(scene==='home'){
+  // Architectural timber rails and integrated interior spotlight niches.
+  for(const side of [-1,1])for(const z of [12,-1,-14,-27]){
+   box(side*13.48,2.46,z,.14,3.95,4.8,[.48,.40,.33],34);
+   for(let j=-4;j<=4;j++){
+    box(side*13.37,2.43,z+j*.48,.08,3.85,.045,j%2?a.slat:a.metal,34);
+   }
+   box(side*13.34,4.49,z,.10,.08,4.6,a.trim,34);
+  }
+ }
+}
+
+function initMesh(){mesh=[];hotspots=[];obstacles=[];if(scene==='mall')mall();else if(scene==='food')grocery();else if(scene==='fashion')fashion();else if(scene==='beauty')beauty();else furniture();zoneSigns();sceneDetail();architecturalFinish();if(gl){gl.bindBuffer(gl.ARRAY_BUFFER,glBuffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(mesh),gl.STATIC_DRAW)}}
 function makeAtlas(){let cv=document.createElement('canvas');cv.width=2048;cv.height=2048;const c=cv.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,2048,2048);function cell(i){return [i%8*256,Math.floor(i/8)*256]}function label(i,text,color,sub='',emoji=''){const [x,y]=cell(i);c.fillStyle=color;c.fillRect(x,y,256,256);c.fillStyle='#ffffffa8';c.fillRect(x+14,y+14,228,6);c.textAlign='center';c.fillStyle='#fff';c.font='900 31px Arial';let t=text.length>11?text.slice(0,10):text;c.fillText(t,x+128,y+87);c.font='80px serif';if(emoji)c.fillText(emoji,x+128,y+180);c.fillStyle='#ffffffba';c.font='bold 15px Arial';c.fillText(sub,x+128,y+220);c.fillStyle='#ffffffaa';c.fillRect(x+14,y+237,228,4)}label(0,'MARKET','#e7e8e9','S P A C E');for(let [sc,prods]of Object.entries(DATA))prods.forEach(p=>label(p.mat,p.name.split(' ')[0].toUpperCase(),sc==='food'?['#d38a36','#f6ac45','#2c78af','#91b652','#704531','#e1bf42'][(p.mat-1)%6]:sc==='fashion'?['#223958','#544d46','#b35664','#426c88'][(p.mat-7)%4]:sc==='beauty'?['#ac5767','#ac8a67','#bca4ad','#c98396'][(p.mat-11)%4]:['#b5aa9a','#73877f','#9f8d67','#906849'][(p.mat-15)%4],'MARKET SPACE',p.emoji));[['FOOD','#3087b1'],['FASHION','#ae795d'],['BEAUTY','#b77889'],['HOME','#648879']].forEach(([name,color],i)=>label(20+i,name,color,'MARKET SPACE'));label(24,'MARKET SPACE','#1b6798','DISCOVER RETAIL');label(25,'FRESH','#145e9b','DAILY COLLECTION');label(26,'ATELIER','#856a4d','THE NEW COLLECTION');label(27,'GLOW','#9b687b','BEAUTY STUDIO');label(28,'FORMA','#938579','LIVING');label(29,'HOME','#647d67','LIVING SPACES');for(let i=0;i<4;i++){const z=(marketZones||[{name:'СВЕЖЕЕ'},{name:'НАПИТКИ'},{name:'КОЛЛЕКЦИЯ'},{name:'НОВИНКИ'}])[i];label(30+i,z.name.toUpperCase(),marketTint,'MARKET SPACE  ·  '+String(i+1).padStart(2,'0'))}for(const [mat,img] of localProductImages){const cx=mat%8*256,cy=Math.floor(mat/8)*256;c.fillStyle='#f8fafc';c.fillRect(cx+17,cy+93,222,133);const scale=Math.min(212/img.width,124/img.height),w=img.width*scale,h=img.height*scale;c.drawImage(img,cx+128-w/2,cy+158-h/2,w,h);c.fillStyle='#0d2842';c.font='bold 15px Arial';c.fillText('FOTO ИЗ STUDIO',cx+128,cy+244)}return cv}
 
 // Studio 4 local photo bridge — same origin, same browser only. Shared links never include images.
@@ -574,11 +673,11 @@ async function loadLocalProductPhotos(){
 // MARKET SPACE 8 / 2D perspective compatibility renderer. Real movement without WebGL.
 const liteCanvas=$('liteWorld');let liteCtx=null,liteTick=0,liteDiag='';
 const LITE_PALETTES={
- mall:{sky:'#0e253d',wall:'#27435e',floor:'#8ea7b8',metal:'#40719a',panel:'#30668d',accent:'#f2cd83',product:'#76b8ed'},
- food:{sky:'#c3e8ff',wall:'#96bed4',floor:'#b6cfdb',metal:'#2c6995',panel:'#397cac',accent:'#ffe0a3',product:'#f7d78a'},
- fashion:{sky:'#d2d9de',wall:'#cbbfb4',floor:'#d4c3af',metal:'#82716b',panel:'#b79780',accent:'#e7c18a',product:'#d8a9b2'},
- beauty:{sky:'#dddfec',wall:'#d0b7bf',floor:'#ddc8d0',metal:'#936d7f',panel:'#b58396',accent:'#ffdab4',product:'#f0b4c8'},
- home:{sky:'#c6d4df',wall:'#acb5ad',floor:'#c6c0b1',metal:'#536a75',panel:'#76939b',accent:'#e3ca9d',product:'#c3b198'}
+ mall:{sky:'#242c2e',wall:'#62726f',floor:'#8b8980',metal:'#3c4746',panel:'#555d58',accent:'#f0d5a6',product:'#b3b6a4'},
+ food:{sky:'#4f6963',wall:'#86978b',floor:'#a8aaa0',metal:'#4b6560',panel:'#63766d',accent:'#eed49c',product:'#d4a56e'},
+ fashion:{sky:'#5a524b',wall:'#97877c',floor:'#b6a89b',metal:'#5e5049',panel:'#866f60',accent:'#f2d5a5',product:'#c1a391'},
+ beauty:{sky:'#65565b',wall:'#a99093',floor:'#c4aeb1',metal:'#72595f',panel:'#aa8186',accent:'#f5d2b2',product:'#e1adb6'},
+ home:{sky:'#545b54',wall:'#9b9b90',floor:'#b8afa0',metal:'#5c6058',panel:'#888473',accent:'#e9ce9e',product:'#b9ae9c'}
 };
 function enableLite(reason){
  root.classList.add('lite-active');hideIntro();
@@ -633,8 +732,8 @@ function drawLiteWorld(){
  function billboards(items){for(const it of items){const screen=proj(it.x,it.y,it.z);if(!screen||screen.d>42||screen.x< -90||screen.x>w+90)continue;
    let size=Math.max(12,Math.min(46,29*9/screen.d));ctx.font='700 '+size+'px system-ui';ctx.textAlign='center';ctx.fillStyle='#102c44';ctx.fillText(it.text,screen.x+1,screen.y+1);ctx.fillStyle='#fff1d0';ctx.fillText(it.text,screen.x,screen.y);
  }}
- const sky=ctx.createLinearGradient(0,0,0,horizon);sky.addColorStop(0,p.sky);sky.addColorStop(1,'#e9f0f6');ctx.fillStyle=sky;ctx.fillRect(0,0,w,Math.max(0,horizon));
- const floor=ctx.createLinearGradient(0,horizon,0,h);floor.addColorStop(0,p.floor);floor.addColorStop(1,'#405773');ctx.fillStyle=floor;ctx.fillRect(0,Math.max(0,horizon),w,h);
+ const sky=ctx.createLinearGradient(0,0,0,horizon);sky.addColorStop(0,p.sky);sky.addColorStop(1,p.wall);ctx.fillStyle=sky;ctx.fillRect(0,0,w,Math.max(0,horizon));
+ const floor=ctx.createLinearGradient(0,horizon,0,h);floor.addColorStop(0,p.floor);floor.addColorStop(1,'#464a43');ctx.fillStyle=floor;ctx.fillRect(0,Math.max(0,horizon),w,h);
  const objects=[];
  // Opaque room walls, softly lit in perspective, with a visible vanishing point.
  for(const v of [
@@ -665,6 +764,24 @@ function drawLiteWorld(){
     boxFaces(o.x,tall+.08,o.z,o.w+.15,.17,o.d+.1,[p.accent]);
   }
  }
+ // V9 software-rendered art direction: faceted sidewall insets, ceiling beams and warm light pods.
+ // These are actual projected 2.5D meshes and remain camera-responsive, unlike the photo fallback.
+ for(const side of [-1,1]){
+  for(let z=-35;z<=19;z+=6.75){
+   if(Math.hypot(side*13.7-pos.x,z-pos.z)>42)continue;
+   boxFaces(side*13.68,2.78,z,.12,4.4,5.9,[p.panel,p.wall,p.metal,p.panel,p.wall]);
+   boxFaces(side*13.51,4.7,z,.18,.11,5.65,[p.accent,p.accent,p.accent,p.accent,p.accent]);
+   for(const zz of [z-2.77,z+2.77])boxFaces(side*13.54,2.75,zz,.19,4.5,.11,[p.metal,p.metal,p.metal,p.metal,p.accent]);
+  }
+  boxFaces(side*13.05,5.1,-9,.26,.12,58,[p.accent,p.metal,p.accent,p.accent,p.accent]);
+ }
+ for(let z=18;z>=-38;z-=9.3){
+  if(Math.abs(z-pos.z)>42)continue;
+  boxFaces(0,5.22,z,25.4,.14,.24,[p.metal,p.metal,p.metal,p.metal,p.metal]);
+  for(const x of [-7.7,-4.2,0,4.2,7.7]){
+   boxFaces(x,5.07,z,.31,.16,.31,[p.accent,p.metal,p.accent,p.accent,p.accent]);
+  }
+ }
  // Floating ceiling lights and in-store islands enhance depth without heavy WebGL draw calls.
  if(scene==='mall'){
   const spots=[[-9,-34,'ПРОДУКТЫ'],[-3,-34,'ОДЕЖДА'],[3,-34,'КРАСОТА'],[9,-34,'МЕБЕЛЬ']];
@@ -684,10 +801,10 @@ function drawLiteWorld(){
  // Product markers scale with depth. Picking uses the existing 3D hotspot proximity logic.
  billboards(hotspots.filter((a,i)=>i%2===0).map(h=>({...h,y:Math.max(h.y||1.4,1.4),text:scene==='mall'?'◉':DATA[scene]?.[h.index]?.emoji||'◆'})));
  // Subtle transparent central path arrows help with navigation.
- const grad=ctx.createLinearGradient(0,0,0,h);grad.addColorStop(0,'#ffffff00');grad.addColorStop(1,'#0a254947');ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
+ const grad=ctx.createLinearGradient(0,0,0,h);grad.addColorStop(0,'#ffffff00');grad.addColorStop(1,'#1017135a');ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
 }
 function shader(type,src){let s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s}
-function initGL(){try{if(new URLSearchParams(location.search).get('mode')==='lite')throw Error('Interactive Lite mode selected');gl=canvas.getContext('webgl',{antialias:true,alpha:false,powerPreference:'high-performance'})||canvas.getContext('webgl',{antialias:false,alpha:false})||canvas.getContext('experimental-webgl');if(!gl)throw Error('No WebGL');const vs='attribute vec3 pos;attribute vec3 col;attribute vec2 uv;attribute vec3 normal;uniform mat4 pv;uniform vec3 eye;varying vec3 vcol;varying vec2 vuv;varying vec3 vN;varying vec3 vP;varying float dist;void main(){gl_Position=pv*vec4(pos,1.0);vcol=col;vuv=uv;vN=normal;vP=pos;dist=distance(pos,eye);}';const fs='precision mediump float;uniform sampler2D atlas;uniform vec3 eye;uniform float time;uniform vec3 grade;varying vec3 vcol;varying vec2 vuv;varying vec3 vN;varying vec3 vP;varying float dist;void main(){vec3 n=normalize(vN);vec3 albedo=texture2D(atlas,vuv).rgb*vcol;vec3 key=normalize(vec3(-.35,.83,.43));vec3 fill=normalize(vec3(.72,.55,-.2));float diffuse=.65+.27*max(dot(n,key),0.)+.15*max(dot(n,fill),0.);float top=clamp(n.y,0.,1.);float ceiling=exp(-abs(vP.x)*.055)*(.18+.13*max(0.,cos(vP.z*.32)));float warm=.08+.17*top*ceiling;vec3 col=albedo*(diffuse+warm);vec3 toEye=normalize(eye-vP);float gloss=pow(max(dot(reflect(-key,n),toEye),0.),28.);float polished=step(.8,n.y)*(1.-smoothstep(.12,.46,vP.y));col+=vec3(.52,.72,.93)*gloss*(.07+polished*.24);float lit=pow(max(0.,dot(n,normalize(vec3(0.,.94,.35)))),2.);col+=vec3(.99,.79,.52)*lit*max(0.,1.-abs(vP.x)/10.)*.045;float fog=smoothstep(24.,96.,dist);col=mix(col,vec3(.76,.78,.76),fog*.55);col=mix(col,col*grade,.37);gl_FragColor=vec4(clamp(col,0.,1.),1.);}';shaderProgram=gl.createProgram();gl.attachShader(shaderProgram,shader(gl.VERTEX_SHADER,vs));gl.attachShader(shaderProgram,shader(gl.FRAGMENT_SHADER,fs));gl.linkProgram(shaderProgram);if(!gl.getProgramParameter(shaderProgram,gl.LINK_STATUS))throw Error('Program link failure');gl.useProgram(shaderProgram);attr={pos:gl.getAttribLocation(shaderProgram,'pos'),col:gl.getAttribLocation(shaderProgram,'col'),uv:gl.getAttribLocation(shaderProgram,'uv'),normal:gl.getAttribLocation(shaderProgram,'normal'),pv:gl.getUniformLocation(shaderProgram,'pv'),eye:gl.getUniformLocation(shaderProgram,'eye'),time:gl.getUniformLocation(shaderProgram,'time'),grade:gl.getUniformLocation(shaderProgram,'grade'),atlas:gl.getUniformLocation(shaderProgram,'atlas')};let cv=makeAtlas();texture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,texture);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cv);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.generateMipmap(gl.TEXTURE_2D);gl.uniform1i(attr.atlas,0);glBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,glBuffer);for(let [id,sz,offset]of [[attr.pos,3,0],[attr.col,3,12],[attr.uv,2,24],[attr.normal,3,32]]){gl.enableVertexAttribArray(id);gl.vertexAttribPointer(id,sz,gl.FLOAT,false,44,offset)}gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);return true}catch(ex){enableLite(ex);console.warn('MARKET SPACE WebGL unavailable, interactive 2D mode active:',ex);return false}}
+function initGL(){try{if(new URLSearchParams(location.search).get('mode')==='lite')throw Error('Interactive Lite mode selected');gl=canvas.getContext('webgl',{antialias:true,alpha:false,powerPreference:'high-performance'})||canvas.getContext('webgl',{antialias:false,alpha:false})||canvas.getContext('experimental-webgl');if(!gl)throw Error('No WebGL');const vs='attribute vec3 pos;attribute vec3 col;attribute vec2 uv;attribute vec3 normal;uniform mat4 pv;uniform vec3 eye;varying vec3 vcol;varying vec2 vuv;varying vec3 vN;varying vec3 vP;varying float dist;void main(){gl_Position=pv*vec4(pos,1.0);vcol=col;vuv=uv;vN=normal;vP=pos;dist=distance(pos,eye);}';const fs='precision mediump float;uniform sampler2D atlas;uniform vec3 eye;uniform float time;uniform vec3 grade;varying vec3 vcol;varying vec2 vuv;varying vec3 vN;varying vec3 vP;varying float dist;void main(){vec3 n=normalize(vN);vec3 albedo=texture2D(atlas,vuv).rgb*vcol;vec3 key=normalize(vec3(-.35,.83,.43));vec3 fill=normalize(vec3(.72,.55,-.2));float diffuse=.65+.27*max(dot(n,key),0.)+.15*max(dot(n,fill),0.);float top=clamp(n.y,0.,1.);float ceiling=exp(-abs(vP.x)*.055)*(.18+.13*max(0.,cos(vP.z*.32)));float warm=.08+.17*top*ceiling;vec3 col=albedo*(diffuse+warm);vec3 toEye=normalize(eye-vP);float gloss=pow(max(dot(reflect(-key,n),toEye),0.),28.);float polished=step(.8,n.y)*(1.-smoothstep(.12,.46,vP.y));col+=vec3(.52,.72,.93)*gloss*(.07+polished*.24);float lit=pow(max(0.,dot(n,normalize(vec3(0.,.94,.35)))),2.);col+=vec3(.99,.79,.52)*lit*max(0.,1.-abs(vP.x)/10.)*.045;float emissive=clamp(max(max(vcol.r,vcol.g),vcol.b)-1.,0.,.45);col+=vec3(1.0,.78,.49)*emissive*.26;float fog=smoothstep(24.,96.,dist);col=mix(col,vec3(.76,.78,.76),fog*.55);col=mix(col,col*grade,.37);gl_FragColor=vec4(clamp(col,0.,1.),1.);}';shaderProgram=gl.createProgram();gl.attachShader(shaderProgram,shader(gl.VERTEX_SHADER,vs));gl.attachShader(shaderProgram,shader(gl.FRAGMENT_SHADER,fs));gl.linkProgram(shaderProgram);if(!gl.getProgramParameter(shaderProgram,gl.LINK_STATUS))throw Error('Program link failure');gl.useProgram(shaderProgram);attr={pos:gl.getAttribLocation(shaderProgram,'pos'),col:gl.getAttribLocation(shaderProgram,'col'),uv:gl.getAttribLocation(shaderProgram,'uv'),normal:gl.getAttribLocation(shaderProgram,'normal'),pv:gl.getUniformLocation(shaderProgram,'pv'),eye:gl.getUniformLocation(shaderProgram,'eye'),time:gl.getUniformLocation(shaderProgram,'time'),grade:gl.getUniformLocation(shaderProgram,'grade'),atlas:gl.getUniformLocation(shaderProgram,'atlas')};let cv=makeAtlas();texture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,texture);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,cv);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.generateMipmap(gl.TEXTURE_2D);gl.uniform1i(attr.atlas,0);glBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,glBuffer);for(let [id,sz,offset]of [[attr.pos,3,0],[attr.col,3,12],[attr.uv,2,24],[attr.normal,3,32]]){gl.enableVertexAttribArray(id);gl.vertexAttribPointer(id,sz,gl.FLOAT,false,44,offset)}gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);return true}catch(ex){enableLite(ex);console.warn('MARKET SPACE WebGL unavailable, interactive 2D mode active:',ex);return false}}
 canvas.addEventListener('webglcontextlost',ev=>{ev.preventDefault();enableLite('GPU context lost');});
 $('fallbackContinue').onclick=()=>$('walkWarning').style.display='none';
 const norm=v=>{let d=Math.hypot(...v)||1;return v.map(x=>x/d)},cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0);
