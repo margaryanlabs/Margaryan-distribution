@@ -83,3 +83,19 @@ Do not confuse GPU batching, clearcoat settings or enhanced lighting with verifi
 - Before production, use licensed commissioned brand merchandise assets, self-host optimized GLBs, implement LOD variants and data budgets, verify all PBR channels and test Android/iOS. Remote model files currently live on GitHub raw hosting.
 - Example HD: /market-space-world-v10/?world=fashion&quality=high&preview=104
 - Example Lite: /market-space-world-v10/?world=fashion&quality=eco&assets=off&preview=104
+
+## V10.5 — mobile correctness and real device instrumentation (2026-10-26)
+
+- Fixed detailed-model visibility when moving from HD to Eco and back: Eco actually hides source GLB clones and restores procedural displays, including on desktop.
+- Raycast candidates are re-synchronized with the currently visible models, so an invisible expensive mesh cannot steal product taps; returning to HD restores the cached model without downloading it again.
+- `quality=eco` prevents premium fetch on all devices. `assets=off` continues to be the hard disable override; mobile Auto defaults to procedural, HD explicitly allows detailed models.
+- The 3D source credits expander includes the detailed-model state so the user can see loading, HD ready, or Eco fallback.
+- Optional on-device diagnostics: append `&diagnostics=1` to any V10 URL. A small live HUD reports observed FPS, current render mode, WebGL draw calls / triangle count, allocated geometries and textures, device pixel ratio, and currently selected store. These are measurements made by the visitor's running browser, not independently benchmarked numbers.
+- Fashion shoe exhibits and home chair displays now have accessible item hotspots. Keyboard `E` selects the nearest valid catalog hotspot instead of an arbitrary render group with missing item metadata.
+- **25/25 offline source and isolated behavior contracts passed.** Quality state tests simulated desktop/touch HD ↔ Eco transitions and verified visible mesh and raycast target synchronization.
+- Still pending: real Chrome/Samsung Fold/iPhone graphics QA, remote asset network timing, device FPS evidence and visually verified lighting. Do not market the preview as production ready.
+
+### Direct QA URLs
+- HD (detailed assets where available): /market-space-world-v10/?world=fashion&quality=high&preview=105
+- Eco (always procedural): /market-space-world-v10/?world=fashion&quality=eco&assets=off&preview=105
+- Mobile hardware diagnostics: /market-space-world-v10/?world=fashion&quality=high&diagnostics=1&preview=105
